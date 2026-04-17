@@ -1,0 +1,58 @@
+groups:
+  - name: app-alerts
+    interval: 30s
+    rules:
+      - alert: HallyuHubMetricsEndpointDown
+        expr: up{job="hallyuhub-production"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: hallyuhub
+          environment: production
+        annotations:
+          summary: "Endpoint de metricas da aplicacao indisponivel"
+          description: "Prometheus nao consegue coletar /api/metrics da producao por mais de 2 minutos."
+
+      - alert: HallyuHubDBLatencyHigh
+        expr: hallyuhub_db_latency_ms{environment="production"} > 800
+        for: 5m
+        labels:
+          severity: warning
+          service: hallyuhub
+          environment: production
+        annotations:
+          summary: "Latencia de banco alta"
+          description: "hallyuhub_db_latency_ms acima de 800ms por mais de 5 minutos."
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+          environment: production
+        annotations:
+          summary: "Banco de dados indisponível"
+          description: "postgres_exporter não consegue conectar ao PostgreSQL de produção."
+
+      - alert: PostgresConnectionsHigh
+        expr: sum(pg_stat_activity_count) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+          environment: production
+        annotations:
+          summary: "Conexões ao banco acima de 80"
+          description: "Número de conexões ativas no PostgreSQL acima de 80 por mais de 5 minutos."
+
+      - alert: HallyuHubAppDown
+        expr: hallyuhub_up{environment="production"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: hallyuhub
+          environment: production
+        annotations:
+          summary: "Aplicacao reportando indisponibilidade"
+          description: "hallyuhub_up = 0 por mais de 2 minutos."

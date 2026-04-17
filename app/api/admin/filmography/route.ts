@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-helpers'
 import { getFilmographySyncService, SyncStrategy } from '@/lib/services/filmography-sync-service'
+import { toHttpError } from '@/lib/repositories/base'
 import { z } from 'zod'
+import { createLogger } from '@/lib/utils/logger'
+import { getErrorMessage } from '@/lib/utils/error'
+
+const log = createLogger('ADMIN-FILMOGRAPHY')
+
+// Force dynamic rendering (uses auth/headers)
+export const dynamic = 'force-dynamic'
 
 const syncSchema = z.object({
   artistIds: z.array(z.string()).optional(),
@@ -22,17 +30,9 @@ const syncSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth()
+    const { error } = await requireAdmin()
+    if (error) return error
 
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized. Admin access required.' },
-        { status: 401 }
-      )
-    }
-
-    // Parse and validate request body
     const body = await request.json()
     const { artistIds, strategy, concurrency } = syncSchema.parse(body)
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // If no artist IDs provided, sync outdated filmographies
     if (!artistIds || artistIds.length === 0) {
-      console.log('Starting sync for outdated filmographies...')
+      log.info('Starting sync for outdated filmographies...')
 
       const result = await syncService.syncOutdatedFilmographies(
         7, // 7 days
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Sync specific artists
     if (artistIds.length === 1) {
-      console.log(`Syncing single artist: ${artistIds[0]}`)
+      log.info('Syncing single artist', { artistId: artistIds[0] })
 
       const result = await syncService.syncSingleArtist(artistIds[0], strategy as SyncStrategy)
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Batch sync multiple artists
-    console.log(`Syncing ${artistIds.length} artists...`)
+    log.info('Syncing multiple artists', { count: artistIds.length })
 
     const result = await syncService.syncMultipleArtists(
       artistIds,
@@ -104,18 +104,8 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: error.issues },
-        { status: 400 }
-      )
-    }
-
-    console.error('Filmography sync error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error', message: (error as Error).message },
-      { status: 500 }
-    )
+    log.error('Filmography sync error', { error: getErrorMessage(error) })
+    return toHttpError(error)
   }
 }
 
@@ -127,15 +117,8 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    // Check authentication
-    const session = await auth()
-
-    if (!session || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized. Admin access required.' },
-        { status: 401 }
-      )
-    }
+    const { error } = await requireAdmin()
+    if (error) return error
 
     const syncService = getFilmographySyncService()
     const stats = await syncService.getFilmographyStats()
@@ -146,10 +129,7 @@ export async function GET() {
     })
 
   } catch (error) {
-    console.error('Get filmography stats error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    log.error('Get filmography stats error', { error: getErrorMessage(error) })
+    return toHttpError(error)
   }
 }

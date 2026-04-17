@@ -1,0 +1,400 @@
+'use client'
+
+import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
+import Image from 'next/image'
+
+interface Artist {
+    id: string
+    nameRomanized: string
+    nameHangul: string | null
+    primaryImageUrl: string | null
+    instagramFeedUrl: string | null
+    instagramLastSync: string | null
+    socialLinks: { instagram?: string } | null
+}
+
+function timeAgo(date: string): string {
+    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+    if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`
+    return `${Math.floor(diff / 86400)}d atrás`
+}
+
+const LIMIT = 50
+
+export default function InstagramAdminPage() {
+    const toast = useAdminToast()
+    const [artists, setArtists] = useState<Artist[]>([])
+    const [search, setSearch] = useState('')
+    const [filter, setFilter] = useState<'all' | 'configured' | 'missing'>('all')
+    const [page, setPage] = useState(1)
+    const [total, setTotal] = useState(0)
+    const [totalConfigured, setTotalConfigured] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState<string | null>(null)
+    const [saved, setSaved] = useState<string | null>(null)
+    const [feedValues, setFeedValues] = useState<Record<string, string>>({})
+    const [syncing, setSyncing] = useState(false)
+    const [syncMsg, setSyncMsg] = useState('')
+    const [syncDetails, setSyncDetails] = useState<{ name: string; posts: number; error?: string; debug?: { id: string; url: string; external_url?: string }[] }[]>([])
+
+    const fetchPage = useCallback(async (p: number, q: string, f: string) => {
+        setLoading(true)
+        try {
+            const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) })
+            if (q) params.set('search', q)
+            if (f !== 'all') params.set('filter', f)
+            const res = await fetch(`/api/admin/artists/social-links?${params}`)
+            const data = await res.json()
+            const list: Artist[] = data.artists || []
+            setArtists(list)
+            setTotal(data.total || 0)
+            setTotalConfigured(data.totalConfigured || 0)
+            const vals: Record<string, string> = {}
+            for (const a of list) vals[a.id] = a.instagramFeedUrl ?? ''
+            setFeedValues(vals)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    // Initial load
+    useEffect(() => { fetchPage(1, '', 'all') }, [fetchPage])
+
+    // Search/filter debounce — reset to page 1
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setPage(1)
+            fetchPage(1, search, filter)
+        }, search ? 300 : 0)
+        return () => clearTimeout(t)
+    }, [search, filter, fetchPage])
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage)
+        fetchPage(newPage, search, filter)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    const handleSave = async (artistId: string) => {
+        setSaving(artistId)
+        try {
+            const res = await fetch(`/api/admin/artists/${artistId}/instagram-feed`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feedUrl: feedValues[artistId] }),
+            })
+            if (!res.ok) throw new Error('Erro ao salvar')
+            setArtists(prev => prev.map(a =>
+                a.id === artistId
+                    ? { ...a, instagramFeedUrl: feedValues[artistId] || null }
+                    : a
+            ))
+            setSaved(artistId)
+            setTimeout(() => setSaved(null), 2000)
+        } catch {
+            toast.error('Erro ao salvar feed URL')
+        } finally {
+            setSaving(null)
+        }
+    }
+
+    const handleSyncAll = async () => {
+        setSyncing(true)
+        setSyncMsg('Sincronizando posts...')
+        try {
+            const res = await fetch('/api/admin/instagram/sync', { method: 'POST' })
+            const data = await res.json()
+            if (res.ok) {
+                setSyncMsg(`✅ ${data.totalPosts} posts sincronizados${data.totalErrors > 0 ? ` · ${data.totalErrors} erros` : ''}`)
+                setSyncDetails(data.results ?? [])
+                await fetchPage(page, search, filter)
+            } else {
+                setSyncMsg('❌ Erro ao sincronizar')
+            }
+        } catch {
+            setSyncMsg('❌ Erro de rede')
+        } finally {
+            setSyncing(false)
+            setTimeout(() => setSyncMsg(''), 6000)
+        }
+    }
+
+    const totalPages = Math.ceil(total / LIMIT)
+    const from = total === 0 ? 0 : (page - 1) * LIMIT + 1
+    const to = Math.min(page * LIMIT, total)
+
+    return (
+        <AdminLayout
+            title="Instagram Feeds"
+            subtitle="Configuração dos feeds RSS.app por artista e sincronização manual dos posts."
+            actions={
+                <Link
+                    href="/admin/instagram/status"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                >
+                    <Activity className="w-4 h-4" />
+                    Ver status do sync
+                </Link>
+            }
+        >
+            <div className="space-y-6">
+
+                {/* Stats + Sync */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="bg-surface border border-border rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-foreground">{total}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Total artistas</p>
+                    </div>
+                    <div className="bg-surface border border-pink-500/20 rounded-xl p-4 text-center">
+                        <p className="text-2xl font-black text-pink-400">{totalConfigured}</p>
+                        <p className="text-xs text-muted mt-1 uppercase tracking-widest font-bold">Com feed RSS.app</p>
+                    </div>
+                    <div className="sm:col-span-1 col-span-2 bg-surface border border-border rounded-xl p-4 flex flex-col items-center justify-center gap-2">
+                        <button
+                            onClick={handleSyncAll}
+                            disabled={syncing || totalConfigured === 0}
+                            className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-40 text-foreground rounded-lg text-sm font-bold transition-colors"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                            {syncing ? 'Sincronizando...' : 'Sync Manual'}
+                        </button>
+                        {syncMsg && (
+                            <p className="text-xs text-center text-muted">{syncMsg}</p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Sync result details */}
+                {syncDetails.length > 0 && (
+                    <div className="bg-surface border border-border rounded-xl p-4">
+                        <p className="text-xs font-black text-muted uppercase tracking-widest mb-3">Resultado do sync</p>
+                        <div className="space-y-1.5">
+                            {syncDetails.map((r, i) => (
+                                <div key={i} className="text-xs space-y-1">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <span className="text-foreground font-medium">{r.name}</span>
+                                        {r.error ? (
+                                            <span className="text-red-400 font-mono text-[10px] text-right max-w-xs truncate" title={r.error}>
+                                                ❌ {r.error.replace('Error: ', '').slice(0, 80)}
+                                            </span>
+                                        ) : (
+                                            <span className={`font-bold flex-shrink-0 ${r.posts > 0 ? 'text-green-400' : 'text-yellow-400'}`}>
+                                                {r.posts > 0 ? `✅ ${r.posts} posts` : '⚠️ 0 posts'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {r.posts === 0 && !r.error && r.debug && r.debug.length > 0 && (
+                                        <div className="ml-2 pl-2 border-l border-yellow-500/30 space-y-0.5">
+                                            <p className="text-yellow-500/70 text-[10px] font-bold uppercase">URLs do feed (amostra):</p>
+                                            {r.debug.map((d, j) => (
+                                                <div key={j} className="text-[10px] text-muted font-mono truncate" title={`id: ${d.id}\nurl: ${d.url}\nexternal_url: ${d.external_url ?? '-'}`}>
+                                                    url: {d.url || '(vazio)'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {r.posts === 0 && !r.error && r.debug && r.debug.length === 0 && (
+                                        <p className="ml-2 text-[10px] text-muted italic">Feed retornou 0 itens</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Como configurar */}
+                <div className="bg-surface border border-pink-500/10 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Instagram className="w-4 h-4 text-pink-400" />
+                        <span className="text-sm font-black text-foreground">Como configurar</span>
+                    </div>
+                    <ol className="text-xs text-muted space-y-1.5 list-none">
+                        <li><span className="text-pink-400 font-bold mr-2">1.</span>Acesse <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline font-bold">rss.app</a> e crie uma conta</li>
+                        <li><span className="text-pink-400 font-bold mr-2">2.</span>Crie um novo feed apontando para o perfil do Instagram: <code className="text-foreground bg-surface px-1 py-0.5 rounded text-[11px]">https://www.instagram.com/@handle</code></li>
+                        <li><span className="text-pink-400 font-bold mr-2">3.</span>Copie a URL do feed no formato JSON: <code className="text-foreground bg-surface px-1 py-0.5 rounded text-[11px]">https://rss.app/feeds/XXXXXXXX.json</code></li>
+                        <li><span className="text-pink-400 font-bold mr-2">4.</span>Cole na coluna "Feed URL" do artista abaixo e clique em Salvar</li>
+                    </ol>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Buscar artista..."
+                            className="w-full px-4 pr-10 py-2.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50"
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        {([['all', 'Todos'], ['configured', 'Com feed'], ['missing', 'Sem feed']] as const).map(([val, label]) => (
+                            <button
+                                key={val}
+                                onClick={() => setFilter(val)}
+                                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${filter === val ? 'bg-pink-600 text-foreground' : 'bg-surface border border-border text-muted hover:border-border'}`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Count */}
+                {!loading && (
+                    <p className="text-xs text-muted">
+                        {total === 0 ? 'Nenhum artista encontrado' : `Mostrando ${from}–${to} de ${total} artistas`}
+                    </p>
+                )}
+
+                {/* Artist list */}
+                {loading ? (
+                    <div className="space-y-2">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="h-16 bg-surface border border-border rounded-xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {artists.length === 0 && (
+                            <div className="text-center py-16 text-muted">Nenhum artista encontrado</div>
+                        )}
+                        {artists.map((artist) => {
+                            const isSaved = saved === artist.id
+                            const isSaving = saving === artist.id
+                            const currentFeed = feedValues[artist.id] ?? ''
+                            const hasChanged = currentFeed !== (artist.instagramFeedUrl ?? '')
+
+                            return (
+                                <div
+                                    key={artist.id}
+                                    className={`flex items-center gap-3 p-4 bg-surface border rounded-xl transition-colors ${artist.instagramFeedUrl ? 'border-pink-500/20' : 'border-border'}`}
+                                >
+                                    {/* Avatar */}
+                                    {artist.primaryImageUrl ? (
+                                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-muted flex-shrink-0">
+                                            {artist.nameRomanized[0]}
+                                        </div>
+                                    )}
+
+                                    {/* Name */}
+                                    <div className="w-32 flex-shrink-0 min-w-0">
+                                        <p className="font-bold text-foreground text-sm truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-xs text-muted truncate">{artist.nameHangul}</p>}
+                                        {artist.instagramLastSync && (
+                                            <p className="text-[10px] text-muted flex items-center gap-1 mt-0.5">
+                                                <Clock className="w-2.5 h-2.5" />
+                                                {timeAgo(artist.instagramLastSync)}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Instagram link */}
+                                    {artist.socialLinks?.instagram ? (
+                                        <a
+                                            href={artist.socialLinks.instagram}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hidden sm:flex items-center gap-1 text-[10px] text-pink-400 hover:underline flex-shrink-0 w-24 truncate"
+                                        >
+                                            <Instagram className="w-3 h-3 flex-shrink-0" />
+                                            <span className="truncate">
+                                                {artist.socialLinks.instagram.replace('https://www.instagram.com/', '@').replace(/\/$/, '')}
+                                            </span>
+                                        </a>
+                                    ) : (
+                                        <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted flex-shrink-0 w-24">
+                                            <AlertCircle className="w-3 h-3" />
+                                            <span>sem @</span>
+                                        </div>
+                                    )}
+
+                                    {/* Feed URL input */}
+                                    <div className="flex-1 min-w-0">
+                                        <input
+                                            type="url"
+                                            value={currentFeed}
+                                            onChange={(e) => setFeedValues(prev => ({ ...prev, [artist.id]: e.target.value }))}
+                                            placeholder="https://rss.app/feeds/XXXXXXXX.json"
+                                            className={`w-full px-3 py-2 bg-background/50 border rounded-xl text-foreground placeholder:text-muted focus:outline-none text-xs ${
+                                                currentFeed && !currentFeed.endsWith('.json')
+                                                    ? 'border-yellow-500/60 focus:border-yellow-500'
+                                                    : 'border-border focus:border-accent/50'
+                                            }`}
+                                        />
+                                        {currentFeed && !currentFeed.endsWith('.json') && (
+                                            <p className="text-yellow-400 text-[10px] mt-0.5">URL deve terminar em .json</p>
+                                        )}
+                                    </div>
+
+                                    {/* Link to Instagram profile */}
+                                    {artist.instagramFeedUrl && (
+                                        <a
+                                            href={artist.instagramFeedUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-shrink-0 text-muted hover:text-pink-400 transition-colors"
+                                            title="Abrir feed"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                    )}
+
+                                    {/* Save button */}
+                                    <button
+                                        onClick={() => handleSave(artist.id)}
+                                        disabled={isSaving || (!hasChanged && !isSaved)}
+                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                                            isSaved ? 'bg-green-600 text-foreground' :
+                                            hasChanged ? 'bg-pink-600 hover:bg-pink-500 text-foreground' :
+                                            'bg-surface text-muted cursor-default'
+                                        }`}
+                                    >
+                                        {isSaved ? <><Check className="w-3 h-3" /> Salvo</> :
+                                         isSaving ? '...' :
+                                         hasChanged ? 'Salvar' : <Check className="w-3 h-3 text-muted" />}
+                                    </button>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2">
+                        <button
+                            onClick={() => handlePageChange(page - 1)}
+                            disabled={page <= 1}
+                            className="flex items-center gap-1 px-3 py-2 bg-surface border border-border rounded-xl text-sm text-muted hover:text-foreground disabled:opacity-30 disabled:cursor-default transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Anterior
+                        </button>
+                        <span className="text-xs text-muted">
+                            Página {page} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => handlePageChange(page + 1)}
+                            disabled={page >= totalPages}
+                            className="flex items-center gap-1 px-3 py-2 bg-surface border border-border rounded-xl text-sm text-muted hover:text-foreground disabled:opacity-30 disabled:cursor-default transition-colors"
+                        >
+                            Próxima
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </AdminLayout>
+    )
+}

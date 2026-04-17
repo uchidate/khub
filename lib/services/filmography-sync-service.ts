@@ -15,7 +15,11 @@ import prisma from '../prisma'
 import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-service'
 import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
-import { AIOrchestrator } from '../ai/orchestrator'
+import { getOrchestrator } from '../ai/orchestrator-factory'
+import { createLogger } from '../utils/logger'
+import { getArtistVisibilityService } from './artist-visibility-service'
+
+const log = createLogger('FILMOGRAPHY')
 
 export type SyncStrategy = 'FULL_REPLACE' | 'INCREMENTAL' | 'SMART_MERGE'
 
@@ -42,7 +46,7 @@ export interface BatchSyncResult {
 /**
  * Calculate string similarity using Levenshtein distance
  */
-function stringSimilarity(str1: string, str2: string): number {
+export function stringSimilarity(str1: string, str2: string): number {
   const s1 = str1.toLowerCase()
   const s2 = str2.toLowerCase()
 
@@ -72,6 +76,15 @@ function stringSimilarity(str1: string, str2: string): number {
 
   const maxLength = Math.max(s1.length, s2.length)
   return 1 - matrix[s2.length][s1.length] / maxLength
+}
+
+/**
+ * Check if production has Korean origin based on TMDB data
+ */
+function isKoreanOrigin(prodData: TMDBProductionData): boolean {
+  if (prodData.origin_country?.includes('KR')) return true
+  if (prodData.production_countries?.some(c => c.iso_3166_1 === 'KR')) return true
+  return false
 }
 
 export class FilmographySyncService {
@@ -106,7 +119,19 @@ export class FilmographySyncService {
       // Get artist from database
       const artist = await prisma.artist.findUnique({
         where: { id: artistId },
-        include: { productions: { include: { production: true } } },
+        select: {
+          id: true,
+          nameRomanized: true,
+          nameHangul: true,
+          tmdbId: true,
+          productions: {
+            select: {
+              productionId: true,
+              role: true,
+              production: { select: { id: true, tmdbId: true, titleKr: true, titlePt: true, year: true, type: true } }
+            }
+          }
+        },
       })
 
       if (!artist) {
@@ -128,7 +153,7 @@ export class FilmographySyncService {
       )
 
       if (!tmdbPerson) {
-        console.log(`⚠️ Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
+        log.warn(`Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -138,11 +163,11 @@ export class FilmographySyncService {
       const credits = await this.tmdbService.getPersonCredits(tmdbPerson.id)
       const productions = await this.tmdbService.transformCreditsToProductions(credits)
 
-      console.log(`Found ${productions.length} productions for ${artist.nameRomanized}`)
+      log.info(`Found ${productions.length} productions for ${artist.nameRomanized}`)
 
       // If no productions found on TMDB even after finding person, try AI as fallback
       if (productions.length === 0) {
-        console.log(`⚠️  No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
+        log.warn(`No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -183,6 +208,8 @@ export class FilmographySyncService {
       })
 
       result.success = true
+      // Reavaliar visibilidade após sync
+      void getArtistVisibilityService().evaluate(artistId).catch(() => {})
     } catch (error) {
       result.errors.push((error as Error).message)
 
@@ -191,13 +218,9 @@ export class FilmographySyncService {
           where: { id: artistId },
           data: { tmdbSyncStatus: 'NOT_FOUND' },
         })
-        await prisma.artist.update({
-          where: { id: artistId },
-          data: { tmdbSyncStatus: 'ERROR' },
-        })
 
         // Try AI fallback even on error
-        console.log(`⚠️ TMDB error for ${artistId}. Attempting AI fallback...`)
+        log.warn(`TMDB error for ${artistId}. Attempting AI fallback...`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
     } finally {
@@ -212,7 +235,7 @@ export class FilmographySyncService {
    */
   async syncArtistFilmographyWithAI(
     artistId: string,
-    strategy: SyncStrategy = 'SMART_MERGE'
+    _strategy: SyncStrategy = 'SMART_MERGE'
   ): Promise<SyncResult> {
     const startTime = Date.now()
     const result: SyncResult = {
@@ -235,11 +258,7 @@ export class FilmographySyncService {
       if (!artist) throw new Error(`Artist not found: ${artistId}`)
       result.artistName = artist.nameRomanized
 
-      const orchestrator = new AIOrchestrator({
-        geminiApiKey: process.env.GEMINI_API_KEY,
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        ollamaBaseUrl: process.env.OLLAMA_BASE_URL,
-      })
+      const orchestrator = getOrchestrator()
 
       const prompt = `Gere uma lista da filmografia oficial (Dramas, Filmes, Programas de Variedades) do artista coreano "${artist.nameRomanized}" (${artist.nameHangul || ''}).
       
@@ -269,15 +288,15 @@ export class FilmographySyncService {
       const aiResult = await orchestrator.generateStructured<{ productions: any[] }>(
         prompt,
         schema,
-        { preferredProvider: 'gemini' }
+        { preferredProvider: 'deepseek' }
       )
 
-      if (!aiResult.productions || aiResult.productions.length === 0) {
+      if (!aiResult.parsed.productions || aiResult.parsed.productions.length === 0) {
         result.success = true
         return result
       }
 
-      for (const prodData of aiResult.productions) {
+      for (const prodData of aiResult.parsed.productions) {
         try {
           // Check for existing production to avoid duplicates
           let production = await prisma.production.findFirst({
@@ -329,6 +348,8 @@ export class FilmographySyncService {
       }
 
       result.success = true
+      // Reavaliar visibilidade após sync via AI
+      void getArtistVisibilityService().evaluate(artistId).catch(() => {})
     } catch (error: any) {
       result.errors.push(error.message)
     } finally {
@@ -369,9 +390,9 @@ export class FilmographySyncService {
               // Log progress
               const progress = results.length
               const total = artistIds.length
-              console.log(`Progress: ${progress}/${total} (${Math.round((progress / total) * 100)}%)`)
+              log.debug(`Progress: ${progress}/${total} (${Math.round((progress / total) * 100)}%)`)
             } catch (error) {
-              console.error(`Failed to sync artist ${artistId}:`, error)
+              log.error(`Failed to sync artist ${artistId}: ${(error as Error).message}`)
               results.push({
                 success: false,
                 artistId,
@@ -416,7 +437,7 @@ export class FilmographySyncService {
       select: { id: true },
     })
 
-    console.log(`Found ${artists.length} artists without filmography`)
+    log.info(`Found ${artists.length} artists without filmography`)
 
     return await this.syncMultipleArtists(
       artists.map(a => a.id),
@@ -447,7 +468,7 @@ export class FilmographySyncService {
       select: { id: true },
     })
 
-    console.log(`Found ${artists.length} artists with outdated filmographies`)
+    log.info(`Found ${artists.length} artists with outdated filmographies`)
 
     return await this.syncMultipleArtists(
       artists.map(a => a.id),
@@ -511,6 +532,15 @@ export class FilmographySyncService {
       return 'added'
     }
 
+    // Validate origin and auto-flag non-Korean productions
+    const isKorean = isKoreanOrigin(prodData)
+    if (!isKorean) {
+      const origins = prodData.origin_country?.join(', ') ||
+                     prodData.production_countries?.map(c => c.iso_3166_1).join(', ') ||
+                     'N/A'
+      console.warn(`⚠️  Non-Korean production detected (filmography sync): "${prodData.title}" (tmdbId: ${prodData.tmdbId}, origin: ${origins})`)
+    }
+
     // Create new production
     const newProduction = await prisma.production.create({
       data: {
@@ -528,6 +558,9 @@ export class FilmographySyncService {
         streamingPlatforms: prodData.streamingPlatforms,
         sourceUrls: [],
         tags: [],
+        // Auto-flag non-Korean productions
+        flaggedAsNonKorean: !isKorean,
+        flaggedAt: !isKorean ? new Date() : null,
       },
     })
 
@@ -612,7 +645,7 @@ export class FilmographySyncService {
         },
       })
     } catch (error) {
-      console.error('Failed to send Slack notification:', error)
+      log.error(`Failed to send Slack notification: ${(error as Error).message}`)
     }
   }
 
@@ -638,7 +671,7 @@ export class FilmographySyncService {
         message
       )
     } catch (error) {
-      console.error('Failed to send batch Slack notification:', error)
+      log.error(`Failed to send batch Slack notification: ${(error as Error).message}`)
     }
   }
 

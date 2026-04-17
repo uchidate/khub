@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta E — Move</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f2;
+  --white: #ffffff;
+  --black: #111110;
+  --accent: #5b4fff;
+  --accent2: #ff5b4f;
+  --text: #111110;
+  --muted: #888880;
+  --border: #e0dfd8;
+  --surface: #ffffff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* NAV */
+nav { display:flex; align-items:center; justify-content:space-between; padding:0 2.5rem; height:68px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+/* The "Move" logomark — animated rectangular modules */
+.logo { display:flex; align-items:center; gap:0.875rem; cursor:pointer; }
+.logo-mark { display:grid; grid-template-columns:1fr 1fr; gap:3px; width:30px; height:30px; }
+.logo-block { border-radius:3px; transition:transform .4s; }
+.logo-block:nth-child(1) { background:var(--accent); }
+.logo-block:nth-child(2) { background:var(--black); }
+.logo-block:nth-child(3) { background:var(--black); }
+.logo-block:nth-child(4) { background:var(--accent2); }
+.logo:hover .logo-block:nth-child(1) { transform:translate(-2px,-2px); }
+.logo:hover .logo-block:nth-child(2) { transform:translate(2px,-2px); }
+.logo:hover .logo-block:nth-child(3) { transform:translate(-2px,2px); }
+.logo:hover .logo-block:nth-child(4) { transform:translate(2px,2px); }
+.logo-text { font-weight:800; font-size:1.2rem; letter-spacing:-0.03em; color:var(--black); }
+.logo-text sup { font-size:0.55rem; vertical-align:super; color:var(--accent); font-weight:700; margin-left:1px; }
+.nav-links { display:flex; gap:0.125rem; }
+.nav-links a { color:var(--muted); text-decoration:none; font-size:0.85rem; font-weight:500; padding:0.4rem 0.875rem; border-radius:6px; transition:.15s; }
+.nav-links a:hover { background:var(--bg); color:var(--text); }
+.nav-right { display:flex; gap:0.75rem; align-items:center; }
+.btn-ghost { padding:0.5rem 1.25rem; border:1px solid var(--border); color:var(--text); border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; background:transparent; font-family:'Outfit',sans-serif; }
+.btn-solid { padding:0.5rem 1.25rem; background:var(--black); color:var(--white); border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; border:none; font-family:'Outfit',sans-serif; }
+.btn-solid:hover { background:#2a2a28; }
+
+/* HERO — modular grid layout */
+.hero { display:grid; grid-template-columns:1fr 1fr 1fr; grid-template-rows:auto auto; gap:1px; background:var(--border); border-bottom:1px solid var(--border); margin-top:1px; }
+.hero-main { grid-column:1/3; grid-row:1/3; background:var(--black); padding:4rem 3.5rem; display:flex; flex-direction:column; justify-content:flex-end; min-height:540px; position:relative; overflow:hidden; }
+/* Modular "move" shapes in background */
+.hero-shapes { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.shape { position:absolute; border-radius:4px; }
+.s1 { width:180px; height:80px; background:var(--accent); opacity:0.15; top:3rem; right:4rem; transform:rotate(12deg); }
+.s2 { width:80px; height:180px; background:var(--accent2); opacity:0.12; top:6rem; right:10rem; transform:rotate(-8deg); }
+.s3 { width:120px; height:120px; background:var(--accent); opacity:0.08; bottom:6rem; right:3rem; transform:rotate(22deg); }
+.s4 { width:60px; height:60px; background:#fff; opacity:0.05; top:2rem; left:3rem; transform:rotate(5deg); }
+.hero-content { position:relative; }
+.hero-tag { display:inline-flex; align-items:center; gap:0.5rem; padding:0.35rem 0.875rem 0.35rem 0.35rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:999px; font-size:0.72rem; font-weight:600; color:rgba(255,255,255,0.6); margin-bottom:2rem; letter-spacing:0.02em; }
+.hero-tag-dot { width:22px; height:22px; border-radius:999px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:0.6rem; }
+h1 { font-weight:900; font-size:clamp(3rem,5.5vw,5.5rem); line-height:1; letter-spacing:-0.04em; color:var(--white); margin-bottom:1.25rem; }
+h1 .move { color:var(--accent); display:inline-block; }
+.hero-sub { font-size:0.95rem; color:rgba(255,255,255,0.45); line-height:1.7; max-width:420px; margin-bottom:2.5rem; font-weight:400; }
+.hero-ctas { display:flex; gap:0.75rem; }
+.cta-white { padding:0.875rem 2rem; background:var(--white); color:var(--black); font-size:0.85rem; font-weight:700; border-radius:999px; cursor:pointer; border:none; font-family:'Outfit',sans-serif; }
+.cta-outline { padding:0.875rem 2rem; background:transparent; border:1px solid rgba(255,255,255,0.2); color:var(--white); font-size:0.85rem; font-weight:600; border-radius:999px; cursor:pointer; font-family:'Outfit',sans-serif; }
+/* Sidebar cells */
+.hero-cell { background:var(--white); padding:2rem; display:flex; flex-direction:column; justify-content:space-between; }
+.cell-top-label { font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+.cell-big-num { font-weight:900; font-size:3.5rem; line-height:1; letter-spacing:-0.04em; color:var(--black); margin-top:auto; }
+.cell-big-num span { font-size:1.5rem; color:var(--accent); }
+.cell-sub { font-size:0.78rem; color:var(--muted); margin-top:0.25rem; }
+.cell-news { background:var(--bg); }
+.cell-news-label { font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:0.75rem; }
+.cell-news-title { font-size:0.95rem; font-weight:700; line-height:1.4; color:var(--text); }
+.cell-news-meta { font-size:0.72rem; color:var(--muted); margin-top:0.5rem; }
+.cell-arrow { margin-top:1.5rem; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+/* MODULAR SECTION */
+.modular { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); }
+.mod-cell { background:var(--white); padding:2rem; cursor:pointer; transition:background .15s; }
+.mod-cell:hover { background:var(--bg); }
+/* Each cell has a colored "move" tag in corner */
+.mod-tag { width:32px; height:8px; border-radius:4px; margin-bottom:1.5rem; }
+.mt-accent { background:var(--accent); }
+.mt-black { background:var(--black); }
+.mt-accent2 { background:var(--accent2); }
+.mt-split { background:linear-gradient(90deg,var(--accent) 50%,var(--accent2) 50%); }
+.mod-title { font-weight:700; font-size:0.9rem; line-height:1.4; margin-bottom:0.4rem; }
+.mod-sub { font-size:0.75rem; color:var(--muted); line-height:1.5; }
+
+/* ARTISTS */
+.section { padding:3.5rem 2.5rem; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
+.section-title { font-weight:800; font-size:1.5rem; letter-spacing:-0.03em; display:flex; align-items:center; gap:0.75rem; }
+.section-title-mark { width:10px; height:32px; border-radius:3px; background:var(--accent); display:inline-block; }
+.see-all { font-size:0.82rem; color:var(--accent); font-weight:600; text-decoration:none; }
+.artists { display:flex; gap:0; border:1px solid var(--border); background:var(--border); }
+.artist { flex:1; background:var(--white); padding:1.5rem 1.25rem; cursor:pointer; transition:.15s; border-right:none; }
+.artist:hover { background:var(--bg); }
+.artist-avatar { width:48px; height:48px; border-radius:8px; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.2rem; }
+.av-blue { background:#ede9fe; color:var(--accent); }
+.av-orange { background:#fff0ed; color:var(--accent2); }
+.av-black { background:#f0f0ee; color:var(--black); }
+.artist-name { font-weight:700; font-size:0.88rem; }
+.artist-group { font-size:0.73rem; color:var(--muted); margin-top:0.15rem; }
+.artist-pill { margin-top:0.75rem; display:inline-block; padding:0.15rem 0.6rem; border-radius:4px; font-size:0.65rem; font-weight:700; }
+.pill-accent { background:#ede9fe; color:var(--accent); }
+.pill-orange { background:#fff0ed; color:var(--accent2); }
+
+/* NEWS */
+.news-row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); }
+.news-big { background:var(--black); padding:2.5rem; cursor:pointer; }
+.news-big-label { font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; }
+.news-big-title { font-weight:800; font-size:1.6rem; line-height:1.2; letter-spacing:-0.02em; color:var(--white); margin-bottom:0.75rem; }
+.news-big-meta { font-size:0.75rem; color:rgba(255,255,255,0.35); }
+.news-small { background:var(--white); padding:1.5rem; cursor:pointer; transition:.15s; display:flex; flex-direction:column; justify-content:space-between; }
+.news-small:hover { background:var(--bg); }
+.news-small-label { font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent2); margin-bottom:0.75rem; }
+.news-small-title { font-weight:700; font-size:0.88rem; line-height:1.4; }
+.news-small-meta { font-size:0.72rem; color:var(--muted); margin-top:0.5rem; }
+
+footer { margin-top:3rem; border-top:1px solid var(--border); padding:2rem 2.5rem; background:var(--white); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.footer-logo { display:flex; align-items:center; gap:0.6rem; font-weight:800; font-size:1.1rem; letter-spacing:-0.03em; }
+.footer-mark { display:grid; grid-template-columns:1fr 1fr; gap:2px; width:22px; height:22px; }
+.footer-block { border-radius:2px; }
+.fb1 { background:var(--accent); }
+.fb2 { background:var(--black); }
+.fb3 { background:var(--black); }
+.fb4 { background:var(--accent2); }
+.footer-copy { font-size:0.75rem; color:var(--muted); }
+
+.back-btn { position:fixed; top:1.5rem; left:1.5rem; background:var(--white); border:1px solid var(--border); color:var(--muted); padding:0.5rem 1rem; border-radius:8px; font-size:0.78rem; text-decoration:none; font-family:'Outfit',sans-serif; z-index:200; transition:.15s; }
+.back-btn:hover { color:var(--text); border-color:var(--accent); }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-btn">← Propostas</a>
+
+<nav>
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-block"></div>
+      <div class="logo-block"></div>
+      <div class="logo-block"></div>
+      <div class="logo-block"></div>
+    </div>
+    <div class="logo-text">HallyuHub<sup>BR</sup></div>
+  </div>
+  <div class="nav-links">
+    <a href="#">Artistas</a>
+    <a href="#">Grupos</a>
+    <a href="#">Doramas</a>
+    <a href="#">Notícias</a>
+    <a href="#">Blog</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost">Entrar</button>
+    <button class="btn-solid">Começar</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-main">
+    <div class="hero-shapes">
+      <div class="shape s1"></div>
+      <div class="shape s2"></div>
+      <div class="shape s3"></div>
+      <div class="shape s4"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-tag"><div class="hero-tag-dot">🇰🇷</div>A onda coreana em português</div>
+      <h1>O universo<br><span class="move">K-pop</span><br>se <span class="move">move</span><br>aqui.</h1>
+      <p class="hero-sub">Perfis, notícias, doramas e artistas — tudo em um sistema modular que cresce com o Hallyu.</p>
+      <div class="hero-ctas">
+        <button class="cta-white">Explorar agora</button>
+        <button class="cta-outline">Ver artistas →</button>
+      </div>
+    </div>
+  </div>
+  <div class="hero-cell">
+    <div class="cell-top-label">Artistas</div>
+    <div>
+      <div class="cell-big-num">12k<span>+</span></div>
+      <div class="cell-sub">perfis cadastrados</div>
+    </div>
+  </div>
+  <div class="hero-cell cell-news">
+    <div class="cell-news-label">● Em alta agora</div>
+    <div class="cell-news-title">BTS anuncia comeback para 2025 após retorno do serviço militar</div>
+    <div class="cell-news-meta">Há 2 horas · HYBE</div>
+    <div class="cell-arrow">→</div>
+  </div>
+</div>
+
+<div class="modular">
+  <div class="mod-cell">
+    <div class="mod-tag mt-accent"></div>
+    <div class="mod-title">12.000+ Artistas</div>
+    <div class="mod-sub">Perfis completos com discografia, filmografia e grupo</div>
+  </div>
+  <div class="mod-cell">
+    <div class="mod-tag mt-black"></div>
+    <div class="mod-title">8.000+ Produções</div>
+    <div class="mod-sub">Doramas, filmes e séries com onde assistir no Brasil</div>
+  </div>
+  <div class="mod-cell">
+    <div class="mod-tag mt-accent2"></div>
+    <div class="mod-title">Notícias diárias</div>
+    <div class="mod-sub">Traduzidas e contextualizadas para fãs brasileiros</div>
+  </div>
+  <div class="mod-cell">
+    <div class="mod-tag mt-split"></div>
+    <div class="mod-title">Blog editorial</div>
+    <div class="mod-sub">Análises, reviews e rankings curados pela equipe</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title"><span class="section-title-mark"></span>Artistas em Alta</div>
+    <a href="#" class="see-all">Ver todos →</a>
+  </div>
+  <div class="artists">
+    <div class="artist"><div class="artist-avatar av-blue">J</div><div class="artist-name">Jisoo</div><div class="artist-group">BLACKPINK</div><span class="artist-pill pill-accent">K-pop</span></div>
+    <div class="artist"><div class="artist-avatar av-black">R</div><div class="artist-name">RM</div><div class="artist-group">BTS</div><span class="artist-pill pill-accent">K-pop</span></div>
+    <div class="artist"><div class="artist-avatar av-orange">H</div><div class="artist-name">Hyun Bin</div><div class="artist-group">Ator</div><span class="artist-pill pill-orange">K-drama</span></div>
+    <div class="artist"><div class="artist-avatar av-blue">I</div><div class="artist-name">IU</div><div class="artist-group">EDAM</div><span class="artist-pill pill-accent">K-pop</span></div>
+    <div class="artist"><div class="artist-avatar av-orange">S</div><div class="artist-name">Son Ye-jin</div><div class="artist-group">Atriz</div><span class="artist-pill pill-orange">K-drama</span></div>
+    <div class="artist"><div class="artist-avatar av-black">V</div><div class="artist-name">V (Taehyung)</div><div class="artist-group">BTS</div><span class="artist-pill pill-accent">K-pop</span></div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:0">
+  <div class="section-header">
+    <div class="section-title"><span class="section-title-mark" style="background:var(--accent2)"></span>Últimas Notícias</div>
+    <a href="#" class="see-all">Ver todas →</a>
+  </div>
+  <div class="news-row">
+    <div class="news-big">
+      <div class="news-big-label">Destaque</div>
+      <div class="news-big-title">BTS anuncia datas de comeback para 2025</div>
+      <div class="news-big-meta">HYBE · Há 2 horas · 4 min de leitura</div>
+    </div>
+    <div class="news-small">
+      <div>
+        <div class="news-small-label">K-drama</div>
+        <div class="news-small-title">Queen of Tears bate recorde de audiência na tvN</div>
+        <div class="news-small-meta">Há 5 horas</div>
+      </div>
+    </div>
+    <div class="news-small">
+      <div>
+        <div class="news-small-label">K-pop</div>
+        <div class="news-small-title">BLACKPINK confirma novo álbum para 2025</div>
+        <div class="news-small-meta">Há 8 horas</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">
+    <div class="footer-mark">
+      <div class="footer-block fb1"></div>
+      <div class="footer-block fb2"></div>
+      <div class="footer-block fb3"></div>
+      <div class="footer-block fb4"></div>
+    </div>
+    HallyuHub
+  </div>
+  <div class="footer-copy">© 2025 HallyuHub · Todos os direitos reservados</div>
+</footer>
+
+</body>
+</html>

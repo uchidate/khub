@@ -2,113 +2,297 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Agency {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  website   String?
-  socials   Json?
-  artists   Artist[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String         @unique
+  website       String?
+  socials       Json?
+  // Campos editoriais
+  logoUrl       String?
+  description   String?
+  foundedYear   Int?
+  country       String         @default("KR")
+  ceoName       String?
+  isVerified    Boolean        @default(false)
+  accentColor   String?        // hex, ex: "#7c3aed"
+  type          String         @default("INDIE") // MAJOR | INDIE | SUBSIDIARY
+  // Relação parent/subsidiary
+  parentId      String?
+  parent        Agency?        @relation("AgencySubsidiaries", fields: [parentId], references: [id], onDelete: SetNull)
+  subsidiaries  Agency[]       @relation("AgencySubsidiaries")
+
+  artists       Artist[]
+  musicalGroups MusicalGroup[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([createdAt])
   @@index([name])
+  @@index([isVerified])
+  @@index([parentId])
+}
+
+model MusicalGroup {
+  id              String                  @id @default(cuid())
+  name            String                  @unique
+  nameHangul      String?
+  mbid            String?                 @unique // MusicBrainz group ID
+  bio             String?
+  // Conteúdo editorial original
+  analiseEditorial   String?  @db.Text
+  curiosidades       String[]
+  editorialGeneratedAt DateTime?
+  profileImageUrl String?
+  debutDate       DateTime?
+  disbandDate     DateTime?               // null = grupo ativo
+  agency          Agency?                 @relation(fields: [agencyId], references: [id])
+  agencyId        String?
+  socialLinks     Json?
+  fanClubName     String?                 // ex: "ARMY", "BLINK", "ONCE"
+  officialColor   String?                 // hex ex: "#c6a852" — cor oficial do grupo
+  videos          Json?                   // [{title, url}] — MVs principais
+  members              ArtistGroupMembership[]
+  kpoppingSuggestions  KpoppingMembershipSuggestion[]
+  userFavorites        Favorite[]
+  blogPosts            BlogPostGroup[]
+  // Instagram sync (RSS.app)
+  instagramFeedUrl  String?               // RSS.app JSON feed URL
+  instagramLastSync DateTime?             // última sincronização bem-sucedida
+  instagramPosts    InstagramPost[]
+  // Trending metrics
+  viewCount       Int                     @default(0)
+  favoriteCount   Int                     @default(0)
+  trendingScore   Float                   @default(0.0)
+  isHidden        Boolean                 @default(false) // Oculto do site público pelo admin
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([name])
+  @@index([agencyId])
+  @@index([trendingScore])
+  @@index([isHidden])
+  @@index([disbandDate, isHidden, trendingScore]) // home page: active groups ordered by trending
+}
+
+model ArtistGroupMembership {
+  id        String       @id @default(cuid())
+  artist    Artist       @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artistId  String
+  group     MusicalGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  joinDate  DateTime?    // data de entrada no grupo
+  leaveDate DateTime?    // null = ainda ativo
+  isActive  Boolean      @default(true)
+  role      String?      // ex: "vocalist", "rapper", "leader"
+  position  Int?         // ordem de exibição na lista de membros
+  createdAt DateTime     @default(now())
+
+  @@unique([artistId, groupId])
+  @@index([groupId])
+  @@index([artistId])
 }
 
 model Artist {
-  id               String             @id @default(cuid())
-  nameRomanized    String             @unique
-  nameHangul       String?
-  birthDate        DateTime?
-  birthName        String?
-  stageNames       String[]
-  roles            String[]
-  height           String?
-  bloodType        String?
-  zodiacSign       String?
-  bio              String?
-  primaryImageUrl  String?
-  socialLinks      Json?
-  agency           Agency?            @relation(fields: [agencyId], references: [id])
-  agencyId         String?
-  productions      ArtistProduction[]
+  id                 String             @id @default(cuid())
+  nameRomanized      String
+  nameHangul         String?
+  birthDate          DateTime?
+  birthName          String?
+  stageNames         String[]
+  roles              String[]
+  gender             Int?               // 0=unspecified, 1=female, 2=male, 3=non-binary (TMDB convention)
+  height             String?
+  bloodType          String?
+  zodiacSign         String?
+  bio                String?
+  // Conteúdo editorial original (gerado via IA ou escrito manualmente)
+  analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
+  curiosidades       String[]                    // 5-8 curiosidades autorais
+  editorialGeneratedAt DateTime?                 // quando o conteúdo editorial foi gerado/atualizado
+  editorialCuratedAt   DateTime?                 // quando a curadoria humana foi concluída
+  primaryImageUrl    String?
+  socialLinks        Json?
+  agency             Agency?            @relation(fields: [agencyId], references: [id])
+  agencyId           String?
+  productions        ArtistProduction[]
+  blogPosts          BlogPostArtist[]
   // TMDB sync tracking
-  tmdbId           String?            // TMDB person ID
-  tmdbSyncStatus   String?            // 'SYNCED', 'NOT_FOUND', 'ERROR'
-  tmdbLastSync     DateTime?          // Last successful sync
-  tmdbLastAttempt    DateTime?          // Last attempt (even if failed)
+  tmdbId             String? @unique // TMDB person ID
+  tmdbSyncStatus     String? // 'SYNCED', 'NOT_FOUND', 'ERROR'
+  tmdbLastSync       DateTime? // Last successful sync
+  tmdbLastAttempt    DateTime? // Last attempt (even if failed)
   // Trending metrics
-  viewCount          Int                @default(0)
-  favoriteCount      Int                @default(0)
-  lastTrendingUpdate DateTime?
-  trendingScore      Float              @default(0.0)
+  viewCount            Int                @default(0)
+  favoriteCount        Int                @default(0)
+  lastTrendingUpdate   DateTime?
+  trendingScore        Float              @default(0.0)
+  trendingRank         Int?               // Rank atual no ciclo (1 = #1 geral)
+  trendingRankPrev     Int?               // Rank do ciclo anterior (detecta velocidade de subida)
+  trendingBadgeOverride String?           // Override manual de badge pelo admin: 'HOT'|'SUBINDO'|'NOVO'|null
+  // Translation tracking
+  translationStatus  String             @default("pending") // 'pending', 'completed', 'failed'
+  translatedAt       DateTime?
+  // Enrichment tracking
+  mbid               String?            // MusicBrainz artist ID (para discografia)
+  groupSyncAt        DateTime?          // última sincronização de grupo musical
+  memberships        ArtistGroupMembership[]
+  discographySyncAt  DateTime?          // última sincronização de discografia
+  hangulSyncAt       DateTime?          // última tentativa de preencher nameHangul via TMDB
+  nameSyncAt         DateTime?          // última tentativa de corrigir nameRomanized via TMDB
+  photoSyncAt        DateTime?          // última tentativa de sincronizar foto via TMDB
+  socialLinksUpdatedAt DateTime?        // última sincronização de redes sociais
+  // Instagram sync (RSS.app)
+  instagramFeedUrl    String?           // RSS.app JSON feed URL
+  instagramLastSync   DateTime?         // última sincronização bem-sucedida
+  instagramPosts      InstagramPost[]
+  // Moderation (filtrar artistas não-relevantes para cultura coreana)
+  flaggedAsNonKorean Boolean            @default(false) // Admin marcou como não-relevante
+  flaggedAt          DateTime?          // Quando foi flagged
+  isHidden           Boolean            @default(false) // Oculto do site público pelo admin
+  autoHidden         Boolean            @default(false) // Oculto automaticamente pelo sistema (sem produções visíveis)
+  placeOfBirth       String?            // Local de nascimento (do TMDB)
+  // Rastreio de origem dos campos (JSON: { campo: { source: 'manual'|'tmdb'|'wikidata'|'system', at: ISO, by?: adminId } })
+  // Usado para proteger campos editados manualmente do sync automático TMDB/Wikidata
+  fieldSources       Json?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  userFavorites      Favorite[]
-  albums             Album[]
+  userFavorites        Favorite[]
+  albums               Album[]
+  news                 NewsArtist[]
+  kpoppingSuggestions  KpoppingMembershipSuggestion[]
+  streamingSignals     StreamingTrendSignal[]
 
   @@index([agencyId])
   @@index([createdAt])
   @@index([birthDate])
   @@index([nameRomanized, createdAt])
+  @@index([flaggedAsNonKorean])
+  @@index([isHidden])
+  @@index([autoHidden])
+  @@index([isHidden, autoHidden]) // auto-show reconciliation
+  @@index([flaggedAsNonKorean, isHidden, trendingScore]) // artist listing: filter + sort
   @@index([tmdbSyncStatus])
   @@index([tmdbLastSync])
+  @@index([tmdbSyncStatus, tmdbLastSync])
   @@index([trendingScore])
+  @@index([translationStatus])
+  @@index([translationStatus, createdAt])
+  @@index([discographySyncAt])
+  @@index([socialLinksUpdatedAt])
+}
+
+model InstagramPost {
+  id        String        @id @default(cuid())
+  postId    String        @unique  // shortcode extraído da URL /p/POSTID/
+  artistId  String?
+  groupId   String?
+  imageUrl  String?
+  caption   String?
+  permalink String
+  postedAt  DateTime
+  createdAt DateTime      @default(now())
+
+  artist    Artist?       @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  group     MusicalGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, postedAt])
+  @@index([groupId, postedAt])
+  @@index([postedAt])
 }
 
 model Album {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
-  type        String   // 'ALBUM', 'EP', 'SINGLE'
+  type        String // 'ALBUM', 'EP', 'SINGLE'
   releaseDate DateTime?
   coverUrl    String?
-  
+
   // Streaming Links
   spotifyUrl    String?
   appleMusicUrl String?
   youtubeUrl    String?
 
-  artistId    String
-  artist      Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  mbid     String? // MusicBrainz release-group ID (deduplicação)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([artistId])
   @@index([releaseDate])
+  @@index([mbid])
 }
 
 model Production {
   id                 String             @id @default(cuid())
-  titlePt            String             @unique
+  titlePt            String
   titleKr            String?
   type               String
   year               Int?
   synopsis           String?
-  imageUrl           String?
+  synopsisSource     String? // 'tmdb_pt' | 'tmdb_en' | 'ai' | 'manual'
+  imageUrl           String? // Poster image
+  backdropUrl        String? // Banner/backdrop image
+  galleryUrls        String[] // Additional images
   streamingPlatforms String[]
   sourceUrls         String[]
   tags               String[]
+  categoryId         String?
+  category           BlogCategory?      @relation(fields: [categoryId], references: [id])
   artists            ArtistProduction[]
   // TMDB metadata
-  tmdbId             String?            // TMDB movie/TV ID
-  tmdbType           String?            // 'movie' or 'tv'
-  releaseDate        DateTime?          // Precise release date
-  runtime            Int?               // Minutes
-  voteAverage        Float?             // TMDB rating
-  trailerUrl         String?            // YouTube trailer URL
+  tmdbId             String? // TMDB movie/TV ID
+  tmdbType           String? // 'movie' or 'tv'
+  releaseDate        DateTime? // Precise release date
+  runtime            Int? // Minutes
+  voteAverage        Float? // TMDB rating
+  voteCount          Int?   // TMDB vote count (usado no aggregateRating JSON-LD)
+  trailerUrl         String? // YouTube trailer URL
+  tagline            String? // Slogan/frase de impacto do TMDB
+  // Conteúdo editorial original
+  editorialReview    String?  @db.Text // nossa análise, 400+ palavras PT-BR
+  editorialRating    Float?             // nossa nota (0-10)
+  whyWatch           String?            // "Por que assistir?" — parágrafo curto autoral
+  editorialGeneratedAt DateTime?        // quando foi gerado/atualizado
+  blogPosts          BlogPostProduction[]
+  // Classificação etária DJCTQ
+  ageRating          String? // 'L' | '10' | '12' | '14' | '16' | '18'
+  ageRatingSyncAt    DateTime? // última tentativa de busca de classificação (com ou sem resultado)
+  // TV Series specific fields
+  episodeCount       Int?      // número total de episódios (TV)
+  seasonCount        Int?      // número de temporadas (TV)
+  episodeRuntime     Int?      // duração média por episódio em minutos (TV)
+  network            String?   // canal/plataforma de origem (ex: tvN, JTBC, Netflix)
+  productionStatus   String?   // "Returning Series" | "Ended" | "Cancelled" | "In Production"
+  // Cast sync tracking
+  castSyncAt         DateTime? // quando o elenco foi sincronizado por última vez
+  // Translation tracking
+  translationStatus  String             @default("pending") // 'pending' | 'completed' | 'failed'
+  translatedAt       DateTime?
+  // Moderation fields
+  flaggedAsNonKorean  Boolean            @default(false)
+  flaggedAt           DateTime?
+  isHidden            Boolean            @default(false) // Oculto do site público pelo admin
+  isTakenDown         Boolean            @default(false) // Takedown legal ativo
+  isAdultContent      Boolean?           // null = não verificado, true = adulto, false = ok
+  adultContentType    String?            // 'sexual' | 'violent' | 'other' — subtipo quando isAdultContent=true
+  adultCheckedAt      DateTime?          // quando foi verificado pelo DeepSeek
+  needsCuration       Boolean            @default(false) // true = aguardando curadoria antes de publicar
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
+  watchEntries       WatchEntry[]
+  streamingShows     StreamingShow[]
+  takedowns          ProductionTakedown[]
 
   @@index([type])
   @@index([year])
@@ -117,6 +301,19 @@ model Production {
   @@index([titlePt])
   @@index([tmdbId])
   @@index([releaseDate])
+  @@index([castSyncAt])
+  @@index([ageRatingSyncAt])
+  @@index([flaggedAsNonKorean])
+  @@index([isHidden])
+  @@index([isTakenDown])
+  @@index([isTakenDown, isHidden])
+  @@index([flaggedAsNonKorean, isHidden]) // production listing filter
+  @@index([isAdultContent])
+  @@index([adultContentType])
+  @@index([adultCheckedAt])
+  @@index([needsCuration])
+  @@index([translationStatus])
+  @@index([translationStatus, synopsis])
 }
 
 model ArtistProduction {
@@ -125,25 +322,93 @@ model ArtistProduction {
   production   Production @relation(fields: [productionId], references: [id])
   productionId String
   role         String?
+  castOrder    Int?
 
   @@id([artistId, productionId])
 }
 
+model ProductionTakedown {
+  id               String         @id @default(cuid())
+  production       Production     @relation(fields: [productionId], references: [id])
+  productionId     String
+  reason           TakedownReason
+  noticeReference  String?        @db.VarChar(500)
+  noticeDate       DateTime?
+  hiddenBy         User           @relation("TakedownHiddenBy", fields: [hiddenById], references: [id])
+  hiddenById       String
+  hiddenAt         DateTime       @default(now())
+  restoredBy       User?          @relation("TakedownRestoredBy", fields: [restoredById], references: [id])
+  restoredById     String?
+  restoredAt       DateTime?
+  restoredReason   String?        @db.Text
+  notes            String?        @db.Text
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  @@index([productionId])
+  @@index([isActive])
+  @@index([productionId, isActive])
+  @@map("production_takedowns")
+}
+
 model News {
-  id          String   @id @default(cuid())
-  title       String   @unique
-  contentMd   String
-  sourceUrl   String
-  publishedAt DateTime @default(now())
-  imageUrl    String?
-  tags        String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userFavorites Favorite[]
+  id                  String                @id @default(cuid())
+  title               String
+  contentMd           String
+  sourceUrl           String                @unique
+  publishedAt         DateTime              @default(now())
+  imageUrl            String?
+  tags                String[]
+  translationStatus   String                @default("pending") // 'pending', 'completed', 'failed'
+  translatedAt        DateTime?
+  originalTitle       String?               // título original EN/KR do RSS
+  originalContent     String?               // conteúdo original EN/KR do RSS
+  source              String?               // nome do feed RSS (ex: 'Soompi', 'Dramabeans')
+  author              String?               // autor do artigo original (ex: "Hana Kim", "Staff Reporter")
+  contentType         String?               // comeback | mv | concert | award | collaboration | interview | drama | debut | scandal | general
+  readingTimeMin      Int?                  // tempo de leitura estimado (palavras ÷ 200)
+  viewCount           Int                   @default(0)
+  trendingScore       Float                 @default(0.0)
+  blocks              Json?                 // Editor de blocos (Opção A) — array de NewsBlock tipados
+  editorialNote       String?               // nosso comentário/contexto autoral sobre a notícia (100-200 palavras)
+  editorialNoteGeneratedAt DateTime?        // quando a nota foi gerada/atualizada
+  blogPostGeneratedAt DateTime?             // quando um blog post foi gerado a partir desta notícia
+  isHidden            Boolean               @default(false) // Oculto do site público pelo admin
+  status              String                @default("published") // 'draft' | 'ready' | 'published'
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  userFavorites       Favorite[]
+  artists             NewsArtist[]
+  notificationHistory NotificationHistory[]
+  comments            Comment[]
 
   @@index([publishedAt])
   @@index([createdAt])
   @@index([title])
+  @@index([sourceUrl])
+  @@index([translationStatus])
+  @@index([translationStatus, createdAt])
+  @@index([trendingScore])
+  @@index([isHidden])
+  @@index([contentType])
+  @@index([status])
+  @@index([status, publishedAt])   // pipeline queue: ordered by date
+  @@index([isHidden, publishedAt]) // news listing: filter + sort
+}
+
+model NewsArtist {
+  id       String @id @default(cuid())
+  newsId   String
+  artistId String
+
+  news     News   @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([newsId, artistId])
+  @@index([newsId])
+  @@index([artistId])
 }
 
 model Image {
@@ -162,21 +427,111 @@ model Image {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  role          String    @default("user") // 'admin' | 'editor' | 'user'
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  favorites     Favorite[]
-  activities    Activity[]
+  id                     String                       @id @default(cuid())
+  name                   String?
+  email                  String                       @unique
+  emailVerified          DateTime?
+  password               String?
+  image                  String?
+  bio                    String?                      @db.VarChar(300)
+  role                   String                       @default("user") // 'admin' | 'editor' | 'user'
+  accounts               Account[]
+  sessions               Session[]
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
+  favorites              Favorite[]
+  watchEntries           WatchEntry[]
+  activities             Activity[]
+  notificationSettings   UserNotificationSettings?
+  notificationHistory    NotificationHistory[]
+  emailLogs              EmailLog[]
+  comments               Comment[]
+  contentPreferences     UserContentPreferences?
+  auditLogs              AuditLog[]
+  lists                  UserList[]
+  blogPosts              BlogPost[]             @relation("BlogPosts")
+  blogPostVersions       BlogPostVersion[]      @relation("BlogPostVersions")
+  takedownsIssued        ProductionTakedown[]   @relation("TakedownHiddenBy")
+  takedownsRestored      ProductionTakedown[]   @relation("TakedownRestoredBy")
 
   @@index([email])
+}
+
+model UserNotificationSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tipos de notificação
+  emailOnNewBlog       Boolean  @default(true)
+  emailDigestEnabled   Boolean  @default(true)
+  emailDigestFrequency String   @default("DAILY") // 'DAILY', 'WEEKLY', 'NEVER'
+  emailDigestTime      String   @default("09:00") // HH:mm format
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model NotificationHistory {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId       String?
+  news         News?      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  blogPostId   String?
+  blogPost     BlogPost?  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  type         String     // 'EMAIL_INSTANT', 'EMAIL_DIGEST', 'PUSH', 'IN_APP'
+  status       String     @default("PENDING") // 'PENDING', 'SENT', 'FAILED'
+  sentAt       DateTime?
+  readAt       DateTime?                      // null = não lida (IN_APP only)
+  errorMessage String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([newsId])
+  @@index([blogPostId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, type, readAt])
+}
+
+model EmailLog {
+  id           String    @id @default(cuid())
+  to           String
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subject      String
+  type         String    // WELCOME | PASSWORD_RESET | NEWS_INSTANT | NEWS_DIGEST | MANUAL | TEST
+  templateSlug String?
+  status       String    @default("PENDING") // PENDING | SENT | FAILED
+  resendId     String?
+  errorMessage String?
+  metadata     Json?
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([to])
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EmailTemplate {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  subject     String
+  htmlContent String
+  variables   String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Account {
@@ -237,36 +592,605 @@ model Tag {
 }
 
 model Favorite {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   artistId     String?
-  artist       Artist?    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artist       Artist?       @relation(fields: [artistId], references: [id], onDelete: Cascade)
   productionId String?
-  production   Production? @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  production   Production?   @relation(fields: [productionId], references: [id], onDelete: Cascade)
   newsId       String?
-  news         News?      @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  createdAt    DateTime   @default(now())
+  news         News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  groupId      String?
+  group        MusicalGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
 
+  @@unique([userId, artistId])
+  @@unique([userId, productionId])
+  @@unique([userId, newsId])
+  @@unique([userId, groupId])
   @@index([userId])
   @@index([artistId])
   @@index([productionId])
   @@index([newsId])
-  @@unique([userId, artistId])
-  @@unique([userId, productionId])
-  @@unique([userId, newsId])
+  @@index([groupId])
 }
 
 model Activity {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // 'VIEW', 'LIKE', 'LOGIN', 'SEARCH'
-  entityId  String?  // Artist ID, Production ID, or News ID
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String // 'VIEW', 'LIKE', 'LOGIN', 'SEARCH'
+  entityId   String? // Artist ID, Production ID, or News ID
   entityType String? // 'ARTIST', 'PRODUCTION', 'NEWS'
-  metadata  Json?    // Additional context
-  createdAt DateTime @default(now())
+  metadata   Json? // Additional context
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model Comment {
+  id             String    @id @default(cuid())
+  content        String    @db.Text
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId         String
+  news           News      @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  // Moderação
+  status         String    @default("ACTIVE") // 'ACTIVE' | 'FLAGGED' | 'REMOVED'
+  moderationNote String?   @db.Text           // Nota do admin ao moderar
+  moderatedById  String?                      // ID do admin que moderou
+  moderatedAt    DateTime?                    // Quando a ação foi tomada
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([newsId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([newsId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String   // CREATE | UPDATE | DELETE | APPROVE | REJECT | RESEND | SEED
+  entity    String   // Artist | News | User | EmailTemplate | Comment | Translation
+  entityId  String?
+  details   String?
+  before    Json?
+  after     Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model SystemEvent {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO") // DEBUG | INFO | WARN | ERROR
+  source    String   // email-service | cron-digest | cron-trending | auth
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model CronLock {
+  id        String   @id @default("cron-update")
+  lockedBy  String
+  lockedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("cron_locks")
+}
+
+// Log de descoberta de artistas (evita repetição a curto prazo)
+model ArtistDiscoveryLog {
+  id          String   @id @default(cuid())
+  tmdbId      Int      // TMDB ID do artista tentado
+  wasAdded    Boolean  @default(false) // Se foi adicionado ao banco ou já existia
+  attemptedAt DateTime @default(now())
+  source      String?  // 'popular', 'trending', 'kdrama', 'movie'
+
+  @@index([tmdbId])
+  @@index([attemptedAt])
+  @@index([tmdbId, attemptedAt])
+  @@map("artist_discovery_log")
+}
+
+// Configurações globais do sistema (singleton - sempre id = "singleton")
+model SystemSettings {
+  id                        String   @id @default("singleton")
+  allowAdultContent         Boolean  @default(false)   // Permite conteúdo 18+ no site
+  allowUnclassifiedContent  Boolean  @default(false)   // Permite produções sem classificação
+  maintenanceMode           Boolean  @default(false)   // Exibe aviso de manutenção para usuários
+  // Homepage editorial slots
+  homeFeaturedPostId        String?  // card principal (1 post)
+  homeSecondaryPostIds      String[] // 4 cards menores (ordenados)
+  homeSidebarPostIds        String[] // "Artigos em destaque" sidebar (até 4)
+  homeCarouselPostIds       String[] // carrossel hero (até 5 posts)
+  homeSpotlightArtistId     String?  // override manual do "artista da semana"
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Sugestões de vínculo artista-grupo vindas da base kpopping (curadoria)
+model KpoppingMembershipSuggestion {
+  id                String   @id @default(cuid())
+
+  // Chave do vínculo no kpopping (IDs da base externa)
+  kpoppingIdolId    String
+  kpoppingGroupId   String
+
+  // Snapshot dos dados do idol (kpopping) — denormalizado para exibição sem precisar do outro banco
+  idolName          String
+  idolNameHangul    String?
+  idolBirthday      DateTime?
+  idolImageUrl      String?
+  idolHeight        Int?
+  idolBloodType     String?
+  idolPosition      String?   // ex: "Main Vocalist", "Leader"
+  idolIsActive      Boolean   // membro ativo no grupo
+  idolProfileUrl    String?
+
+  // Snapshot dos dados do grupo (kpopping)
+  groupName         String
+  groupNameHangul   String?
+  groupImageUrl     String?
+  groupDebutDate    DateTime?
+  groupAgency       String?
+  groupStatus       String?
+
+  // Correspondência automática com o banco principal
+  artist            Artist?       @relation(fields: [artistId], references: [id])
+  artistId          String?
+  musicalGroup      MusicalGroup? @relation(fields: [musicalGroupId], references: [id])
+  musicalGroupId    String?
+
+  // Score de confiança do matching (0.0 a 1.0)
+  artistMatchScore  Float?
+  artistMatchReason String?   // ex: "exact_romanized", "icase_hangul", "normalized"
+  groupMatchScore   Float?
+  groupMatchReason  String?
+
+  // Status de curadoria
+  status            KpoppingSuggestionStatus @default(PENDING)
+  reviewedAt        DateTime?
+  reviewNotes       String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([kpoppingIdolId, kpoppingGroupId])
+  @@index([status])
+  @@index([artistId])
+  @@index([musicalGroupId])
+  @@index([status, createdAt])
+  @@map("kpopping_membership_suggestions")
+}
+
+enum KpoppingSuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TakedownReason {
+  DMCA
+  COPYRIGHT
+  LEGAL_NOTICE
+  MANUAL
+}
+
+// Reports de problemas enviados por usuários nas páginas públicas
+model Report {
+  id          String   @id @default(cuid())
+  entityType  String   // 'artist' | 'production' | 'group'
+  entityId    String
+  entityName  String   // snapshot do nome na hora do report
+  category    String   // 'wrong_info' | 'wrong_image' | 'duplicate' | 'missing_info' | 'other'
+  description String?  @db.Text
+  status      String   @default("PENDING") // 'PENDING' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityId])
+  @@index([status])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+// Preferências de conteúdo por usuário (quais classificações deseja ver)
+model UserContentPreferences {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allowedRatings String[] // ex: ['L', '10', '12', '14'] ou ['null'] para não classificados
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_content_preferences")
+}
+
+// Catálogo de shows populares nos streamings — atualizado diariamente via cron
+// Fonte: TMDB /trending/tv/day (global) + /discover/tv por plataforma
+model StreamingShow {
+  id           String      @id @default(cuid())
+  source       String      // "trending_global" | "netflix_br" | "disney_br" | "prime_br" | "apple_br"
+  rank         Int         // 1–10 (ou mais para trending_global)
+  showTitle    String      // título original do TMDB
+  tmdbId       String      // TMDB show ID
+  posterUrl    String?     // https://image.tmdb.org/t/p/w500{poster_path}
+  year         Int?        // first_air_date year
+  voteAverage  Float?      // TMDB rating
+  isKorean     Boolean     @default(false) // original_language === 'ko'
+  productionId String?     // FK para Production quando tmdbId coincide
+  fetchedAt    DateTime    @default(now())
+  expiresAt    DateTime    // fetchedAt + 2 dias
+
+  production   Production? @relation(fields: [productionId], references: [id])
+
+  @@unique([source, tmdbId])
+  @@index([source, rank])
+  @@index([expiresAt])
+  @@map("streaming_show")
+}
+
+// Sinal de trending baseado em presença de atores em shows populares de streaming
+// Sistema de tradução de conteúdo — camada não-destrutiva sobre os campos originais
+model ContentTranslation {
+  id         String   @id @default(cuid())
+  entityType String   // "artist" | "group" | "production" | "news"
+  entityId   String
+  field      String   // "bio" | "synopsis" | "tagline" | "title" | "contentMd"
+  locale     String   // "pt-BR" (expansível para outros locales)
+  value      String   @db.Text
+  status     String   @default("draft") // "draft" | "approved" | "ai"
+  sourceLang String?  // idioma de origem detectado: "ko" | "en" | "pt" | "unknown"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, field, locale])
+  @@index([entityType, entityId])
+  @@index([entityType, status])
+}
+
+// Log imutável de todas as alterações de tradução
+model TranslationLog {
+  id            String   @id @default(cuid())
+  entityType    String
+  entityId      String
+  field         String
+  locale        String
+  previousValue String?  @db.Text
+  newValue      String   @db.Text
+  changedBy     String   // email do admin ou "ai-agent"
+  source        String   @default("manual") // "manual" | "ai"
+  createdAt     DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// Lista de produções que o usuário quer assistir, está assistindo ou já assistiu
+model WatchEntry {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productionId String
+  production   Production  @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  status       WatchStatus
+  rating       Int?        // 1–5 estrelas (null = sem avaliação)
+  notes        String?     @db.Text // Nota privada do usuário
+  watchedAt    DateTime?   // Quando terminou de assistir (WATCHED)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, productionId])
+  @@index([userId])
+  @@index([productionId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("watch_entries")
+}
+
+enum WatchStatus {
+  WANT_TO_WATCH
+  WATCHING
+  WATCHED
+  DROPPED
+}
+
+// Fonte: TMDB /discover/tv por plataforma (artist-centric, para trendingScore)
+model StreamingTrendSignal {
+  id           String   @id @default(cuid())
+  artistId     String
+  source       String   // "tmdb_trending", futuramente "flixpatrol", etc.
+  showTitle    String
+  showTmdbId   String
+  rank         Int      // Posição no top 10 do streaming (1–10)
+  score        Float    // Peso calculado pelo rank (ex: rank 1 = 30, rank 10 = 10)
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime // fetchedAt + 7 dias
+
+  artist       Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, showTmdbId, source])
+  @@index([artistId])
+  @@index([expiresAt])
+  @@index([source])
+  @@index([expiresAt, source])
+  @@map("streaming_trend_signal")
+}
+
+// Registro de crawls de robôs de busca (Googlebot, Bingbot, etc.)
+model BotCrawlLog {
+  id        String   @id @default(cuid())
+  bot       String   // "Googlebot", "Bingbot", "YandexBot", etc.
+  path      String   // pathname visitado
+  ip        String?  // IP do robô
+  userAgent String   @db.Text
+  referer   String?  // Referer header (se presente)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([bot])
+  @@index([path])
+  @@index([bot, createdAt])
+  @@map("bot_crawl_log")
+}
+
+model UserList {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?        @db.VarChar(500)
+  isPublic    Boolean        @default(false)
+  items       UserListItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId])
+  @@map("user_lists")
+}
+
+model UserListItem {
+  id         String   @id @default(cuid())
+  listId     String
+  list       UserList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  entityType String   // 'ARTIST' | 'PRODUCTION' | 'GROUP'
+  entityId   String
+  note       String?  @db.VarChar(300)
+  addedAt    DateTime @default(now())
+
+  @@unique([listId, entityType, entityId])
+  @@index([listId])
+  @@index([entityId])
+  @@map("user_list_items")
+}
+
+model ServerLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  method     String   @db.VarChar(10)
+  path       String   @db.VarChar(2000)
+  status     Int
+  duration   Int      // ms
+  error      String?  @db.Text
+  body       String?  @db.Text // request body truncado (apenas 4xx/5xx)
+  userAgent  String?  @db.VarChar(500)
+  ip         String?  @db.VarChar(45)
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([path])
+  @@map("server_log")
+}
+
+// ─── Blog ─────────────────────────────────────────────────────────────────────
+
+enum BlogPostStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+model BlogCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  posts       BlogPost[]
+  productions Production[]
+  createdAt   DateTime     @default(now())
+
+  @@index([slug])
+}
+
+model BlogPostVersion {
+  id         String    @id @default(cuid())
+  blogPostId String
+  blogPost   BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  title      String
+  excerpt    String?   @db.VarChar(600)
+  contentMd  String    @db.Text
+  blocks     Json?
+  savedAt    DateTime  @default(now())
+  savedById  String
+  savedBy    User      @relation("BlogPostVersions", fields: [savedById], references: [id])
+  note       String?   @db.VarChar(300)
+  pinned     Boolean   @default(false)
+  label      String?   @db.VarChar(100)
+
+  @@index([blogPostId, savedAt])
+}
+
+model BlogPost {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  excerpt        String?        @db.VarChar(600)
+  contentMd      String         @db.Text
+  blocks         Json?          // Conteúdo em blocos (quando não-nulo, tem precedência sobre contentMd)
+  template       String?        // 'idol_bio' | 'review' | 'ranking' | 'free'
+  coverImageUrl  String?
+  status         BlogPostStatus @default(DRAFT)
+  isPrivate      Boolean        @default(false) // Publicado mas visível apenas para admins
+  featured       Boolean        @default(false)
+  viewCount      Int            @default(0)
+  readingTimeMin Int            @default(1)
+  authorId       String
+  author         User           @relation("BlogPosts", fields: [authorId], references: [id])
+  categoryId     String?
+  category       BlogCategory?  @relation(fields: [categoryId], references: [id])
+  tags           String[]
+  publishedAt    DateTime?
+  scheduledAt    DateTime?      // se definido com status DRAFT = publicação agendada
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  // Relações com entidades do site para cross-linking
+  relatedArtists     BlogPostArtist[]
+  relatedGroups      BlogPostGroup[]
+  relatedProductions BlogPostProduction[]
+  notifications      NotificationHistory[]
+  versions           BlogPostVersion[]
+
+  @@index([status, publishedAt])
+  @@index([status, scheduledAt])
+  @@index([authorId])
+  @@index([slug])
+  @@index([featured, status])
+}
+
+// Junction tables para relações BlogPost ↔ entidades
+model BlogPostArtist {
+  blogPostId String
+  artistId   String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  artist     Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, artistId])
+  @@index([artistId])
+}
+
+model BlogPostGroup {
+  blogPostId String
+  groupId    String
+  blogPost   BlogPost     @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  group      MusicalGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, groupId])
+  @@index([groupId])
+}
+
+model BlogPostProduction {
+  blogPostId   String
+  productionId String
+  blogPost     BlogPost   @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  production   Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+
+  @@id([blogPostId, productionId])
+  @@index([productionId])
+}
+
+// ─── SEO ─────────────────────────────────────────────────────────────────────
+
+/// Override de meta tags SEO por entidade (artista, produção, grupo, post)
+model SeoMeta {
+  id           String   @id @default(cuid())
+  entityType   String   // 'artist' | 'production' | 'group' | 'blog_post'
+  entityId     String
+  metaTitle    String?  @db.VarChar(70)
+  metaDesc     String?  @db.VarChar(160)
+  ogTitle      String?  @db.VarChar(70)
+  ogDesc       String?  @db.VarChar(200)
+  ogImageUrl   String?
+  canonicalUrl String?
+  noIndex      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([entityType, entityId])
+  @@index([entityType, entityId])
+  @@map("seo_meta")
+}
+
+// ─── IA ──────────────────────────────────────────────────────────────────────
+
+/// Log imutável de cada chamada de IA (melhor esforço — nunca bloqueia a operação)
+model AiUsageLog {
+  id         String   @id @default(cuid())
+  provider   String   // 'deepseek' | 'openai' | 'claude' | 'ollama' | 'gemini'
+  model      String   // 'deepseek-chat' | 'gpt-4o-mini' | etc.
+  feature    String   // 'news_translation' | 'news_generation' | 'artist_generation' | ...
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  cost       Float    @default(0)   // USD
+  durationMs Int      @default(0)
+  status     String   // 'success' | 'error' | 'circuit_open'
+  errorMsg   String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([provider, createdAt])
+  @@index([feature, createdAt])
+  @@index([status])
+  @@map("ai_usage_log")
+}
+
+/// Configuração de IA por feature — sobrescreve padrões do ai-config.ts em runtime
+model AiConfig {
+  id                String   @id @default(cuid())
+  feature           String   @unique // ex: 'news_translation', 'default'
+  preferredProvider String?  // null = round-robin automático
+  enabled           Boolean  @default(true)
+  monthlyBudgetUsd  Float?   // null = sem limite
+  notes             String?  @db.VarChar(300)
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?  // email do admin
+
+  @@map("ai_config")
+}
+
+// ─── Time-series de views por entidade/dia ────────────────────────────────────
+// Cada linha representa o total de views de uma entidade num dia específico.
+// Upsert incrementa o count a cada visualização. Permite gráficos históricos.
+model ViewEvent {
+  entityType String   // "blog" | "artist" | "news" | "group"
+  entityId   String
+  date       DateTime @db.Date
+  count      Int      @default(1)
+
+  @@id([entityType, entityId, date])
+  @@index([date])
+  @@index([entityType, date])
+}
+
+// ─── Time-series de views por entidade/slot de 15min ─────────────────────────
+// slot = 0-95: cada slot representa 15 minutos (slot 0 = 00:00, slot 95 = 23:45).
+// Cálculo: slot = Math.floor(horaUTC * 4 + minutoUTC / 15)
+// Permite visualização "Hoje" com intervalos de 15min no painel de analytics.
+model ViewEventHourly {
+  entityType String   // "blog" | "artist" | "news" | "group"
+  entityId   String
+  date       DateTime @db.Date
+  slot       Int      // 0-95 (15-min bucket)
+  count      Int      @default(1)
+
+  @@id([entityType, entityId, date, slot])
+  @@index([date, slot])
+  @@index([entityType, date])
 }

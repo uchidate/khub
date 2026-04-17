@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import prisma from '../lib/prisma';
 import { ImageSearchService } from '../lib/services/image-search-service';
-
-const prisma = new PrismaClient();
 const imageSearch = new ImageSearchService();
 
 async function main() {

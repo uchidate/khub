@@ -3,97 +3,135 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Search, X } from "lucide-react"
-import { SearchBar } from "@/components/features/SearchBar"
-import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
+import { NotificationBell } from "@/components/features/NotificationBell"
+import { ThemeToggle } from "@/components/ui/ThemeToggle"
+import { useSession } from "next-auth/react"
+import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
+import { BrandMark } from "@/components/ui/BrandMark"
 
 const NavBar = () => {
     const pathname = usePathname()
+    const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
-    const [showSearch, setShowSearch] = useState(false)
+    const openSearch = useQuickSearch(s => s.open)
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 0)
-        }
+        const handleScroll = () => setIsScrolled(window.scrollY > 0)
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
 
-    // Hide NavBar on auth pages - AFTER all hooks
-    if (pathname?.startsWith('/auth')) return null
+    if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
-        { label: "Início", href: "/" },
+        { label: "Blog", href: "/blog" },
         { label: "Artistas", href: "/artists" },
-        { label: "Agências", href: "/agencies" },
-        { label: "Filmes & Séries", href: "/productions" },
-        { label: "Notícias", href: "/news" },
-        { label: "Premium", href: "/premium" },
-        { label: "Sobre", href: "/about" },
+        { label: "Grupos", href: "/groups" },
+        { label: "Produções", href: "/productions" },
     ]
 
+    const navBg = isScrolled
+        ? 'backdrop-blur-xl border-b border-border shadow-[0_4px_24px_rgba(0,0,0,0.08)]'
+        : 'bg-background border-b border-border'
+
     return (
-        <nav className={`w-full z-[100] transition-all duration-300 ${isScrolled ? 'glass-nav py-2' : 'fixed top-0 bg-transparent bg-gradient-to-b from-black/80 to-transparent py-6'}`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16 md:h-20">
-                    <div className="flex items-center gap-10">
-                        <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter uppercase">
-                            <span className="text-purple-500">HALLYU</span><span className="text-pink-500">HUB</span>
-                        </Link>
-                        <div className="hidden md:flex space-x-6">
+        <>
+            <nav
+                className={`w-full z-[100] sticky top-0 transition-[background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
+                style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
+            >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between gap-3 h-[52px] sm:h-[60px] lg:h-[64px]">
+
+                        {/* Left: hamburger (mobile) + logo */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex lg:hidden">
+                                <MobileMenu links={navLinks} />
+                            </div>
+                            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
+                                <BrandMark size={36} />
+                                <span className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
+                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                </span>
+                            </Link>
+                        </div>
+
+                        {/* Center: desktop/tablet nav links */}
+                        <div className="hidden md:flex items-center justify-center gap-1 flex-1 min-w-0 px-2">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`text-sm font-medium hover:text-zinc-300 transition-colors focus-visible:outline-none focus-visible:text-white focus-visible:underline focus-visible:underline-offset-4 ${pathname === link.href ? "text-white" : "text-zinc-400"
-                                        }`}
+                                    className={`text-[12.5px] lg:text-[13px] font-semibold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
+                                        pathname === link.href
+                                            ? 'text-accent border-accent/30 bg-accent/8'
+                                            : 'text-foreground border-border bg-background hover:border-border-strong hover:bg-surface'
+                                    }`}
                                 >
                                     {link.label}
                                 </Link>
                             ))}
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* Mobile menu - Only visible on mobile */}
-                        <MobileMenu links={navLinks} />
+                        {/* Right: search + theme toggle + auth */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Search bar (tablet+) */}
+                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[130px] lg:min-w-[200px]"
+                                onClick={() => openSearch()}
+                            >
+                                <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">
+                                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M10 10l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                </svg>
+                                Buscar artistas, dramas…
+                            </div>
 
-                        {/* Theme toggle */}
-                        <ThemeToggle />
+                            {/* Mobile search icon */}
+                            <button
+                                onClick={() => openSearch()}
+                                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-muted hover:bg-surface transition-colors"
+                                aria-label="Buscar"
+                            >
+                                <Search className="w-[18px] h-[18px]" />
+                            </button>
 
-                        {/* Search button and expanded search */}
-                        <div className="relative">
-                            {!showSearch ? (
-                                <button
-                                    onClick={() => setShowSearch(true)}
-                                    className="text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    <Search className="h-6 w-6" />
-                                </button>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-48 md:w-64">
-                                        <SearchBar />
-                                    </div>
-                                    <button
-                                        onClick={() => setShowSearch(false)}
-                                        className="text-zinc-400 hover:text-white transition-colors"
+                            {/* Theme toggle */}
+                            <ThemeToggle />
+
+                            {/* Logged out: Entrar + Criar conta */}
+                            {!session && (
+                                <>
+                                    <Link
+                                        href="/auth/login"
+                                        className="hidden sm:block text-[11.5px] font-semibold text-muted hover:text-foreground transition-colors whitespace-nowrap"
                                     >
-                                        <X className="h-6 w-6" />
-                                    </button>
+                                        Entrar
+                                    </Link>
+                                    <Link
+                                        href="/auth/register"
+                                        className="hidden sm:block bg-accent text-white text-[11.5px] font-semibold rounded-full px-4 py-[7px] hover:brightness-110 transition-all whitespace-nowrap"
+                                    >
+                                        Criar conta
+                                    </Link>
+                                </>
+                            )}
+
+                            {/* Logged in: notifications + user menu */}
+                            {session && (
+                                <div className="hidden sm:flex items-center gap-1.5">
+                                    <NotificationBell />
+                                    <UserMenu />
                                 </div>
                             )}
                         </div>
-
-                        {/* User menu */}
-                        <UserMenu />
                     </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
+
+        </>
     )
 }
 

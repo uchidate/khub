@@ -26,7 +26,7 @@ export function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-sm font-medium text-zinc-300 mb-2"
+          className="block text-sm font-medium text-foreground mb-2"
         >
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
@@ -35,7 +35,7 @@ export function Input({
 
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none z-10 flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -43,19 +43,13 @@ export function Input({
         <input
           id={inputId}
           className={`
-            w-full px-4 py-3
-            ${icon ? 'pl-10' : ''}
-            bg-zinc-900 text-white
-            border rounded-lg
+            w-full ${icon ? 'pl-10' : 'px-4'} ${error ? 'pr-10' : 'pr-4'} py-3 text-sm
+            bg-background border border-border rounded-lg
+            text-foreground placeholder:text-muted/60
             transition-all duration-200
-            placeholder:text-zinc-500
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${
-              error
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-zinc-800 focus:ring-purple-500'
-            }
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black
+            focus:outline-none
+            ${error ? 'border-red-500' : 'focus:border-accent'}
             ${className}
           `}
           aria-invalid={error ? 'true' : 'false'}
@@ -66,7 +60,7 @@ export function Input({
         />
 
         {error && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none z-10">
             <AlertCircle size={20} />
           </div>
         )}
@@ -86,7 +80,7 @@ export function Input({
       {!error && helperText && (
         <p
           id={`${inputId}-helper`}
-          className="mt-2 text-sm text-zinc-400"
+          className="mt-2 text-sm text-muted"
         >
           {helperText}
         </p>

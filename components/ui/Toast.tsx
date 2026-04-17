@@ -43,7 +43,7 @@ export function Toast({ message, type = 'info', duration = 5000, onClose }: Toas
 
   return (
     <div className={`
-      ${isVisible ? 'animate-slide-down' : 'animate-slide-up opacity-0'}
+      animate-slide-down
       ${colors[type]}
       text-white rounded-lg shadow-2xl p-4 flex items-center gap-3 min-w-[300px] max-w-md
     `}>

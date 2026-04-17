@@ -24,7 +24,7 @@ import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter'
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w342'
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -92,6 +92,11 @@ export class TMDBFilmographyService {
   // HTTP REQUEST WITH RETRY
   // ============================================================================
 
+  private buildUrl(endpoint: string): string {
+    const sep = endpoint.includes('?') ? '&' : '?'
+    return `${endpoint}${sep}api_key=${TMDB_API_KEY}`
+  }
+
   private async fetchWithRetry<T>(
     url: string,
     options: RequestInit = {},
@@ -103,10 +108,9 @@ export class TMDBFilmographyService {
       try {
         await this.rateLimiter.acquire()
 
-        const response = await fetch(url, {
+        const response = await fetch(this.buildUrl(url), {
           ...options,
           headers: {
-            'Authorization': `Bearer ${TMDB_API_KEY}`,
             'Content-Type': 'application/json',
             ...options.headers,
           },
@@ -377,6 +381,7 @@ export class TMDBFilmographyService {
           voteAverage: details.vote_average,
           streamingPlatforms,
           role,
+          production_countries: details.production_countries,
         }
       } else {
         // Handle TV show
@@ -412,6 +417,8 @@ export class TMDBFilmographyService {
           voteAverage: details.vote_average,
           streamingPlatforms,
           role,
+          production_countries: details.production_countries,
+          origin_country: details.origin_country,
         }
       }
     } catch (error) {

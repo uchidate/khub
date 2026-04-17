@@ -4,14 +4,23 @@ async function monitorHealth() {
     console.log('🔍 Running HallyuHub System Health Monitor...');
 
     const slackService = getSlackService();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const healthUrl = `${siteUrl}/api/health`;
+    // Use localhost to bypass nginx — matches what monitor-health.sh does
+    const healthUrl = 'http://localhost:3000/api/health';
 
     try {
-        const response = await fetch(healthUrl, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10_000);
+
+        let response: Response;
+        try {
+            response = await fetch(healthUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
 
         if (!response.ok) {
             throw new Error(`Health endpoint returned ${response.status}`);
@@ -25,41 +34,12 @@ async function monitorHealth() {
             issues.push('🔴 Global health check failed (`ok: false`)');
         }
 
-        // 2. Check AI Providers
-        if (health.ai && health.ai.providers) {
-            const { gemini, ollama } = health.ai.providers;
-
-            if (!gemini.configured) {
-                issues.push('⚠️ Gemini API Key not configured');
-            }
-
-            if (!ollama.configured) {
-                issues.push('⚠️ Ollama Base URL not configured');
-            } else if (!ollama.available) {
-                issues.push('🔴 Ollama service is unreachable');
-            }
-        }
-
-        // 3. Check Monitoring (Slack)
-        if (health.monitoring && health.monitoring.slack) {
-            const { content, alerts } = health.monitoring.slack;
-
-            if (!content) {
-                issues.push('⚠️ Slack Content Webhook is missing');
-            }
-
-            if (!alerts) {
-                issues.push('⚠️ Slack Alerts Webhook is missing');
-            }
-        }
-
-        // 4. Check External Data Providers (TMDB)
-        if (health.monitoring && health.monitoring.tmdb) {
-            const { configured, available } = health.monitoring.tmdb;
-            if (!configured) {
-                issues.push('⚠️ TMDB API Key not configured');
-            } else if (!available) {
-                issues.push('🔴 TMDB API is unreachable/invalid');
+        // 2. Check database latency (only field exposed by /api/health)
+        if (health.db) {
+            if (!health.db.ok) {
+                issues.push('🔴 Database connection failed');
+            } else if (health.db.latencyMs !== null && health.db.latencyMs > 2000) {
+                issues.push(`⚠️ High DB latency: ${health.db.latencyMs}ms`);
             }
         }
 
@@ -71,7 +51,7 @@ async function monitorHealth() {
             if (slackService.isEnabled()) {
                 await slackService.notifyHealthAlert({
                     service: 'System Health Monitor',
-                    status: 'degraded',
+                    status: health.db?.ok === false ? 'down' : 'degraded',
                     message: `*Problemas detectados:*\n${issues.map(i => `• ${i}`).join('\n')}`,
                     context: {
                         source: 'cron',
@@ -86,13 +66,14 @@ async function monitorHealth() {
         }
 
     } catch (error: any) {
-        console.error(`❌ Critical Error during health monitor: ${error.message}`);
+        const msg = error.name === 'AbortError' ? 'Health endpoint timed out (>10s)' : error.message;
+        console.error(`❌ Critical Error during health monitor: ${msg}`);
 
         if (slackService.isEnabled()) {
             await slackService.notifyHealthAlert({
                 service: 'System Health Monitor',
                 status: 'down',
-                message: `Não foi possível acessar o health endpoint: \`${error.message}\``,
+                message: `Não foi possível acessar o health endpoint: \`${msg}\``,
                 context: {
                     source: 'cron',
                     timestamp: new Date(),

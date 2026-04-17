@@ -51,28 +51,28 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black px-4">
-          <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
+        <div className="min-h-screen flex items-center justify-center bg-white px-4">
+          <div className="max-w-md w-full text-center space-y-6">
             {/* Error Icon */}
             <div className="flex justify-center">
-              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-full">
+              <div className="p-6 bg-red-50 border border-red-200 rounded-full">
                 <AlertTriangle className="w-16 h-16 text-red-500" />
               </div>
             </div>
 
             {/* Error Message */}
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold text-[#080808]">
                 Oops! Algo deu errado
               </h1>
-              <p className="text-zinc-400">
+              <p className="text-[#6b6b6b]">
                 Encontramos um erro inesperado. Não se preocupe, estamos trabalhando nisso!
               </p>
             </div>
 
             {/* Error Details (Development only) */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mt-6 p-4 bg-zinc-900 border border-zinc-800 rounded-lg text-left">
+              <div className="mt-6 p-4 bg-[#f5f5f7] border border-[#e8e8e8] rounded-lg text-left">
                 <p className="text-xs font-mono text-red-400 break-all">
                   {this.state.error.toString()}
                 </p>

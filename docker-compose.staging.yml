@@ -6,16 +6,18 @@ services:
       POSTGRES_USER: hallyuhub
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: hallyuhub_staging
+      TZ: America/Sao_Paulo
     volumes:
       - postgres-staging-data:/var/lib/postgresql/data
     networks:
       - web
+      - backend-staging
     restart: on-failure
     deploy:
       resources:
         limits:
-          cpus: '0.1'
-          memory: 256M
+          cpus: '0.2'
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hallyuhub"]
       interval: 10s
@@ -25,21 +27,40 @@ services:
   ollama-staging:
     image: ollama/ollama:latest
     container_name: hallyuhub-ollama-staging
+    environment:
+      TZ: America/Sao_Paulo
     volumes:
       - ollama-staging-data:/root/.ollama
     networks:
       - web
-    restart: on-failure
+      - backend-staging
+    restart: "no"  # Não inicia automaticamente — use DeepSeek/OpenAI como provider principal
     deploy:
       resources:
         limits:
           cpus: '0.5'
-          memory: 1G
+          memory: 2G  # Reduzido — sem modelo ativo carregado
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
+
+  migrate-staging:
+    image: ghcr.io/uchidate/khub:staging
+    container_name: hallyuhub-migrate-staging
+    # safe-migrate.sh: detecta e auto-resolve migrações travadas (DDL já aplicado),
+    # depois roda migrate deploy. Sempre sai com 0 para não bloquear o deploy.
+    command: ["sh", "-c", "chmod +x scripts/safe-migrate.sh && bash scripts/safe-migrate.sh"]
+    env_file:
+      - .env.staging
+    networks:
+      - backend-staging
+    restart: "no"
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
 
   hallyuhub-staging:
     image: ghcr.io/uchidate/khub:staging
@@ -48,32 +69,139 @@ services:
       - "3001:3000"
     environment:
       - DEPLOY_ENV=staging
+      - TZ=America/Sao_Paulo
+      # Ollama: desabilitado — setar OLLAMA_ENABLED=true para reativar (OLLAMA_BASE_URL preservado no .env.staging)
+      - OLLAMA_MODEL=phi3:mini
+      - OLLAMA_ENABLED=false
+      # Limitar heap do Node.js — GC agressivo antes do limite Docker, evita OOM
+      - NODE_OPTIONS=--max-old-space-size=2048
     env_file:
       - .env.staging
     volumes:
       - hallyuhub-data:/app/data
+      - instagram-images-staging:/app/public/instagram
+      - blog-uploads-staging:/app/public/uploads
+      - /var/log/nginx:/app/nginx-logs:ro
     networks:
       - web
+      - backend-staging
     restart: on-failure
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 1G
+          cpus: '0.7'
+          memory: 3G   # Aumentado de 2G — memória liberada do Ollama
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 60s
       timeout: 10s
       retries: 2
     depends_on:
+      migrate-staging:
+        condition: service_completed_successfully
       postgres-staging:
         condition: service_healthy
-      ollama-staging:
-        condition: service_started
+
+  prometheus-staging:
+    image: prom/prometheus:latest
+    container_name: hallyuhub-prometheus-staging
+    volumes:
+      - ./monitoring/prometheus.staging.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-staging-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+    networks:
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+    depends_on:
+      - hallyuhub-staging
+
+  grafana-staging:
+    image: grafana/grafana:latest
+    container_name: hallyuhub-grafana-staging
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://31.97.255.107:3003
+      - GF_DB_HOST=postgres-staging:5432
+      - GF_DB_NAME=hallyuhub_staging
+      - GF_DB_USER=hallyuhub
+      - GF_DB_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - grafana-staging-data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - web
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    depends_on:
+      - postgres-staging
+      - prometheus-staging
+
+  postgres-umami-staging:
+    image: postgres:15-alpine
+    container_name: hallyuhub-postgres-umami-staging
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - postgres-umami-staging-data:/var/lib/postgresql/data
+    networks:
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  umami-staging:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: hallyuhub-umami-staging
+    ports:
+      - "3004:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@postgres-umami-staging:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    networks:
+      - web
+      - backend-staging
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    depends_on:
+      postgres-umami-staging:
+        condition: service_healthy
 
 networks:
   web:
     external: true
+  backend-staging:
+    driver: bridge
 
 volumes:
   hallyuhub-data:
@@ -82,3 +210,8 @@ volumes:
     external: true
   ollama-staging-data:
     external: true
+  instagram-images-staging:
+  blog-uploads-staging:
+  prometheus-staging-data:
+  grafana-staging-data:
+  postgres-umami-staging-data:

@@ -1,0 +1,135 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import { Music } from 'lucide-react'
+
+type AlbumType = 'ALBUM' | 'EP' | 'SINGLE'
+
+interface Album {
+    id: string
+    title: string
+    type: string
+    releaseDate: Date | string | null
+    coverUrl: string | null
+    spotifyUrl: string | null
+    appleMusicUrl: string | null
+    youtubeUrl: string | null
+    mbid: string | null
+}
+
+interface DiscographySectionProps {
+    albums: Album[]
+}
+
+type FilterTab = 'all' | AlbumType
+
+const TYPE_LABEL: Record<string, string> = {
+    ALBUM: 'Álbum',
+    EP: 'EP',
+    SINGLE: 'Single',
+}
+
+const TYPE_COLOR: Record<string, string> = {
+    ALBUM: 'text-[#ff2d78] bg-[#ff2d78]/10',
+    EP: 'text-blue-500 bg-blue-500/10',
+    SINGLE: 'text-[#ff2d78] bg-[#ff2d78]/10',
+}
+
+export function DiscographySection({ albums }: DiscographySectionProps) {
+    const [filter, setFilter] = useState<FilterTab>('all')
+
+    const counts = {
+        ALBUM: albums.filter(a => a.type === 'ALBUM').length,
+        EP: albums.filter(a => a.type === 'EP').length,
+        SINGLE: albums.filter(a => a.type === 'SINGLE').length,
+    }
+
+    const filtered = filter === 'all' ? albums : albums.filter(a => a.type === filter)
+
+    const tabs = [
+        { key: 'all' as FilterTab, label: 'Todos', count: albums.length },
+        { key: 'ALBUM' as FilterTab, label: 'Álbuns', count: counts.ALBUM },
+        { key: 'EP' as FilterTab, label: 'EPs', count: counts.EP },
+        { key: 'SINGLE' as FilterTab, label: 'Singles', count: counts.SINGLE },
+    ].filter(t => t.key === 'all' || t.count > 0)
+
+    return (
+        <section>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
+                    <Music className="w-4 h-4" />
+                    Discografia
+                    <span className="text-muted opacity-60 font-bold normal-case tracking-normal">
+                        {albums.length} lançamento{albums.length !== 1 ? 's' : ''}
+                    </span>
+                </h3>
+
+                {tabs.length > 2 && (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {tabs.map(({ key, label, count }) => (
+                            <button
+                                key={key}
+                                onClick={() => setFilter(key)}
+                                className={`text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full transition-all ${
+                                    filter === key
+                                        ? 'bg-[#ff2d78] text-white'
+                                        : 'bg-[#1a1a1a] text-[#999] hover:bg-[#2a2a2a]'
+                                }`}
+                            >
+                                {label}
+                                {key !== 'all' && (
+                                    <span className="ml-1 opacity-60">({count})</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filtered.map((album) => (
+                    <div
+                        key={album.id}
+                        className="group relative bg-[#080808] rounded-xl border border-white/5 overflow-hidden hover:border-[#ff2d78]/40 transition-all hover:-translate-y-1"
+                    >
+                        <div className="aspect-square relative bg-[#1a1a1a]">
+                            {album.coverUrl ? (
+                                <Image
+                                    src={album.coverUrl}
+                                    alt={album.title}
+                                    fill
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                    unoptimized
+                                />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#2a2a2a]">
+                                    <Music className="w-8 h-8 opacity-20" />
+                                    <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-muted bg-[#1a1a1a]'}`}>
+                                        {TYPE_LABEL[album.type] ?? album.type}
+                                    </span>
+                                </div>
+                            )}
+
+                        </div>
+
+                        <div className="p-3">
+                            <h4 className="font-bold text-white text-sm line-clamp-1">{album.title}</h4>
+                            <div className="flex justify-between items-center mt-1">
+                                <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded-sm ${TYPE_COLOR[album.type] ?? 'text-muted bg-[#1a1a1a]'}`}>
+                                    {TYPE_LABEL[album.type] ?? album.type}
+                                </span>
+                                {album.releaseDate && (
+                                    <span className="text-[10px] font-bold text-muted">
+                                        {new Date(album.releaseDate).getUTCFullYear()}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    )
+}

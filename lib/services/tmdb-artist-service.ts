@@ -1,9 +1,13 @@
 import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
+const KOREAN_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u314F-\u3163]/
+const CJK_REGEX = /[\uAC00-\uD7AF\u3131-\u314E\u4E00-\u9FFF\u3040-\u30FF]/
 
 interface TMDBPerson {
   id: number;
@@ -24,17 +28,20 @@ interface TMDBPersonDetails {
   known_for_department: string;
   popularity: number;
   also_known_as?: string[];
+  gender?: number; // 0=unspecified, 1=female, 2=male, 3=non-binary
 }
 
 interface RealArtistData {
   tmdbId: number;
   nameRomanized: string;
   nameHangul?: string;
+  stageNames?: string[];
   birthName?: string;
   birthDate?: Date;
   profileImageUrl: string;
   biography?: string;
   roles: string[];
+  gender?: number;
   popularity: number;
   height?: string;
   bloodType?: string;
@@ -49,8 +56,8 @@ export class TMDBArtistService {
   private prisma: PrismaClient;
   private rateLimiter: RateLimiter;
 
-  constructor(prisma?: PrismaClient) {
-    this.prisma = prisma || new PrismaClient();
+  constructor(prismaInstance?: PrismaClient) {
+    this.prisma = prismaInstance || prisma;
     this.rateLimiter = new RateLimiter(RateLimiterPresets.TMDB);
   }
 
@@ -141,6 +148,26 @@ export class TMDBArtistService {
     }
   }
 
+  /**
+   * Fetch person name in English (used when pt-BR returns Korean name as primary).
+   */
+  private async fetchPersonNameEn(tmdbId: number): Promise<string | null> {
+    if (!TMDB_API_KEY) return null
+    try {
+      const res = await fetch(
+        `${TMDB_BASE_URL}/person/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US`,
+        { signal: AbortSignal.timeout(8000) }
+      )
+      if (!res.ok) return null
+      const data = await res.json()
+      const name: string = data.name || ''
+      // Only use if it's truly romanized (no Korean chars)
+      return KOREAN_REGEX.test(name) ? null : name || null
+    } catch {
+      return null
+    }
+  }
+
   private async convertTMDBToArtistData(person: TMDBPerson, details?: TMDBPersonDetails): Promise<RealArtistData | null> {
     const fullDetails = details || await this.getPersonDetails(person.id);
 
@@ -169,23 +196,48 @@ export class TMDBArtistService {
       roles.push('ATOR');
     }
 
-    // Tentar encontrar nome em Hangul em also_known_as
-    let nameHangul = undefined;
+    // Extrair nameHangul e stageNames do also_known_as
+    let nameHangul: string | undefined = undefined;
+    const stageNames: string[] = [];
+
     if (fullDetails.also_known_as && fullDetails.also_known_as.length > 0) {
-      // Procura por string que contenha caracteres coreanos
-      nameHangul = fullDetails.also_known_as.find(n => /[\u3131-\uD79D]/.test(n));
+      for (const aka of fullDetails.also_known_as) {
+        if (KOREAN_REGEX.test(aka)) {
+          // Nome coreano → nameHangul (pegar o primeiro encontrado)
+          if (!nameHangul) nameHangul = aka;
+        } else if (!CJK_REGEX.test(aka) && aka !== fullDetails.name) {
+          // Nome romanizado diferente do nome principal → stage name
+          const trimmed = aka.trim();
+          if (trimmed.length >= 2 && trimmed.length <= 50 && !stageNames.includes(trimmed)) {
+            stageNames.push(trimmed);
+          }
+        }
+      }
+    }
+
+    // Corrigir nomes: se TMDB retornou o nome em coreano como nome principal,
+    // buscar o nome romanizado correto em en-US e mover o coreano para nameHangul.
+    let finalNameRomanized = fullDetails.name;
+    if (KOREAN_REGEX.test(fullDetails.name)) {
+      const enName = await this.fetchPersonNameEn(fullDetails.id);
+      if (enName) {
+        if (!nameHangul) nameHangul = fullDetails.name; // move coreano → hangul
+        finalNameRomanized = enName;
+      }
     }
 
     return {
       tmdbId: fullDetails.id,
-      nameRomanized: fullDetails.name,
+      nameRomanized: finalNameRomanized,
       nameHangul: nameHangul,
+      stageNames: stageNames.length > 0 ? stageNames : undefined,
       birthDate: fullDetails.birthday ? new Date(fullDetails.birthday) : undefined,
       profileImageUrl: fullDetails.profile_path
         ? `${TMDB_IMAGE_BASE}${fullDetails.profile_path}`
         : 'https://via.placeholder.com/500x750?text=No+Image',
       biography: fullDetails.biography || undefined,
       roles,
+      gender: fullDetails.gender ?? undefined,
       popularity: fullDetails.popularity,
       // Wiki fields initialized as undefined, enriched later
       birthName: undefined,

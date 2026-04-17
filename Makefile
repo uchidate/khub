@@ -85,11 +85,11 @@ git-status: ## Status git formatado
 	@git status --short
 
 # Comandos de deploy (via GitHub Actions)
-deploy-staging: ## Faz deploy para staging (push develop)
+deploy-staging: ## Faz deploy para staging (push staging)
 	@echo "$(YELLOW)Fazendo deploy para STAGING...$(NC)"
 	@./scripts/pre-deploy-validation.sh
-	@git checkout develop
-	@git push origin develop
+	@git checkout staging
+	@git push origin staging
 	@echo "$(GREEN)✓ Deploy iniciado via GitHub Actions$(NC)"
 	@echo "Acompanhe em: https://github.com/uchidate/khub/actions"
 

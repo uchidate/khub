@@ -1,37 +1,32 @@
-'use client'
-
-import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 interface SectionHeaderProps {
     title: string
+    count?: number | null
+    countLabel?: string
     subtitle?: string
-    align?: 'left' | 'center'
+    backHref?: string
+    backLabel?: string
     className?: string
 }
 
-export function SectionHeader({ title, subtitle, align = 'left', className = '' }: SectionHeaderProps) {
+export function SectionHeader({ title, count, countLabel, subtitle, backHref, backLabel = 'Início', className = '' }: SectionHeaderProps) {
     return (
-        <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="text-4xl md:text-6xl font-black mb-4 hallyu-gradient-text uppercase tracking-tighter italic"
-            >
-                {title}
-            </motion.h1>
-
-            {subtitle && (
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-                    className={`text-zinc-500 text-lg font-medium max-w-xl ${align === 'center' ? 'mx-auto' : ''}`}
-                >
-                    {subtitle}
-                </motion.p>
+        <div className={`flex items-center justify-between mb-6 ${className}`}>
+            <div className="flex items-baseline gap-3">
+                <h1 className="text-[1.75rem] md:text-[2rem] font-black text-foreground tracking-[-0.04em] leading-none">
+                    {title}
+                </h1>
+                {count != null && (
+                    <span className="text-[11px] font-bold text-muted px-2.5 py-1 bg-surface border border-border rounded-full">
+                        {count.toLocaleString('pt-BR')} {countLabel}
+                    </span>
+                )}
+            </div>
+            {backHref && (
+                <Link href={backHref} className="text-[11px] font-semibold text-muted hover:text-accent transition-colors">
+                    ← {backLabel}
+                </Link>
             )}
         </div>
     )

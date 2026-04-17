@@ -12,11 +12,12 @@ interface EventProps {
 
 export function useAnalytics() {
   const pathname = usePathname()
+  const isAdmin = pathname.startsWith('/admin')
 
-  // Track pageviews (pathname only to avoid Suspense requirement)
+  // Páginas /admin são internas — não trackear no GA
   useEffect(() => {
-    trackPageView(pathname)
-  }, [pathname])
+    if (!isAdmin) trackPageView(pathname)
+  }, [pathname, isAdmin])
 
   const trackPageView = (url: string) => {
     // Google Analytics 4
@@ -73,12 +74,21 @@ export function useAnalytics() {
     })
   }
 
-  const trackSearch = (query: string) => {
+  const trackSearch = (query: string, context?: string) => {
     trackEvent({
       action: 'search',
       category: 'search',
       label: query,
     })
+
+    // Log no banco para usuários autenticados (fire and forget)
+    if (query.trim().length >= 3) {
+      fetch('/api/track/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim(), context }),
+      }).catch(() => {})
+    }
   }
 
   const trackFavorite = (itemId: string, itemType: string, action: 'add' | 'remove') => {

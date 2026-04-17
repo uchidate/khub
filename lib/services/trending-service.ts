@@ -1,6 +1,7 @@
 import prisma from '../prisma'
+import { createLogger } from '../utils/logger'
 
-
+const log = createLogger('TRENDING')
 
 export class TrendingService {
   private static instance: TrendingService
@@ -44,30 +45,53 @@ export class TrendingService {
     return viewScore + favoriteScore + recentScore + completenessScore
   }
 
+  /**
+   * Batch update de trending scores usando SQL com normalização global [0, 100].
+   *
+   * Fórmula:
+   *   raw   = viewCount × 0.6 + favoriteCount × 0.3
+   *           + Σ StreamingTrendSignal.score × STREAMING_WEIGHT   (somente não expirados)
+   *   score = (raw / MAX(raw) global) × 100   →  normalizado [0, 100]
+   *
+   * STREAMING_WEIGHT = 200 garante que protagonistas das top 10 produções
+   * de streaming dominam o Trending Now mesmo com baixo engajamento orgânico.
+   */
   async updateAllTrendingScores(): Promise<void> {
-    console.log('📈 Iniciando atualização de trending scores...')
+    log.info('Iniciando atualização de trending scores (batch SQL)...')
 
-    const artists = await prisma.artist.findMany({ select: { id: true, nameRomanized: true } })
-    console.log(`   Encontrados ${artists.length} artistas`)
+    const count = await prisma.artist.count()
 
-    let updated = 0
-    for (const artist of artists) {
-      const score = await this.calculateTrendingScore(artist.id)
-      await prisma.artist.update({
-        where: { id: artist.id },
-        data: {
-          trendingScore: score,
-          lastTrendingUpdate: new Date()
-        }
-      })
-      updated++
+    await prisma.$executeRaw`
+      UPDATE "Artist" a
+      SET
+        "trendingScore" = scores.normalized,
+        "lastTrendingUpdate" = NOW(),
+        "updatedAt" = NOW()
+      FROM (
+        SELECT
+          id,
+          ROUND(
+            (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
+          ) / 100.0 AS normalized
+        FROM (
+          SELECT
+            a.id,
+            -- Engajamento orgânico
+            (COALESCE(a."viewCount", 0) * 0.6 + COALESCE(a."favoriteCount", 0) * 0.3)
+            -- Boost streaming (somente protagonistas, sinais não expirados, ×200)
+            + COALESCE((
+                SELECT SUM(s.score) * 200
+                FROM streaming_trend_signal s
+                WHERE s."artistId" = a.id AND s."expiresAt" > NOW()
+              ), 0)
+            AS raw
+          FROM "Artist" a
+        ) raw_scores
+      ) scores
+      WHERE a.id = scores.id
+    `
 
-      if (updated % 10 === 0) {
-        console.log(`   Processados ${updated}/${artists.length} artistas...`)
-      }
-    }
-
-    console.log(`✅ Trending scores atualizados para ${updated} artistas`)
+    log.info(`Trending scores atualizados para ${count} artistas (batch SQL)`, { count })
   }
 
   async getTrendingArtists(limit: number = 6) {

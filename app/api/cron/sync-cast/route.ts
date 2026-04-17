@@ -1,0 +1,135 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { onCronError } from '@/lib/utils/cron-logger'
+import { timingSafeEqual } from 'crypto';
+import { getProductionCastService } from '@/lib/services/production-cast-service';
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
+
+/**
+ * Cron Job - Sync Production Cast
+ *
+ * Fetches top 20 cast members from TMDB for each production that hasn't had
+ * its cast synced yet (or is stale), creating/updating Artist records and
+ * linking them via ArtistProduction.
+ *
+ * AUTENTICAÇÃO: Requer CRON_SECRET via header Authorization: Bearer ou ?token=
+ * RETORNO: 202 Accepted imediatamente — processamento continua em background.
+ *
+ * POST /api/cron/sync-cast                    → sync 5 productions
+ * POST /api/cron/sync-cast?limit=N            → sync N productions (max 50)
+ * POST /api/cron/sync-cast?mode=reset-resync  → reset castSyncAt de todas e sincroniza N
+ */
+export async function POST(request: NextRequest) {
+    const requestId = `cron-cast-sync-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
+    const log = {
+        info: (message: string, context?: any) => {
+            console.log(JSON.stringify({
+                timestamp: new Date().toISOString(),
+                level: 'info',
+                service: 'CRON_SYNC_CAST',
+                message,
+                requestId,
+                ...context,
+            }));
+        },
+        error: (message: string, context?: any) => {
+            console.error(JSON.stringify({
+                timestamp: new Date().toISOString(),
+                level: 'error',
+                service: 'CRON_SYNC_CAST',
+                message,
+                requestId,
+                ...context,
+            }));
+        },
+    };
+
+    // Authentication
+    const authToken = request.headers.get('authorization')?.replace('Bearer ', '') ||
+                     request.nextUrl.searchParams.get('token');
+    const expectedToken = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET;
+
+    if (!expectedToken) {
+        log.error('CRON_SECRET not configured');
+        return NextResponse.json({ success: false, error: 'Cron secret not configured' }, { status: 500 });
+    }
+
+    const tokenValid = authToken !== null
+        && authToken.length === expectedToken.length
+        && timingSafeEqual(Buffer.from(authToken), Buffer.from(expectedToken));
+
+    if (!tokenValid) {
+        log.error('Unauthorized access attempt');
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '5');
+    const limit = Math.min(Math.max(1, rawLimit), 50);
+    const mode = request.nextUrl.searchParams.get('mode') || 'sync';
+
+    log.info('Starting cast sync job in background', { limit, mode });
+
+    // Lock — evita encavalar execuções simultâneas
+    const lockId = await acquireCronLock('cron-sync-cast');
+    if (!lockId) {
+        return NextResponse.json({
+            success: false,
+            skipped: true,
+            reason: 'already_running',
+            message: 'Cast sync já está em execução. Esta chamada foi ignorada.',
+        }, { status: 409 });
+    }
+
+    // Fire-and-forget background processing
+    runCastSync(limit, mode, lockId, log).catch(onCronError(log, 'cron-sync-cast', 'Unhandled error in background job'));
+
+    return NextResponse.json({
+        status: 'accepted',
+        message: mode === 'reset-resync'
+            ? 'Cast reset + resync started in background'
+            : 'Cast sync started in background',
+        requestId,
+        limit,
+        mode,
+        timestamp: new Date().toISOString(),
+    }, { status: 202 });
+}
+
+async function runCastSync(
+    limit: number,
+    mode: string,
+    lockId: string,
+    log: { info: (msg: string, ctx?: any) => void; error: (msg: string, ctx?: any) => void }
+) {
+    const startTime = Date.now();
+
+    try {
+        const service = getProductionCastService();
+
+        if (mode === 'reset-resync') {
+            const resetCount = await service.resetCastSyncAt()
+            log.info('Cast sync reset completed', { resetCount })
+        }
+
+        const result = await service.syncPendingProductionCasts(limit);
+        const duration = Math.round((Date.now() - startTime) / 1000);
+
+        log.info('Cast sync job completed', { result, duration_s: duration });
+    } catch (error: any) {
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        log.error('Cast sync job failed', {
+            error: error.message,
+            stack: error.stack,
+            duration_s: duration,
+        });
+    } finally {
+        await releaseCronLock('cron-sync-cast', lockId);
+    }
+}
+
+export async function GET() {
+    return NextResponse.json({
+        error: 'Method not allowed. Use POST.',
+        hint: 'POST /api/cron/sync-cast?limit=5 | POST /api/cron/sync-cast?mode=reset-resync&limit=10',
+    }, { status: 405 });
+}

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta C — Idol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface2: #f4f0ff;
+  --border: #e8e0f5;
+  --purple: #7c3aed;
+  --purple2: #a855f7;
+  --pink: #db2777;
+  --text: #18181b;
+  --muted: #71717a;
+  --subtle: #a1a1aa;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* NAV */
+nav { display:flex; align-items:center; justify-content:space-between; padding:0 2.5rem; height:64px; background:rgba(250,250,250,0.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.logo { display:flex; align-items:center; gap:0.6rem; font-weight:800; font-size:1.25rem; color:var(--text); letter-spacing:-0.02em; }
+.logo-icon { width:32px; height:32px; background:linear-gradient(135deg,var(--purple),var(--pink)); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; font-weight:800; }
+.nav-links { display:flex; gap:0.25rem; }
+.nav-links a { color:var(--muted); text-decoration:none; font-size:0.85rem; font-weight:500; padding:0.4rem 0.875rem; border-radius:8px; transition:.15s; }
+.nav-links a:hover { background:var(--surface2); color:var(--purple); }
+.nav-right { display:flex; gap:0.75rem; align-items:center; }
+.btn-ghost { padding:0.5rem 1.25rem; border:1.5px solid var(--border); color:var(--text); border-radius:10px; font-size:0.82rem; font-weight:600; cursor:pointer; background:transparent; font-family:'Plus Jakarta Sans',sans-serif; }
+.btn-solid { padding:0.5rem 1.25rem; background:linear-gradient(135deg,var(--purple),var(--purple2)); color:#fff; border-radius:10px; font-size:0.82rem; font-weight:700; cursor:pointer; border:none; font-family:'Plus Jakarta Sans',sans-serif; box-shadow:0 4px 14px rgba(124,58,237,0.3); }
+
+/* HERO */
+.hero { padding:5rem 2.5rem 4rem; position:relative; overflow:hidden; }
+.hero-blobs { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.blob { position:absolute; border-radius:50%; filter:blur(80px); }
+.blob1 { width:500px; height:500px; background:rgba(168,85,247,0.12); right:-100px; top:-100px; }
+.blob2 { width:400px; height:400px; background:rgba(219,39,119,0.08); right:200px; top:100px; }
+.blob3 { width:300px; height:300px; background:rgba(124,58,237,0.1); left:-50px; bottom:-50px; }
+.hero-inner { position:relative; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr auto; gap:3rem; align-items:center; }
+.hero-left { }
+.pill { display:inline-flex; align-items:center; gap:0.4rem; padding:0.35rem 0.875rem; background:var(--surface2); border:1.5px solid var(--border); border-radius:999px; font-size:0.75rem; font-weight:600; color:var(--purple); margin-bottom:1.5rem; }
+.pill-dot { width:7px; height:7px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--pink)); }
+h1 { font-size:clamp(2.4rem,4.5vw,4rem); font-weight:800; line-height:1.1; letter-spacing:-0.03em; margin-bottom:1.25rem; color:var(--text); }
+h1 .grad { background:linear-gradient(135deg,var(--purple),var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero-sub { color:var(--muted); font-size:1.05rem; line-height:1.7; max-width:500px; margin-bottom:2.5rem; font-weight:400; }
+.hero-actions { display:flex; gap:0.875rem; flex-wrap:wrap; }
+.btn-hero { padding:0.875rem 2rem; background:linear-gradient(135deg,var(--purple),var(--purple2)); color:#fff; border-radius:12px; font-size:0.9rem; font-weight:700; cursor:pointer; border:none; font-family:'Plus Jakarta Sans',sans-serif; box-shadow:0 6px 20px rgba(124,58,237,0.35); }
+.btn-hero-outline { padding:0.875rem 2rem; border:1.5px solid var(--border); color:var(--text); border-radius:12px; font-size:0.9rem; font-weight:600; cursor:pointer; background:#fff; font-family:'Plus Jakarta Sans',sans-serif; }
+/* Hero cards float */
+.hero-cards { display:flex; flex-direction:column; gap:0.875rem; }
+.hero-card { background:#fff; border:1.5px solid var(--border); border-radius:16px; padding:1rem 1.25rem; display:flex; align-items:center; gap:0.875rem; box-shadow:0 4px 16px rgba(0,0,0,0.05); min-width:240px; }
+.hero-card-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; shrink:0; flex-shrink:0; }
+.hc-purple { background:linear-gradient(135deg,#ede9fe,#ddd6fe); }
+.hc-pink { background:linear-gradient(135deg,#fce7f3,#fbcfe8); }
+.hc-blue { background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.hero-card-label { font-size:0.7rem; color:var(--subtle); font-weight:500; }
+.hero-card-val { font-size:1rem; font-weight:700; color:var(--text); }
+
+/* TRENDING PILL ROW */
+.trending-row { background:#fff; border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:0.875rem 2.5rem; display:flex; align-items:center; gap:1rem; overflow-x:auto; }
+.trending-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--subtle); white-space:nowrap; flex-shrink:0; }
+.trend-pill { display:flex; align-items:center; gap:0.4rem; padding:0.35rem 0.875rem; background:var(--surface2); border-radius:999px; font-size:0.78rem; font-weight:600; color:var(--purple); white-space:nowrap; flex-shrink:0; cursor:pointer; }
+.trend-pill:hover { background:#ede9fe; }
+
+/* SECTION */
+.section { padding:3.5rem 2.5rem; max-width:1100px; margin:0 auto; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
+.section-title { font-size:1.35rem; font-weight:800; letter-spacing:-0.02em; }
+.see-all { font-size:0.82rem; color:var(--purple); font-weight:600; text-decoration:none; }
+
+/* ARTIST CARDS */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; }
+.card { background:#fff; border:1.5px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:.2s; }
+.card:hover { border-color:var(--purple); box-shadow:0 8px 24px rgba(124,58,237,0.12); transform:translateY(-2px); }
+.card-img { aspect-ratio:3/4; background:linear-gradient(160deg,var(--surface2),#ede9fe); display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+.card-body { padding:0.875rem; }
+.card-name { font-weight:700; font-size:0.88rem; }
+.card-sub { font-size:0.73rem; color:var(--muted); margin-top:0.15rem; }
+.badge { display:inline-flex; align-items:center; gap:0.3rem; margin-top:0.6rem; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.65rem; font-weight:700; }
+.badge-purple { background:#ede9fe; color:var(--purple); }
+.badge-pink { background:#fce7f3; color:var(--pink); }
+
+/* NEWS */
+.news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+.news-card { background:#fff; border:1.5px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:.2s; }
+.news-card:hover { border-color:var(--purple); box-shadow:0 8px 24px rgba(124,58,237,0.1); }
+.news-card-img { height:150px; background:linear-gradient(135deg,#ede9fe,#fce7f3); display:flex; align-items:center; justify-content:center; font-size:2.5rem; position:relative; }
+.news-cat { position:absolute; bottom:0.75rem; left:0.75rem; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.65rem; font-weight:700; background:var(--purple); color:#fff; }
+.news-body { padding:1rem; }
+.news-title { font-size:0.88rem; font-weight:700; line-height:1.4; margin-bottom:0.4rem; }
+.news-meta { font-size:0.73rem; color:var(--muted); }
+
+footer { margin-top:2rem; background:#fff; border-top:1px solid var(--border); padding:2rem 2.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.footer-logo { display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:1.1rem; letter-spacing:-0.02em; }
+.footer-logo-icon { width:26px; height:26px; background:linear-gradient(135deg,var(--purple),var(--pink)); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.65rem; font-weight:800; }
+.footer-copy { font-size:0.78rem; color:var(--subtle); }
+
+.back-btn { position:fixed; top:1.5rem; left:1.5rem; background:#fff; border:1.5px solid var(--border); color:var(--muted); padding:0.5rem 1rem; border-radius:10px; font-size:0.78rem; text-decoration:none; font-family:'Plus Jakarta Sans',sans-serif; z-index:200; transition:.15s; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.back-btn:hover { color:var(--purple); border-color:var(--purple); }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-btn">← Propostas</a>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">HH</div>
+    HallyuHub
+  </div>
+  <div class="nav-links">
+    <a href="#">Artistas</a>
+    <a href="#">Grupos</a>
+    <a href="#">Doramas</a>
+    <a href="#">Notícias</a>
+    <a href="#">Blog</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-ghost">Entrar</button>
+    <button class="btn-solid">Cadastrar</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-blobs">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="pill"><span class="pill-dot"></span>🇰🇷 A maior plataforma do Hallyu no Brasil</div>
+      <h1>Descubra o universo do <span class="grad">K-pop e K-drama</span></h1>
+      <p class="hero-sub">Perfis completos de artistas, grupos, doramas e filmes. Notícias diárias traduzidas e contextualizadas para os fãs brasileiros.</p>
+      <div class="hero-actions">
+        <button class="btn-hero">Começar agora</button>
+        <button class="btn-hero-outline">Ver artistas →</button>
+      </div>
+    </div>
+    <div class="hero-cards">
+      <div class="hero-card">
+        <div class="hero-card-icon hc-purple">🎤</div>
+        <div><div class="hero-card-label">Artistas</div><div class="hero-card-val">12.000+</div></div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-icon hc-pink">🎬</div>
+        <div><div class="hero-card-label">Produções</div><div class="hero-card-val">8.000+</div></div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-icon hc-blue">📰</div>
+        <div><div class="hero-card-label">Notícias</div><div class="hero-card-val">50.000+</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="trending-row">
+  <span class="trending-label">Em alta</span>
+  <div class="trend-pill">🔥 BTS comeback</div>
+  <div class="trend-pill">💜 BLACKPINK</div>
+  <div class="trend-pill">👑 Queen of Tears</div>
+  <div class="trend-pill">⭐ Stray Kids</div>
+  <div class="trend-pill">🌸 NewJeans</div>
+  <div class="trend-pill">🎭 MAMA Awards</div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Artistas em alta ✦</div>
+    <a href="#" class="see-all">Ver todos →</a>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-img">👩</div><div class="card-body"><div class="card-name">Jisoo</div><div class="card-sub">BLACKPINK</div><div class="badge badge-purple">K-pop</div></div></div>
+    <div class="card"><div class="card-img">👨</div><div class="card-body"><div class="card-name">RM</div><div class="card-sub">BTS</div><div class="badge badge-purple">K-pop</div></div></div>
+    <div class="card"><div class="card-img">🎭</div><div class="card-body"><div class="card-name">Hyun Bin</div><div class="card-sub">Ator</div><div class="badge badge-pink">K-drama</div></div></div>
+    <div class="card"><div class="card-img">🎵</div><div class="card-body"><div class="card-name">IU</div><div class="card-sub">EDAM</div><div class="badge badge-purple">K-pop</div></div></div>
+    <div class="card"><div class="card-img">👩</div><div class="card-body"><div class="card-name">Son Ye-jin</div><div class="card-sub">Atriz</div><div class="badge badge-pink">K-drama</div></div></div>
+  </div>
+</div>
+
+<div class="section" style="padding-top:0">
+  <div class="section-header">
+    <div class="section-title">Últimas notícias ✦</div>
+    <a href="#" class="see-all">Ver todas →</a>
+  </div>
+  <div class="news-grid">
+    <div class="news-card"><div class="news-card-img">📰<span class="news-cat">K-pop</span></div><div class="news-body"><div class="news-title">BTS anuncia comeback para 2025 após retorno do serviço militar</div><div class="news-meta">Há 2 horas · 4 min</div></div></div>
+    <div class="news-card"><div class="news-card-img">🎬<span class="news-cat">K-drama</span></div><div class="news-body"><div class="news-title">Queen of Tears bate recorde histórico de audiência na tvN</div><div class="news-meta">Há 5 horas · 3 min</div></div></div>
+    <div class="news-card"><div class="news-card-img">🏆<span class="news-cat">Premiação</span></div><div class="news-body"><div class="news-title">Resultados completos do MAMA Awards 2024</div><div class="news-meta">Há 1 dia · 6 min</div></div></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">
+    <div class="footer-logo-icon">HH</div>
+    HallyuHub
+  </div>
+  <div class="footer-copy">© 2025 HallyuHub · Todos os direitos reservados</div>
+</footer>
+
+</body>
+</html>

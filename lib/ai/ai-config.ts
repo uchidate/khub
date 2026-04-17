@@ -3,14 +3,15 @@
  * Configurações centralizadas para todos os providers de IA
  */
 
-export type AIProviderType = 'gemini' | 'openai' | 'claude' | 'ollama';
+export type AIProviderType = 'ollama' | 'deepseek';
 
 export interface AIProviderConfig {
   name: AIProviderType;
   displayName: string;
   enabled: boolean;
   priority: number; // Menor = maior prioridade
-  costPer1kTokens: number; // Em USD
+  costPer1kTokens: number; // Em USD (input — fallback se outputCostPer1kTokens não definido)
+  outputCostPer1kTokens?: number; // Em USD (output — se diferente do input)
   rateLimit: {
     requestsPerMinute: number;
     tokensPerMinute?: number;
@@ -27,6 +28,9 @@ export interface GenerateOptions {
   preferredProvider?: AIProviderType;
   systemPrompt?: string;
   excludeList?: string[];
+  json_mode?: boolean // Force JSON output via response_format (DeepSeek/OpenAI)
+  /** Feature que originou a chamada — usada para logging de uso */
+  feature?: import('./ai-usage-logger').AiFeature;
 }
 
 export interface GenerationResult {
@@ -34,6 +38,8 @@ export interface GenerationResult {
   provider: AIProviderType;
   model: string;
   tokensUsed?: number;
+  tokensIn?: number;
+  tokensOut?: number;
   cost?: number;
 }
 
@@ -52,49 +58,20 @@ export interface OrchestratorStats {
 
 // Configurações padrão dos providers
 export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
-  gemini: {
-    name: 'gemini',
-    displayName: 'Google Gemini',
+  deepseek: {
+    name: 'deepseek',
+    displayName: 'DeepSeek',
     enabled: true,
-    priority: 1, // Maior prioridade (gratuito)
-    costPer1kTokens: 0, // Tier gratuito
+    priority: 1, // Alta prioridade — barato e rápido
+    costPer1kTokens:       0.00014,  // DeepSeek-V3: $0.14/MTok input
+    outputCostPer1kTokens: 0.00028,  // DeepSeek-V3: $0.28/MTok output
     rateLimit: {
-      requestsPerMinute: 15, // Limite do tier gratuito
-      tokensPerMinute: 1000000,
+      requestsPerMinute: 60,
+      tokensPerMinute: 60000,
     },
     models: {
-      default: 'gemini-2.0-flash',
-      alternatives: ['gemini-1.5-flash', 'gemini-1.5-pro'],
-    },
-  },
-  openai: {
-    name: 'openai',
-    displayName: 'OpenAI',
-    enabled: true,
-    priority: 2,
-    costPer1kTokens: 0.00015, // gpt-4o-mini
-    rateLimit: {
-      requestsPerMinute: 500,
-      tokensPerMinute: 200000,
-    },
-    models: {
-      default: 'gpt-4o-mini',
-      alternatives: ['gpt-3.5-turbo'],
-    },
-  },
-  claude: {
-    name: 'claude',
-    displayName: 'Anthropic Claude',
-    enabled: true,
-    priority: 3,
-    costPer1kTokens: 0.00025, // claude-3-haiku
-    rateLimit: {
-      requestsPerMinute: 50,
-      tokensPerMinute: 100000,
-    },
-    models: {
-      default: 'claude-3-5-haiku-20241022',
-      alternatives: ['claude-3-haiku-20240307'],
+      default: 'deepseek-chat', // DeepSeek-V3
+      alternatives: ['deepseek-reasoner'],
     },
   },
   ollama: {
@@ -107,8 +84,11 @@ export const PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> = {
       requestsPerMinute: 60,
     },
     models: {
-      default: 'phi3',
-      alternatives: ['mistral', 'llama3:8b'],
+      // Permite configurar modelo por ambiente via OLLAMA_MODEL
+      // Production: phi3 (melhor qualidade)
+      // Staging: tinyllama (mais rápido)
+      default: process.env.OLLAMA_MODEL || 'phi3',
+      alternatives: ['mistral', 'llama3:8b', 'tinyllama'],
     },
   },
 };

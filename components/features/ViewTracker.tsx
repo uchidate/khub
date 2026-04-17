@@ -3,19 +3,28 @@
 import { useEffect } from 'react'
 
 interface ViewTrackerProps {
-  artistId: string
+  artistId?: string
+  groupId?: string
+  newsId?: string
+  productionId?: string
 }
 
-export function ViewTracker({ artistId }: ViewTrackerProps) {
+export function ViewTracker({ artistId, groupId, newsId, productionId }: ViewTrackerProps) {
   useEffect(() => {
-    // Track view (fire and forget - non-blocking)
-    fetch(`/api/artists/${artistId}/view`, {
-      method: 'POST'
-    }).catch(() => {
-      // Silently fail - view tracking is not critical
-    })
-  }, [artistId])
+    const url = artistId
+      ? `/api/artists/${artistId}/view`
+      : groupId
+        ? `/api/groups/${groupId}/view`
+        : newsId
+          ? `/api/news/${newsId}/view`
+          : productionId
+            ? `/api/productions/${productionId}/view`
+            : null
 
-  // This component renders nothing
+    if (!url) return
+
+    fetch(url, { method: 'POST', credentials: 'same-origin' }).catch(() => {})
+  }, [artistId, groupId, newsId, productionId])
+
   return null
 }

@@ -59,7 +59,7 @@ export function PWAInstaller() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-50 animate-slide-up">
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-2xl p-6 relative">
+      <div className="bg-gradient-to-r from-[#ff2d78] to-pink-600 rounded-2xl shadow-2xl p-6 relative">
         <button
           onClick={handleDismiss}
           className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors"
@@ -80,7 +80,7 @@ export function PWAInstaller() {
 
             <button
               onClick={handleInstallClick}
-              className="w-full bg-white text-purple-600 font-bold py-2 px-4 rounded-lg hover:bg-zinc-100 transition-colors"
+              className="w-full bg-background text-[#ff2d78] font-bold py-2 px-4 rounded-lg hover:bg-surface transition-colors"
             >
               Instalar Agora
             </button>

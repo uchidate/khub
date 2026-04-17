@@ -30,13 +30,12 @@ export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   pages: {
     signIn: "/auth/login",
     error: "/auth/error",
     verifyRequest: "/auth/verify-request",
-    newUser: "/auth/register",
   },
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -44,7 +43,7 @@ export const authOptions: AuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
+            allowDangerousEmailAccountLinking: false,
           }),
         ]
       : []),
@@ -92,7 +91,13 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = user.role
+        // user.role may be undefined for OAuth providers (PrismaAdapter only returns standard fields)
+        // Always fetch the latest role from DB to ensure correctness for all auth methods
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        })
+        token.role = dbUser?.role ?? 'user'
       }
       return token
     },
@@ -110,6 +115,18 @@ export const authOptions: AuthOptions = {
         where: { id: user.id },
         data: { emailVerified: new Date() },
       })
+    },
+    async signIn({ user, isNewUser }) {
+      if (!user.id) return
+      await prisma.activity.create({
+        data: { userId: user.id, type: isNewUser ? 'REGISTER' : 'LOGIN' },
+      }).catch(() => {})
+    },
+    async signOut({ token }) {
+      if (!token?.id) return
+      await prisma.activity.create({
+        data: { userId: token.id as string, type: 'LOGOUT' },
+      }).catch(() => {})
     },
   },
   debug: process.env.NODE_ENV === "development",

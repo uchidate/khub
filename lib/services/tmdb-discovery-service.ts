@@ -11,6 +11,7 @@
  */
 
 import { RateLimiter, RateLimiterPresets } from '../utils/rate-limiter';
+import { isRelevantToKoreanCulture as validateKoreanRelevance } from '../utils/korean-validation';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
@@ -88,9 +89,9 @@ export class TMDBDiscoveryService {
       const details = await this.getPersonDetails(person.id);
       if (!details) continue;
 
-      // Verificar se é artista coreano
-      const isKorean = this.isKoreanArtist(details);
-      if (!isKorean) continue;
+      // Verificar se é artista relevante para cultura coreana
+      const isRelevant = this.isRelevantToKoreanCulture(details);
+      if (!isRelevant) continue;
 
       discovered.push(this.mapToDiscoveredArtist(details));
 
@@ -115,12 +116,19 @@ export class TMDBDiscoveryService {
 
   /**
    * Busca pessoas populares que trabalharam em produções coreanas
+   * OTIMIZAÇÃO: Rotação de página baseada na hora para evitar sempre os mesmos artistas
    */
   private async getPopularPeopleWithKoreanWorks(count: number): Promise<TMDBPerson[]> {
     await this.rateLimiter.acquire();
 
+    // Rotação de página baseada na hora (muda a cada hora)
+    // 20 páginas = ~400 artistas diferentes ao longo do dia
+    const page = (Math.floor(Date.now() / 3600000) % 20) + 1;
+
+    console.log(`📄 Fetching from TMDB popular page ${page} (rotates hourly)`);
+
     const response = await fetch(
-      `${TMDB_BASE_URL}/person/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=1`,
+      `${TMDB_BASE_URL}/person/popular?api_key=${TMDB_API_KEY}&language=ko-KR&page=${page}`,
       {
         headers: {
           'Accept': 'application/json',
@@ -136,10 +144,15 @@ export class TMDBDiscoveryService {
     const people: TMDBPerson[] = data.results || [];
 
     // Filtrar apenas pessoas que trabalharam em produções coreanas
-    return people.filter(person => {
+    const filtered = people.filter(person => {
       if (!person.known_for) return false;
       return person.known_for.some(work => work.original_language === 'ko');
-    }).slice(0, count);
+    });
+
+    // Randomizar ordem intra-página para mais variedade
+    const shuffled = filtered.sort(() => Math.random() - 0.5);
+
+    return shuffled.slice(0, count);
   }
 
   /**
@@ -197,8 +210,8 @@ export class TMDBDiscoveryService {
         const details = await this.getPersonDetails(member.id);
         if (!details) continue;
 
-        const isKorean = this.isKoreanArtist(details);
-        if (!isKorean) continue;
+        const isRelevant = this.isRelevantToKoreanCulture(details);
+        if (!isRelevant) continue;
 
         seenIds.add(member.id);
         artists.push(this.mapToDiscoveredArtist(details));
@@ -237,33 +250,15 @@ export class TMDBDiscoveryService {
   }
 
   /**
-   * Verifica se é um artista coreano baseado nos dados
+   * Verifica se artista é relevante para cultura coreana.
+   *
+   * Delega para utilitário compartilhado korean-validation.ts
+   * com lógica RIGOROSA (default: rejeitar se incerto).
+   *
+   * Mudança de filosofia: requer evidência positiva de relevância coreana.
    */
-  private isKoreanArtist(person: TMDBPersonDetails): boolean {
-    // Verificar local de nascimento
-    if (person.place_of_birth) {
-      const birthPlace = person.place_of_birth.toLowerCase();
-      if (
-        birthPlace.includes('korea') ||
-        birthPlace.includes('seoul') ||
-        birthPlace.includes('busan') ||
-        birthPlace.includes('incheon') ||
-        birthPlace.includes('daegu')
-      ) {
-        return true;
-      }
-    }
-
-    // Verificar nomes alternativos para nomes coreanos
-    if (person.also_known_as && person.also_known_as.length > 0) {
-      const hasKoreanName = person.also_known_as.some(name => {
-        // Detectar caracteres coreanos (Hangul)
-        return /[\uAC00-\uD7AF]/.test(name);
-      });
-      if (hasKoreanName) return true;
-    }
-
-    return false;
+  private isRelevantToKoreanCulture(person: TMDBPersonDetails): boolean {
+    return validateKoreanRelevance(person);
   }
 
   /**
@@ -279,14 +274,24 @@ export class TMDBDiscoveryService {
       koreanName,
       biography: person.biography || '',
       birthDate: person.birthday ? new Date(person.birthday) : null,
-      placeOfBirth: person.place_of_birth,
+      placeOfBirth: person.place_of_birth, // Salvamos para moderação admin
       profileImage: person.profile_path
         ? `${TMDB_IMAGE_BASE}${person.profile_path}`
         : null,
       department: person.known_for_department || 'Acting',
       popularity: person.popularity,
-      isKorean: true,
+      isKorean: this.isRelevantToKoreanCulture(person), // Validação atualizada
     };
+  }
+
+  /**
+   * Busca a foto de um artista existente pelo tmdbId
+   * Útil para corrigir artistas sem foto no banco
+   */
+  async fetchPersonPhoto(tmdbId: number): Promise<string | null> {
+    const details = await this.getPersonDetails(tmdbId);
+    if (!details?.profile_path) return null;
+    return `${TMDB_IMAGE_BASE}${details.profile_path}`;
   }
 
   /**

@@ -1,0 +1,413 @@
+'use client'
+
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import { AdminLayout } from '@/components/admin/AdminLayout'
+import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
+import { FormModal, FormField } from '@/components/admin/FormModal'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { adminApi, ApiError } from '@/lib/admin-api'
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { SocialBadges } from '@/components/admin/SocialBadges'
+import { StatCard } from '@/components/admin'
+import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminIconButton } from '@/components/admin/AdminIconButton'
+import { Plus, Users, Music2, EyeOff, Pencil, Trash2, Languages } from 'lucide-react'
+import Image from 'next/image'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface MusicalGroup {
+  id: string
+  name: string
+  nameHangul: string | null
+  mbid: string | null
+  profileImageUrl: string | null
+  debutDate: Date | null
+  disbandDate: Date | null
+  agencyId: string | null
+  agencyName: string | null
+  socialLinks: Record<string, string> | null
+  fanClubName: string | null
+  officialColor: string | null
+  videos: Array<{ title: string; url: string }> | null
+  membersCount: number
+  createdAt: Date
+  isHidden: boolean
+}
+
+interface GroupStats {
+  total: number
+  active: number
+  disbanded: number
+  noMembers: number
+  hidden: number
+}
+
+type StatusFilter = '' | 'active' | 'disbanded' | 'hidden'
+
+const SOCIAL_PLATFORMS = ['website', 'instagram', 'youtube', 'twitter', 'tiktok', 'spotify', 'weverse', 'vlive'] as const
+const MAX_MVS = 6
+
+// ─── Status Badge helper ───────────────────────────────────────────────────────
+
+function GroupStatusBadge({ group }: { group: MusicalGroup }) {
+  if (group.isHidden)    return <AdminStatusBadge label="Oculto"     color="bg-surface text-muted"                       icon={<EyeOff size={10} />} />
+  if (group.disbandDate) return <AdminStatusBadge label="Disbandado" color="bg-red-900/40 text-red-400 border-red-800/30" />
+  return                        <AdminStatusBadge label="Ativo"      color="bg-green-900/40 text-green-400 border-green-800/30" />
+}
+
+// ─── Form fields ──────────────────────────────────────────────────────────────
+
+const formFields: FormField[] = [
+  { key: 'name', label: 'Nome do Grupo', type: 'text', placeholder: 'Ex: BTS', required: true },
+  { key: 'nameHangul', label: 'Nome em Hangul', type: 'text', placeholder: 'Ex: 방탄소년단' },
+  { key: 'mbid', label: 'MusicBrainz ID', type: 'text', placeholder: 'UUID do MusicBrainz' },
+  { key: 'bio', label: 'Biografia', type: 'textarea', placeholder: 'Descrição do grupo...' },
+  { key: 'profileImageUrl', label: 'URL da Foto', type: 'text', placeholder: 'https://...' },
+  { key: 'debutDate', label: 'Data de Debut', type: 'date' },
+  { key: 'disbandDate', label: 'Data de Disbandamento', type: 'date' },
+  { key: 'agencyId', label: 'Agência', type: 'select-async', optionsUrl: '/api/admin/agencies/all' },
+  { key: 'sl_website', label: '🌐 Site Oficial', type: 'text', placeholder: 'https://bts.weverse.io' },
+  { key: 'sl_instagram', label: '📸 Instagram', type: 'text', placeholder: 'https://instagram.com/bts.bighitofficial' },
+  { key: 'sl_youtube', label: '▶️ YouTube', type: 'text', placeholder: 'https://youtube.com/@BANGTANTV' },
+  { key: 'sl_twitter', label: '🐦 Twitter / X', type: 'text', placeholder: 'https://twitter.com/BTS_twt' },
+  { key: 'sl_tiktok', label: '🎵 TikTok', type: 'text', placeholder: 'https://tiktok.com/@bts_official_bighit' },
+  { key: 'sl_spotify', label: '🎧 Spotify', type: 'text', placeholder: 'https://open.spotify.com/artist/...' },
+  { key: 'sl_weverse', label: '💬 Weverse', type: 'text', placeholder: 'https://weverse.io/bts' },
+  { key: 'sl_vlive', label: '📺 VLive', type: 'text', placeholder: 'https://channels.vlive.tv/...' },
+  { key: 'fanClubName', label: '💜 Nome do Fã-Clube', type: 'text', placeholder: 'Ex: ARMY, BLINK, ONCE' },
+  { key: 'officialColor', label: '🎨 Cor Oficial (hex)', type: 'text', placeholder: 'Ex: #c6a852' },
+  { key: 'mv1_title', label: '🎬 MV 1 — Título', type: 'text', placeholder: 'Ex: Dynamite' },
+  { key: 'mv1_url', label: '🎬 MV 1 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv2_title', label: '🎬 MV 2 — Título', type: 'text', placeholder: 'Ex: Butter' },
+  { key: 'mv2_url', label: '🎬 MV 2 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv3_title', label: '🎬 MV 3 — Título', type: 'text', placeholder: 'Ex: DNA' },
+  { key: 'mv3_url', label: '🎬 MV 3 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv4_title', label: '🎬 MV 4 — Título', type: 'text', placeholder: 'Ex: Boy With Luv' },
+  { key: 'mv4_url', label: '🎬 MV 4 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv5_title', label: '🎬 MV 5 — Título', type: 'text', placeholder: 'Ex: IDOL' },
+  { key: 'mv5_url', label: '🎬 MV 5 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'mv6_title', label: '🎬 MV 6 — Título', type: 'text', placeholder: 'Ex: Fake Love' },
+  { key: 'mv6_url', label: '🎬 MV 6 — URL YouTube', type: 'text', placeholder: 'https://youtube.com/watch?v=...' },
+  { key: 'isHidden', label: 'Visibilidade', type: 'toggle' },
+]
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function GroupsPage() {
+  const toast = useAdminToast()
+  const [formOpen, setFormOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [membersOpen, setMembersOpen] = useState(false)
+  const [managingGroup, setManagingGroup] = useState<MusicalGroup | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
+  const [stats, setStats] = useState<GroupStats | null>(null)
+
+  const fetchStats = useCallback(async () => {
+    adminApi.groups.stats().then(s => setStats(s as unknown as GroupStats)).catch(() => {})
+  }, [])
+
+  useEffect(() => { fetchStats() }, [fetchStats])
+
+  const extraParams = useMemo(
+    () => (statusFilter ? { status: statusFilter } : undefined),
+    [statusFilter],
+  )
+
+  const columns: Column<MusicalGroup>[] = useMemo(() => [
+    {
+      key: 'profileImageUrl',
+      label: 'Foto',
+      render: (group) => group.profileImageUrl ? (
+        <Image src={group.profileImageUrl} alt={group.name} width={40} height={40}
+          className="rounded-full object-cover w-10 h-10" />
+      ) : (
+        <div
+          className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-black text-foreground"
+          style={group.officialColor ? { backgroundColor: `${group.officialColor}30`, color: group.officialColor } : {}}>
+          {group.name.charAt(0).toUpperCase()}
+        </div>
+      ),
+    },
+    {
+      key: 'name', label: 'Nome', sortable: true,
+      render: (group) => (
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-foreground">{group.name}</span>
+            {group.officialColor && (
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-white/10"
+                style={{ backgroundColor: group.officialColor }} />
+            )}
+            {group.isHidden && <EyeOff size={11} className="text-muted" />}
+          </div>
+          {group.nameHangul && <div className="text-xs text-muted">{group.nameHangul}</div>}
+        </div>
+      ),
+    },
+    {
+      key: 'disbandDate', label: 'Status',
+      render: (group) => <GroupStatusBadge group={group} />,
+    },
+    {
+      key: 'membersCount', label: 'Membros', sortable: true,
+      render: (group) => (
+        <span className="text-accent font-bold tabular-nums">{group.membersCount}</span>
+      ),
+    },
+    {
+      key: 'agencyName', label: 'Agência',
+      className: 'hidden lg:table-cell',
+      render: (group) => group.agencyName
+        ? <span className="text-foreground text-sm">{group.agencyName}</span>
+        : <span className="text-muted text-xs">—</span>,
+    },
+    {
+      key: 'socialLinks', label: 'Redes',
+      className: 'hidden xl:table-cell',
+      render: (group) => <SocialBadges links={group.socialLinks} showLabels={false} maxItems={4} />,
+    },
+    {
+      key: 'debutDate', label: 'Debut', sortable: true,
+      className: 'hidden md:table-cell',
+      render: (group) => group.debutDate
+        ? <span className="text-muted text-sm">{new Date(group.debutDate).getUTCFullYear()}</span>
+        : <span className="text-muted text-xs">—</span>,
+    },
+    {
+      key: 'createdAt', label: 'Cadastro', sortable: true,
+      className: 'hidden xl:table-cell',
+      render: (group) => (
+        <span className="text-muted text-xs">
+          {new Date(group.createdAt).toLocaleDateString('pt-BR')}
+        </span>
+      ),
+    },
+  ], [])
+
+  const handleCreate = () => { setFormOpen(true) }
+  const handleManageMembers = (group: MusicalGroup) => { setManagingGroup(group); setMembersOpen(true) }
+  const handleDelete = (ids: string[]) => { setSelectedIds(ids); setDeleteOpen(true) }
+
+  const handleFormSubmit = async (data: Record<string, unknown>) => {
+    const socialLinks: Record<string, string> = {}
+    for (const platform of SOCIAL_PLATFORMS) {
+      const val = data[`sl_${platform}`] as string | undefined
+      if (val && val.trim()) socialLinks[platform] = val.trim()
+      delete data[`sl_${platform}`]
+    }
+    const videos: Array<{ title: string; url: string }> = []
+    for (let i = 1; i <= MAX_MVS; i++) {
+      const title = (data[`mv${i}_title`] as string | undefined)?.trim() ?? ''
+      const url = (data[`mv${i}_url`] as string | undefined)?.trim() ?? ''
+      delete data[`mv${i}_title`]
+      delete data[`mv${i}_url`]
+      if (url) videos.push({ title: title || `MV ${i}`, url })
+    }
+    const payload = {
+      ...data,
+      socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+      videos: videos.length > 0 ? videos : null,
+    }
+
+    try {
+      await adminApi.groups.create(payload)
+      toast.saved()
+      refetchTable()
+      fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar')
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true)
+    try {
+      await adminApi.groups.delete(selectedIds)
+      toast.deleted(`${selectedIds.length} grupo${selectedIds.length > 1 ? 's' : ''}`)
+      setDeleteOpen(false)
+      refetchTable()
+      fetchStats()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Erro ao deletar')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  const statusFilterEl = (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {([
+        ['',          'Todos',       stats?.total],
+        ['active',    'Ativos',      stats?.active],
+        ['disbanded', 'Disbandados', stats?.disbanded],
+        ['hidden',    'Ocultos',     stats?.hidden],
+      ] as [StatusFilter, string, number | undefined][]).map(([val, label, count]) => (
+        <button key={val} onClick={() => setStatusFilter(val)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+            statusFilter === val
+              ? 'bg-accent border-transparent text-white'
+              : 'bg-surface border-border text-muted hover:border-border hover:text-foreground'
+          }`}>
+          {label}
+          {count != null && (
+            <span className={`font-mono tabular-nums ${statusFilter === val ? 'text-white/80' : 'text-muted'}`}>
+              {count}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+
+  return (
+    <AdminLayout
+      title="Grupos Musicais"
+      subtitle="Gerencie os grupos musicais da plataforma"
+      actions={
+        <div className="flex items-center gap-2">
+          <AdminLinkButton href="/admin/translations?tab=group" size="sm">
+            <Languages size={11} />
+            Traduções
+          </AdminLinkButton>
+          <AdminButton variant="primary" onClick={handleCreate}>
+            <Plus size={16} />
+            Novo Grupo
+          </AdminButton>
+        </div>
+      }
+    >
+      <div className="space-y-5">
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Total"       value={stats?.total}     icon={<Music2 size={16} />} color="text-foreground" />
+          <StatCard label="Ativos"      value={stats?.active}    icon={<Users size={16} />}  color="text-green-400" />
+          <StatCard label="Disbandados" value={stats?.disbanded} icon={<Users size={16} />}  color="text-red-400" />
+          <StatCard label="Sem membros" value={stats?.noMembers} icon={<Users size={16} />}  color="text-amber-400" />
+        </div>
+
+        <DataTable<MusicalGroup>
+          columns={columns}
+          apiUrl="/api/admin/groups"
+          extraParams={extraParams}
+          filters={statusFilterEl}
+          editHref={(group) => `/admin/groups/${group.id}`}
+          onDelete={handleDelete}
+          searchPlaceholder="Buscar por nome ou hangul..."
+          actions={(group) => (
+            <div className="flex items-center gap-1">
+              <AdminIconButton onClick={() => handleManageMembers(group)} title="Gerenciar Membros">
+                <Users size={15} />
+              </AdminIconButton>
+              <AdminIconButton variant="danger" onClick={() => handleDelete([group.id])} title="Excluir">
+                <Trash2 size={15} />
+              </AdminIconButton>
+            </div>
+          )}
+          renderMobileCard={(group) => (
+            <div className="p-3 flex items-start gap-3">
+              {/* Photo / avatar */}
+              {group.profileImageUrl ? (
+                <Image src={group.profileImageUrl} alt={group.name} width={48} height={48}
+                  className="rounded-full object-cover w-12 h-12 flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center text-sm font-black text-foreground flex-shrink-0"
+                  style={group.officialColor ? { backgroundColor: `${group.officialColor}30`, color: group.officialColor } : {}}>
+                  {group.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-semibold text-foreground truncate">{group.name}</span>
+                      {group.officialColor && (
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-white/10"
+                          style={{ backgroundColor: group.officialColor }} />
+                      )}
+                    </div>
+                    {group.nameHangul && <div className="text-xs text-muted">{group.nameHangul}</div>}
+                  </div>
+                  <GroupStatusBadge group={group} />
+                </div>
+
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted flex-wrap">
+                  <span className="text-accent font-bold flex items-center gap-1">
+                    <Users size={10} /> {group.membersCount}
+                  </span>
+                  {group.agencyName && <span className="truncate">{group.agencyName}</span>}
+                  {group.debutDate && <span>{new Date(group.debutDate).getUTCFullYear()}</span>}
+                  {group.fanClubName && (
+                    <span className="text-pink-400/70">{group.fanClubName}</span>
+                  )}
+                </div>
+
+                {group.socialLinks && Object.keys(group.socialLinks).length > 0 && (
+                  <div className="mt-2">
+                    <SocialBadges links={group.socialLinks} />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleManageMembers(group) }}
+                    className="text-xs text-muted hover:text-foreground flex items-center gap-1 transition-colors"
+                  >
+                    <Users size={10} /> Membros
+                  </button>
+                  <a
+                    href={`/admin/groups/${group.id}`}
+                    className="text-xs text-muted hover:text-foreground flex items-center gap-1 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Pencil size={10} /> Editar
+                  </a>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete([group.id]) }}
+                    className="text-xs text-muted hover:text-red-400 flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 size={10} /> Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        />
+      </div>
+
+      <FormModal
+        title="Novo Grupo Musical"
+        fields={formFields}
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSubmit={handleFormSubmit}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title={`Excluir ${selectedIds.length} grupo${selectedIds.length > 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita. Os dados serão removidos permanentemente."
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleteLoading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteOpen(false)}
+      />
+
+      {managingGroup && (
+        <GroupMembersModal
+          groupId={managingGroup.id}
+          groupName={managingGroup.name}
+          open={membersOpen}
+          onClose={() => { setMembersOpen(false); setManagingGroup(null) }}
+        />
+      )}
+    </AdminLayout>
+  )
+}

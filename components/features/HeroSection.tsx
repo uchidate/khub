@@ -1,77 +1,306 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
+import { ArrowRight, Users, Music2, Film, Newspaper, TrendingUp, Flame } from 'lucide-react'
 
-export function HeroSection() {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface TrendingArtist {
+    id: string
+    nameRomanized: string
+    primaryImageUrl: string | null
+}
+
+interface LatestNewsItem {
+    id: string
+    title: string
+    imageUrl: string | null
+    publishedAt: string
+}
+
+interface SiteStats {
+    artists: number
+    productions: number
+    news: number
+    views: number
+}
+
+interface HeroSectionProps {
+    trendingArtists: TrendingArtist[]
+    latestNews: LatestNewsItem[]
+    stats: SiteStats
+}
+
+const ROTATING_CTAS = [
+    { href: '/artists',     label: 'Explorar Artistas', icon: Users },
+    { href: '/productions', label: 'Ver Produções',      icon: Film },
+    { href: '/groups',      label: 'Descobrir Grupos',   icon: Music2 },
+    { href: '/news',        label: 'Últimas Notícias',   icon: Newspaper },
+]
+
+export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionProps) {
+    const [ctaIndex, setCtaIndex] = useState(0)
+    const [newsIndex, setNewsIndex] = useState(0)
+
+    useEffect(() => {
+        const timer = setInterval(() => setCtaIndex(i => (i + 1) % ROTATING_CTAS.length), 3000)
+        return () => clearInterval(timer)
+    }, [])
+
+    useEffect(() => {
+        if (latestNews.length <= 1) return
+        const timer = setInterval(() => setNewsIndex(i => (i + 1) % latestNews.length), 4000)
+        return () => clearInterval(timer)
+    }, [latestNews.length])
+
+    const currentCta = ROTATING_CTAS[ctaIndex]
+    const currentNews = latestNews[newsIndex] ?? null
+
+    const hasRightPanel = trendingArtists.length > 0 || latestNews.length > 0
+
     return (
-        <section className="relative min-h-[80vh] w-full flex items-center justify-center overflow-hidden">
+        <section className="relative w-full overflow-hidden pt-24 pb-8 md:pt-28 md:pb-10">
+
             {/* Background */}
             <div className="absolute inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black z-10" />
-                <motion.div
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 10, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-                    className="relative w-full h-full"
-                >
-                    <Image
-                        src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=2000"
-                        alt="Hallyu Wave Background"
-                        fill
-                        priority
-                        className="object-cover opacity-60"
-                    />
-                </motion.div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black z-10" />
+                <Image
+                    src="https://images.unsplash.com/photo-1574169208507-84376144848b?q=60&w=1200"
+                    alt=""
+                    fill
+                    priority
+                    aria-hidden="true"
+                    className="object-cover opacity-25"
+                    sizes="100vw"
+                />
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#ff2d78]/20 blur-[120px] rounded-full z-20" />
+                <div className="absolute top-0 right-1/4 w-96 h-96 bg-neon-pink/10 blur-[120px] rounded-full z-20" />
             </div>
 
-            {/* Content */}
-            <div className="relative z-30 container mx-auto px-4 text-center pt-24 md:pt-0">
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                >
-                    <span className="inline-block text-sm font-bold uppercase tracking-[0.3em] text-neon-pink mb-6 text-shadow-glow">
-                        CULTURA • MÚSICA • DRAMA
-                    </span>
-                </motion.div>
+            {/* ── Hero content ──────────────────────────────────────────── */}
+            <div className={`relative z-30 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 ${hasRightPanel ? 'grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 lg:gap-12 items-center' : ''}`}>
 
-                <motion.h1
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    className="text-6xl md:text-9xl font-display font-black mb-6 tracking-tighter leading-tight italic"
-                >
-                    A ONDA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple via-neon-pink to-electric-cyan animate-gradient bg-[length:200%_auto]">HALLYU</span><br />
-                    NO SEU RITMO.
-                </motion.h1>
+                {/* ── Left: headline + CTA ── */}
+                <div className="min-w-0">
+                    <div className="animate-slide-up">
+                        <p className="inline-flex items-center gap-1.5 text-neon-pink font-black tracking-widest uppercase text-[10px] mb-4 px-3 py-1 rounded-full border border-neon-pink/30 bg-neon-pink/10">
+                            A plataforma Hallyu do Brasil
+                        </p>
 
-                <motion.p
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                    className="text-xl text-zinc-300 mb-10 max-w-2xl mx-auto leading-relaxed"
-                >
-                    Explore o universo do K-Pop, K-Dramas e cultura coreana com detalhes impressionantes e design premium.
-                </motion.p>
+                        <h1 className="text-4xl md:text-6xl xl:text-7xl 2xl:text-8xl font-display font-black mb-4 tracking-tighter leading-[0.95] italic">
+                            A ONDA{' '}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff2d78] via-neon-pink to-neon-cyan animate-gradient bg-[length:200%_auto]">
+                                HALLYU
+                            </span>
+                            <br />
+                            NO SEU RITMO.
+                        </h1>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.8 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-                >
-                    <Link href="/artists" className="btn-primary flex items-center gap-2 group">
-                        <span>Explorar Artistas</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform group-hover:translate-x-1"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-                    </Link>
-                    <Link href="/about" className="btn-secondary">
-                        Saiba Mais
-                    </Link>
-                </motion.div>
+                        <p className="text-sm text-[#999] mb-3 max-w-lg leading-relaxed">
+                            Artistas, Produções e Notícias da cultura coreana.
+                        </p>
+
+                        {/* Stats inline */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-6">
+                            {[
+                                { icon: Users,      href: '/artists',     label: 'Artistas',  value: stats.artists },
+                                { icon: Film,       href: '/productions', label: 'Produções', value: stats.productions },
+                                { icon: Newspaper,  href: '/news',        label: 'Notícias',  value: stats.news },
+                            ].map(({ icon: Icon, href, label, value }) => (
+                                <a key={label} href={href} className="flex items-center gap-1 text-muted hover:text-[#e8e8e8] transition-colors group">
+                                    <Icon className="w-3 h-3 group-hover:text-neon-pink transition-colors" />
+                                    <span className="text-xs font-black text-white tabular-nums">{value.toLocaleString('pt-BR')}</span>
+                                    <span className="text-[11px] text-[#444]">{label}</span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Rotating CTA */}
+                    <div
+                        className="flex gap-3 items-center animate-slide-up"
+                        style={{ animationDelay: '0.15s', animationFillMode: 'both' }}
+                    >
+                        <div className="h-10 flex items-center">
+                            <div key={ctaIndex} className="animate-fade-in">
+                                <Link href={currentCta.href} className="btn-primary flex items-center gap-2 group text-sm">
+                                    <currentCta.icon className="w-4 h-4 flex-shrink-0" />
+                                    <span>{currentCta.label}</span>
+                                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 flex-shrink-0" />
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="flex gap-0 items-center">
+                            {ROTATING_CTAS.map((cta, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setCtaIndex(i)}
+                                    aria-label={`Ir para ${cta.label}`}
+                                    className="flex items-center justify-center w-8 h-8"
+                                >
+                                    <span className={`rounded-full transition-all duration-300 ${
+                                        i === ctaIndex ? 'bg-neon-pink w-4 h-1.5' : 'bg-[#444] hover:bg-[#999] w-1.5 h-1.5'
+                                    }`} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Right: live content (desktop only) ── */}
+                {hasRightPanel && (
+                    <div
+                        className="hidden lg:flex flex-col gap-3 animate-slide-in-right"
+                        style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
+                    >
+                        {/* Trending artists card */}
+                        {trendingArtists.length > 0 && (
+                            <div className="glass-card p-4 rounded-2xl border border-white/8 bg-black/40 backdrop-blur-md">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <Flame className="w-3.5 h-3.5 text-orange-500" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-400">
+                                            Trending Agora
+                                        </p>
+                                    </div>
+                                    <Link
+                                        href="/artists?sortBy=trending"
+                                        className="text-[10px] text-muted hover:text-white uppercase tracking-widest transition-colors"
+                                    >
+                                        Ver todos →
+                                    </Link>
+                                </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {trendingArtists.slice(0, 5).map((artist, i) => (
+                                        <Link
+                                            key={artist.id}
+                                            href={`/artists/${artist.id}`}
+                                            className="group flex flex-col items-center gap-1.5"
+                                        >
+                                            <div className={`relative w-full aspect-square rounded-xl overflow-hidden border transition-all duration-300 ${i === 0 ? 'border-orange-500/50 group-hover:border-orange-400' : 'border-white/10 group-hover:border-neon-pink/50'}`}>
+                                                {artist.primaryImageUrl ? (
+                                                    <Image
+                                                        src={artist.primaryImageUrl}
+                                                        alt={artist.nameRomanized}
+                                                        fill
+                                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        sizes="60px"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white font-black text-sm">
+                                                        {artist.nameRomanized[0]}
+                                                    </div>
+                                                )}
+                                                {i === 0 && (
+                                                    <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                                                        <span className="text-[8px] font-black text-black">1</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-[9px] text-[#999] group-hover:text-white text-center truncate w-full transition-colors font-semibold leading-tight">
+                                                {artist.nameRomanized.split(' ')[0]}
+                                            </p>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Latest news */}
+                        {latestNews.length > 0 && currentNews && (
+                            <div className="glass-card rounded-2xl border border-white/8 bg-black/40 backdrop-blur-md overflow-hidden">
+                                <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#999]">
+                                        Últimas Notícias
+                                    </p>
+                                    {latestNews.length > 1 && (
+                                        <div className="flex gap-0">
+                                            {latestNews.map((news, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setNewsIndex(i)}
+                                                    aria-label={`Ver notícia ${i + 1}: ${news.title}`}
+                                                    className="flex items-center justify-center w-6 h-6"
+                                                >
+                                                    <span className={`rounded-full transition-all duration-300 ${
+                                                        i === newsIndex
+                                                            ? 'bg-neon-cyan w-3 h-1'
+                                                            : 'bg-[#2a2a2a] hover:bg-[#6b6b6b] w-1 h-1'
+                                                    }`} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div key={currentNews.id} className="animate-fade-in">
+                                        <Link href={`/news/${currentNews.id}`} className="flex gap-3 items-center px-4 pb-4 group">
+                                            {currentNews.imageUrl && (
+                                                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]">
+                                                    <Image
+                                                        src={currentNews.imageUrl}
+                                                        alt={currentNews.title}
+                                                        fill
+                                                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        sizes="64px"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-white group-hover:text-neon-cyan transition-colors line-clamp-3 leading-snug">
+                                                    {currentNews.title}
+                                                </p>
+                                                <p className="text-[10px] text-[#444] mt-1.5">
+                                                    {new Date(currentNews.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
+
+            {/* ── Trending strip (mobile only) ─────────────────────────── */}
+            {trendingArtists.length > 0 && (
+                <div
+                    className="relative z-30 border-t border-white/8 bg-black/50 backdrop-blur-sm mt-8 lg:hidden animate-fade-in"
+                    style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
+                >
+                    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <Flame className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Trending</span>
+                        </div>
+                        <div className="flex items-center gap-3 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
+                            {trendingArtists.slice(0, 8).map((artist) => (
+                                <Link
+                                    key={artist.id}
+                                    href={`/artists/${artist.id}`}
+                                    className="flex-shrink-0 flex items-center gap-2 group"
+                                >
+                                    <div className="relative w-7 h-7 rounded-full overflow-hidden border border-white/10 group-hover:border-neon-pink/50 transition-all flex-shrink-0">
+                                        {artist.primaryImageUrl ? (
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover" sizes="28px" />
+                                        ) : (
+                                            <div className="w-full h-full bg-[#1a1a1a] flex items-center justify-center text-white text-[9px] font-black">
+                                                {artist.nameRomanized[0]}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[11px] font-semibold text-[#999] group-hover:text-white transition-colors hidden sm:block">
+                                        {artist.nameRomanized}
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </section>
     )
 }

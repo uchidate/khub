@@ -1,0 +1,77 @@
+{
+  "title": "KHub - Alerts & SLO",
+  "uid": "khub-alerts-slo",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": ["khub", "alerts", "slo"],
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Critical Firing",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "count(ALERTS{alertstate=\"firing\",severity=\"critical\"}) or vector(0)" }]
+    },
+    {
+      "id": 2,
+      "title": "Warning Firing",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "count(ALERTS{alertstate=\"firing\",severity=\"warning\"}) or vector(0)" }]
+    },
+    {
+      "id": 3,
+      "title": "Availability 1h",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "job:blackbox:availability_1h * 100" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 4,
+      "title": "Availability 5m",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "refId": "A", "expr": "job:blackbox:availability_5m * 100" }],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 5,
+      "title": "Firing Alerts by Name",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "targets": [{ "refId": "A", "expr": "sum by (alertname) (ALERTS{alertstate=\"firing\"})", "legendFormat": "{{alertname}}" }]
+    },
+    {
+      "id": 6,
+      "title": "Probe Success Trend",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        { "refId": "A", "expr": "probe_success{job=\"blackbox-hallyuhub-prod\"}", "legendFormat": "prod" },
+        { "refId": "B", "expr": "probe_success{job=\"blackbox-hallyuhub-staging\"}", "legendFormat": "staging" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "App/Infra Alert Signals",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "refId": "A", "expr": "hallyuhub_up{environment=\"production\"}", "legendFormat": "hallyuhub_up" },
+        { "refId": "B", "expr": "up{job=\"node-exporter\"}", "legendFormat": "node-exporter" },
+        { "refId": "C", "expr": "up{job=\"cadvisor\"}", "legendFormat": "cadvisor" }
+      ]
+    }
+  ]
+}
