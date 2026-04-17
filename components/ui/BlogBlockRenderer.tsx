@@ -440,8 +440,8 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                         : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
             ).reduce<React.ReactNode[]>((acc, node, idx) => {
                 acc.push(node)
-                // Inject in-article ad after the 4th block
-                if (idx === 3) acc.push(<InArticleAd key="ad-mid" />)
+                if (idx === 3) acc.push(<InArticleAd key="ad-1" />)
+                if (idx === 9) acc.push(<InArticleAd key="ad-2" />)
                 return acc
             }, [])}
         </div>
