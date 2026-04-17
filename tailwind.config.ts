@@ -83,6 +83,7 @@ const config: Config = {
                 'gradient': 'gradient 8s linear infinite',
                 'home-ticker':  'home-ticker 42s linear infinite',
                 'home-marquee': 'home-marquee 24s linear infinite',
+                'slideUp': 'slideUp 300ms ease-out',
             },
             keyframes: {
                 float: {
@@ -108,6 +109,10 @@ const config: Config = {
                 'home-marquee': {
                     '0%': { transform: 'translateX(0)' },
                     '100%': { transform: 'translateX(-50%)' },
+                },
+                slideUp: {
+                    '0%': { transform: 'translateY(100%)' },
+                    '100%': { transform: 'translateY(0)' },
                 },
             }
         },
