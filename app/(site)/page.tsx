@@ -337,6 +337,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     group={randomGroup ? { id: randomGroup.id, name: randomGroup.name } : null}
                     production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt } : null}
                 />
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot="1740970038" format="auto" />
+                </div>
                 <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
                 <HomeBlogFeed
                     key={`${activeCategory ?? 'all'}:${activeTag ?? 'all'}`}
@@ -347,6 +350,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     initialCategory={activeCategory}
                     initialTag={activeTag}
                 />
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot="1740970038" format="auto" />
+                </div>
                 {(hasStreaming || trendingGroups.length > 0) && (
                     <section className="border-b border-border bg-background">
                         <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
