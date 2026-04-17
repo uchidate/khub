@@ -20,6 +20,7 @@ import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
 import { AdSenseLoader } from "@/components/features/AdSenseLoader"
+import { StickyBottomAd } from "@/components/ui/StickyBottomAd"
 
 const getTickerPosts = unstable_cache(
     async () => {
@@ -187,6 +188,7 @@ export default async function RootLayout({
                         <AuthGateModal />
                         <PWAInstaller />
                         <CookieBanner />
+                        <StickyBottomAd />
                         <BottomNav />
                         <SiteFooter />
                     </div>
