@@ -465,6 +465,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
+                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
                             <div>

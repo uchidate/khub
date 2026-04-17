@@ -13,6 +13,7 @@ import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/S
 import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
 import { HomeRecommended } from "@/components/home/HomeRecommended"
 import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
+import { AdBanner } from "@/components/ui/AdBanner"
 
 export const dynamic = 'force-dynamic'
 
@@ -327,12 +328,18 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
+            <div className="max-w-7xl mx-auto px-4 py-4">
+                <AdBanner slot="1740970038" format="auto" />
+            </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
                     artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized } : null}
                     group={randomGroup ? { id: randomGroup.id, name: randomGroup.name } : null}
                     production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt } : null}
                 />
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot="1740970038" format="auto" />
+                </div>
                 <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
                 <HomeBlogFeed
                     key={`${activeCategory ?? 'all'}:${activeTag ?? 'all'}`}
@@ -343,6 +350,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     initialCategory={activeCategory}
                     initialTag={activeTag}
                 />
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot="1740970038" format="auto" />
+                </div>
                 {(hasStreaming || trendingGroups.length > 0) && (
                     <section className="border-b border-border bg-background">
                         <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
@@ -355,6 +365,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                         </div>
                     </section>
                 )}
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <AdBanner slot="1740970038" format="auto" />
+                </div>
                 <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
             </div>
             <ScrollToTop />
