@@ -455,6 +455,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </div>
                         )}
 
+                        {/* Ad sidebar */}
+                        <AdBanner slot="1740970038" format="auto" />
 
                     </div>
 
@@ -508,10 +510,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         )}
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner
-                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST ?? ''}
-                            format="horizontal"
-                        />
+                        <AdBanner slot="1740970038" format="auto" className="my-2" />
 
                         {/* Filmography */}
                         <section>
@@ -639,8 +638,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {artist.albums.length > 0 && (
                             <DiscographySection albums={artist.albums} />
                         )}
-
-                        <AdBanner slot="1740970038" format="auto" className="my-8" />
 
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
