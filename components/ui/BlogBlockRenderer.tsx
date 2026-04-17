@@ -384,6 +384,7 @@ function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
     return typeof item === 'object' && item !== null && '_portraitGroup' in item
 }
 
+
 export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
     // Group consecutive compact cards into a 2-col desktop grid
     // Group consecutive non-compact artist cards into a portrait editorial grid

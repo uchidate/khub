@@ -20,6 +20,29 @@ import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 const BASE_URL = SITE_URL
 
+function MarkdownWithAds({ content }: { content: string }) {
+  // Split on H2/H3 headings to inject ads between sections
+  const sections = content.split(/(?=^#{2,3} )/m).filter(Boolean)
+  if (sections.length <= 2) {
+    return (
+      <>
+        <MarkdownRenderer content={content} />
+        <AdBanner slot="1740970038" format="auto" className="my-8" />
+      </>
+    )
+  }
+  const midpoint = Math.floor(sections.length / 2)
+  const firstHalf = sections.slice(0, midpoint).join('')
+  const secondHalf = sections.slice(midpoint).join('')
+  return (
+    <>
+      <MarkdownRenderer content={firstHalf} />
+      <AdBanner slot="1740970038" format="auto" className="my-8" />
+      <MarkdownRenderer content={secondHalf} />
+    </>
+  )
+}
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
@@ -242,10 +265,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
             ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
-            : <MarkdownRenderer content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
+            : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
           }
         </article>
 
+        {/* Ad após conteúdo */}
+        <AdBanner slot="1740970038" format="auto" className="mt-8" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
