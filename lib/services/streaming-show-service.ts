@@ -100,42 +100,19 @@ async function fetchShowsForSource(source: string): Promise<TMDBShow[]> {
         .slice(0, TOP_N_PLATFORM)
 }
 
-// ─── Enriquecimento: detalhes por show ────────────────────────────────────────
+// ─── Conversão direta do listing (sem chamada extra por show) ────────────────
 
-async function enrichShow(show: TMDBShow): Promise<EnrichedShow> {
-    try {
-        const detail = await tmdbFetch<{
-            poster_path: string | null
-            first_air_date?: string
-            vote_average?: number
-            original_language?: string
-        }>(`/tv/${show.id}`)
-
-        const year = detail.first_air_date
-            ? new Date(detail.first_air_date).getFullYear()
-            : null
-
-        return {
-            tmdbId: String(show.id),
-            showTitle: show.name,
-            posterUrl: detail.poster_path ? `${TMDB_IMAGE_BASE}${detail.poster_path}` : null,
-            year: isNaN(year as number) ? null : year,
-            voteAverage: detail.vote_average ?? null,
-            isKorean: detail.original_language === 'ko',
-        }
-    } catch {
-        // Fallback: usa dados básicos do listing
-        const year = show.first_air_date
-            ? new Date(show.first_air_date).getFullYear()
-            : null
-        return {
-            tmdbId: String(show.id),
-            showTitle: show.name,
-            posterUrl: show.poster_path ? `${TMDB_IMAGE_BASE}${show.poster_path}` : null,
-            year: isNaN(year as number) ? null : year,
-            voteAverage: show.vote_average ?? null,
-            isKorean: show.original_language === 'ko',
-        }
+function toEnriched(show: TMDBShow): EnrichedShow {
+    const year = show.first_air_date
+        ? new Date(show.first_air_date).getFullYear()
+        : null
+    return {
+        tmdbId: String(show.id),
+        showTitle: show.name,
+        posterUrl: show.poster_path ? `${TMDB_IMAGE_BASE}${show.poster_path}` : null,
+        year: isNaN(year as number) ? null : year,
+        voteAverage: show.vote_average ?? null,
+        isKorean: show.original_language === 'ko',
     }
 }
 
@@ -183,60 +160,40 @@ async function persist(source: string, shows: Array<EnrichedShow & { productionI
 
 // ─── Sincronização principal ──────────────────────────────────────────────────
 
+async function syncSource(source: string): Promise<ShowSyncResult> {
+    const result: ShowSyncResult = { source, fetched: 0, upserted: 0 }
+    try {
+        log.info(`Fetching shows for ${source}`)
+        const raw = await fetchShowsForSource(source)
+        result.fetched = raw.length
+
+        if (raw.length === 0) return result
+
+        const enriched = raw.map(toEnriched)
+
+        const filtered = source === 'trending_global'
+            ? enriched.filter(s => s.isKorean)
+            : enriched
+
+        if (filtered.length === 0) return result
+
+        const productionMap = await matchProductions(filtered.map(s => s.tmdbId))
+        const withProductions = filtered.map(s => ({
+            ...s,
+            productionId: productionMap.get(s.tmdbId),
+        }))
+
+        result.upserted = await persist(source, withProductions)
+        log.info(`${source}: ${result.fetched} fetched, ${filtered.length} filtered, ${result.upserted} saved`)
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        result.error = msg
+        log.error(`${source} failed: ${msg}`)
+    }
+    return result
+}
+
 export async function syncStreamingShows(): Promise<ShowSyncResult[]> {
     if (!TMDB_API_KEY) throw new Error('TMDB_API_KEY não configurado')
-
-    const results: ShowSyncResult[] = []
-    const sources = STREAMING_TAB_ORDER
-
-    for (const source of sources) {
-        const result: ShowSyncResult = { source, fetched: 0, upserted: 0 }
-
-        try {
-            log.info(`Fetching shows for ${source}`)
-            const raw = await fetchShowsForSource(source)
-            result.fetched = raw.length
-
-            if (raw.length === 0) {
-                results.push(result)
-                continue
-            }
-
-            // Enriquecer com detalhes TMDB
-            const enriched: EnrichedShow[] = []
-            for (const show of raw) {
-                enriched.push(await enrichShow(show))
-            }
-
-            // Para trending_global: filtrar apenas K-dramas
-            const filtered = source === 'trending_global'
-                ? enriched.filter(s => s.isKorean)
-                : enriched
-
-            if (filtered.length === 0) {
-                results.push(result)
-                continue
-            }
-
-            // Cruzar com Productions do banco
-            const tmdbIds = filtered.map(s => s.tmdbId)
-            const productionMap = await matchProductions(tmdbIds)
-
-            const withProductions = filtered.map(s => ({
-                ...s,
-                productionId: productionMap.get(s.tmdbId),
-            }))
-
-            result.upserted = await persist(source, withProductions)
-            log.info(`${source}: ${result.fetched} fetched, ${filtered.length} Korean, ${result.upserted} saved`)
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err)
-            result.error = msg
-            log.error(`${source} failed: ${msg}`)
-        }
-
-        results.push(result)
-    }
-
-    return results
+    return Promise.all(STREAMING_TAB_ORDER.map(syncSource))
 }
