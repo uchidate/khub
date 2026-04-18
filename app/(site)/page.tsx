@@ -333,9 +333,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
             </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
-                    artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized } : null}
-                    group={randomGroup ? { id: randomGroup.id, name: randomGroup.name } : null}
-                    production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt } : null}
+                    artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
+                    group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}
+                    production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
                 />
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <AdBanner slot="1740970038" format="auto" />
