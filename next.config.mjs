@@ -7,10 +7,10 @@ const nextConfig = {
         },
     },
     async rewrites() {
-        // Proxy Umami via URL pública — independente de rede Docker
+        // /um/api/send é servido pela route handler em app/um/api/send/route.ts
+        // que passa o IP real do cliente diretamente ao Umami via rede Docker interna
         return [
             { source: '/um/script.js', destination: 'https://umami.hallyuhub.com.br/script.js' },
-            { source: '/um/api/send',  destination: 'https://umami.hallyuhub.com.br/api/send'  },
         ]
     },
     async headers() {
