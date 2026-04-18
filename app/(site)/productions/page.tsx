@@ -10,7 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL

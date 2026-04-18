@@ -11,7 +11,7 @@ import { AdBanner } from "@/components/ui/AdBanner"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { SITE_URL } from '@/lib/constants/site'
 
-export const dynamic = 'force-dynamic'
+// ISR ativo — revalidate abaixo substitui force-dynamic
 export const revalidate = 3600
 
 const BASE_URL = SITE_URL
