@@ -1,4 +1,7 @@
+'use client'
+
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 
 interface SiteStats {
     artists: number
@@ -8,7 +11,6 @@ interface SiteStats {
 
 interface HomeBlogSectionProps {
     siteStats: SiteStats
-    isLoggedIn?: boolean
 }
 
 function formatCount(n: number): string {
@@ -23,7 +25,10 @@ const STATS = (stats: SiteStats) => [
     { label: 'produções', value: formatCount(stats.productions) },
 ]
 
-export function HomeBlogSection({ siteStats, isLoggedIn }: HomeBlogSectionProps) {
+export function HomeBlogSection({ siteStats }: HomeBlogSectionProps) {
+    const { data: session } = useSession()
+    const isLoggedIn = !!session?.user
+
     return (
         <section className="bg-background py-4 pb-12 sm:pb-4 px-4 sm:px-6 lg:px-12">
             <div className="max-w-7xl mx-auto">
