@@ -38,7 +38,7 @@ const getTickerPosts = unstable_cache(
         }
     },
     ['layout-ticker-posts-v1'],
-    { revalidate: 120 }
+    { revalidate: 600 }
 )
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
