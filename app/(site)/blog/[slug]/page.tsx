@@ -43,7 +43,7 @@ function MarkdownWithAds({ content }: { content: string }) {
   )
 }
 
-export const dynamic = 'force-dynamic'
+// ISR ativo — force-dynamic removido; generateStaticParams pré-renderiza os posts publicados
 export const revalidate = 3600
 
 export async function generateStaticParams() {
@@ -126,7 +126,7 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
     <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
       {post.coverImageUrl ? (
         <div className="relative aspect-video rounded-t-2xl overflow-hidden">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       ) : (
         <div className="aspect-video rounded-t-2xl bg-[#ff2d78]/5 flex items-center justify-center">
@@ -257,7 +257,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Cover image */}
         {post.coverImageUrl && (
           <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
-            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority unoptimized />
+            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
           </div>
         )}
 

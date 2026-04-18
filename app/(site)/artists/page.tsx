@@ -10,8 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from '@/lib/constants/site'
 
-export const dynamic = 'force-dynamic'
-
+// searchParams já torna a página dinâmica no Next.js — force-dynamic redundante
 const BASE_URL = SITE_URL
 const DEFAULT_PER_PAGE = 50
 
