@@ -25,27 +25,33 @@ export function SearchBar() {
   const { trackSearch, trackArtistClick, trackProductionClick } = useUmami()
 
   useEffect(() => {
-    if (debouncedQuery.length >= 2) {
-      setIsLoading(true)
-      setError(null)
-      fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
-        .then(res => res.json())
-        .then(data => {
-          const r = data.results || []
-          setResults(r)
-          setIsLoading(false)
-          trackSearch(debouncedQuery, r.length)
-        })
-        .catch(err => {
-          console.error('Search error:', err)
-          setError('Erro ao buscar. Tente novamente.')
-          setIsLoading(false)
-        })
-    } else {
+    if (debouncedQuery.length < 2) {
       setResults([])
       setError(null)
       setIsLoading(false)
+      return
     }
+
+    const controller = new AbortController()
+    setIsLoading(true)
+    setError(null)
+
+    fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`, { signal: controller.signal })
+      .then(res => res.json())
+      .then(data => {
+        const r = data.results || []
+        setResults(r)
+        setIsLoading(false)
+        trackSearch(debouncedQuery, r.length)
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return
+        console.error('Search error:', err)
+        setError('Erro ao buscar. Tente novamente.')
+        setIsLoading(false)
+      })
+
+    return () => controller.abort()
   }, [debouncedQuery])
 
   const handleClear = () => {

@@ -45,7 +45,7 @@ const getArtist = cache(async (id: string) => {
         where: { id },
         include: {
             agency: true,
-            albums: { orderBy: { releaseDate: 'desc' } },
+            albums: { orderBy: { releaseDate: 'desc' }, take: 20 },
             productions: {
                 where: {
                     production: {
@@ -57,12 +57,17 @@ const getArtist = cache(async (id: string) => {
                         ],
                     }
                 },
-                include: { production: true },
+                include: { production: { select: {
+                    id: true, titlePt: true, type: true, year: true, imageUrl: true,
+                    voteAverage: true, synopsis: true, tmdbId: true, releaseDate: true,
+                    ageRating: true, isAdultContent: true,
+                } } },
                 orderBy: [
                     { production: { releaseDate: { sort: 'desc', nulls: 'last' } } },
                     { production: { year: { sort: 'desc', nulls: 'last' } } },
                     { production: { createdAt: 'desc' } },
                 ],
+                take: 24,
             },
             memberships: {
                 include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
@@ -168,7 +173,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     // Step 2: queries secundárias todas em paralelo (incluindo relatedArtists)
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const productionIds = artist.productions.map(ap => ap.production.id)
-    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles] = await Promise.all([
+    const productionWhere = {
+        artistId: params.id,
+        production: {
+            flaggedAsNonKorean: false, isHidden: false,
+            AND: [
+                { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+                { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+            ],
+        },
+    }
+    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles, totalProductions, totalAlbums] = await Promise.all([
         prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } } }).catch(() => 0),
         getTranslation('artist', params.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
@@ -195,6 +210,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             orderBy: { publishedAt: 'desc' },
             take: 6,
         }).catch(() => []),
+        prisma.artistProduction.count({ where: productionWhere }).catch(() => artist.productions.length),
+        prisma.album.count({ where: { artistId: params.id } }).catch(() => artist.albums.length),
     ])
 
     // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
@@ -521,9 +538,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 </div>
                                 <div className="flex-1 h-px bg-[#e8e8e8]" />
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className="flex items-center gap-1 text-xs font-bold text-[#ff2d78]"><Film className="w-3 h-3" />{artist.productions.length}</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-[#ff2d78]"><Film className="w-3 h-3" />{totalProductions}</span>
                                     <span className="text-muted">·</span>
-                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-500"><Disc3 className="w-3 h-3" />{artist.albums.length}</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-500"><Disc3 className="w-3 h-3" />{totalAlbums}</span>
                                     <span className="text-muted">·</span>
                                     <span className="flex items-center gap-1 text-xs font-bold text-amber-500"><Newspaper className="w-3 h-3" />{newsCount}</span>
                                 </div>
@@ -620,6 +637,16 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                         )
                                     })}
                                 </div>
+                                {totalProductions > 24 && (
+                                    <div className="mt-4 text-center">
+                                        <Link
+                                            href={`/productions?artistId=${artist.id}`}
+                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground border border-border rounded-full px-4 py-2 hover:border-foreground/30 transition-all"
+                                        >
+                                            Ver todos os {totalProductions} trabalhos →
+                                        </Link>
+                                    </div>
+                                )}
                                 </>
 
                             ) : (
