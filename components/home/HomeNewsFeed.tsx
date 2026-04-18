@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { BLOG_CATEGORY_BY_SLUG, BLOG_CATEGORIES, HOME_FEED_CATEGORIES } from "@/lib/config/categories"
+import { AdBanner } from "@/components/ui/AdBanner"
 
 interface BlogFeedItem {
     id: string
@@ -481,8 +482,11 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                             ))}
                         </div>
 
+                        {/* Ad entre Em destaque e Explorar categorias */}
+                        <AdBanner slot="1740970038" format="auto" className="px-3 py-2 border-b border-border" />
+
                         {/* Explorar categorias */}
-                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-t border-b border-border mt-auto bg-surface/35">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-t border-b border-border bg-surface/35">
                             Explorar categorias
                         </div>
                         <div className="flex flex-col">
