@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { nameToGradient } from "@/lib/utils"
@@ -12,10 +15,12 @@ interface RecommendedArtist {
     agency?: { name: string } | null
 }
 
-interface HomeRecommendedProps {
-    artists: RecommendedArtist[]
+interface PersonalizedData {
+    isLoggedIn: boolean
     hasFavorites: boolean
+    recommendedArtists: RecommendedArtist[]
 }
+
 
 const ROLE_LABELS: Record<string, [string, string]> = {
     'ATOR':      ['Ator',      'Atriz'],
@@ -38,7 +43,7 @@ function getInitials(name: string): string {
     return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()
 }
 
-export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps) {
+function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedArtist[], hasFavorites: boolean }) {
     if (artists.length < 2) {
         return (
             <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
@@ -156,4 +161,19 @@ export function HomeRecommended({ artists, hasFavorites }: HomeRecommendedProps)
             </div>
         </section>
     )
+}
+
+export function HomeRecommended() {
+    const [data, setData] = useState<PersonalizedData | null>(null)
+
+    useEffect(() => {
+        fetch('/api/home/personalized')
+            .then(r => r.ok ? r.json() : null)
+            .then(d => setData(d))
+            .catch(() => null)
+    }, [])
+
+    if (!data?.isLoggedIn) return null
+
+    return <HomeRecommendedInner artists={data.recommendedArtists} hasFavorites={data.hasFavorites} />
 }

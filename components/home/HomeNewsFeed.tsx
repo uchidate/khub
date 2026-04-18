@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { BLOG_CATEGORY_BY_SLUG, BLOG_CATEGORIES, HOME_FEED_CATEGORIES } from "@/lib/config/categories"
@@ -202,7 +203,11 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
 }
 
 export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory, initialTag }: HomeBlogFeedProps) {
-    const validInitial = initialCategory && TABS.some(t => t.value === initialCategory) ? initialCategory : 'all'
+    const searchParams = useSearchParams()
+    const categoryFromUrl = searchParams.get('category') ?? initialCategory
+    const tagFromUrl = searchParams.get('tag') ?? initialTag
+
+    const validInitial = categoryFromUrl && TABS.some(t => t.value === categoryFromUrl) ? categoryFromUrl : 'all'
     const [activeTab, setActiveTab] = useState(validInitial)
     const availableTags = Object.entries(
         blogPosts.reduce<Record<string, number>>((acc, post) => {
@@ -216,8 +221,15 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
     )
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         .slice(0, 10)
-    const validInitialTag = initialTag && availableTags.some(([t]) => t === initialTag) ? initialTag : 'all'
+    const validInitialTag = tagFromUrl && availableTags.some(([t]) => t === tagFromUrl) ? tagFromUrl : 'all'
     const [activeTag, setActiveTag] = useState(validInitialTag)
+
+    // Sync com URL quando searchParams mudam (navegação)
+    useEffect(() => {
+        const cat = searchParams.get('category')
+        if (cat && TABS.some(t => t.value === cat)) setActiveTab(cat)
+        else if (!cat) setActiveTab('all')
+    }, [searchParams])
     const [visibleCount, setVisibleCount] = useState(8)
 
     function handleTabChange(value: string) {
