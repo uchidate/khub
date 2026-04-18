@@ -639,6 +639,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             <DiscographySection albums={artist.albums} />
                         )}
 
+                        {/* Ad: após discografia */}
+                        {artist.albums.length > 0 && (
+                            <AdBanner slot="1740970038" format="auto" className="my-2" />
+                        )}
+
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
                             <section>
@@ -675,6 +680,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                     ))}
                                 </div>
                             </section>
+                        )}
+
+                        {/* Ad: após membros do grupo */}
+                        {relatedArtists.length > 0 && activeGroup && (
+                            <AdBanner slot="1740970038" format="auto" className="my-2" />
                         )}
 
                         {/* Blog articles */}
