@@ -69,7 +69,6 @@ export function GroupsList() {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
     const [generationFilter, setGenerationFilter] = useState<string>('all')
-    const [agencyFilter, setAgencyFilter] = useState<string>('all')
     const [sortBy, setSortBy] = useState<'name' | 'debut' | 'recent' | 'members' | 'popular'>('popular')
 
     useEffect(() => {
@@ -98,10 +97,6 @@ export function GroupsList() {
             result = result.filter(g => getGeneration(g.debutDate) === generationFilter)
         }
 
-        if (agencyFilter !== 'all') {
-            result = result.filter(g => g.agency?.name === agencyFilter)
-        }
-
         result = [...result].sort((a, b) => {
             if (sortBy === 'debut') {
                 const ya = a.debutDate ? new Date(a.debutDate).getUTCFullYear() : 9999
@@ -121,37 +116,14 @@ export function GroupsList() {
         })
 
         return result
-    }, [groups, search, statusFilter, generationFilter, agencyFilter, sortBy])
+    }, [groups, search, statusFilter, generationFilter, sortBy])
 
-    const agencies = useMemo(() => {
-        const counts = new Map<string, number>()
-        for (const g of groups) {
-            const name = g.agency?.name
-            if (!name) continue
-            counts.set(name, (counts.get(name) ?? 0) + 1)
-        }
-        return Array.from(counts.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 12)
-    }, [groups])
-
-    const totalActive = groups.filter(g => !g.disbandDate).length
-    const totalDisbanded = groups.filter(g => !!g.disbandDate).length
-    const avgMembers = groups.length > 0
-        ? (groups.reduce((acc, g) => acc + (g._count.members ?? 0), 0) / groups.length).toFixed(1)
-        : '0.0'
-    const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all' || agencyFilter !== 'all' || sortBy !== 'popular'
+    const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all' || sortBy !== 'popular'
 
     if (groups.length === 0) return <GroupsSkeleton />
 
     return (
         <div id="groups-list">
-
-            {/* Contadores */}
-            <p className="text-muted text-xs font-medium mb-6">
-                {totalActive} ativo{totalActive !== 1 ? 's' : ''}
-                {totalDisbanded > 0 && ` · ${totalDisbanded} disbandado${totalDisbanded !== 1 ? 's' : ''}`}
-            </p>
 
             {/* Filtros */}
             <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
@@ -224,39 +196,6 @@ export function GroupsList() {
                     </div>
                 </div>
 
-                {agencies.length > 0 && (
-                    <div className="relative">
-                        <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
-                        <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
-                        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap">
-                            <button
-                                onClick={() => setAgencyFilter('all')}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
-                                    agencyFilter === 'all'
-                                        ? 'bg-foreground text-background'
-                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
-                                }`}
-                            >
-                                Todas as agências
-                            </button>
-                            {agencies.map(([name, count]) => (
-                                <button
-                                    key={name}
-                                    onClick={() => setAgencyFilter(name)}
-                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all inline-flex items-center gap-1.5 ${
-                                        agencyFilter === name
-                                            ? 'bg-foreground text-background'
-                                            : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
-                                    }`}
-                                >
-                                    <span>{name}</span>
-                                    <span className="text-[10px] opacity-70">{count}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {hasActiveFilters && (
                     <div className="flex items-center gap-3 flex-wrap">
                         <p className="text-xs text-muted">
@@ -277,13 +216,8 @@ export function GroupsList() {
                                 {generationFilter}
                             </span>
                         )}
-                        {agencyFilter !== 'all' && (
-                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
-                                agência: {agencyFilter}
-                            </span>
-                        )}
                         <button
-                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') }}
+                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setSortBy('popular') }}
                             className="text-xs text-accent hover:text-accent/70 transition-colors"
                         >
                             Limpar filtros
@@ -296,7 +230,7 @@ export function GroupsList() {
             {filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"
-                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setAgencyFilter('all'); setSortBy('popular') } }}
+                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setSortBy('popular') } }}
                 />
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
