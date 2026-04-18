@@ -43,7 +43,7 @@ function MarkdownWithAds({ content }: { content: string }) {
   )
 }
 
-export const dynamic = 'force-dynamic'
+// ISR ativo — revalidate abaixo substitui force-dynamic
 export const revalidate = 3600
 
 export async function generateStaticParams() {
