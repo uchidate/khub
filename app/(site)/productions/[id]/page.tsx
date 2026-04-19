@@ -22,7 +22,6 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
-// ISR ativo — revalidate abaixo substitui force-dynamic
 export const revalidate = 3600
 
 // Pré-gera as produções com maior nota no build → first-paint rápido, melhor SEO e Core Web Vitals
@@ -411,7 +410,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-8" />
+                        {/* Ad 1 — in-article após sinopse/tags, posição de maior atenção */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} layout="in-article" format="fluid" className="my-4" />
 
                         {/* Cast */}
                         {production.artists.length > 0 && (
@@ -465,12 +465,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
-                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+                        {/* Ad 2 — após elenco/galeria, antes das recomendações */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-6" />
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
                             <div>
-                                <AdBanner slot="1740970038" format="auto" className="mb-8" />
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
                                         <Film className="w-4 h-4" />
@@ -633,6 +633,9 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 <span className="text-sm font-bold text-foreground">{production.artists.length} artistas</span>
                             </div>
                         </div>
+
+                        {/* Ad 3 — sidebar rectangle, visível enquanto o usuário lê o conteúdo principal */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="rectangle" className="mt-6" />
                     </div>
                 </div>
             </div>

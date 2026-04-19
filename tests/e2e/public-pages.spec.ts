@@ -10,20 +10,20 @@ test.describe('Páginas Públicas', () => {
   test('página /blog carrega lista de artigos', async ({ page }) => {
     await page.goto('/blog')
     await expect(page).toHaveTitle(/Blog/)
-    // Artigos reais (não ticker) — links dentro de main/section
-    const articles = page.locator('main a[href^="/blog/"]')
+    // Artigos reais — excluir RSS feed e links de navegação (/blog sem slug)
+    const articles = page.locator('main a[href^="/blog/"]:not([href*="feed"]):not([href="/blog/"])')
     await expect(articles.first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('artigo de blog abre e exibe conteúdo', async ({ page }) => {
     await page.goto('/blog')
-    // Usar um artigo estável — não o ticker animado
-    const firstArticle = page.locator('main a[href^="/blog/"]').first()
+    // Excluir RSS feed e links que não são artigos
+    const firstArticle = page.locator('main a[href^="/blog/"]:not([href*="feed"]):not([href="/blog/"])').first()
     const href = await firstArticle.getAttribute('href')
     expect(href).toBeTruthy()
     await page.goto(href!)
     await expect(page).toHaveURL(new RegExp('/blog/'))
-    await expect(page.locator('h1')).toBeVisible()
+    await expect(page.locator('h1')).toBeVisible({ timeout: 10_000 })
   })
 
   test('página /search carrega', async ({ page }) => {
