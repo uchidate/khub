@@ -200,7 +200,7 @@ function EditorialMainCard({ post }: { post: PostItem }) {
 }
 
 // Card menor para o par do lado direito no magazine grid
-function EditorialSideCard({ post }: { post: PostItem }) {
+function EditorialSideCard({ post, priority }: { post: PostItem; priority?: boolean }) {
   const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
@@ -210,7 +210,7 @@ function EditorialSideCard({ post }: { post: PostItem }) {
       {/* Thumbnail */}
       <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
         {post.coverImageUrl ? (
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="80px"
+          <Image src={post.coverImageUrl} alt={post.title} fill sizes="80px" priority={priority}
             className="object-cover group-hover:scale-[1.05] transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center"
@@ -622,8 +622,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                       {/* Dois cards empilhados */}
                       <div className="flex flex-col gap-3">
-                        {magazineSide.map(p => (
-                          <EditorialSideCard key={p.id} post={p} />
+                        {magazineSide.map((p, i) => (
+                          <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
                         {/* Preenche espaço vazio se só 1 card lateral */}
                         {magazineSide.length < 2 && (
