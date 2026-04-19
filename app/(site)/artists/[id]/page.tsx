@@ -287,7 +287,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                     {artist.primaryImageUrl ? (
                         <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-[50%_15%]" />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#ff2d78]/10 via-[#f5f5f7] to-[#e8e8e8]" />
+                        <div className="w-full h-full bg-gradient-to-br from-accent/10 via-surface to-border" />
                     )}
                 </div>
                 {/* Gradients */}
@@ -319,7 +319,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             ))}
                             {activeGroup && (
                                 <Link href={`/groups/${activeGroup.id}`}
-                                    className="text-xs font-black px-3 py-1 bg-[#ff2d78]/20 backdrop-blur-sm text-white rounded-full border border-[#ff2d78]/50 hover:bg-[#ff2d78]/30 transition-colors">
+                                    className="text-xs font-black px-3 py-1 bg-accent/20 backdrop-blur-sm text-white rounded-full border border-accent/50 hover:bg-accent/30 transition-colors">
                                     {activeGroup.name}
                                 </Link>
                             )}
@@ -338,7 +338,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 {artist.nameRomanized}
                             </h1>
                             {artist.nameHangul && (
-                                <p className="text-lg md:text-3xl font-bold mt-1 text-[#ff2d78] drop-shadow-lg flex items-baseline gap-2 flex-wrap">
+                                <p className="text-lg md:text-3xl font-bold mt-1 text-accent drop-shadow-lg flex items-baseline gap-2 flex-wrap">
                                     <span>{artist.nameHangul}</span>
                                     {age !== null && (
                                         <span className="text-sm md:text-xl font-semibold text-white/70">{age} anos</span>
@@ -359,7 +359,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                 <Eye className="w-3.5 h-3.5" />
                                 <span className="text-sm font-bold">{artist.viewCount.toLocaleString('pt-BR')} views</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-[#ff2d78]/80">
+                            <div className="flex items-center gap-1.5 text-accent/80">
                                 <Heart className="w-3.5 h-3.5" />
                                 <span className="text-sm font-bold">{artist.favoriteCount.toLocaleString('pt-BR')} fãs</span>
                             </div>
@@ -397,7 +397,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {/* Informações */}
                         <div className="rounded-2xl bg-background border border-border overflow-hidden">
                             <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                                <User className="w-3.5 h-3.5 text-[#ff2d78]" />
+                                <User className="w-3.5 h-3.5 text-accent" />
                                 <h3 className="text-[10px] font-black text-muted uppercase tracking-widest">Informações</h3>
                             </div>
                             <div className="p-4 md:p-5">
@@ -423,7 +423,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                             <Globe className="w-3.5 h-3.5" />
                                             <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Agência</span>
                                         </div>
-                                        <Link href={`/agencies/${artist.agency.id}`} className="text-xs md:text-sm font-bold text-[#ff2d78] hover:underline transition-colors">
+                                        <Link href={`/agencies/${artist.agency.id}`} className="text-xs md:text-sm font-bold text-accent hover:underline transition-colors">
                                             {artist.agency.name}
                                         </Link>
                                     </div>
@@ -437,7 +437,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                 {m.isActive ? 'Grupo' : 'Ex-grupo'}
                                             </span>
                                         </div>
-                                        <Link href={`/groups/${m.group.id}`} className={`text-xs md:text-sm font-bold transition-colors ${m.isActive ? 'text-[#ff2d78] hover:underline' : 'text-muted hover:text-foreground'}`}>
+                                        <Link href={`/groups/${m.group.id}`} className={`text-xs md:text-sm font-bold transition-colors ${m.isActive ? 'text-accent hover:underline' : 'text-muted hover:text-foreground'}`}>
                                             {m.group.name}
                                         </Link>
                                     </div>
@@ -450,7 +450,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {Object.keys(socialLinks).length > 0 && (
                             <div className="rounded-2xl bg-background border border-border overflow-hidden">
                                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                                    <Globe className="w-3.5 h-3.5 text-[#ff2d78]" />
+                                    <Globe className="w-3.5 h-3.5 text-accent" />
                                     <h3 className="text-[10px] font-black text-muted uppercase tracking-widest">Redes Sociais</h3>
                                 </div>
                                 <div className="p-3 grid grid-cols-2 md:grid-cols-1 gap-1.5">
@@ -491,11 +491,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                             return (
                                                 <div key={i}>
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <span className="w-5 h-5 rounded-full bg-[#ff2d78]/10 text-[#ff2d78] flex items-center justify-center shrink-0">
+                                                        <span className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center shrink-0">
                                                             <Icon className="w-2.5 h-2.5" />
                                                         </span>
                                                         <span className="text-sm font-black text-foreground uppercase tracking-widest">{sec.title}</span>
-                                                        <div className="flex-1 h-px bg-[#e8e8e8]" />
+                                                        <div className="flex-1 h-px bg-border" />
                                                     </div>
                                                     <p className="text-sm text-muted leading-relaxed pl-8 text-justify">{sec.content}</p>
                                                 </div>
@@ -511,12 +511,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             <section>
                                 <div className="flex items-center gap-3 mb-5">
                                     <span className="text-sm font-black text-foreground uppercase tracking-widest">Curiosidades</span>
-                                    <div className="flex-1 h-px bg-[#e8e8e8]" />
+                                    <div className="flex-1 h-px bg-border" />
                                 </div>
                                 <ul className="space-y-3">
                                     {artist.curiosidades.map((c, i) => (
                                         <li key={i} className="flex items-start gap-3 text-muted text-sm leading-relaxed text-justify">
-                                            <span className="mt-1 w-5 h-5 rounded-full bg-[#ff2d78]/10 text-[#ff2d78] text-[10px] font-black flex items-center justify-center shrink-0">
+                                            <span className="mt-1 w-5 h-5 rounded-full bg-accent/10 text-accent text-[10px] font-black flex items-center justify-center shrink-0">
                                                 {i + 1}
                                             </span>
                                             {c}
@@ -533,12 +533,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         <section>
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="flex items-center gap-2">
-                                    <Film className="w-4 h-4 text-[#ff2d78]" />
+                                    <Film className="w-4 h-4 text-accent" />
                                     <h3 className="text-sm font-black text-foreground uppercase tracking-widest">Filmografia</h3>
                                 </div>
-                                <div className="flex-1 h-px bg-[#e8e8e8]" />
+                                <div className="flex-1 h-px bg-border" />
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className="flex items-center gap-1 text-xs font-bold text-[#ff2d78]"><Film className="w-3 h-3" />{totalProductions}</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-accent"><Film className="w-3 h-3" />{totalProductions}</span>
                                     <span className="text-muted">·</span>
                                     <span className="flex items-center gap-1 text-xs font-bold text-emerald-500"><Disc3 className="w-3 h-3" />{totalAlbums}</span>
                                     <span className="text-muted">·</span>
@@ -556,7 +556,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                         return (
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
-                                                className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
+                                                className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-accent/30 hover:shadow-sm transition-all">
                                                 {/* Poster — proporção 2:3 fixa */}
                                                 <div className="w-24 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
                                                     {production.imageUrl ? (
@@ -572,7 +572,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                 <div className="flex-1 min-w-0 p-3">
                                                     <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
                                                         <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface border border-border text-muted">{production.type}</span>
-                                                        {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
+                                                        {production.year && <span className="text-[10px] font-bold text-accent">{production.year}</span>}
                                                         {production.voteAverage != null && production.voteAverage > 0 && (
                                                             <span className="text-[10px] text-muted">★ {production.voteAverage.toFixed(1)}</span>
                                                         )}
@@ -582,7 +582,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
+                                                    <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
                                                     {syn && <p className="text-[11px] text-muted leading-relaxed line-clamp-2">{syn}</p>}
                                                 </div>
                                             </Link>
@@ -600,7 +600,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                         return (
                                         <div key={production.id} className="relative group/card">
                                             <Link href={`/productions/${production.id}`}
-                                                className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-[#ff2d78]/30 hover:shadow-sm transition-all">
+                                                className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-accent/30 hover:shadow-sm transition-all">
                                                 {/* Poster — proporção 2:3 fixa, corte lateral se necessário */}
                                                 <div className="w-28 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
                                                     {production.imageUrl ? (
@@ -616,7 +616,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                 <div className="flex-1 min-w-0 p-4">
                                                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
                                                         <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface border border-border text-muted">{production.type}</span>
-                                                        {production.year && <span className="text-[10px] font-bold text-[#ff2d78]">{production.year}</span>}
+                                                        {production.year && <span className="text-[10px] font-bold text-accent">{production.year}</span>}
                                                         {production.voteAverage != null && production.voteAverage > 0 && (
                                                             <span className="text-[10px] text-muted">★ {production.voteAverage.toFixed(1)}</span>
                                                         )}
@@ -626,7 +626,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm font-bold text-foreground group-hover:text-[#ff2d78] transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
+                                                    <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2 mb-1.5">{production.titlePt}</p>
                                                     {syn && <p className="text-[11px] text-muted leading-relaxed line-clamp-3">{syn}</p>}
                                                 </div>
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity p-2 flex-shrink-0 self-start">
@@ -676,21 +676,21 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             <section>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-[#ff2d78]" />
+                                        <Users className="w-4 h-4 text-accent" />
                                         <h3 className="text-sm font-black text-foreground uppercase tracking-widest">
                                             Membros de{' '}
-                                            <Link href={`/groups/${activeGroup.id}`} className="text-[#ff2d78] hover:underline transition-colors normal-case tracking-normal">
+                                            <Link href={`/groups/${activeGroup.id}`} className="text-accent hover:underline transition-colors normal-case tracking-normal">
                                                 {activeGroup.name}
                                             </Link>
                                         </h3>
                                     </div>
-                                    <div className="flex-1 h-px bg-[#e8e8e8]" />
+                                    <div className="flex-1 h-px bg-border" />
                                 </div>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
                                     {relatedArtists.map(ra => (
                                         <Link key={ra.id} href={`/artists/${ra.id}`}
-                                            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background border border-border hover:border-[#ff2d78]/30 hover:shadow-sm transition-all group/ra text-center">
-                                            <div className="relative w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden flex-shrink-0 bg-surface border-2 border-border group-hover/ra:border-[#ff2d78]/40 transition-colors">
+                                            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background border border-border hover:border-accent/30 hover:shadow-sm transition-all group/ra text-center">
+                                            <div className="relative w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden flex-shrink-0 bg-surface border-2 border-border group-hover/ra:border-accent/40 transition-colors">
                                                 {ra.primaryImageUrl ? (
                                                     <Image src={ra.primaryImageUrl} alt={ra.nameRomanized} fill sizes="64px" className="object-cover object-top group-hover/ra:scale-110 transition-transform duration-300" />
                                                 ) : (
@@ -700,7 +700,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                 )}
                                             </div>
                                             <div className="min-w-0 w-full">
-                                                <p className="text-xs font-bold text-foreground truncate group-hover/ra:text-[#ff2d78] transition-colors">{ra.nameRomanized}</p>
+                                                <p className="text-xs font-bold text-foreground truncate group-hover/ra:text-accent transition-colors">{ra.nameRomanized}</p>
                                                 {ra.nameHangul && <p className="text-[9px] text-muted leading-none mt-0.5 truncate">{ra.nameHangul}</p>}
                                             </div>
                                         </Link>
@@ -718,7 +718,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         {blogArticles.length > 0 && (
                             <section>
                                 <h2 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <Film className="w-4 h-4 text-[#ff2d78]" />
+                                    <Film className="w-4 h-4 text-accent" />
                                     Artigos
                                 </h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -726,7 +726,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                         <Link
                                             key={article.slug}
                                             href={`/blog/${article.slug}`}
-                                            className="group flex flex-col rounded-xl border border-border hover:border-[#ff2d78]/30 bg-surface overflow-hidden transition-all hover:shadow-md"
+                                            className="group flex flex-col rounded-xl border border-border hover:border-accent/30 bg-surface overflow-hidden transition-all hover:shadow-md"
                                         >
                                             {article.coverImageUrl && (
                                                 <div className="relative aspect-video overflow-hidden bg-background">
@@ -734,7 +734,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                                                 </div>
                                             )}
                                             <div className="flex-1 p-3">
-                                                <p className="text-xs font-bold text-foreground line-clamp-2 group-hover:text-[#ff2d78] transition-colors leading-snug">
+                                                <p className="text-xs font-bold text-foreground line-clamp-2 group-hover:text-accent transition-colors leading-snug">
                                                     {article.title}
                                                 </p>
                                                 {article.excerpt && (
