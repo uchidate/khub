@@ -214,7 +214,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* Grid: mobile=1col, xl=article+right, 2xl=left+article+right */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_200px] 2xl:grid-cols-[200px_1fr_200px] gap-6 xl:gap-8">
 
-      {/* ── Sidebar ESQUERDA — 2xl only, ordem-1 no grid ── */}
+      {/* ── Sidebar ESQUERDA — 2xl only ── */}
       <aside className="hidden 2xl:block 2xl:order-first">
         <div className="sticky top-6">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" />
