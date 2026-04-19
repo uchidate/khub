@@ -70,16 +70,22 @@ export default async function GroupsPage() {
 
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden">
-                    {/* Imagem de fundo */}
-                    <Image
-                        src={spotlight.profileImageUrl!}
-                        alt={spotlight.name}
-                        fill priority sizes="100vw"
-                        className="object-cover object-top"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
+                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black">
+                    {/* Mosaico: top 5 grupos em colunas verticais */}
+                    <div className="absolute inset-0 flex">
+                        {heroGroups.map((g, i) => (
+                            <div key={g.id} className="relative flex-1 h-full">
+                                {g.profileImageUrl ? (
+                                    <Image src={g.profileImageUrl} alt="" fill priority={i === 0} sizes="20vw"
+                                        className="object-cover object-top" />
+                                ) : (
+                                    <div className="w-full h-full" style={{ background: nameToGradient(g.name) }} />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
 
                     <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 min-h-[360px] md:min-h-[440px]">
                         {/* Topo */}
@@ -91,41 +97,57 @@ export default async function GroupsPage() {
 
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
-                            <Link href={`/groups/${spotlight.id}`} className="group flex-1 min-w-0">
-                                <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <TrendingUp size={10} /> Em alta
-                                </p>
-                                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
-                                    {spotlight.name}
-                                </h1>
-                                {spotlight.nameHangul && (
-                                    <p className="text-white/50 text-sm mb-3">{spotlight.nameHangul}</p>
-                                )}
-                                <div className="flex items-center gap-3 flex-wrap">
-                                    {spotlight._count.members > 0 && (
-                                        <span className="text-white/60 text-xs">{spotlight._count.members} membros</span>
+                            {/* Grupo em destaque: portrait + texto juntos */}
+                            <Link href={`/groups/${spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
+                                {/* Portrait card */}
+                                <div className="block shrink-0">
+                                    <div className="w-20 md:w-32 lg:w-40 aspect-square relative rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+                                        <Image
+                                            src={spotlight.profileImageUrl!}
+                                            alt={spotlight.name}
+                                            fill priority
+                                            sizes="(max-width: 768px) 80px, (max-width: 1024px) 128px, 160px"
+                                            className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    </div>
+                                </div>
+                                {/* Texto */}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                        <TrendingUp size={10} /> Em alta
+                                    </p>
+                                    <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
+                                        {spotlight.name}
+                                    </h1>
+                                    {spotlight.nameHangul && (
+                                        <p className="text-white/50 text-sm mb-3">{spotlight.nameHangul}</p>
                                     )}
-                                    {spotlight.debutDate && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-white/60 text-xs">Debut {new Date(spotlight.debutDate).getFullYear()}</span>
-                                        </>
-                                    )}
-                                    {spotlight.fanClubName && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-white/60 text-xs">{spotlight.fanClubName}</span>
-                                        </>
-                                    )}
-                                    <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
-                                        Ver perfil <ArrowRight size={13} />
-                                    </span>
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {spotlight._count.members > 0 && (
+                                            <span className="text-white/60 text-xs">{spotlight._count.members} membros</span>
+                                        )}
+                                        {spotlight.debutDate && (
+                                            <>
+                                                <span className="text-white/30">·</span>
+                                                <span className="text-white/60 text-xs">Debut {new Date(spotlight.debutDate).getFullYear()}</span>
+                                            </>
+                                        )}
+                                        {spotlight.fanClubName && (
+                                            <>
+                                                <span className="text-white/30">·</span>
+                                                <span className="text-white/60 text-xs">{spotlight.fanClubName}</span>
+                                            </>
+                                        )}
+                                        <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                                            Ver perfil <ArrowRight size={13} />
+                                        </span>
+                                    </div>
                                 </div>
                             </Link>
 
                             {sidePicks.length > 0 && (
-                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0">
-                                    <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também em alta</p>
+                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
+                                    <p className="text-white text-[9px] font-bold uppercase tracking-widest mb-1">Também em alta</p>
                                     {sidePicks.slice(0, 4).map(g => (
                                         <Link key={g.id} href={`/groups/${g.id}`}
                                             className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
