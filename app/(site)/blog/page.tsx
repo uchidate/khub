@@ -603,12 +603,22 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         {page < totalPages ? (
                           <Link href={buildHref(page + 1)} scroll
                             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background hover:opacity-90 text-sm font-semibold transition-all">
-                            Próxima →
+                            Ver mais artigos <ArrowRight size={14} />
                           </Link>
                         ) : <div />}
                       </div>
                     )
                   })()}
+
+                  {/* Botão "Ver todos" quando filtrado */}
+                  {isFiltered && (
+                    <div className="mt-6 text-center">
+                      <Link href="/blog"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 text-sm font-semibold text-foreground transition-all">
+                        Ver todos os artigos <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-24 text-muted border border-dashed border-border rounded-2xl">
