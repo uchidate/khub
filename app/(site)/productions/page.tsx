@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight, Film, Star, TrendingUp, Tv } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -9,8 +10,9 @@ import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
+import { nameToGradient } from '@/lib/utils'
 
-export const revalidate = 3600
+export const revalidate = 600
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
@@ -33,7 +35,28 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProductionsPage() {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
-  await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => null)
+    const baseWhere = { flaggedAsNonKorean: false, isHidden: false, ...ageFilter }
+
+    const [total, heroProductions] = await Promise.all([
+        prisma.production.count({ where: baseWhere }).catch(() => 0),
+        prisma.production.findMany({
+            where: { ...baseWhere, backdropUrl: { not: null } },
+            orderBy: [{ voteCount: 'desc' }, { voteAverage: 'desc' }],
+            take: 5,
+            select: {
+                id: true, titlePt: true, titleKr: true, type: true, year: true,
+                imageUrl: true, backdropUrl: true, voteAverage: true, synopsis: true,
+            },
+        }).catch(() => []),
+    ])
+
+    const [spotlight, ...sidePicks] = heroProductions
+
+    const TYPE_LABEL: Record<string, string> = {
+        MOVIE: 'Filme', Filme: 'Filme', FILME: 'Filme',
+        SERIES: 'Série', SERIE: 'Série', 'K-Drama': 'K-Drama',
+        SPECIAL: 'Especial', DOCUMENTARY: 'Documentário',
+    }
 
     return (
         <>
@@ -46,34 +69,124 @@ export default async function ProductionsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        <PageTransition className="py-8 md:py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <PageTransition className="pb-16">
 
-                {/* Hero header */}
-                <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.72)_0%,rgba(248,250,252,0.55)_100%)] dark:bg-[linear-gradient(180deg,rgba(23,23,23,0.62)_0%,rgba(14,14,14,0.46)_100%)] px-5 py-6 sm:px-7 md:py-7 shadow-[0_14px_34px_rgba(0,0,0,0.08)]">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.14),transparent_46%),radial-gradient(circle_at_88%_88%,rgba(148,163,184,0.08),transparent_42%)]" />
-                  <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background:linear-gradient(120deg,transparent_0%,#fff_35%,transparent_70%)]" />
-                  <div className="relative">
-                    <h1 className="text-[1.9rem] sm:text-[2.1rem] md:text-[2.45rem] font-black text-foreground tracking-[-0.04em] leading-[0.96] mb-2 animate-[fadeIn_450ms_ease-out]">
-                      Dramas & Filmes
-                    </h1>
+            {/* ── Hero ────────────────────────────────────────────── */}
+            {spotlight ? (
+                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden">
+                    {/* Backdrop de fundo */}
+                    <Image
+                        src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
+                        alt={spotlight.titlePt}
+                        fill priority sizes="100vw"
+                        className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
-                    <div className="mt-3 flex items-center gap-2 flex-wrap animate-[fadeIn_750ms_ease-out]">
-                      <Link href="#productions-list" className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
-                        Explorar catálogo
-                        <ArrowRight size={13} />
-                      </Link>
+                    <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 min-h-[360px] md:min-h-[440px]">
+                        {/* Topo */}
+                        <div className="flex items-center gap-2">
+                            <Film className="w-3.5 h-3.5 text-accent" />
+                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Dramas & Filmes</span>
+                            <span className="text-white/30 text-xs hidden sm:inline">· {total.toLocaleString('pt-BR')} produções</span>
+                        </div>
+
+                        {/* Bottom: destaque + side picks */}
+                        <div className="flex items-end gap-6 mt-auto">
+                            <Link href={`/productions/${spotlight.id}`} className="group flex-1 min-w-0">
+                                <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                    <TrendingUp size={10} /> Em destaque
+                                </p>
+                                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
+                                    {spotlight.titlePt}
+                                </h1>
+                                {spotlight.titleKr && (
+                                    <p className="text-white/50 text-sm mb-3">{spotlight.titleKr}</p>
+                                )}
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    {spotlight.type && <span className="text-white/60 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
+                                    {spotlight.year && (
+                                        <>
+                                            <span className="text-white/30">·</span>
+                                            <span className="text-white/60 text-xs">{spotlight.year}</span>
+                                        </>
+                                    )}
+                                    {spotlight.voteAverage && (
+                                        <>
+                                            <span className="text-white/30">·</span>
+                                            <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                                                <Star size={10} fill="currentColor" />{spotlight.voteAverage.toFixed(1)}
+                                            </span>
+                                        </>
+                                    )}
+                                    <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                                        Ver produção <ArrowRight size={13} />
+                                    </span>
+                                </div>
+                            </Link>
+
+                            {sidePicks.length > 0 && (
+                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0">
+                                    <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
+                                    {sidePicks.slice(0, 4).map(p => (
+                                        <Link key={p.id} href={`/productions/${p.id}`}
+                                            className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                                            <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/15">
+                                                {p.imageUrl ? (
+                                                    <Image src={p.imageUrl} alt={p.titlePt} fill sizes="32px" className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full" style={{ background: nameToGradient(p.titlePt) }} />
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-white text-xs font-semibold truncate group-hover:text-accent transition-colors">{p.titlePt}</p>
+                                                <p className="text-white/40 text-[10px]">{p.year ?? ''}</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                  </div>
                 </div>
+            ) : (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
+                    <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
+                        <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Dramas & Filmes</h1>
+                        <p className="text-muted text-sm">{total.toLocaleString('pt-BR')} produções · K-Drama, K-Film</p>
+                    </div>
+                </div>
+            )}
 
-            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="mb-6" />
+            {/* ── Stats strip ─────────────────────────────────────── */}
+            <div className="border-b border-border bg-surface/50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Film size={12} className="text-accent" />
+                        <span className="text-xs text-muted"><span className="font-bold text-foreground">{total.toLocaleString('pt-BR')}</span> produções</span>
+                    </div>
+                    <div className="w-px h-3 bg-border shrink-0" />
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Tv size={12} className="text-accent" />
+                        <span className="text-xs text-muted">K-Drama · K-Film · Especiais</span>
+                    </div>
+                    <div className="w-px h-3 bg-border shrink-0" />
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Star size={12} className="text-accent" />
+                        <span className="text-xs text-muted">Avaliações e streaming</span>
+                    </div>
+                </div>
+            </div>
 
-            <Suspense>
-                <ProductionsList />
-            </Suspense>
-            <AdBanner slot="1740970038" format="auto" className="mt-8 mb-4" />
-            <ScrollToTop />
+            {/* ── Conteúdo principal ──────────────────────────────── */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="mb-6" />
+                <Suspense>
+                    <ProductionsList />
+                </Suspense>
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="mt-8 mb-4" />
+                <ScrollToTop />
             </div>
         </PageTransition>
         </>
