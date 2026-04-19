@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -16,6 +16,7 @@ import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
 
 const BASE_URL = SITE_URL
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
 
 export const metadata: Metadata = {
   title: 'Blog K-Pop & K-Drama',
@@ -30,8 +31,9 @@ export const metadata: Metadata = {
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
 const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [], total: 0 }
+const PAGE_SIZE = 20
 
-async function getPosts(category?: string, tag?: string) {
+async function getPosts(category?: string, tag?: string, page = 1) {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return EMPTY_POSTS
   try {
     const where = {
@@ -40,7 +42,8 @@ async function getPosts(category?: string, tag?: string) {
       ...(tag ? { tags: { has: tag } } : {}),
     }
     const [hero, posts, mostRead, categories, popularTags, total] = await Promise.all([
-      prisma.blogPost.findFirst({
+      // Hero só na primeira página, sem filtros
+      page === 1 ? prisma.blogPost.findFirst({
         where: PUBLIC_WHERE,
         orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
         select: {
@@ -48,11 +51,12 @@ async function getPosts(category?: string, tag?: string) {
           publishedAt: true, readingTimeMin: true, viewCount: true, featured: true, tags: true,
           category: { select: { id: true, name: true, slug: true } },
         },
-      }),
+      }) : Promise.resolve(null),
       prisma.blogPost.findMany({
         where,
         orderBy: { publishedAt: 'desc' },
-        take: 21,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
         select: {
           id: true, slug: true, title: true, excerpt: true, coverImageUrl: true,
           publishedAt: true, readingTimeMin: true, viewCount: true, featured: true, tags: true,
@@ -106,7 +110,7 @@ function CategoryBadge({ category }: { category: { name: string; slug: string } 
   const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
   return (
     <span
-      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
       style={{ backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151' }}
     >
       {category.name}
@@ -114,70 +118,86 @@ function CategoryBadge({ category }: { category: { name: string; slug: string } 
   )
 }
 
-function PostMeta({ post, size = 'sm' }: { post: Pick<PostItem, 'publishedAt' | 'readingTimeMin' | 'viewCount'>, size?: 'sm' | 'xs' }) {
+function PostMeta({ post, size = 'sm', light = false }: {
+  post: Pick<PostItem, 'publishedAt' | 'readingTimeMin' | 'viewCount'>
+  size?: 'sm' | 'xs'
+  light?: boolean
+}) {
   const cls = size === 'xs' ? 'text-[10px] gap-2' : 'text-[11px] gap-2.5'
+  const colorCls = light ? 'text-white/55' : 'text-muted'
   return (
-    <div className={`flex items-center ${cls} text-muted`}>
+    <div className={`flex items-center flex-wrap ${cls} ${colorCls}`}>
       {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
-      <span className="flex items-center gap-1"><Clock size={size === 'xs' ? 9 : 10} />{post.readingTimeMin} min</span>
-      <span className="flex items-center gap-1"><Eye size={size === 'xs' ? 9 : 10} />{post.viewCount}</span>
+      {post.readingTimeMin > 0 && (
+        <span className="flex items-center gap-1"><Clock size={size === 'xs' ? 9 : 10} />{post.readingTimeMin} min</span>
+      )}
+      {post.viewCount > 0 && (
+        <span className="flex items-center gap-1"><Eye size={size === 'xs' ? 9 : 10} />{post.viewCount}</span>
+      )}
     </div>
   )
 }
 
-// Card horizontal — artigo em destaque (ocupa 2 colunas)
-function HeroCard({ post }: { post: PostItem }) {
+// Card horizontal grande — artigo em destaque no topo do grid
+function FeaturedCard({ post }: { post: PostItem }) {
   const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group col-span-full lg:col-span-2 flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-xl transition-all duration-300"
+      className="group col-span-full flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-lg transition-all duration-300"
     >
-      <div className="relative aspect-video sm:aspect-auto sm:w-[45%] sm:min-h-[280px] overflow-hidden bg-surface-hover shrink-0">
+      {/* Imagem */}
+      <div className="relative sm:w-[48%] aspect-[16/9] sm:aspect-auto sm:min-h-[260px] overflow-hidden bg-surface-hover shrink-0">
         {post.coverImageUrl ? (
           <Image
             src={post.coverImageUrl} alt={post.title} fill priority
-            sizes="(max-width: 640px) 100vw, 45vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 640px) 100vw, 48vw"
+            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full" style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` } : { background: '#f3f4f6' }}>
-            <BookOpen className="w-12 h-12 text-muted/20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="w-full h-full flex items-center justify-center"
+            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` } : { background: '#f3f4f6' }}>
+            <BookOpen className="w-12 h-12 opacity-10" />
           </div>
         )}
-        {isRecent(post.publishedAt) && (
-          <span className="absolute top-3 right-3 px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
-        )}
-        {post.featured && (
-          <span className="absolute top-3 left-3 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">Destaque</span>
-        )}
+        {/* Badges sobrepostos */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          {post.featured && (
+            <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">Destaque</span>
+          )}
+          {isRecent(post.publishedAt) && (
+            <span className="px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col gap-3 p-5 sm:p-7 flex-1 min-w-0">
+
+      {/* Conteúdo */}
+      <div className="flex flex-col gap-3 p-5 sm:p-8 flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <CategoryBadge category={post.category} />
           <PostMeta post={post} />
         </div>
-        <h2 className="font-black text-foreground text-xl sm:text-2xl leading-tight group-hover:text-accent transition-colors line-clamp-3">
+        <h2 className="font-black text-foreground text-xl sm:text-2xl lg:text-[1.6rem] leading-tight group-hover:text-accent transition-colors">
           {post.title}
         </h2>
         {post.excerpt && (
-          <p className="text-sm text-muted line-clamp-3 leading-relaxed flex-1">{post.excerpt}</p>
+          <p className="text-sm text-muted leading-relaxed line-clamp-3 flex-1">{post.excerpt}</p>
         )}
         {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {post.tags.slice(0, 4).map(tag => {
               const ts = getTagStyle(tag)
               return <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: ts.color, backgroundColor: ts.bg }}>{tag}</span>
             })}
           </div>
         )}
-        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border">
-          <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-[9px] font-bold text-accent flex-shrink-0">
+        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
+          <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
             {BLOG_AUTHOR_AVATAR_INITIAL}
           </div>
-          <span className="text-[11px] text-muted truncate">{BLOG_AUTHOR_DISPLAY_NAME}</span>
-          <span className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-accent">
-            Ler artigo <ArrowRight size={11} />
+          <span className="text-xs text-muted truncate flex-1">{BLOG_AUTHOR_DISPLAY_NAME}</span>
+          <span className="flex items-center gap-1.5 text-xs font-bold text-accent group-hover:gap-2.5 transition-all whitespace-nowrap">
+            Ler artigo <ArrowRight size={13} />
           </span>
         </div>
       </div>
@@ -185,84 +205,93 @@ function HeroCard({ post }: { post: PostItem }) {
   )
 }
 
-// Card vertical padrão
+// Card vertical padrão — grid 2-3 colunas
 function PostCard({ post }: { post: PostItem }) {
+  const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-md transition-all duration-300"
+      className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 h-full"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-surface-hover">
+      {/* Imagem */}
+      <div className="relative aspect-[16/9] overflow-hidden bg-surface-hover shrink-0">
         {post.coverImageUrl ? (
           <Image
             src={post.coverImageUrl} alt={post.title} fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={post.category ? { background: `linear-gradient(135deg, ${BLOG_CATEGORY_BY_SLUG[post.category.slug]?.bg ?? '#f3f4f6'}, ${BLOG_CATEGORY_BY_SLUG[post.category.slug]?.color ?? '#e5e7eb'}33)` } : undefined}>
+          <div className="w-full h-full flex items-center justify-center"
+            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}33)` } : { background: '#f5f5f5' }}>
             <span className="text-4xl opacity-10">✦</span>
           </div>
         )}
-        {isRecent(post.publishedAt) && (
-          <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
-        )}
-        <div className="absolute top-2.5 left-2.5">
+        <div className="absolute top-2.5 left-2.5 flex gap-1">
           <CategoryBadge category={post.category} />
         </div>
+        {isRecent(post.publishedAt) && (
+          <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-accent text-white rounded-full text-[9px] font-bold uppercase">Novo</span>
+        )}
       </div>
-      <div className="flex flex-col gap-2 p-4 flex-1">
+
+      {/* Conteúdo */}
+      <div className="flex flex-col gap-2.5 p-4 flex-1">
         <h2 className="font-bold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
           {post.title}
         </h2>
         {post.excerpt && (
           <p className="text-[12px] text-muted line-clamp-2 leading-relaxed">{post.excerpt}</p>
         )}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {post.tags.slice(0, 2).map(tag => {
-              const ts = getTagStyle(tag)
-              return <span key={tag} className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: ts.color, backgroundColor: ts.bg }}>{tag}</span>
-            })}
-          </div>
-        )}
-        <div className="pt-2.5 border-t border-border mt-auto">
+        <div className="pt-2.5 border-t border-border mt-auto flex items-center justify-between gap-2">
           <PostMeta post={post} size="xs" />
+          <ChevronRight size={12} className="text-muted opacity-0 group-hover:opacity-60 group-hover:translate-x-0.5 transition-all shrink-0" />
         </div>
       </div>
     </Link>
   )
 }
 
-// Card compacto para listagem (sem imagem grande)
+// Card compacto — listagem de mais artigos
 function CompactPostCard({ post }: { post: PostItem }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex gap-3 items-start p-3 rounded-xl border border-border bg-surface hover:border-accent/30 hover:bg-surface-hover transition-all"
+      className="group flex gap-3.5 items-start p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
     >
-      {post.coverImageUrl && (
-        <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="64px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+      {post.coverImageUrl ? (
+        <div className="relative w-[72px] h-[48px] rounded-lg overflow-hidden shrink-0">
+          <Image src={post.coverImageUrl} alt={post.title} fill sizes="72px"
+            className="object-cover group-hover:scale-[1.04] transition-transform duration-300" />
+        </div>
+      ) : (
+        <div className="w-[72px] h-[48px] rounded-lg shrink-0 bg-surface-hover flex items-center justify-center">
+          <BookOpen size={14} className="text-muted/30" />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+        <div className="flex items-center gap-1.5 mb-1">
           <CategoryBadge category={post.category} />
+          {isRecent(post.publishedAt) && (
+            <span className="px-1.5 py-0.5 bg-accent/10 text-accent rounded-full text-[9px] font-bold">Novo</span>
+          )}
         </div>
         <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors mb-1.5">
           {post.title}
         </p>
         <PostMeta post={post} size="xs" />
       </div>
+      <ChevronRight size={14} className="text-muted opacity-0 group-hover:opacity-50 group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
     </Link>
   )
 }
 
-export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string }> }) {
-  const { category: activeCategory, tag: activeTag } = await searchParams
-  const { hero, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag)
+export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string }> }) {
+  const { category: activeCategory, tag: activeTag, page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+  const { hero, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
   const isFiltered = !!activeCategory || !!activeTag
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const categoryOrder = new Map(BLOG_CATEGORIES.map((c, i) => [c.slug, i]))
   const orderedCategories = categories
@@ -280,7 +309,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     .map(([tag, count]) => ({ tag, count }))
     .slice(0, 14)
 
-  const heroId = isFiltered ? posts[0]?.id : hero?.id
+  // Hero: artigo fixo em destaque no topo da imagem. Grid começa do primeiro post.
+  // Na page > 1, não há hero global (hero=null), o destaque vira o posts[0] se filtrado.
+  const featPost = page > 1 ? null : (isFiltered ? posts[0] : hero)
+  const heroId = featPost?.id
   const gridPosts = posts.filter(p => p.id !== heroId)
 
   const activeCatConfig = activeCategory ? BLOG_CATEGORY_BY_SLUG[activeCategory] : null
@@ -296,125 +328,142 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* ── Hero ──────────────────────────────────────────────── */}
-        <div className="relative w-full h-[300px] md:h-[440px] overflow-hidden">
-          {(() => {
-            const featPost = isFiltered ? posts[0] : hero
-            const coverImage = featPost?.coverImageUrl ?? null
-            const cfg = featPost?.category ? BLOG_CATEGORY_BY_SLUG[featPost.category.slug] : null
-            return (
-              <>
-                {coverImage ? (
-                  <Image src={coverImage} alt={featPost?.title ?? 'Blog'} fill priority sizes="100vw"
-                    className="object-cover" />
-                ) : (
-                  <div className="w-full h-full" style={{ background: activeCatConfig ? `linear-gradient(135deg, ${activeCatConfig.bg}, ${activeCatConfig.color}55)` : 'linear-gradient(135deg, #1a1a2e, #16213e)' }} />
+        {/* ── Hero com imagem de fundo ─────────────────────────── */}
+        <div className="relative w-full min-h-[360px] md:min-h-[480px] overflow-hidden">
+          {/* Background */}
+          {featPost?.coverImageUrl ? (
+            <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
+              className="object-cover" />
+          ) : (
+            <div className="w-full h-full absolute inset-0"
+              style={{ background: activeCatConfig
+                ? `linear-gradient(135deg, ${activeCatConfig.bg}, ${activeCatConfig.color}55)`
+                : 'linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%)' }} />
+          )}
+
+          {/* Gradientes para legibilidade */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+
+          {/* Conteúdo do hero */}
+          <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10">
+            {/* Topo: label + RSS */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-white/50" />
+                <span className="text-white/50 text-xs font-semibold uppercase tracking-widest">Blog HallyuHub</span>
+                {!isFiltered && total > 0 && (
+                  <span className="text-white/35 text-xs hidden sm:inline">· {total} artigos</span>
                 )}
-                {/* Gradientes */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
+              </div>
+              <Link href="/blog/feed.xml"
+                className="flex items-center gap-1.5 text-white/35 hover:text-white/70 transition-colors text-xs px-2.5 py-1.5 rounded-lg hover:bg-white/10">
+                <Rss size={12} />
+                <span className="hidden sm:inline">RSS</span>
+              </Link>
+            </div>
 
-                {/* Conteúdo */}
-                <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-10 max-w-5xl">
-                  {/* Header do blog */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-white/60" />
-                      <span className="text-white/60 text-xs font-semibold uppercase tracking-widest">Blog HallyuHub</span>
-                      {!isFiltered && total > 0 && (
-                        <span className="text-white/40 text-xs">· {total} artigos</span>
-                      )}
-                    </div>
-                    <Link href="/blog/feed.xml" className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-xs">
-                      <Rss size={12} />
-                      <span className="hidden sm:inline">RSS</span>
-                    </Link>
-                  </div>
-
-                  {/* Artigo em destaque */}
-                  {featPost ? (
-                    <Link href={`/blog/${featPost.slug}`} className="group block">
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
-                        {cfg && (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider" style={{ backgroundColor: cfg.color, color: '#fff' }}>
-                            {featPost.category?.name}
-                          </span>
-                        )}
-                        {isRecent(featPost.publishedAt) && (
-                          <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">Novo</span>
-                        )}
-                        {featPost.featured && !isFiltered && (
-                          <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[11px] font-bold uppercase tracking-wider">Destaque</span>
-                        )}
-                        {isFiltered && (
-                          <span className="text-white/50 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
-                        )}
-                      </div>
-                      <h1 className="text-2xl md:text-[2.2rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-2 md:mb-3">
-                        {featPost.title}
-                      </h1>
-                      {featPost.excerpt && (
-                        <p className="text-white/65 text-sm md:text-base line-clamp-2 leading-relaxed hidden sm:block mb-3">
-                          {featPost.excerpt}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-3 text-white/55 text-xs">
-                        <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/70">
-                          {BLOG_AUTHOR_AVATAR_INITIAL}
-                        </div>
-                        <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1"><Clock size={11} />{featPost.readingTimeMin} min</span>
-                        <span className="flex items-center gap-1"><Eye size={11} />{featPost.viewCount} views</span>
-                        <span className="ml-auto flex items-center gap-1 text-accent font-bold group-hover:gap-2 transition-all">
-                          Ler <ArrowRight size={12} />
-                        </span>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div>
-                      <h1 className="text-3xl md:text-4xl font-black text-white">Blog K-Pop & K-Drama</h1>
-                      <p className="text-white/60 mt-2">Artigos sobre cultura coreana em português</p>
-                    </div>
+            {/* Artigo em destaque */}
+            {featPost ? (
+              <Link href={`/blog/${featPost.slug}`} className="group block mt-auto">
+                {/* Badges */}
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  {featPost.category && (() => {
+                    const cfg = BLOG_CATEGORY_BY_SLUG[featPost.category.slug]
+                    return cfg ? (
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                        style={{ backgroundColor: cfg.color, color: '#fff' }}>
+                        {featPost.category.name}
+                      </span>
+                    ) : null
+                  })()}
+                  {isRecent(featPost.publishedAt) && (
+                    <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">Novo</span>
+                  )}
+                  {featPost.featured && !isFiltered && (
+                    <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[11px] font-bold uppercase tracking-wider">Destaque</span>
+                  )}
+                  {isFiltered && (
+                    <span className="text-white/50 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
                   )}
                 </div>
-              </>
-            )
-          })()}
+
+                {/* Título */}
+                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
+                  {featPost.title}
+                </h1>
+
+                {/* Excerpt */}
+                {featPost.excerpt && (
+                  <p className="text-white/65 text-sm md:text-[15px] line-clamp-2 leading-relaxed hidden sm:block mb-4 max-w-2xl">
+                    {featPost.excerpt}
+                  </p>
+                )}
+
+                {/* Meta + CTA */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 text-white/50 text-xs">
+                    <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold text-white/80">
+                      {BLOG_AUTHOR_AVATAR_INITIAL}
+                    </div>
+                    <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
+                    <span>·</span>
+                    <PostMeta post={featPost} size="xs" light />
+                  </div>
+                  <span className="ml-auto sm:ml-4 flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                    Ler artigo <ArrowRight size={14} />
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="mt-auto">
+                <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Blog K-Pop & K-Drama</h1>
+                <p className="text-white/55 text-base">Artigos sobre cultura coreana em português</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ── Conteúdo ───────────────────────────────────────────── */}
+        {/* ── Conteúdo principal ────────────────────────────────── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
-          {/* Filter bar sticky */}
-          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-6 space-y-2.5">
+          {/* ── Filter bar sticky ─────────────────────────────── */}
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
+
             {/* Categorias */}
             <div className="relative">
-              <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
-              <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
+              {/* Fade edges no mobile */}
+              <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
               <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
                 <Link
                   href="/blog" scroll={false}
-                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${!isFiltered ? 'bg-foreground text-background' : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'}`}
+                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    !isFiltered
+                      ? 'bg-foreground text-background'
+                      : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground border border-border'
+                  }`}
                 >
-                  Todos {total > 0 && <span className="opacity-50 ml-0.5">({total})</span>}
+                  Todos {total > 0 && <span className="opacity-40 ml-0.5">({total})</span>}
                 </Link>
                 {orderedCategories.map(c => {
                   const isActive = activeCategory === c.slug
                   const cfg = BLOG_CATEGORY_BY_SLUG[c.slug]
-                  const href = activeTag ? `/blog?category=${c.slug}&tag=${encodeURIComponent(activeTag)}` : `/blog?category=${c.slug}`
+                  const href = activeTag
+                    ? `/blog?category=${c.slug}&tag=${encodeURIComponent(activeTag)}`
+                    : `/blog?category=${c.slug}`
                   return (
                     <Link
                       key={c.id} href={href} scroll={false}
                       className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border"
                       style={isActive
-                        ? { backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151', borderColor: `${cfg?.color ?? '#374151'}40` }
+                        ? { backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151', borderColor: `${cfg?.color ?? '#374151'}50` }
                         : { backgroundColor: 'transparent', borderColor: 'transparent', color: 'var(--color-muted)' }
                       }
                     >
                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: cfg?.color ?? '#9ca3af' }} />
                       {c.name}
-                      <span className="opacity-40 text-[10px]">{c._count.posts}</span>
+                      <span className="opacity-35 text-[10px]">{c._count.posts}</span>
                     </Link>
                   )
                 })}
@@ -423,106 +472,164 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
             {/* Tags */}
             {normalizedPopularTags.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
-                <Tag size={10} className="text-muted shrink-0" />
-                {normalizedPopularTags.map(({ tag }) => {
-                  const ts = getTagStyle(tag)
-                  const isActiveTag = activeTag === tag
-                  const href = isActiveTag
-                    ? (activeCategory ? `/blog?category=${activeCategory}` : '/blog')
-                    : (activeCategory ? `/blog?category=${activeCategory}&tag=${encodeURIComponent(tag)}` : `/blog?tag=${encodeURIComponent(tag)}`)
-                  return (
-                    <Link
-                      key={tag} href={href} scroll={false}
-                      className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
-                      style={{
-                        color: isActiveTag ? '#fff' : ts.color,
-                        backgroundColor: isActiveTag ? ts.color : ts.bg,
-                      }}
-                    >
-                      {tag}
-                    </Link>
-                  )
-                })}
+              <div className="relative">
+                <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
+                <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
+                  <Tag size={10} className="text-muted shrink-0 ml-1" />
+                  {normalizedPopularTags.map(({ tag }) => {
+                    const ts = getTagStyle(tag)
+                    const isActiveTag = activeTag === tag
+                    const href = isActiveTag
+                      ? (activeCategory ? `/blog?category=${activeCategory}` : '/blog')
+                      : (activeCategory ? `/blog?category=${activeCategory}&tag=${encodeURIComponent(tag)}` : `/blog?tag=${encodeURIComponent(tag)}`)
+                    return (
+                      <Link
+                        key={tag} href={href} scroll={false}
+                        className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap"
+                        style={{
+                          color: isActiveTag ? '#fff' : ts.color,
+                          backgroundColor: isActiveTag ? ts.color : ts.bg,
+                          outline: isActiveTag ? `2px solid ${ts.color}` : 'none',
+                          outlineOffset: '1px',
+                        }}
+                      >
+                        {tag}
+                      </Link>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>
 
           {/* Info de filtro ativo */}
           {isFiltered && (
-            <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-surface border border-border">
-              {activeCatConfig && (
-                <span className="text-xs font-semibold" style={{ color: activeCatConfig.color }}>
-                  {activeCatConfig.name}
+            <div className="flex items-center gap-3 mb-6 p-3.5 rounded-xl bg-surface border border-border">
+              <div className="flex items-center gap-2 flex-wrap flex-1">
+                {activeCatConfig && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{ color: activeCatConfig.color, backgroundColor: activeCatConfig.bg }}>
+                    {activeCatConfig.name}
+                  </span>
+                )}
+                {activeTag && (
+                  <span className="flex items-center gap-1 text-xs text-muted">
+                    <Tag size={10} />#{activeTag}
+                  </span>
+                )}
+                <span className="text-xs text-muted">
+                  {posts.length} {posts.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}
                 </span>
-              )}
-              {activeTag && (
-                <span className="flex items-center gap-1 text-xs text-muted">
-                  <Tag size={10} />#{activeTag}
-                </span>
-              )}
-              <span className="text-xs text-muted">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
-              <Link href="/blog" className="ml-auto text-xs text-accent hover:underline font-semibold">
+              </div>
+              <Link href="/blog" className="text-xs text-accent hover:underline font-semibold whitespace-nowrap">
                 Limpar filtros
               </Link>
             </div>
           )}
 
-          <AdBanner slot="1740970038" format="auto" className="mb-8" />
+          {/* Ad acima do grid */}
+          <AdBanner slot={AD_SLOT} layout="in-article" format="fluid" className="mb-8" />
 
-          {/* Layout principal: posts + sidebar */}
-          <div className="grid lg:grid-cols-[1fr_300px] gap-10">
+          {/* ── Layout: posts + sidebar ────────────────────────── */}
+          <div className="grid lg:grid-cols-[1fr_300px] gap-10 xl:gap-14">
 
-            {/* Posts */}
+            {/* ── Coluna principal ─────────────────────────────── */}
             <div>
-              {!isFiltered && <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-4">Publicações recentes</p>}
+              {!isFiltered && (
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
+                  <span className="w-3 h-px bg-muted inline-block" />
+                  Publicações recentes
+                </p>
+              )}
 
               {gridPosts.length > 0 ? (
-                <>
-                  {/* Grid 2 colunas: primeiro card ocupa as 2 */}
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    {gridPosts[0] && <HeroCard post={gridPosts[0]} />}
+                <div className="space-y-8">
+                  {/* Bloco 1: Featured + 2 PostCards */}
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    {gridPosts[0] && <FeaturedCard post={gridPosts[0]} />}
                     {gridPosts.slice(1, 3).map(p => <PostCard key={p.id} post={p} />)}
                   </div>
 
+                  {/* Ad entre blocos */}
                   {gridPosts.length > 3 && (
-                    <>
-                      <AdBanner slot="1740970038" format="auto" className="my-8" />
-
-                      {/* Segunda linha: 3 colunas */}
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-5">
-                        {gridPosts.slice(3, 9).map(p => <PostCard key={p.id} post={p} />)}
-                      </div>
-                    </>
+                    <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
                   )}
 
+                  {/* Bloco 2: grid 3 colunas */}
+                  {gridPosts.length > 3 && (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {gridPosts.slice(3, 9).map(p => <PostCard key={p.id} post={p} />)}
+                    </div>
+                  )}
+
+                  {/* Mais artigos (compactos) */}
                   {gridPosts.length > 9 && (
-                    <>
-                      <div className="my-8 border-t border-border" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-4">Mais artigos</p>
-                      <div className="flex flex-col gap-3">
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
+                          <span className="w-3 h-px bg-muted inline-block" />
+                          Mais artigos
+                        </p>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
+                      <div className="flex flex-col gap-2.5">
                         {gridPosts.slice(9).map(p => <CompactPostCard key={p.id} post={p} />)}
                       </div>
-                    </>
+                    </div>
                   )}
-                </>
+
+                  {/* Paginação */}
+                  {totalPages > 1 && (() => {
+                    const buildHref = (p: number) => {
+                      const params = new URLSearchParams()
+                      if (activeCategory) params.set('category', activeCategory)
+                      if (activeTag) params.set('tag', activeTag)
+                      if (p > 1) params.set('page', String(p))
+                      const q = params.toString()
+                      return `/blog${q ? `?${q}` : ''}`
+                    }
+                    return (
+                      <div className="mt-6 flex items-center justify-between gap-4">
+                        {page > 1 ? (
+                          <Link href={buildHref(page - 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 text-sm font-semibold text-foreground transition-all">
+                            ← Anterior
+                          </Link>
+                        ) : <div />}
+                        <span className="text-xs text-muted">
+                          Página {page} de {totalPages} · {total} artigos
+                        </span>
+                        {page < totalPages ? (
+                          <Link href={buildHref(page + 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background hover:opacity-90 text-sm font-semibold transition-all">
+                            Próxima →
+                          </Link>
+                        ) : <div />}
+                      </div>
+                    )
+                  })()}
+                </div>
               ) : (
-                <div className="text-center py-20 text-muted border border-dashed border-border rounded-2xl">
+                <div className="text-center py-24 text-muted border border-dashed border-border rounded-2xl">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-semibold">Nenhum artigo encontrado.</p>
-                  <Link href="/blog" className="text-xs text-accent mt-2 inline-block hover:underline">Ver todos os artigos</Link>
+                  <p className="text-sm font-semibold mb-1">Nenhum artigo encontrado.</p>
+                  <p className="text-xs text-muted/70 mb-4">Tente outro filtro ou veja todos os artigos.</p>
+                  <Link href="/blog" className="text-xs text-accent font-semibold hover:underline">
+                    Ver todos os artigos →
+                  </Link>
                 </div>
               )}
             </div>
 
-            {/* Sidebar */}
-            <aside className="space-y-6 lg:pt-0">
+            {/* ── Sidebar ──────────────────────────────────────── */}
+            <aside className="space-y-7">
 
               {/* Mais lidos */}
               {mostRead.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-3 flex items-center gap-1.5">
-                    <TrendingUp size={12} className="text-accent" /> Mais lidos
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-4 flex items-center gap-1.5">
+                    <TrendingUp size={11} className="text-accent" /> Mais lidos
                   </p>
                   <div className="space-y-2">
                     {mostRead.map((p, i) => {
@@ -533,9 +640,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                           href={`/blog/${p.slug}`}
                           className="group flex items-start gap-3 p-3 rounded-xl border border-border bg-surface hover:border-accent/30 hover:bg-surface-hover transition-all"
                         >
-                          <span className="text-xl font-black leading-none w-6 shrink-0 mt-0.5"
-                            style={{ color: `color-mix(in srgb, var(--accent) ${Math.max(20, 70 - i * 12)}%, var(--color-muted))` }}
-                          >
+                          <span className="text-lg font-black leading-none w-5 shrink-0 mt-0.5 tabular-nums"
+                            style={{ color: `color-mix(in srgb, var(--accent) ${Math.max(25, 75 - i * 13)}%, var(--color-muted))` }}>
                             {i + 1}
                           </span>
                           <div className="flex-1 min-w-0">
@@ -544,7 +650,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                             </p>
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {cfg && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold" style={{ color: cfg.color, backgroundColor: cfg.bg }}>
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                                  style={{ color: cfg.color, backgroundColor: cfg.bg }}>
                                   {p.category?.name}
                                 </span>
                               )}
@@ -553,8 +660,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                             </div>
                           </div>
                           {p.coverImageUrl && (
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                              <Image src={p.coverImageUrl} alt={p.title} fill sizes="48px" className="object-cover" />
+                            <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0">
+                              <Image src={p.coverImageUrl} alt={p.title} fill sizes="44px" className="object-cover" />
                             </div>
                           )}
                         </Link>
@@ -564,12 +671,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               )}
 
-              <AdBanner slot="1740970038" format="auto" />
+              {/* Ad na sidebar */}
+              <AdBanner slot={AD_SLOT} format="rectangle" />
 
-              {/* Explorar categorias */}
+              {/* Explorar por categoria */}
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-3">Explorar por categoria</p>
-                <div className="flex flex-col gap-1.5">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3">Categorias</p>
+                <div className="flex flex-col gap-1">
                   {orderedCategories.map(c => {
                     const cfg = BLOG_CATEGORY_BY_SLUG[c.slug]
                     const isActive = activeCategory === c.slug
@@ -585,14 +693,16 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         }
                       >
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cfg?.color ?? '#9ca3af' }} />
-                        <span className={`text-xs font-semibold flex-1 ${isActive ? '' : 'text-muted group-hover:text-foreground'}`}
-                          style={isActive ? { color: cfg?.color } : undefined}>
+                        <span className="text-xs font-semibold flex-1 transition-colors"
+                          style={isActive ? { color: cfg?.color } : undefined}
+                          >
                           {c.name}
                         </span>
-                        <span className="text-[10px] font-bold opacity-40" style={isActive ? { color: cfg?.color } : undefined}>
+                        <span className="text-[10px] font-bold opacity-35" style={isActive ? { color: cfg?.color } : undefined}>
                           {c._count.posts}
                         </span>
-                        <ArrowRight size={11} className={`opacity-0 group-hover:opacity-60 transition-opacity shrink-0 ${isActive ? 'opacity-60' : ''}`}
+                        <ArrowRight size={11}
+                          className={`transition-all shrink-0 ${isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-50 group-hover:translate-x-0.5'}`}
                           style={isActive ? { color: cfg?.color } : undefined} />
                       </Link>
                     )
@@ -600,19 +710,51 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               </div>
 
+              {/* Tags populares na sidebar */}
+              {normalizedPopularTags.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3 flex items-center gap-1.5">
+                    <Tag size={10} /> Tags populares
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {normalizedPopularTags.slice(0, 10).map(({ tag }) => {
+                      const ts = getTagStyle(tag)
+                      const isActiveTag = activeTag === tag
+                      const href = isActiveTag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`
+                      return (
+                        <Link key={tag} href={href} scroll={false}
+                          className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all"
+                          style={{
+                            color: isActiveTag ? '#fff' : ts.color,
+                            backgroundColor: isActiveTag ? ts.color : ts.bg,
+                          }}>
+                          {tag}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* RSS */}
               <Link
                 href="/blog/feed.xml"
-                className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors border border-border rounded-xl px-3 py-2.5"
+                className="flex items-center gap-2.5 text-xs text-muted hover:text-foreground transition-colors border border-border rounded-xl px-3.5 py-3 hover:bg-surface group"
               >
-                <Rss size={13} className="text-orange-500" />
-                <span>Assinar via RSS</span>
+                <Rss size={14} className="text-orange-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground text-xs">Feed RSS</p>
+                  <p className="text-[10px] opacity-60">Receba novos artigos no seu leitor</p>
+                </div>
+                <ArrowRight size={12} className="ml-auto opacity-0 group-hover:opacity-50 transition-opacity" />
               </Link>
             </aside>
           </div>
 
-          <AdBanner slot="1740970038" format="auto" className="mt-10" />
+          {/* Ad final */}
+          <AdBanner slot={AD_SLOT} format="horizontal" className="mt-12" />
         </div>
+
         <ScrollToTop />
       </PageTransition>
     </>
