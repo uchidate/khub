@@ -208,8 +208,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ],
       }} />
       <div className="max-w-screen-2xl mx-auto">
-      {/* Grid: mobile=1col, xl=article+right, 2xl=left+article+right */}
-      {/* Grid: mobile=1col, xl=left+article+right (ambas sidebars) */}
+      {/* Grid: mobile=1col, xl=left+article+right (ambas sidebars em >=1280px) */}
       <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr_200px] gap-6 xl:gap-8">
 
       {/* ── Sidebar ESQUERDA (sticky) ── */}
