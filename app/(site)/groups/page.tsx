@@ -38,18 +38,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GroupsPage() {
     const [total, heroGroups, totalArtists] = await Promise.all([
         prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
-        process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD
-            ? prisma.musicalGroup.findMany({
-                where: { isHidden: false, profileImageUrl: { not: null } },
-                orderBy: { trendingScore: 'desc' },
-                take: 5,
-                select: {
-                    id: true, name: true, nameHangul: true, profileImageUrl: true,
-                    debutDate: true, fanClubName: true, trendingScore: true,
-                    _count: { select: { members: { where: { isActive: true } } } },
-                },
-            }).catch(() => [])
-            : Promise.resolve([]),
+        prisma.musicalGroup.findMany({
+            where: { isHidden: false, profileImageUrl: { not: null } },
+            orderBy: { trendingScore: 'desc' },
+            take: 5,
+            select: {
+                id: true, name: true, nameHangul: true, profileImageUrl: true,
+                debutDate: true, fanClubName: true, trendingScore: true,
+                _count: { select: { members: { where: { isActive: true } } } },
+            },
+        }).catch(() => []),
         prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
     ])
 
