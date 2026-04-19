@@ -1,3 +1,4 @@
+import React from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -20,27 +21,23 @@ import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 const BASE_URL = SITE_URL
 
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
+
 function MarkdownWithAds({ content }: { content: string }) {
-  // Split on H2/H3 headings to inject ads between sections
   const sections = content.split(/(?=^#{2,3} )/m).filter(Boolean)
   if (sections.length <= 2) {
-    return (
-      <>
-        <MarkdownRenderer content={content} />
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
-      </>
-    )
+    return <MarkdownRenderer content={content} />
   }
-  const midpoint = Math.floor(sections.length / 2)
-  const firstHalf = sections.slice(0, midpoint).join('')
-  const secondHalf = sections.slice(midpoint).join('')
-  return (
-    <>
-      <MarkdownRenderer content={firstHalf} />
-      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
-      <MarkdownRenderer content={secondHalf} />
-    </>
-  )
+  // Inject an ad every 3 sections
+  const AD_EVERY = 3
+  const parts: React.ReactNode[] = []
+  for (let i = 0; i < sections.length; i++) {
+    parts.push(<MarkdownRenderer key={i} content={sections[i]} />)
+    if ((i + 1) % AD_EVERY === 0 && i < sections.length - 1) {
+      parts.push(<AdBanner key={`ad-${i}`} slot={AD_SLOT} format="auto" className="my-8" />)
+    }
+  }
+  return <>{parts}</>
 }
 
 // ISR ativo — force-dynamic removido; generateStaticParams pré-renderiza os posts publicados
@@ -281,9 +278,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           }
         </article>
 
-        {/* Ad após conteúdo */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-8" />
-
         {/* Tags */}
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
@@ -317,8 +311,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad before related posts */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-10" />
+        {/* Ad before related posts — slot diferente do inline */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" className="mt-10" />
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
