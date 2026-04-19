@@ -158,6 +158,7 @@ jobs:
             NEXT_PUBLIC_ADSENSE_SLOT_AGENCY=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY }}
             NEXT_PUBLIC_ADSENSE_SLOT_CONTACT=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_CONTACT }}
             NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST }}
+            NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR }}
           cache-from: |
             type=gha
             type=registry,ref=ghcr.io/uchidate/khub:staging
