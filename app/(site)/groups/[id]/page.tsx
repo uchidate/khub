@@ -306,7 +306,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                         {/* Status badges */}
                         <div className="flex items-center gap-2 flex-wrap">
                             {disbandYear ? (
-                                <span className="text-xs font-black uppercase px-3 py-1 bg-[#2a2a2a]/80 backdrop-blur-sm text-[#e8e8e8] rounded-full border border-[#444]/50">
+                                <span className="text-xs font-black uppercase px-3 py-1 bg-black/60 backdrop-blur-sm text-white/70 rounded-full border border-white/20">
                                     Disbandado em {disbandYear}
                                 </span>
                             ) : (
@@ -741,7 +741,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                                                     <Image src={album.coverUrl} alt={album.title} fill sizes="(max-width: 640px) 50vw, 33vw"
                                                         className="object-cover group-hover:scale-105 transition-transform duration-500" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#ff2d78]/20 to-[#f5f5f7]">
+                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/20 to-surface">
                                                         <Music className="w-8 h-8 text-muted" />
                                                     </div>
                                                 )}
@@ -871,7 +871,7 @@ function SectionHeader({ icon, title, count, muted = false, accent = '#9333ea' }
         <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-xl border"
                 style={muted
-                    ? { background: '#f5f5f7', borderColor: '#e8e8e8' }
+                    ? { background: 'hsl(var(--surface))', borderColor: 'hsl(var(--border))' }
                     : { background: toRgba(accent, 0.15), borderColor: toRgba(accent, 0.25) }
                 }>
                 <span style={{ color: muted ? '#6b6b6b' : accent }}>{icon}</span>
