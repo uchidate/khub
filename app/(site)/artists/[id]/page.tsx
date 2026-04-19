@@ -388,10 +388,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
             {/* ── CONTEÚDO ── */}
             <div className="px-4 sm:px-12 md:px-20 py-8 lg:py-12">
-                <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 max-w-[1600px] mx-auto">
+                <div className="grid lg:grid-cols-[280px_1fr_300px] gap-8 lg:gap-12 max-w-[1800px] mx-auto">
 
                     {/* ── SIDEBAR ── */}
-                    <div className="space-y-4 lg:space-y-6 lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
+                    <div className="space-y-4 lg:space-y-6 lg:sticky lg:top-24 lg:self-start">
 
 
                         {/* Informações */}
@@ -472,13 +472,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                             </div>
                         )}
 
-                        {/* Ad sidebar */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" />
-
                     </div>
 
                     {/* ── MAIN ── */}
-                    <div className="lg:col-span-2 space-y-10 lg:space-y-16">
+                    <div className="space-y-10 lg:space-y-16">
 
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 1 && (() => {
@@ -755,6 +752,15 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>
+
+                    {/* ── SIDEBAR DIREITA (sticky ads) ── */}
+                    <aside className="hidden xl:block">
+                        <div className="sticky top-24 flex flex-col gap-6">
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="rectangle" />
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="rectangle" />
+                        </div>
+                    </aside>
+
                 </div>
             </div>
             <ScrollToTop />
