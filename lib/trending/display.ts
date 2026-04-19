@@ -49,14 +49,14 @@ export function getArtistBadgeDisplay(artist: ArtistForBadge): BadgeDisplay | nu
   const delta = getRankDelta(artist)
 
   if (badge === 'SUBINDO') {
-    const label = delta !== null && delta > 0 ? `↑${delta}` : '↑'
+    const label = delta !== null && delta > 0 ? `↑${Math.min(delta, 99)}` : '↑'
     return { label, className: BADGE_BASE.SUBINDO.className }
   }
 
-  // Mostra queda mesmo sem badge "formal" — artista está descendo no ranking
-  if (!badge && delta !== null && delta <= -3) {
+  // Mostra queda apenas quando significativa e não absurda (salto de rank pode ser streaming signal)
+  if (!badge && delta !== null && delta <= -8 && delta >= -999) {
     return {
-      label: `↓${Math.abs(delta)}`,
+      label: `↓${Math.min(Math.abs(delta), 99)}`,
       className: 'bg-red-500/10 text-red-400',
     }
   }
