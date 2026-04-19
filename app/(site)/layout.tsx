@@ -41,8 +41,8 @@ const getTickerPosts = unstable_cache(
     { revalidate: 600 }
 )
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" })
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" })
 
 import { SITE_URL } from '@/lib/constants/site'

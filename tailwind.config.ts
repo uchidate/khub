@@ -84,6 +84,7 @@ const config: Config = {
                 'home-ticker':  'home-ticker 42s linear infinite',
                 'home-marquee': 'home-marquee 24s linear infinite',
                 'slideUp': 'slideUp 300ms ease-out',
+                'fadeInUp': 'fadeInUp 350ms ease-out',
             },
             keyframes: {
                 float: {
@@ -113,6 +114,10 @@ const config: Config = {
                 slideUp: {
                     '0%': { transform: 'translateY(100%)' },
                     '100%': { transform: 'translateY(0)' },
+                },
+                fadeInUp: {
+                    '0%': { transform: 'translateY(24px)', opacity: '0' },
+                    '100%': { transform: 'translateY(0)', opacity: '1' },
                 },
             }
         },
