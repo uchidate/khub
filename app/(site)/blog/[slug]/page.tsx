@@ -210,8 +210,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <div className="max-w-6xl mx-auto">
-      <div className="flex gap-10 xl:gap-14 items-start">
+      <div className="max-w-7xl mx-auto">
+      <div className="flex gap-6 xl:gap-10 items-start">
+
+      {/* ── Sidebar ESQUERDA (sticky) ── */}
+      <aside className="hidden xl:block w-[160px] shrink-0">
+        <div className="sticky top-6 flex flex-col gap-6">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="rectangle" />
+        </div>
+      </aside>
+
       {/* ── Coluna principal ── */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-8">
@@ -331,11 +339,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar sticky ── */}
-      <aside className="hidden xl:block w-[300px] shrink-0">
+      {/* ── Sidebar DIREITA (sticky) ── */}
+      <aside className="hidden xl:block w-[160px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-6">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="rectangle" />
         </div>
       </aside>
 
