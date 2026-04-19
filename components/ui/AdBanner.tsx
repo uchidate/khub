@@ -46,7 +46,12 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
     if (!CLIENT || !slot) return null
 
     return (
-        <div ref={containerRef} className={`overflow-hidden text-center ${className}`}>
+        <div ref={containerRef} className={`overflow-hidden ${className}`}>
+            <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
+                <div className="flex-1 h-px bg-border" />
+            </div>
             <ins
                 className="adsbygoogle"
                 style={{ display: 'block', textAlign: 'center', ...style }}
@@ -56,6 +61,11 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
                 {...(layout ? { 'data-ad-layout': layout } : {})}
                 {...(format !== 'fluid' ? { 'data-full-width-responsive': 'true' } : {})}
             />
+            <div className="flex items-center gap-3 mt-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Continua abaixo</span>
+                <div className="flex-1 h-px bg-border" />
+            </div>
         </div>
     )
 }

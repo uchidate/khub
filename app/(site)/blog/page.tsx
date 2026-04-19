@@ -346,8 +346,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* ── Hero ──────────────────────────────────────────────── */}
-        <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
+        {/* ── Hero — só na página 1 ─────────────────────────────── */}
+        {page === 1 && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -442,10 +442,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               <ChevronDown size={16} />
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Stats strip ───────────────────────────────────────── */}
-        {!isFiltered && total > 0 && (
+        {page === 1 && !isFiltered && total > 0 && (
           <div className="border-b border-border bg-surface/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
               <div className="flex items-center gap-2 shrink-0">
@@ -582,12 +582,52 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
             {/* ── Coluna principal ─────────────────────────────── */}
             <div>
-              {!isFiltered && (
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
-                  <span className="w-3 h-px bg-muted inline-block" />
-                  Publicações recentes
-                </p>
-              )}
+              {page > 1 && !isFiltered ? (
+                /* Página 2+: arquivo compacto em ordem */
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5 shrink-0">
+                      <span className="w-3 h-px bg-muted inline-block" />
+                      Arquivo · Página {page}
+                    </p>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] text-muted shrink-0">{total} artigos</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    {gridPosts.map((p, i) => <CompactPostCard key={p.id} post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />)}
+                  </div>
+                  {totalPages > 1 && (() => {
+                    const buildHref = (p: number) => {
+                      const q = p > 1 ? `?page=${p}` : ''
+                      return `/blog${q}`
+                    }
+                    return (
+                      <div className="mt-6 flex items-center justify-between gap-4">
+                        {page > 1 ? (
+                          <Link href={buildHref(page - 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 text-sm font-semibold text-foreground transition-all">
+                            ← Anterior
+                          </Link>
+                        ) : <div />}
+                        <span className="text-xs text-muted text-center">Página {page} de {totalPages}</span>
+                        {page < totalPages ? (
+                          <Link href={buildHref(page + 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background hover:opacity-90 text-sm font-semibold transition-all">
+                            Próxima <ArrowRight size={14} />
+                          </Link>
+                        ) : <div />}
+                      </div>
+                    )
+                  })()}
+                </div>
+              ) : (
+                <>
+                {!isFiltered && (
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
+                    <span className="w-3 h-px bg-muted inline-block" />
+                    Publicações recentes
+                  </p>
+                )}
 
               {gridPosts.length > 0 ? (
                 <div className="space-y-8">
@@ -595,15 +635,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   {/* ── Magazine grid: 1 grande + 2 lado a lado ── */}
                   {magazineMain && (
                     <div className="grid sm:grid-cols-[3fr_2fr] gap-4 items-stretch">
-                      {/* Card principal — ocupa toda a altura */}
                       <EditorialMainCard post={magazineMain} />
-
-                      {/* Dois cards empilhados */}
                       <div className="flex flex-col gap-3">
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {/* Preenche espaço vazio se só 1 card lateral */}
                         {magazineSide.length < 2 && (
                           <div className="flex-1 rounded-xl border border-dashed border-border bg-surface/30" />
                         )}
@@ -611,12 +647,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     </div>
                   )}
 
-                  {/* Ad entre blocos */}
                   {block2Posts.length > 0 && (
                     <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
                   )}
 
-                  {/* ── Grid 3 colunas ─────────────────────────── */}
                   {block2Posts.length > 0 && (
                     <>
                       <div className="flex items-center gap-3 -mb-3">
@@ -632,7 +666,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     </>
                   )}
 
-                  {/* ── Lista compacta ─────────────────────────── */}
                   {compactPosts.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
@@ -698,6 +731,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     Ver todos os artigos →
                   </Link>
                 </div>
+              )}
+              </>
               )}
             </div>
 
