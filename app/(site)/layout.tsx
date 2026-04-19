@@ -41,8 +41,8 @@ const getTickerPosts = unstable_cache(
     { revalidate: 600 }
 )
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" })
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" })
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -128,9 +128,9 @@ export default async function RootLayout({
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
                 <Script
                     src="https://www.googletagmanager.com/gtag/js?id=G-KHWW1EGSK3"
-                    strategy="afterInteractive"
+                    strategy="lazyOnload"
                 />
-                <Script id="ga-init" strategy="afterInteractive">{`
+                <Script id="ga-init" strategy="lazyOnload">{`
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
