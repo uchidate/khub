@@ -3,6 +3,7 @@ export const revalidate = 300
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -147,18 +148,12 @@ function EditorialMainCard({ post }: { post: PostItem }) {
       className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-xl transition-all duration-300 h-full min-h-[340px]"
     >
       {/* Imagem de fundo */}
-      {post.coverImageUrl ? (
-        <Image
-          src={post.coverImageUrl} alt={post.title} fill priority
-          sizes="(max-width: 640px) 100vw, 55vw"
-          className="object-cover group-hover:scale-[1.03] transition-transform duration-700"
-        />
-      ) : (
-        <div className="absolute inset-0"
-          style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}55)` } : { background: '#0d0d1a' }}>
-          <BookOpen className="absolute bottom-6 right-6 w-16 h-16 opacity-5" />
-        </div>
-      )}
+      <BlogImage
+        src={post.coverImageUrl} alt={post.title} fill priority
+        sizes="(max-width: 640px) 100vw, 55vw"
+        className="object-cover group-hover:scale-[1.03] transition-transform duration-700"
+        fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}55)` : '#0d0d1a'}
+      />
 
       {/* Gradiente sobre imagem */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -208,16 +203,11 @@ function EditorialSideCard({ post, priority }: { post: PostItem; priority?: bool
       className="group flex gap-3 p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all duration-200"
     >
       {/* Thumbnail */}
-      <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
-        {post.coverImageUrl ? (
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="80px" priority={priority}
-            className="object-cover group-hover:scale-[1.05] transition-transform duration-300" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"
-            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` } : { background: '#f5f5f5' }}>
-            <span className="text-2xl opacity-10">✦</span>
-          </div>
-        )}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted/20">
+        <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="80px" priority={priority}
+          className="object-cover group-hover:scale-[1.05] transition-transform duration-300"
+          fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` : '#f5f5f5'}
+        />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div>
@@ -239,26 +229,20 @@ function EditorialSideCard({ post, priority }: { post: PostItem; priority?: bool
 }
 
 // Card vertical padrão — grid 2-3 colunas
-function PostCard({ post }: { post: PostItem }) {
+function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
   const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
       href={`/blog/${post.slug}`}
       className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 h-full"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-surface-hover shrink-0">
-        {post.coverImageUrl ? (
-          <Image
-            src={post.coverImageUrl} alt={post.title} fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"
-            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}33)` } : { background: '#f5f5f5' }}>
-            <span className="text-4xl opacity-10">✦</span>
-          </div>
-        )}
+      <div className="relative aspect-[16/9] overflow-hidden bg-muted/20 shrink-0">
+        <BlogImage
+          src={post.coverImageUrl} alt={post.title} fill priority={priority}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+          fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}33)` : '#f5f5f5'}
+        />
         <div className="absolute top-2.5 left-2.5 flex gap-1">
           <CategoryBadge category={post.category} />
         </div>
@@ -294,16 +278,10 @@ function CompactPostCard({ post, rank }: { post: PostItem; rank?: number }) {
           {rank}
         </span>
       ) : null}
-      {post.coverImageUrl ? (
-        <div className="relative w-[72px] h-[48px] rounded-lg overflow-hidden shrink-0">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="72px"
-            className="object-cover group-hover:scale-[1.04] transition-transform duration-300" />
-        </div>
-      ) : (
-        <div className="w-[72px] h-[48px] rounded-lg shrink-0 bg-surface-hover flex items-center justify-center">
-          <BookOpen size={14} className="text-muted/30" />
-        </div>
-      )}
+      <BlogImage src={post.coverImageUrl} alt={post.title}
+        aspectRatio="thumb" width={72} height={48} priority
+        className="rounded-lg shrink-0 object-cover group-hover:scale-[1.04] transition-transform duration-300"
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
           <CategoryBadge category={post.category} size="xs" />
@@ -368,8 +346,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* ── Hero ──────────────────────────────────────────────── */}
-        <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
+        {/* ── Hero — só na página 1 ─────────────────────────────── */}
+        {page === 1 && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -464,10 +442,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               <ChevronDown size={16} />
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Stats strip ───────────────────────────────────────── */}
-        {!isFiltered && total > 0 && (
+        {page === 1 && !isFiltered && total > 0 && (
           <div className="border-b border-border bg-surface/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
               <div className="flex items-center gap-2 shrink-0">
@@ -604,12 +582,52 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
             {/* ── Coluna principal ─────────────────────────────── */}
             <div>
-              {!isFiltered && (
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
-                  <span className="w-3 h-px bg-muted inline-block" />
-                  Publicações recentes
-                </p>
-              )}
+              {page > 1 && !isFiltered ? (
+                /* Página 2+: arquivo compacto em ordem */
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5 shrink-0">
+                      <span className="w-3 h-px bg-muted inline-block" />
+                      Arquivo · Página {page}
+                    </p>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] text-muted shrink-0">{total} artigos</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    {gridPosts.map((p, i) => <CompactPostCard key={p.id} post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />)}
+                  </div>
+                  {totalPages > 1 && (() => {
+                    const buildHref = (p: number) => {
+                      const q = p > 1 ? `?page=${p}` : ''
+                      return `/blog${q}`
+                    }
+                    return (
+                      <div className="mt-6 flex items-center justify-between gap-4">
+                        {page > 1 ? (
+                          <Link href={buildHref(page - 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 text-sm font-semibold text-foreground transition-all">
+                            ← Anterior
+                          </Link>
+                        ) : <div />}
+                        <span className="text-xs text-muted text-center">Página {page} de {totalPages}</span>
+                        {page < totalPages ? (
+                          <Link href={buildHref(page + 1)} scroll
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background hover:opacity-90 text-sm font-semibold transition-all">
+                            Próxima <ArrowRight size={14} />
+                          </Link>
+                        ) : <div />}
+                      </div>
+                    )
+                  })()}
+                </div>
+              ) : (
+                <>
+                {!isFiltered && (
+                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
+                    <span className="w-3 h-px bg-muted inline-block" />
+                    Publicações recentes
+                  </p>
+                )}
 
               {gridPosts.length > 0 ? (
                 <div className="space-y-8">
@@ -617,15 +635,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   {/* ── Magazine grid: 1 grande + 2 lado a lado ── */}
                   {magazineMain && (
                     <div className="grid sm:grid-cols-[3fr_2fr] gap-4 items-stretch">
-                      {/* Card principal — ocupa toda a altura */}
                       <EditorialMainCard post={magazineMain} />
-
-                      {/* Dois cards empilhados */}
                       <div className="flex flex-col gap-3">
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {/* Preenche espaço vazio se só 1 card lateral */}
                         {magazineSide.length < 2 && (
                           <div className="flex-1 rounded-xl border border-dashed border-border bg-surface/30" />
                         )}
@@ -633,12 +647,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     </div>
                   )}
 
-                  {/* Ad entre blocos */}
                   {block2Posts.length > 0 && (
                     <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
                   )}
 
-                  {/* ── Grid 3 colunas ─────────────────────────── */}
                   {block2Posts.length > 0 && (
                     <>
                       <div className="flex items-center gap-3 -mb-3">
@@ -649,12 +661,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         <div className="flex-1 h-px bg-border" />
                       </div>
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {block2Posts.map(p => <PostCard key={p.id} post={p} />)}
+                        {block2Posts.map((p, i) => <PostCard key={p.id} post={p} priority={i < 3} />)}
                       </div>
                     </>
                   )}
 
-                  {/* ── Lista compacta ─────────────────────────── */}
                   {compactPosts.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
@@ -721,6 +732,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   </Link>
                 </div>
               )}
+              </>
+              )}
             </div>
 
             {/* ── Sidebar ──────────────────────────────────────── */}
@@ -760,11 +773,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                               <span className="text-[10px] text-muted flex items-center gap-0.5"><Clock size={9} />{p.readingTimeMin}min</span>
                             </div>
                           </div>
-                          {p.coverImageUrl && (
-                            <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0">
-                              <Image src={p.coverImageUrl} alt={p.title} fill sizes="44px" className="object-cover" />
-                            </div>
-                          )}
+                          <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-muted/20">
+                            <BlogImage src={p.coverImageUrl} alt={p.title} fill priority aspectRatio="thumb"
+                              className="object-cover" />
+                          </div>
                         </Link>
                       )
                     })}
