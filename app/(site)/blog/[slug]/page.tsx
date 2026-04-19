@@ -210,18 +210,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <div className="max-w-7xl mx-auto">
-      <div className="flex gap-6 xl:gap-10 items-start">
+      <div className="max-w-screen-2xl mx-auto">
+      <div className="flex gap-4 2xl:gap-8">
 
-      {/* ── Sidebar ESQUERDA (sticky) ── */}
-      <aside className="hidden xl:block w-[160px] shrink-0">
-        <div className="sticky top-6 flex flex-col gap-6">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="rectangle" />
+      {/* ── Sidebar ESQUERDA (sticky) — visível em 2xl (≥1536px) ── */}
+      <aside className="hidden 2xl:block w-[200px] shrink-0">
+        <div className="sticky top-6">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" />
         </div>
       </aside>
 
       {/* ── Coluna principal ── */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
@@ -339,10 +339,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar DIREITA (sticky) ── */}
-      <aside className="hidden xl:block w-[160px] shrink-0">
-        <div className="sticky top-6 flex flex-col gap-6">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+      {/* ── Sidebar DIREITA (sticky) — visível em xl (≥1280px) ── */}
+      <aside className="hidden xl:block w-[200px] shrink-0">
+        <div className="sticky top-6">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
         </div>
       </aside>
 
