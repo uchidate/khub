@@ -335,7 +335,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <aside className="hidden xl:block w-[300px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-6">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="rectangle" />
         </div>
       </aside>
 
