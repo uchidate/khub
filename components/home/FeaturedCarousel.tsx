@@ -92,9 +92,11 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                         )}
                         <div
                             className="absolute inset-0"
-                            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 35%, rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%)' }}
+                            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0) 100%)' }}
                         />
-                        <div className="absolute bottom-0 left-0 right-0 px-5 pb-10 pt-10">
+                        <div className="absolute bottom-0 left-0 right-0 px-5 pb-10 pt-16"
+                            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
+                        >
                             <div className="flex items-center gap-1.5 mb-3">
                                 <span
                                     className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded"
@@ -103,11 +105,17 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                     {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
                                 </span>
                             </div>
-                            <h1 className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3">
+                            <h1
+                                className="text-[1.15rem] sm:text-[1.4rem] lg:text-[1.7rem] font-extrabold tracking-[-0.03em] text-white leading-[1.15] mb-2 group-hover:text-white/90 transition-colors line-clamp-3"
+                                style={{ textShadow: '0 1px 8px rgba(0,0,0,0.8), 0 2px 24px rgba(0,0,0,0.6)' }}
+                            >
                                 {story.title}
                             </h1>
                             {story.excerpt && (
-                                <p className="text-[12.5px] text-white/70 leading-relaxed line-clamp-2 mb-2">
+                                <p
+                                    className="text-[12.5px] text-white/85 leading-relaxed line-clamp-2 mb-2"
+                                    style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
+                                >
                                     {story.excerpt}
                                 </p>
                             )}

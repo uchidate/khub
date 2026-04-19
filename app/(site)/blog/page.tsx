@@ -1,5 +1,6 @@
 export const revalidate = 300
 
+import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -594,7 +595,14 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     <span className="text-[10px] text-muted shrink-0">{total} artigos</span>
                   </div>
                   <div className="flex flex-col gap-2.5">
-                    {gridPosts.map((p, i) => <CompactPostCard key={p.id} post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />)}
+                    {gridPosts.map((p, i) => (
+                      <Fragment key={p.id}>
+                        <CompactPostCard post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />
+                        {i === 9 && gridPosts.length > 10 && (
+                          <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                        )}
+                      </Fragment>
+                    ))}
                   </div>
                   {totalPages > 1 && (() => {
                     const buildHref = (p: number) => {
@@ -668,6 +676,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
+                      <AdBanner slot={AD_SLOT} format="horizontal" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
                           <span className="w-3 h-px bg-muted inline-block" />
@@ -676,7 +685,14 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         <div className="flex-1 h-px bg-border" />
                       </div>
                       <div className="flex flex-col gap-2.5">
-                        {compactPosts.map((p, i) => <CompactPostCard key={p.id} post={p} rank={gridStart + 6 + i + 1} />)}
+                        {compactPosts.map((p, i) => (
+                          <Fragment key={p.id}>
+                            <CompactPostCard post={p} rank={gridStart + 6 + i + 1} />
+                            {i === 9 && compactPosts.length > 10 && (
+                              <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                            )}
+                          </Fragment>
+                        ))}
                       </div>
                     </div>
                   )}
