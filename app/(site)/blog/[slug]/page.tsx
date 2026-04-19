@@ -211,17 +211,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ],
       }} />
       <div className="max-w-screen-2xl mx-auto">
-      <div className="flex gap-4 2xl:gap-8">
+      {/* Grid: mobile=1col, xl=article+right, 2xl=left+article+right */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_200px] 2xl:grid-cols-[200px_1fr_200px] gap-6 xl:gap-8">
 
-      {/* ── Sidebar ESQUERDA (sticky) — visível em 2xl (≥1536px) ── */}
-      <aside className="hidden 2xl:block w-[200px] shrink-0">
+      {/* ── Sidebar ESQUERDA — 2xl only ── */}
+      <aside className="hidden 2xl:block 2xl:order-first">
         <div className="sticky top-6">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" />
         </div>
       </aside>
 
       {/* ── Coluna principal ── */}
-      <div className="flex-1 min-w-0 max-w-3xl mx-auto">
+      <div className="min-w-0 xl:col-start-1 2xl:col-start-2">
         <div className="flex items-center justify-between mb-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
@@ -339,14 +340,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar DIREITA (sticky) — visível em xl (≥1280px) ── */}
-      <aside className="hidden xl:block w-[200px] shrink-0">
+      {/* ── Sidebar DIREITA — xl e 2xl, sempre última coluna ── */}
+      <aside className="hidden xl:block xl:col-start-2 2xl:col-start-3">
         <div className="sticky top-6">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
         </div>
       </aside>
 
-      </div>{/* fim flex */}
+      </div>{/* fim grid */}
       </div>{/* fim max-w */}
     </PageTransition>
   )
