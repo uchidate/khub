@@ -128,9 +128,9 @@ export default async function RootLayout({
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
                 <Script
                     src="https://www.googletagmanager.com/gtag/js?id=G-KHWW1EGSK3"
-                    strategy="lazyOnload"
+                    strategy="afterInteractive"
                 />
-                <Script id="ga-init" strategy="lazyOnload">{`
+                <Script id="ga-init" strategy="afterInteractive">{`
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
