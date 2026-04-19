@@ -38,7 +38,7 @@ const getTickerPosts = unstable_cache(
         }
     },
     ['layout-ticker-posts-v1'],
-    { revalidate: 120 }
+    { revalidate: 600 }
 )
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" })
@@ -121,6 +121,8 @@ export default async function RootLayout({
                 <link key="dns-youtube" rel="dns-prefetch" href="https://img.youtube.com" />
                 <link key="preconnect-wikimedia" rel="preconnect" href="https://upload.wikimedia.org" />
                 <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
+                <link key="dns-soompi" rel="dns-prefetch" href="https://0.soompi.io" />
+                <link key="dns-r2" rel="dns-prefetch" href="https://pub-placeholder.r2.dev" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}

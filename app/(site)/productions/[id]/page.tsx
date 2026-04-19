@@ -43,8 +43,12 @@ const getProduction = cache(async (id: string) => {
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
-                include: { artist: true },
+                include: { artist: { select: {
+                    id: true, nameRomanized: true, nameHangul: true,
+                    primaryImageUrl: true, roles: true, gender: true,
+                } } },
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
+                take: 30,
             }
         }
     }).catch(() => null)
@@ -173,6 +177,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         : []
 
     const relatedProductions = [...byArtist, ...byTag, ...byType]
+
+    // Total real de artistas (pode ser maior que o take:30)
+    const totalCast = production.artists.length < 30
+        ? production.artists.length
+        : await prisma.artistProduction.count({ where: { productionId: production.id, artist: { flaggedAsNonKorean: false } } }).catch(() => production.artists.length)
 
     // Busca sinopse traduzida (PT-BR) — fallback para o campo original
     const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
@@ -630,7 +639,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             )}
                             <div className="flex justify-between py-3">
                                 <span className="text-xs font-black text-muted uppercase tracking-widest">Elenco</span>
-                                <span className="text-sm font-bold text-foreground">{production.artists.length} artistas</span>
+                                <span className="text-sm font-bold text-foreground">{totalCast} artistas</span>
                             </div>
                         </div>
 
