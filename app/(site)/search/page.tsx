@@ -5,9 +5,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
-import { Search, User, Film, Users, ArrowLeft } from 'lucide-react'
+import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { AdBanner } from '@/components/ui/AdBanner'
+import { nameToGradient } from '@/lib/utils'
 
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
 
 interface Artist {
     id: string
@@ -43,6 +46,20 @@ interface SearchData {
 
 type FilterType = 'all' | 'artists' | 'groups' | 'productions'
 
+function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
+    return (
+        <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent shrink-0">
+                {icon}
+            </div>
+            <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-foreground">{title}</h2>
+                <span className="text-xs text-muted font-medium">{count} resultado{count !== 1 ? 's' : ''}</span>
+            </div>
+        </div>
+    )
+}
+
 function SearchContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -51,7 +68,6 @@ function SearchContent() {
 
     const [data, setData] = useState<SearchData | null>(null)
     const [loading, setLoading] = useState(false)
-    // useDeferredValue: mantém resultados anteriores visíveis enquanto nova busca carrega
     const deferredData = useDeferredValue(data)
     const isStale = loading && deferredData !== null
 
@@ -63,17 +79,13 @@ function SearchContent() {
         setLoading(true)
         try {
             const res = await fetch(`/api/search/full?q=${encodeURIComponent(q)}`)
-            if (res.ok) {
-                setData(await res.json())
-            }
+            if (res.ok) setData(await res.json())
         } finally {
             setLoading(false)
         }
     }, [])
 
-    useEffect(() => {
-        fetchResults(query)
-    }, [query, fetchResults])
+    useEffect(() => { fetchResults(query) }, [query, fetchResults])
 
     const setFilter = (type: FilterType) => {
         const params = new URLSearchParams(searchParams.toString())
@@ -87,11 +99,11 @@ function SearchContent() {
     const productions = deferredData?.productions ?? []
     const total = artists.length + groups.length + productions.length
 
-    const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode; color: string }[] = [
-        { key: 'all', label: 'Todos', count: total, icon: <Search className="w-4 h-4" />, color: 'purple' },
-        { key: 'artists', label: 'Artistas', count: artists.length, icon: <User className="w-4 h-4" />, color: 'purple' },
-        { key: 'groups', label: 'Grupos', count: groups.length, icon: <Users className="w-4 h-4" />, color: 'pink' },
-        { key: 'productions', label: 'Produções', count: productions.length, icon: <Film className="w-4 h-4" />, color: 'cyan' },
+    const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode }[] = [
+        { key: 'all', label: 'Todos', count: total, icon: <Search size={13} /> },
+        { key: 'artists', label: 'Artistas', count: artists.length, icon: <User size={13} /> },
+        { key: 'groups', label: 'Grupos', count: groups.length, icon: <Users size={13} /> },
+        { key: 'productions', label: 'Produções', count: productions.length, icon: <Film size={13} /> },
     ]
 
     const showArtists = activeFilter === 'all' || activeFilter === 'artists'
@@ -100,24 +112,24 @@ function SearchContent() {
 
     return (
         <>
-            {/* Filter tabs — only shown when there are results */}
+            {/* Filter tabs */}
             {deferredData && total > 0 && (
-                <div className="flex flex-wrap gap-2 mb-8">
+                <div className="flex flex-wrap gap-1.5 mb-8">
                     {tabs.map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => setFilter(tab.key)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                                 activeFilter === tab.key
-                                    ? 'bg-[#ff2d78] text-white'
-                                    : 'bg-surface text-muted hover:text-foreground hover:bg-[#e8e8e8] border border-border'
+                                    ? 'bg-foreground text-background'
+                                    : 'bg-surface text-muted hover:text-foreground hover:bg-surface-hover border border-border'
                             }`}
                         >
                             {tab.icon}
                             {tab.label}
                             {tab.count > 0 && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                    activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-surface text-muted'
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                    activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-surface-hover text-muted'
                                 }`}>
                                     {tab.count}
                                 </span>
@@ -127,166 +139,149 @@ function SearchContent() {
                 </div>
             )}
 
-            {/* Empty query */}
             {!query || query.trim().length < 2 ? (
-                <div className="text-center py-20">
-                    <Search className="w-16 h-16 text-[#e8e8e8] mx-auto mb-4" />
-                    <p className="text-[#999] text-lg">Digite pelo menos 2 caracteres para buscar</p>
+                <div className="text-center py-24">
+                    <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-7 h-7 text-muted/40" />
+                    </div>
+                    <p className="text-muted text-base font-medium mb-1">Buscar no HallyuHub</p>
+                    <p className="text-muted/60 text-sm">Artistas, grupos, dramas e filmes coreanos</p>
                 </div>
             ) : loading && !deferredData ? (
-                <div className="space-y-8">
+                <div className="space-y-10">
                     {[1, 2].map(i => (
                         <div key={i} className="space-y-4">
-                            <Skeleton className="h-8 w-40" />
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {[1, 2, 3, 4, 5, 6].map(j => <Skeleton key={j} className="aspect-square rounded-xl" />)}
+                            <Skeleton className="h-6 w-32" />
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: 6 }).map((_, j) => <Skeleton key={j} className="aspect-square rounded-xl" />)}
                             </div>
                         </div>
                     ))}
                 </div>
             ) : deferredData && total === 0 ? (
-                <div className="text-center py-20">
-                    <Search className="w-16 h-16 text-[#e8e8e8] mx-auto mb-4" />
-                    <p className="text-[#999] text-lg mb-2">
-                        Nenhum resultado encontrado para &quot;{query}&quot;
-                    </p>
-                    <p className="text-muted">Tente buscar por artistas, grupos, notícias ou produções</p>
+                <div className="text-center py-24">
+                    <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-7 h-7 text-muted/40" />
+                    </div>
+                    <p className="text-foreground font-semibold mb-1">Nenhum resultado para &quot;{query}&quot;</p>
+                    <p className="text-muted text-sm">Tente um nome diferente ou busque em português / romanizado</p>
                 </div>
             ) : deferredData ? (
-                <div className={`space-y-12 transition-opacity duration-200 ${isStale ? 'opacity-50' : 'opacity-100'}`}>
-                    {/* Summary */}
-                    <div>
-                        <p className="text-[#999]">
-                            <span className="text-2xl font-bold text-foreground">{total}</span> resultado{total > 1 ? 's' : ''} para &quot;<span className="text-[#ff2d78]">{query}</span>&quot;
-                        </p>
-                    </div>
+                <div className={`space-y-10 transition-opacity duration-150 ${isStale ? 'opacity-60' : 'opacity-100'}`}>
+                    {/* Resumo */}
+                    <p className="text-muted text-sm">
+                        <span className="text-xl font-black text-foreground mr-1">{total}</span>
+                        resultado{total !== 1 ? 's' : ''} para{' '}
+                        <span className="text-accent font-semibold">&quot;{query}&quot;</span>
+                    </p>
 
-                    {/* Artists */}
+                    {/* Artistas */}
                     {showArtists && artists.length > 0 && (
                         <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-[#fff0f5] rounded-lg">
-                                    <User className="w-5 h-5 text-[#ff2d78]" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-foreground">Artistas</h2>
-                                    <p className="text-sm text-muted">{artists.length} encontrado{artists.length > 1 ? 's' : ''}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {artists.map((artist) => (
-                                    <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
-                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-2">
+                            <SectionHeader icon={<User size={14} />} title="Artistas" count={artists.length} />
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
+                                {artists.map(artist => (
+                                    <Link key={artist.id} href={`/artists/${artist.id}`}
+                                        className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
+                                        <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             {artist.primaryImageUrl ? (
-                                                <Image
-                                                    src={artist.primaryImageUrl}
-                                                    alt={artist.nameRomanized}
-                                                    fill
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                                                />
+                                                <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill
+                                                    sizes="(max-width: 640px) 33vw, 16vw"
+                                                    className="object-cover object-top group-hover:scale-[1.04] transition-transform duration-500" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#ff2d78] to-pink-600 text-white text-2xl font-bold">
-                                                    {artist.nameRomanized[0]}
+                                                <div className="w-full h-full flex items-center justify-center"
+                                                    style={{ background: nameToGradient(artist.nameRomanized) }}>
+                                                    <span className="text-xl font-black text-white/80">{artist.nameRomanized[0]}</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
-                                            {artist.nameRomanized}
-                                        </h3>
+                                        <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors truncate">{artist.nameRomanized}</p>
+                                        {artist.nameHangul && <p className="text-[10px] text-muted truncate">{artist.nameHangul}</p>}
                                         {artist.roles.length > 0 && (
-                                            <p className="text-xs text-muted truncate">{getRoleLabel(artist.roles[0], artist.gender)}</p>
+                                            <p className="text-[10px] text-muted/70 truncate">{getRoleLabel(artist.roles[0], artist.gender)}</p>
                                         )}
                                     </Link>
                                 ))}
                             </div>
+                            {artists.length > 0 && (
+                                <div className="mt-4">
+                                    <Link href={`/artists?search=${encodeURIComponent(query)}`}
+                                        className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-semibold">
+                                        Ver todos os artistas <ChevronRight size={12} />
+                                    </Link>
+                                </div>
+                            )}
                         </section>
                     )}
 
-                    {/* Groups */}
+                    {/* Ad entre seções */}
+                    {showArtists && artists.length > 0 && (showGroups && groups.length > 0 || showProductions && productions.length > 0) && (
+                        <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                    )}
+
+                    {/* Grupos */}
                     {showGroups && groups.length > 0 && (
                         <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-[#fff0f5] rounded-lg">
-                                    <Users className="w-5 h-5 text-[#ff2d78]" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-foreground">Grupos</h2>
-                                    <p className="text-sm text-muted">{groups.length} encontrado{groups.length > 1 ? 's' : ''}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {groups.map((group) => (
-                                    <Link key={group.id} href={`/groups/${group.id}`} className="group">
-                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface mb-2">
+                            <SectionHeader icon={<Users size={14} />} title="Grupos" count={groups.length} />
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
+                                {groups.map(group => (
+                                    <Link key={group.id} href={`/groups/${group.id}`}
+                                        className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
+                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             {group.profileImageUrl ? (
-                                                <Image
-                                                    src={group.profileImageUrl}
-                                                    alt={group.name}
-                                                    fill
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                                                />
+                                                <Image src={group.profileImageUrl} alt={group.name} fill
+                                                    sizes="(max-width: 640px) 33vw, 16vw"
+                                                    className="object-cover object-top group-hover:scale-[1.04] transition-transform duration-500" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-600 to-[#ff6fa3] text-white text-2xl font-bold">
-                                                    {group.name[0]}
+                                                <div className="w-full h-full flex items-center justify-center"
+                                                    style={{ background: nameToGradient(group.name) }}>
+                                                    <span className="text-xl font-black text-white/80">{group.name[0]}</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
-                                            {group.name}
-                                        </h3>
-                                        {group.nameHangul && (
-                                            <p className="text-xs text-muted truncate">{group.nameHangul}</p>
-                                        )}
+                                        <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors truncate">{group.name}</p>
+                                        {group.nameHangul && <p className="text-[10px] text-muted truncate">{group.nameHangul}</p>}
                                     </Link>
                                 ))}
                             </div>
                         </section>
                     )}
 
-                    {/* Productions */}
+                    {/* Produções */}
                     {showProductions && productions.length > 0 && (
                         <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-[#e0f2fe] rounded-lg">
-                                    <Film className="w-5 h-5 text-[#0ea5e9]" />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black text-foreground">Produções</h2>
-                                    <p className="text-sm text-muted">{productions.length} encontrada{productions.length > 1 ? 's' : ''}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {productions.map((production) => (
-                                    <Link key={production.id} href={`/productions/${production.id}`} className="group">
-                                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface mb-2">
-                                            {production.imageUrl ? (
-                                                <Image
-                                                    src={production.imageUrl}
-                                                    alt={production.titlePt}
-                                                    fill
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                                                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                                                />
+                            <SectionHeader icon={<Film size={14} />} title="Produções" count={productions.length} />
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                                {productions.map(prod => (
+                                    <Link key={prod.id} href={`/productions/${prod.id}`}
+                                        className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
+                                        <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
+                                            {prod.imageUrl ? (
+                                                <Image src={prod.imageUrl} alt={prod.titlePt} fill
+                                                    sizes="(max-width: 640px) 50vw, 20vw"
+                                                    className="object-cover group-hover:scale-[1.04] transition-transform duration-500" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-surface p-4">
-                                                    <p className="text-muted text-center text-xs font-bold line-clamp-3">{production.titlePt}</p>
+                                                <div className="w-full h-full flex items-center justify-center p-3"
+                                                    style={{ background: nameToGradient(prod.titlePt) }}>
+                                                    <p className="text-white/80 text-center text-xs font-bold line-clamp-3">{prod.titlePt}</p>
+                                                </div>
+                                            )}
+                                            {prod.voteAverage && (
+                                                <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-black/70 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                                    <Star size={8} fill="currentColor" />{prod.voteAverage.toFixed(1)}
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-semibold text-foreground group-hover:text-[#0ea5e9] transition-colors line-clamp-2 text-sm">
-                                            {production.titlePt}
-                                        </h3>
-                                        <p className="text-xs text-muted">
-                                            {production.type}{production.year && ` • ${production.year}`}
-                                        </p>
+                                        <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prod.titlePt}</p>
+                                        <p className="text-[10px] text-muted mt-0.5">{prod.type}{prod.year ? ` · ${prod.year}` : ''}</p>
                                     </Link>
                                 ))}
                             </div>
                         </section>
                     )}
 
+                    {/* Ad após resultados */}
+                    <AdBanner slot={AD_SLOT} format="horizontal" className="mt-4" />
                 </div>
             ) : null}
         </>
@@ -295,32 +290,29 @@ function SearchContent() {
 
 export default function SearchPage() {
     return (
-        <div className="min-h-screen bg-background py-8 md:py-12 px-4 sm:px-12 md:px-20">
+        <div className="min-h-screen bg-background py-8 md:py-12 px-4 sm:px-6 lg:px-12">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-6"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
+                    <Link href="/" className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-colors mb-6 text-sm">
+                        <ArrowLeft size={14} />
                         Voltar
                     </Link>
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-[#ff2d78] to-pink-600 rounded-xl">
-                            <Search className="w-6 h-6 text-foreground" />
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <Search className="w-5 h-5 text-accent" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-foreground">Resultados da Busca</h1>
+                        <h1 className="text-2xl md:text-3xl font-black text-foreground">Busca</h1>
                     </div>
                 </div>
 
                 <Suspense fallback={
-                    <div className="space-y-8">
+                    <div className="space-y-10">
                         {[1, 2].map(i => (
                             <div key={i} className="space-y-4">
-                                <Skeleton className="h-8 w-40" />
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    {[1, 2, 3, 4, 5, 6].map(j => <Skeleton key={j} className="aspect-square rounded-xl" />)}
+                                <Skeleton className="h-6 w-32" />
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                                    {Array.from({ length: 6 }).map((_, j) => <Skeleton key={j} className="aspect-square rounded-xl" />)}
                                 </div>
                             </div>
                         ))}

@@ -1,0 +1,226 @@
+name: ⏰ Cron Jobs
+
+# Substitui todos os scheduled tasks do Coolify por chamadas HTTP diretas ao Next.js.
+# Padrão: curl → /api/cron/<endpoint> com Authorization: Bearer CRON_SECRET
+# Nunca usar docker exec — apenas HTTP para evitar OOM kill.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # A cada 5min  → publish-scheduled, fetch-news, tag-news
+    - cron: '*/15 * * * *'  # A cada 15min → fetch-streaming-signals
+    - cron: '0 */6 * * *'   # A cada 6h   → update-trending
+    - cron: '0 * * * *'     # Horário      → sync-discography, sync-cast
+    - cron: '0 2 * * *'     # 02:00 UTC    → sync-social-links, artist-visibility, digest
+
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job a executar manualmente'
+        required: true
+        type: choice
+        options:
+          - publish-scheduled
+          - fetch-news
+          - tag-news
+          - update-trending
+          - fetch-streaming-signals
+          - sync-discography
+          - sync-cast
+          - sync-social-links
+          - artist-visibility
+          - digest
+
+env:
+  BASE_URL: https://www.hallyuhub.com.br
+
+jobs:
+  # ─── A cada 5 minutos ──────────────────────────────────────────────────────
+
+  publish-scheduled:
+    name: 📅 Publicar posts agendados
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'publish-scheduled')
+      || (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *')
+    steps:
+      - name: POST /api/cron/publish-scheduled
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
+            "$BASE_URL/api/cron/publish-scheduled" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  fetch-news:
+    name: 📰 Buscar notícias
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'fetch-news')
+      || (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *')
+    steps:
+      - name: POST /api/cron/fetch-news
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
+            "$BASE_URL/api/cron/fetch-news" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  tag-news:
+    name: 🏷️ Taguear notícias
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: fetch-news
+    if: >
+      always() && (
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'tag-news')
+        || (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *')
+      )
+    steps:
+      - name: POST /api/cron/tag-news
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
+            "$BASE_URL/api/cron/tag-news" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  # ─── A cada 15 minutos ─────────────────────────────────────────────────────
+
+  update-trending:
+    name: 📈 Atualizar trending score
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'update-trending')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
+    steps:
+      - name: POST /api/cron/update-trending
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
+            "$BASE_URL/api/cron/update-trending" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  fetch-streaming-signals:
+    name: 📡 Buscar sinais de streaming
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'fetch-streaming-signals')
+      || (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *')
+    steps:
+      - name: POST /api/cron/fetch-streaming-signals
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
+            "$BASE_URL/api/cron/fetch-streaming-signals" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  # ─── A cada hora ───────────────────────────────────────────────────────────
+
+  sync-discography:
+    name: 💿 Sincronizar discografia
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-discography')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 * * * *')
+    steps:
+      - name: POST /api/cron/sync-discography
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
+            "$BASE_URL/api/cron/sync-discography" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  sync-cast:
+    name: 🎭 Sincronizar elenco
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-cast')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 * * * *')
+    steps:
+      - name: POST /api/cron/sync-cast
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
+            "$BASE_URL/api/cron/sync-cast" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  # ─── Diário 02:00 UTC ──────────────────────────────────────────────────────
+
+  sync-social-links:
+    name: 🔗 Sincronizar redes sociais (Wikidata)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-social-links')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *')
+    steps:
+      - name: POST /api/cron/sync-social-links-wikidata
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 600 -X POST \
+            "$BASE_URL/api/cron/sync-social-links-wikidata" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  artist-visibility:
+    name: 👁️ Atualizar visibilidade de artistas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'artist-visibility')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *')
+    steps:
+      - name: POST /api/cron/artist-visibility
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
+            "$BASE_URL/api/cron/artist-visibility" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  digest:
+    name: 📬 Email digest de blog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'digest')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *')
+    steps:
+      - name: POST /api/cron/digest
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
+            "$BASE_URL/api/cron/digest" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1

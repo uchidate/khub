@@ -40,11 +40,13 @@ test.describe('Autenticação', () => {
 
   test('rota /favorites mostra prompt de login sem autenticação', async ({ page }) => {
     await page.goto('/favorites')
-    // Pode redirecionar para login OU mostrar inline prompt para entrar
+    // Pode redirecionar para login OU mostrar inline prompt — aguardar client-side render
     const url = page.url()
     const isAuthPage = /login|signin|auth/.test(url)
-    const hasLoginPrompt = await page.locator('text=/login|entrar/i').isVisible().catch(() => false)
-    expect(isAuthPage || hasLoginPrompt, '/favorites deveria pedir autenticação').toBeTruthy()
+    if (!isAuthPage) {
+      // Página usa useSession() — aguardar status unauthenticated ser renderizado
+      await expect(page.locator('text=/login|entrar/i').first()).toBeVisible({ timeout: 10_000 })
+    }
   })
 
   test('rota /settings redireciona para login sem autenticação', async ({ page }) => {

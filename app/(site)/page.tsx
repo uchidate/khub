@@ -1,8 +1,6 @@
 import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
@@ -14,8 +12,16 @@ import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
 import { HomeRecommended } from "@/components/home/HomeRecommended"
 import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { Suspense } from "react"
 
-export const dynamic = 'force-dynamic'
+// ISR: homepage recacheada a cada 2 minutos
+// Personalização (sessão, filtros) acontece client-side
+export const revalidate = 120
+
+// Durante o build local (sem DB), retorna shell vazio para que o build não falhe
+// Em produção, a primeira request popula o cache via ISR
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
+const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 
 const POST_SELECT = {
     id: true, slug: true, title: true, excerpt: true,
@@ -237,11 +243,9 @@ export const metadata: Metadata = {
     },
 }
 
-export default async function Home({ searchParams }: { searchParams?: Promise<{ category?: string; tag?: string }> }) {
-    const session = await getServerSession(authOptions)
-    const resolvedSearch = await searchParams
-    const activeCategory = resolvedSearch?.category
-    const activeTag = resolvedSearch?.tag
+export default async function Home() {
+    // Build local não tem DB — retorna shell mínimo; ISR popula em produção
+    if (IS_BUILD) return <div />
 
     const [publicData, ageRatingFilter] = await Promise.all([
         getHomePublicData(),
@@ -250,28 +254,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
 
     const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction } = publicData
 
-    // ── Recomendações personalizadas para usuários logados ───────────────────
-    let recommendedArtists: typeof trendingArtists = []
-    let hasFavorites = false
-    if (session?.user?.id) {
-        try {
-            const favRows = await prisma.favorite.findMany({
-                where: { userId: (session.user as { id: string }).id, artistId: { not: null } },
-                select: { artistId: true },
-            })
-            hasFavorites = favRows.length > 0
-            const favSet = new Set(favRows.map(f => f.artistId!))
-            recommendedArtists = trendingArtists.filter(a => !favSet.has(a.id)).slice(0, 8)
-            if (recommendedArtists.length < 2) {
-                // fallback: artistas 8–11 (já buscados, ainda não exibidos)
-                recommendedArtists = trendingArtists.slice(8, 12)
-            }
-        } catch {
-            recommendedArtists = trendingArtists.slice(8, 12)
-        }
-    }
-
-    // latestProductions depende do ageRatingFilter (por sessão) — roda em paralelo com session
+    // latestProductions depende de configuração do sistema (cached) — não de sessão
     const latestProductions = await prisma.production.findMany({
         where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
         take: 5,
@@ -329,7 +312,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                 spotlightProduction={spotlightProduction}
             />
             <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot="1740970038" format="auto" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
             </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
@@ -338,20 +321,19 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
                 />
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
-                <HomeRecommended artists={recommendedArtists} hasFavorites={hasFavorites} />
-                <HomeBlogFeed
-                    key={`${activeCategory ?? 'all'}:${activeTag ?? 'all'}`}
-                    blogPosts={feedPosts}
-                    sidebarPosts={sidebarPosts}
-                    productions={latestProductions}
-                    categoryCounts={categoryCountMap}
-                    initialCategory={activeCategory}
-                    initialTag={activeTag}
-                />
+                <HomeRecommended />
+                <Suspense>
+                    <HomeBlogFeed
+                        blogPosts={feedPosts}
+                        sidebarPosts={sidebarPosts}
+                        productions={latestProductions}
+                        categoryCounts={categoryCountMap}
+                    />
+                </Suspense>
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
                 {(hasStreaming || trendingGroups.length > 0) && (
                     <section className="border-b border-border bg-background">
@@ -366,9 +348,9 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
                     </section>
                 )}
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
-                <HomeBlogSection siteStats={siteStats} isLoggedIn={!!session} />
+                <HomeBlogSection siteStats={siteStats} />
             </div>
             <ScrollToTop />
         </div>

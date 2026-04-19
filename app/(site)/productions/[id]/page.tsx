@@ -22,7 +22,6 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
-// ISR ativo — revalidate abaixo substitui force-dynamic
 export const revalidate = 3600
 
 // Pré-gera as produções com maior nota no build → first-paint rápido, melhor SEO e Core Web Vitals
@@ -44,8 +43,12 @@ const getProduction = cache(async (id: string) => {
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
-                include: { artist: true },
+                include: { artist: { select: {
+                    id: true, nameRomanized: true, nameHangul: true,
+                    primaryImageUrl: true, roles: true, gender: true,
+                } } },
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
+                take: 30,
             }
         }
     }).catch(() => null)
@@ -174,6 +177,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
         : []
 
     const relatedProductions = [...byArtist, ...byTag, ...byType]
+
+    // Total real de artistas (pode ser maior que o take:30)
+    const totalCast = production.artists.length < 30
+        ? production.artists.length
+        : await prisma.artistProduction.count({ where: { productionId: production.id, artist: { flaggedAsNonKorean: false } } }).catch(() => production.artists.length)
 
     // Busca sinopse traduzida (PT-BR) — fallback para o campo original
     const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
@@ -411,7 +419,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-8" />
+                        {/* Ad 1 — in-article após sinopse/tags, posição de maior atenção */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} layout="in-article" format="fluid" className="my-4" />
 
                         {/* Cast */}
                         {production.artists.length > 0 && (
@@ -465,12 +474,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             </div>
                         )}
 
-                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+                        {/* Ad 2 — após elenco/galeria, antes das recomendações */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-6" />
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
                             <div>
-                                <AdBanner slot="1740970038" format="auto" className="mb-8" />
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
                                         <Film className="w-4 h-4" />
@@ -630,9 +639,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                             )}
                             <div className="flex justify-between py-3">
                                 <span className="text-xs font-black text-muted uppercase tracking-widest">Elenco</span>
-                                <span className="text-sm font-bold text-foreground">{production.artists.length} artistas</span>
+                                <span className="text-sm font-bold text-foreground">{totalCast} artistas</span>
                             </div>
                         </div>
+
+                        {/* Ad 3 — sidebar rectangle, visível enquanto o usuário lê o conteúdo principal */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="rectangle" className="mt-6" />
                     </div>
                 </div>
             </div>

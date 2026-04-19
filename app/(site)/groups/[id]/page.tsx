@@ -820,7 +820,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
                             </section>
                         )}
 
-                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} format="auto" className="my-8" />
 
                         {/* Estado vazio */}
                         {group.members.length === 0 && (

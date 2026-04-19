@@ -1069,6 +1069,7 @@ model BlogPost {
   versions           BlogPostVersion[]
 
   @@index([status, publishedAt])
+  @@index([status, isPrivate, publishedAt]) // blog listing: filter published + public, ordered by date
   @@index([status, scheduledAt])
   @@index([authorId])
   @@index([slug])
