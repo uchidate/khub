@@ -25,7 +25,7 @@ export interface ArtistForBadge {
  * SUBINDO_THRESHOLD: quantas posições precisa subir para ganhar badge SUBINDO.
  * Ex: era #12, agora é #6 → subiu 6 → SUBINDO ✓
  */
-const SUBINDO_THRESHOLD = 5
+const SUBINDO_THRESHOLD = 10
 
 /** Artistas criados há X dias ou menos podem ganhar badge NOVO (se em top 20) */
 const NOVO_MAX_AGE_DAYS = 30
@@ -46,9 +46,13 @@ export function getArtistBadge(artist: ArtistForBadge): TrendingBadge {
   if (rank === 1) return 'HOT'
 
   // Detecta velocidade: subiu bastante posições no último ciclo?
-  const prevRank = artist.trendingRankPrev ?? 999
+  const prevRank = artist.trendingRankPrev ?? 9999
   const delta = prevRank - rank // positivo = subiu
-  if (delta >= SUBINDO_THRESHOLD || (prevRank === 999 && rank <= 10)) {
+
+  // Salto absurdo (ex: estava em #15000, agora em top 500) → NOVO, não SUBINDO com número gigante
+  if (delta >= 1000 && rank <= 500) return 'NOVO'
+
+  if (delta >= SUBINDO_THRESHOLD || (prevRank === 9999 && rank <= 10)) {
     return 'SUBINDO'
   }
 

@@ -7,7 +7,8 @@ name: ⏰ Cron Jobs
 on:
   schedule:
     - cron: '*/5 * * * *'   # A cada 5min  → publish-scheduled, fetch-news, tag-news
-    - cron: '*/15 * * * *'  # A cada 15min → update-trending, fetch-streaming-signals
+    - cron: '*/15 * * * *'  # A cada 15min → fetch-streaming-signals
+    - cron: '0 */6 * * *'   # A cada 6h   → update-trending
     - cron: '0 * * * *'     # Horário      → sync-discography, sync-cast
     - cron: '0 2 * * *'     # 02:00 UTC    → sync-social-links, artist-visibility, digest
 
@@ -100,7 +101,7 @@ jobs:
     timeout-minutes: 5
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'update-trending')
-      || (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
     steps:
       - name: POST /api/cron/update-trending
         run: |
