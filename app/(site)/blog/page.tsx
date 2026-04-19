@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown, Mail } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 }
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
-const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [], total: 0 }
+const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [], total: 0, totalCategories: 0 }
 const PAGE_SIZE = 20
 
 async function getPosts(category?: string, tag?: string, page = 1) {
@@ -41,8 +41,7 @@ async function getPosts(category?: string, tag?: string, page = 1) {
       ...(category ? { category: { slug: category } } : {}),
       ...(tag ? { tags: { has: tag } } : {}),
     }
-    const [hero, posts, mostRead, categories, popularTags, total] = await Promise.all([
-      // Hero só na primeira página, sem filtros
+    const [hero, posts, mostRead, categories, popularTags, total, totalCategories] = await Promise.all([
       page === 1 ? prisma.blogPost.findFirst({
         where: PUBLIC_WHERE,
         orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
@@ -84,8 +83,9 @@ async function getPosts(category?: string, tag?: string, page = 1) {
         GROUP BY tag ORDER BY count DESC LIMIT 16
       `,
       prisma.blogPost.count({ where: PUBLIC_WHERE }),
+      prisma.blogCategory.count(),
     ])
-    return { hero, posts, mostRead, categories, popularTags, total }
+    return { hero, posts, mostRead, categories, popularTags, total, totalCategories }
   } catch { return EMPTY_POSTS }
 }
 
@@ -105,12 +105,12 @@ type PostItem = {
   category: { id: string; name: string; slug: string } | null
 }
 
-function CategoryBadge({ category }: { category: { name: string; slug: string } | null }) {
+function CategoryBadge({ category, size = 'sm' }: { category: { name: string; slug: string } | null; size?: 'sm' | 'xs' }) {
   if (!category) return null
   const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
   return (
     <span
-      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+      className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}
       style={{ backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151' }}
     >
       {category.name}
@@ -138,69 +138,102 @@ function PostMeta({ post, size = 'sm', light = false }: {
   )
 }
 
-// Card horizontal grande — artigo em destaque no topo do grid
-function FeaturedCard({ post }: { post: PostItem }) {
+// Card grande — destaque editorial (esquerda do magazine grid)
+function EditorialMainCard({ post }: { post: PostItem }) {
   const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group col-span-full flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-lg transition-all duration-300"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-xl transition-all duration-300 h-full min-h-[340px]"
     >
-      {/* Imagem */}
-      <div className="relative sm:w-[48%] aspect-[16/9] sm:aspect-auto sm:min-h-[260px] overflow-hidden bg-surface-hover shrink-0">
-        {post.coverImageUrl ? (
-          <Image
-            src={post.coverImageUrl} alt={post.title} fill priority
-            sizes="(max-width: 640px) 100vw, 48vw"
-            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"
-            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` } : { background: '#f3f4f6' }}>
-            <BookOpen className="w-12 h-12 opacity-10" />
-          </div>
-        )}
-        {/* Badges sobrepostos */}
-        <div className="absolute top-3 left-3 flex gap-1.5">
+      {/* Imagem de fundo */}
+      {post.coverImageUrl ? (
+        <Image
+          src={post.coverImageUrl} alt={post.title} fill priority
+          sizes="(max-width: 640px) 100vw, 55vw"
+          className="object-cover group-hover:scale-[1.03] transition-transform duration-700"
+        />
+      ) : (
+        <div className="absolute inset-0"
+          style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}55)` } : { background: '#0d0d1a' }}>
+          <BookOpen className="absolute bottom-6 right-6 w-16 h-16 opacity-5" />
+        </div>
+      )}
+
+      {/* Gradiente sobre imagem */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+      {/* Conteúdo no rodapé */}
+      <div className="relative z-10 mt-auto p-5 sm:p-6 flex flex-col gap-2.5">
+        <div className="flex items-center gap-2 flex-wrap">
           {post.featured && (
-            <span className="px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">Destaque</span>
+            <span className="px-2 py-0.5 bg-yellow-400/90 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">Destaque</span>
           )}
           {isRecent(post.publishedAt) && (
             <span className="px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
           )}
+          {post.category && (() => {
+            const c = BLOG_CATEGORY_BY_SLUG[post.category!.slug]
+            return c ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                style={{ backgroundColor: c.color, color: '#fff' }}>
+                {post.category!.name}
+              </span>
+            ) : null
+          })()}
         </div>
-      </div>
-
-      {/* Conteúdo */}
-      <div className="flex flex-col gap-3 p-5 sm:p-8 flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <CategoryBadge category={post.category} />
-          <PostMeta post={post} />
-        </div>
-        <h2 className="font-black text-foreground text-xl sm:text-2xl lg:text-[1.6rem] leading-tight group-hover:text-accent transition-colors">
+        <h2 className="font-black text-white text-lg sm:text-xl leading-snug line-clamp-3 group-hover:text-accent/90 transition-colors">
           {post.title}
         </h2>
         {post.excerpt && (
-          <p className="text-sm text-muted leading-relaxed line-clamp-3 flex-1">{post.excerpt}</p>
+          <p className="text-white/60 text-xs leading-relaxed line-clamp-2 hidden sm:block">{post.excerpt}</p>
         )}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {post.tags.slice(0, 4).map(tag => {
-              const ts = getTagStyle(tag)
-              return <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ color: ts.color, backgroundColor: ts.bg }}>{tag}</span>
-            })}
-          </div>
-        )}
-        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border">
-          <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent flex-shrink-0">
-            {BLOG_AUTHOR_AVATAR_INITIAL}
-          </div>
-          <span className="text-xs text-muted truncate flex-1">{BLOG_AUTHOR_DISPLAY_NAME}</span>
-          <span className="flex items-center gap-1.5 text-xs font-bold text-accent group-hover:gap-2.5 transition-all whitespace-nowrap">
-            Ler artigo <ArrowRight size={13} />
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+          <PostMeta post={post} size="xs" light />
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-accent group-hover:gap-2.5 transition-all whitespace-nowrap">
+            Ler <ArrowRight size={12} />
           </span>
         </div>
       </div>
+    </Link>
+  )
+}
+
+// Card menor para o par do lado direito no magazine grid
+function EditorialSideCard({ post }: { post: PostItem }) {
+  const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group flex gap-3 p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all duration-200"
+    >
+      {/* Thumbnail */}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0">
+        {post.coverImageUrl ? (
+          <Image src={post.coverImageUrl} alt={post.title} fill sizes="80px"
+            className="object-cover group-hover:scale-[1.05] transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"
+            style={cfg ? { background: `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` } : { background: '#f5f5f5' }}>
+            <span className="text-2xl opacity-10">✦</span>
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+            <CategoryBadge category={post.category} size="xs" />
+            {isRecent(post.publishedAt) && (
+              <span className="px-1.5 py-0.5 bg-accent/10 text-accent rounded text-[9px] font-bold">Novo</span>
+            )}
+          </div>
+          <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+            {post.title}
+          </p>
+        </div>
+        <PostMeta post={post} size="xs" />
+      </div>
+      <ChevronRight size={12} className="text-muted opacity-0 group-hover:opacity-50 transition-all shrink-0 mt-1" />
     </Link>
   )
 }
@@ -213,7 +246,6 @@ function PostCard({ post }: { post: PostItem }) {
       href={`/blog/${post.slug}`}
       className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 h-full"
     >
-      {/* Imagem */}
       <div className="relative aspect-[16/9] overflow-hidden bg-surface-hover shrink-0">
         {post.coverImageUrl ? (
           <Image
@@ -234,8 +266,6 @@ function PostCard({ post }: { post: PostItem }) {
           <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-accent text-white rounded-full text-[9px] font-bold uppercase">Novo</span>
         )}
       </div>
-
-      {/* Conteúdo */}
       <div className="flex flex-col gap-2.5 p-4 flex-1">
         <h2 className="font-bold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
           {post.title}
@@ -253,12 +283,17 @@ function PostCard({ post }: { post: PostItem }) {
 }
 
 // Card compacto — listagem de mais artigos
-function CompactPostCard({ post }: { post: PostItem }) {
+function CompactPostCard({ post, rank }: { post: PostItem; rank?: number }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
       className="group flex gap-3.5 items-start p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
     >
+      {rank !== undefined ? (
+        <span className="text-base font-black w-5 shrink-0 mt-0.5 tabular-nums text-muted/40 group-hover:text-accent/60 transition-colors">
+          {rank}
+        </span>
+      ) : null}
       {post.coverImageUrl ? (
         <div className="relative w-[72px] h-[48px] rounded-lg overflow-hidden shrink-0">
           <Image src={post.coverImageUrl} alt={post.title} fill sizes="72px"
@@ -271,7 +306,7 @@ function CompactPostCard({ post }: { post: PostItem }) {
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-1">
-          <CategoryBadge category={post.category} />
+          <CategoryBadge category={post.category} size="xs" />
           {isRecent(post.publishedAt) && (
             <span className="px-1.5 py-0.5 bg-accent/10 text-accent rounded-full text-[9px] font-bold">Novo</span>
           )}
@@ -289,7 +324,7 @@ function CompactPostCard({ post }: { post: PostItem }) {
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string }> }) {
   const { category: activeCategory, tag: activeTag, page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
-  const { hero, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
+  const { hero, posts, mostRead, categories, popularTags, total, totalCategories } = await getPosts(activeCategory, activeTag, page)
   const isFiltered = !!activeCategory || !!activeTag
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -309,13 +344,18 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     .map(([tag, count]) => ({ tag, count }))
     .slice(0, 14)
 
-  // Hero: artigo fixo em destaque no topo da imagem. Grid começa do primeiro post.
-  // Na page > 1, não há hero global (hero=null), o destaque vira o posts[0] se filtrado.
   const featPost = page > 1 ? null : (isFiltered ? posts[0] : hero)
   const heroId = featPost?.id
   const gridPosts = posts.filter(p => p.id !== heroId)
 
   const activeCatConfig = activeCategory ? BLOG_CATEGORY_BY_SLUG[activeCategory] : null
+
+  // Magazine grid: posts 0-1 no editorial (main+side), posts 2+ no grid normal
+  const magazineMain = gridPosts[0]
+  const magazineSide = gridPosts.slice(1, 3)
+  const gridStart = 3
+  const block2Posts = gridPosts.slice(gridStart, gridStart + 6)
+  const compactPosts = gridPosts.slice(gridStart + 6)
 
   return (
     <>
@@ -328,9 +368,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* ── Hero com imagem de fundo ─────────────────────────── */}
-        <div className="relative w-full min-h-[360px] md:min-h-[480px] overflow-hidden">
-          {/* Background */}
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -341,19 +380,19 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 : 'linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%)' }} />
           )}
 
-          {/* Gradientes para legibilidade */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+          {/* Gradientes */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
 
-          {/* Conteúdo do hero */}
+          {/* Conteúdo */}
           <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10">
-            {/* Topo: label + RSS */}
+            {/* Topo */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-white/50" />
-                <span className="text-white/50 text-xs font-semibold uppercase tracking-widest">Blog HallyuHub</span>
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
+                <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
                 {!isFiltered && total > 0 && (
-                  <span className="text-white/35 text-xs hidden sm:inline">· {total} artigos</span>
+                  <span className="text-white/30 text-xs hidden sm:inline">· {total} artigos</span>
                 )}
               </div>
               <Link href="/blog/feed.xml"
@@ -366,7 +405,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             {/* Artigo em destaque */}
             {featPost ? (
               <Link href={`/blog/${featPost.slug}`} className="group block mt-auto">
-                {/* Badges */}
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   {featPost.category && (() => {
                     const cfg = BLOG_CATEGORY_BY_SLUG[featPost.category.slug]
@@ -384,25 +422,22 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[11px] font-bold uppercase tracking-wider">Destaque</span>
                   )}
                   {isFiltered && (
-                    <span className="text-white/50 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
+                    <span className="text-white/45 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
                   )}
                 </div>
 
-                {/* Título */}
-                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
+                <h1 className="text-2xl sm:text-3xl md:text-[2.6rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
                   {featPost.title}
                 </h1>
 
-                {/* Excerpt */}
                 {featPost.excerpt && (
-                  <p className="text-white/65 text-sm md:text-[15px] line-clamp-2 leading-relaxed hidden sm:block mb-4 max-w-2xl">
+                  <p className="text-white/60 text-sm md:text-[15px] line-clamp-2 leading-relaxed hidden sm:block mb-5 max-w-2xl">
                     {featPost.excerpt}
                   </p>
                 )}
 
-                {/* Meta + CTA */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 text-white/50 text-xs">
+                  <div className="flex items-center gap-2 text-white/45 text-xs">
                     <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold text-white/80">
                       {BLOG_AUTHOR_AVATAR_INITIAL}
                     </div>
@@ -422,17 +457,50 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               </div>
             )}
           </div>
+
+          {/* Scroll hint */}
+          {!isFiltered && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/25 animate-bounce pointer-events-none">
+              <ChevronDown size={16} />
+            </div>
+          )}
         </div>
+
+        {/* ── Stats strip ───────────────────────────────────────── */}
+        {!isFiltered && total > 0 && (
+          <div className="border-b border-border bg-surface/50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 shrink-0">
+                <BookOpen size={12} className="text-accent" />
+                <span className="text-xs text-muted"><span className="font-bold text-foreground">{total}</span> artigos</span>
+              </div>
+              <div className="w-px h-3 bg-border shrink-0" />
+              <div className="flex items-center gap-2 shrink-0">
+                <Tag size={12} className="text-accent" />
+                <span className="text-xs text-muted"><span className="font-bold text-foreground">{totalCategories}</span> categorias</span>
+              </div>
+              <div className="w-px h-3 bg-border shrink-0" />
+              <div className="flex items-center gap-2 shrink-0">
+                <TrendingUp size={12} className="text-accent" />
+                <span className="text-xs text-muted">Atualizado semanalmente</span>
+              </div>
+              <div className="ml-auto shrink-0">
+                <Link href="/blog/feed.xml" className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors">
+                  <Rss size={11} className="text-orange-500" />
+                  <span className="hidden sm:inline">Assinar feed</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Conteúdo principal ────────────────────────────────── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* ── Filter bar sticky ─────────────────────────────── */}
           <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
-
             {/* Categorias */}
             <div className="relative">
-              {/* Fade edges no mobile */}
               <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
               <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
               <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
@@ -545,36 +613,59 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
               {gridPosts.length > 0 ? (
                 <div className="space-y-8">
-                  {/* Bloco 1: Featured + 2 PostCards */}
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    {gridPosts[0] && <FeaturedCard post={gridPosts[0]} />}
-                    {gridPosts.slice(1, 3).map(p => <PostCard key={p.id} post={p} />)}
-                  </div>
 
-                  {/* Ad entre blocos */}
-                  {gridPosts.length > 3 && (
-                    <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
-                  )}
+                  {/* ── Magazine grid: 1 grande + 2 lado a lado ── */}
+                  {magazineMain && (
+                    <div className="grid sm:grid-cols-[3fr_2fr] gap-4 items-stretch">
+                      {/* Card principal — ocupa toda a altura */}
+                      <EditorialMainCard post={magazineMain} />
 
-                  {/* Bloco 2: grid 3 colunas */}
-                  {gridPosts.length > 3 && (
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {gridPosts.slice(3, 9).map(p => <PostCard key={p.id} post={p} />)}
+                      {/* Dois cards empilhados */}
+                      <div className="flex flex-col gap-3">
+                        {magazineSide.map(p => (
+                          <EditorialSideCard key={p.id} post={p} />
+                        ))}
+                        {/* Preenche espaço vazio se só 1 card lateral */}
+                        {magazineSide.length < 2 && (
+                          <div className="flex-1 rounded-xl border border-dashed border-border bg-surface/30" />
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {/* Mais artigos (compactos) */}
-                  {gridPosts.length > 9 && (
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
+                  {/* Ad entre blocos */}
+                  {block2Posts.length > 0 && (
+                    <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                  )}
+
+                  {/* ── Grid 3 colunas ─────────────────────────── */}
+                  {block2Posts.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-3 -mb-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5 shrink-0">
                           <span className="w-3 h-px bg-muted inline-block" />
                           Mais artigos
                         </p>
                         <div className="flex-1 h-px bg-border" />
                       </div>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {block2Posts.map(p => <PostCard key={p.id} post={p} />)}
+                      </div>
+                    </>
+                  )}
+
+                  {/* ── Lista compacta ─────────────────────────── */}
+                  {compactPosts.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
+                          <span className="w-3 h-px bg-muted inline-block" />
+                          Arquivo
+                        </p>
+                        <div className="flex-1 h-px bg-border" />
+                      </div>
                       <div className="flex flex-col gap-2.5">
-                        {gridPosts.slice(9).map(p => <CompactPostCard key={p.id} post={p} />)}
+                        {compactPosts.map((p, i) => <CompactPostCard key={p.id} post={p} rank={gridStart + 6 + i + 1} />)}
                       </div>
                     </div>
                   )}
@@ -597,7 +688,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                             ← Anterior
                           </Link>
                         ) : <div />}
-                        <span className="text-xs text-muted">
+                        <span className="text-xs text-muted text-center">
                           Página {page} de {totalPages} · {total} artigos
                         </span>
                         {page < totalPages ? (
@@ -610,7 +701,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     )
                   })()}
 
-                  {/* Botão "Ver todos" quando filtrado */}
+                  {/* Ver todos quando filtrado */}
                   {isFiltered && (
                     <div className="mt-6 text-center">
                       <Link href="/blog"
@@ -704,8 +795,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                       >
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cfg?.color ?? '#9ca3af' }} />
                         <span className="text-xs font-semibold flex-1 transition-colors"
-                          style={isActive ? { color: cfg?.color } : undefined}
-                          >
+                          style={isActive ? { color: cfg?.color } : undefined}>
                           {c.name}
                         </span>
                         <span className="text-[10px] font-bold opacity-35" style={isActive ? { color: cfg?.color } : undefined}>
@@ -720,7 +810,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               </div>
 
-              {/* Tags populares na sidebar */}
+              {/* Tags populares */}
               {normalizedPopularTags.length > 0 && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3 flex items-center gap-1.5">
@@ -745,6 +835,24 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   </div>
                 </div>
               )}
+
+              {/* Newsletter CTA */}
+              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail size={14} className="text-accent shrink-0" />
+                  <p className="text-xs font-black uppercase tracking-wider text-accent">Newsletter</p>
+                </div>
+                <p className="text-sm font-bold text-foreground mb-1">Novidades do universo Hallyu</p>
+                <p className="text-[11px] text-muted leading-relaxed mb-4">
+                  Receba os melhores artigos sobre K-Pop, K-Drama e cultura coreana direto no seu e-mail.
+                </p>
+                <Link
+                  href="/settings"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-90 transition-all"
+                >
+                  Criar conta gratuita <ArrowRight size={12} />
+                </Link>
+              </div>
 
               {/* RSS */}
               <Link
