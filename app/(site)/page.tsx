@@ -312,7 +312,7 @@ export default async function Home() {
                 spotlightProduction={spotlightProduction}
             />
             <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot="1740970038" format="auto" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
             </div>
             <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
                 <HomeRandomDiscovery
@@ -321,7 +321,7 @@ export default async function Home() {
                     production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
                 />
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
                 <HomeRecommended />
                 <Suspense>
@@ -333,7 +333,7 @@ export default async function Home() {
                     />
                 </Suspense>
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
                 {(hasStreaming || trendingGroups.length > 0) && (
                     <section className="border-b border-border bg-background">
@@ -348,7 +348,7 @@ export default async function Home() {
                     </section>
                 )}
                 <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot="1740970038" format="auto" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
                 </div>
                 <HomeBlogSection siteStats={siteStats} />
             </div>

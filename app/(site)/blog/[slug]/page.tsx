@@ -27,7 +27,7 @@ function MarkdownWithAds({ content }: { content: string }) {
     return (
       <>
         <MarkdownRenderer content={content} />
-        <AdBanner slot="1740970038" format="auto" className="my-8" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
       </>
     )
   }
@@ -37,7 +37,7 @@ function MarkdownWithAds({ content }: { content: string }) {
   return (
     <>
       <MarkdownRenderer content={firstHalf} />
-      <AdBanner slot="1740970038" format="auto" className="my-8" />
+      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
       <MarkdownRenderer content={secondHalf} />
     </>
   )
@@ -270,7 +270,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </article>
 
         {/* Ad após conteúdo */}
-        <AdBanner slot="1740970038" format="auto" className="mt-8" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-8" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -306,7 +306,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Ad before related posts */}
-        <AdBanner slot="1740970038" format="auto" className="mt-10" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-10" />
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (

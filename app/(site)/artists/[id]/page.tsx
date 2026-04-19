@@ -473,7 +473,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         )}
 
                         {/* Ad sidebar */}
-                        <AdBanner slot="1740970038" format="auto" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" />
 
                     </div>
 
@@ -527,7 +527,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         )}
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot="1740970038" format="auto" className="my-2" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" className="my-2" />
 
                         {/* Filmography */}
                         <section>
@@ -659,7 +659,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
                         </section>
 
                         {/* Ad: após filmografia, antes da discografia */}
-                        <AdBanner slot="1740970038" format="auto" className="my-8" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" className="my-8" />
 
                         {/* Discography */}
                         {artist.albums.length > 0 && (
@@ -668,7 +668,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Ad: após discografia */}
                         {artist.albums.length > 0 && (
-                            <AdBanner slot="1740970038" format="auto" className="my-2" />
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" className="my-2" />
                         )}
 
                         {/* Membros do grupo */}
@@ -711,7 +711,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Ad: após membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
-                            <AdBanner slot="1740970038" format="auto" className="my-2" />
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" className="my-2" />
                         )}
 
                         {/* Blog articles */}
@@ -750,7 +750,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
 
                         {/* Ad: após artigos de blog */}
                         {blogArticles.length > 0 && (
-                            <AdBanner slot="1740970038" format="auto" className="my-8" />
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="auto" className="my-8" />
                         )}
 
                         {/* Instagram Feed — temporariamente oculto */}
