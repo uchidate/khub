@@ -210,7 +210,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
+      <div className="flex gap-10 xl:gap-14 items-start">
+      {/* ── Coluna principal ── */}
+      <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
@@ -326,7 +329,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             Voltar ao Blog
           </Link>
         </div>
-      </div>
+      </div>{/* fim coluna principal */}
+
+      {/* ── Sidebar sticky ── */}
+      <aside className="hidden xl:block w-[300px] shrink-0">
+        <div className="sticky top-6 flex flex-col gap-6">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+        </div>
+      </aside>
+
+      </div>{/* fim flex */}
+      </div>{/* fim max-w */}
     </PageTransition>
   )
 }
