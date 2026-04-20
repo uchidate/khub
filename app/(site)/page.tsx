@@ -4,15 +4,10 @@ import { unstable_cache } from "next/cache"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
-import { HomeBlogFeed } from "@/components/home/HomeNewsFeed"
+import { HomeBelowFold } from "@/components/home/HomeBelowFold"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { HomeBlogSection } from "@/components/home/HomeBlogSection"
-import { StreamingTopShows, type ShowsByPlatform } from "@/components/features/StreamingTopShows"
-import { HomeTrendingGroups } from "@/components/home/HomeTrendingGroups"
-import { HomeRecommended } from "@/components/home/HomeRecommended"
-import { HomeRandomDiscovery } from "@/components/home/HomeRandomDiscovery"
 import { AdBanner } from "@/components/ui/AdBanner"
-import { Suspense } from "react"
+import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 // ISR: homepage recacheada a cada 2 minutos
 // Personalização (sessão, filtros) acontece client-side
@@ -314,44 +309,19 @@ export default async function Home() {
             <div className="max-w-7xl mx-auto px-4 py-4">
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
             </div>
-            <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
-                <HomeRandomDiscovery
-                    artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
-                    group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}
-                    production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
-                />
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
-                </div>
-                <HomeRecommended />
-                <Suspense>
-                    <HomeBlogFeed
-                        blogPosts={feedPosts}
-                        sidebarPosts={sidebarPosts}
-                        productions={latestProductions}
-                        categoryCounts={categoryCountMap}
-                    />
-                </Suspense>
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
-                </div>
-                {(hasStreaming || trendingGroups.length > 0) && (
-                    <section className="border-b border-border bg-background">
-                        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
-                            {hasStreaming && (
-                                <div className="border-b md:border-b-0 md:border-r border-border">
-                                    <StreamingTopShows showsByPlatform={showsByPlatform} />
-                                </div>
-                            )}
-                            <HomeTrendingGroups groups={trendingGroups} />
-                        </div>
-                    </section>
-                )}
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
-                </div>
-                <HomeBlogSection siteStats={siteStats} />
-            </div>
+            <HomeBelowFold
+                artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
+                group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}
+                production={randomProduction ? { id: randomProduction.id, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
+                feedPosts={feedPosts}
+                sidebarPosts={sidebarPosts}
+                latestProductions={latestProductions}
+                categoryCountMap={categoryCountMap}
+                showsByPlatform={showsByPlatform}
+                trendingGroups={trendingGroups}
+                hasStreaming={hasStreaming}
+                siteStats={siteStats}
+            />
             <ScrollToTop />
         </div>
     )
