@@ -36,7 +36,7 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
                     }
                 }
             },
-            { rootMargin: '200px' } // pré-carrega 200px antes de entrar na viewport
+            { rootMargin: '100px' }
         )
 
         observer.observe(el)

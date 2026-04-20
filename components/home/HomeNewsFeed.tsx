@@ -94,7 +94,7 @@ function HeroBlock({ post }: { post: BlogFeedItem }) {
                     alt={post.title}
                     fill
                     priority
-                    unoptimized
+                   
                     sizes="(max-width: 768px) 100vw, 70vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -160,7 +160,7 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
                             src={featured.coverImageUrl}
                             alt={featured.title}
                             fill
-                            unoptimized
+                           
                             sizes="(max-width: 640px) 100vw, 40vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -402,7 +402,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                                         alt={post.title}
                                                         width={80}
                                                         height={58}
-                                                        unoptimized
+                                                       
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     />
                                                 ) : (
