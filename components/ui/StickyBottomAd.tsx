@@ -13,6 +13,7 @@ export function StickyBottomAd() {
     const sentinelRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
 
+    // Show ad once user scrolls past the sentinel (placed 300px from top of body)
     useEffect(() => {
         const el = sentinelRef.current
         if (!el) return
@@ -45,7 +46,6 @@ export function StickyBottomAd() {
             {/* Sentinel: quando sai da viewport, ad aparece */}
             <div ref={sentinelRef} className="absolute top-[300px] left-0 h-px w-px pointer-events-none" aria-hidden />
             {CLIENT && !dismissed && visible && (
-                /* bottom-[70px] no mobile para não sobrepor o BottomNav */
                 <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-[0_-4px_24px_rgba(0,0,0,0.10)] animate-[slideUp_300ms_ease-out]">
                     <div className="relative max-w-4xl mx-auto px-2 py-1">
                         <button
