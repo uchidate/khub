@@ -46,7 +46,6 @@ export function StickyBottomAd() {
                 <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 animate-[slideUp_250ms_ease-out]"
                     style={{ background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
                 >
-                    {/* Label + fechar */}
                     <div className="flex items-center justify-between px-3 pt-1 pb-0.5">
                         <span className="text-[9px] font-medium uppercase tracking-widest text-muted/40 select-none">Publicidade</span>
                         <button
