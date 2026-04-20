@@ -13,7 +13,6 @@ export function StickyBottomAd() {
     const sentinelRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
 
-    // Show ad once user scrolls past the sentinel (placed 300px from top of body)
     useEffect(() => {
         const el = sentinelRef.current
         if (!el) return
@@ -25,7 +24,6 @@ export function StickyBottomAd() {
         return () => observer.disconnect()
     }, [])
 
-    // Auto-dismiss após 15s para não travar o mobile
     useEffect(() => {
         if (!visible) return
         const t = setTimeout(() => setDismissed(true), AUTO_DISMISS_MS)
@@ -43,27 +41,30 @@ export function StickyBottomAd() {
 
     return (
         <>
-            {/* Sentinel: quando sai da viewport, ad aparece */}
             <div ref={sentinelRef} className="absolute top-[300px] left-0 h-px w-px pointer-events-none" aria-hidden />
             {CLIENT && !dismissed && visible && (
-                <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-[0_-4px_24px_rgba(0,0,0,0.10)] animate-[slideUp_300ms_ease-out]">
-                    <div className="relative max-w-4xl mx-auto px-2 py-1">
+                <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 animate-[slideUp_250ms_ease-out]"
+                    style={{ background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                    <div className="flex items-center justify-between px-3 pt-1 pb-0.5">
+                        <span className="text-[9px] font-medium uppercase tracking-widest text-muted/40 select-none">Publicidade</span>
                         <button
                             onClick={() => setDismissed(true)}
-                            className="absolute top-1 right-2 p-1 text-muted hover:text-foreground transition-colors z-10"
+                            className="flex items-center gap-1 text-[9px] text-muted/40 hover:text-muted transition-colors"
                             aria-label="Fechar anúncio"
                         >
-                            <X size={14} />
+                            <X size={10} />
+                            <span className="hidden sm:inline">fechar</span>
                         </button>
-                        <ins
-                            className="adsbygoogle"
-                            style={{ display: 'block' }}
-                            data-ad-client={CLIENT}
-                            data-ad-slot={SLOT}
-                            data-ad-format="horizontal"
-                            data-full-width-responsive="true"
-                        />
                     </div>
+                    <ins
+                        className="adsbygoogle"
+                        style={{ display: 'block' }}
+                        data-ad-client={CLIENT}
+                        data-ad-slot={SLOT}
+                        data-ad-format="horizontal"
+                        data-full-width-responsive="true"
+                    />
                 </div>
             )}
         </>
