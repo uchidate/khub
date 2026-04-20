@@ -123,6 +123,9 @@ export default async function RootLayout({
                 <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
                 <link key="dns-soompi" rel="dns-prefetch" href="https://0.soompi.io" />
                 <link key="dns-r2" rel="dns-prefetch" href="https://pub-placeholder.r2.dev" />
+                <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
+                <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+                <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}

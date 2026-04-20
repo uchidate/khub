@@ -86,6 +86,7 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                 sizes="(max-width: 1024px) 100vw, 62vw"
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                                 priority={i === 0}
+                                loading={i === 0 ? 'eager' : 'lazy'}
                             />
                         ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft" />
