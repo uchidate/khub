@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { cache } from 'react'
+import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -30,18 +31,22 @@ export const revalidate = 3600
 export async function generateStaticParams() {
     if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     const groups = await prisma.musicalGroup.findMany({
-        where: { isHidden: false },
-        select: { id: true },
+        where: { isHidden: false, slug: { not: null } },
+        select: { slug: true },
         orderBy: { updatedAt: 'desc' },
         take: 200,
     })
-    return groups.map(g => ({ id: g.id }))
+    return groups.map(g => ({ slug: g.slug! }))
 }
 
+// Detecta se o parâmetro é um CUID (legado) ou slug
+const isCuid = (param: string) => /^c[a-z0-9]{24}$/.test(param)
+
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
-const getGroup = cache(async (id: string) => {
+const getGroup = cache(async (slugOrId: string) => {
+    const where = isCuid(slugOrId) ? { id: slugOrId } : { slug: slugOrId }
     return prisma.musicalGroup.findUnique({
-        where: { id },
+        where,
         include: {
             agency: true,
             members: {
@@ -63,24 +68,25 @@ const getGroup = cache(async (id: string) => {
     }).catch(() => null)
 })
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const group = await getGroup(params.id)
+    const group = await getGroup(params.slug)
     if (!group) return { title: 'Grupo não encontrado' }
     if (group.isHidden) return { title: 'Grupo não encontrado', robots: { index: false, follow: false } }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
+    const canonicalSlug = group.slug ?? group.id
     return applySeoOverride({
         title: `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''}`,
         description: description.slice(0, 160),
-        alternates: { canonical: `${BASE_URL}/groups/${params.id}` },
+        alternates: { canonical: `${BASE_URL}/groups/${canonicalSlug}` },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${group.name} | HallyuHub`,
             description: description.slice(0, 160),
             images: group.profileImageUrl ? [{ url: group.profileImageUrl, width: 1200, height: 630, alt: group.name }] : [],
             type: 'website',
-            url: `${BASE_URL}/groups/${params.id}`,
+            url: `${BASE_URL}/groups/${canonicalSlug}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -88,13 +94,17 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: description.slice(0, 160),
             images: group.profileImageUrl ? [group.profileImageUrl] : [],
         },
-    }, 'group', params.id)
+    }, 'group', group.id)
 }
 
-export default async function GroupDetailPage(props: { params: Promise<{ id: string }> }) {
+export default async function GroupDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
-    // Step 1: fetch group (deduplica com generateMetadata via React.cache)
-    const group = await getGroup(params.id)
+    const group = await getGroup(params.slug)
+
+    // Redirect 301: UUID legado → URL com slug
+    if (group?.slug && isCuid(params.slug) && group.slug !== params.slug) {
+        redirect(`/groups/${group.slug}`)
+    }
 
     if (!group || group.isHidden) {
         return (
@@ -146,7 +156,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ id: str
 
     // Step 2: queries secundárias todas em paralelo
     const [bioPt, themeColorFetched, relatedGroups, recentAlbums, linkedPosts, fallbackPosts] = await Promise.all([
-        getTranslation('group', params.id, 'bio', 'pt-BR').catch(() => null),
+        getTranslation('group', group.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
             where: {
