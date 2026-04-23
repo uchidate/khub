@@ -41,6 +41,7 @@ model Agency {
 
 model MusicalGroup {
   id              String                  @id @default(cuid())
+  slug            String?                 @unique // URL slug ex: "bts", "blackpink"
   name            String                  @unique
   nameHangul      String?
   mbid            String?                 @unique // MusicBrainz group ID

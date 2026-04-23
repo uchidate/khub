@@ -10,18 +10,34 @@ import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { BlogBlock } from '@/lib/types/blocks'
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const ADSENSE_SLOT = '1740970038'
+const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE ?? '1740970038'
 
 function InArticleAd({ id }: { id: string }) {
+    const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
     useEffect(() => {
-        if (pushed.current) return
-        pushed.current = true
-        try { ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({}) } catch {}
+        if (pushed.current || !containerRef.current) return
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !pushed.current) {
+                    pushed.current = true
+                    observer.disconnect()
+                    try { ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({}) } catch {}
+                }
+            },
+            { rootMargin: '300px' }
+        )
+        observer.observe(containerRef.current)
+        return () => observer.disconnect()
     }, [])
     if (!ADSENSE_CLIENT) return null
     return (
-        <div className="my-8 overflow-hidden text-center">
+        <div ref={containerRef} className="my-8 overflow-hidden">
+            <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
+                <div className="flex-1 h-px bg-border" />
+            </div>
             <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center' }}
                 data-ad-layout="in-article" data-ad-format="fluid"
                 data-ad-client={ADSENSE_CLIENT} data-ad-slot={ADSENSE_SLOT}

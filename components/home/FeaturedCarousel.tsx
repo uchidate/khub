@@ -48,7 +48,8 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
 
     useEffect(() => {
         if (posts.length <= 1 || paused) return
-        timerRef.current = setInterval(next, INTERVAL_MS)
+        const tick = () => { if (!document.hidden) next() }
+        timerRef.current = setInterval(tick, INTERVAL_MS)
         return () => { if (timerRef.current) clearInterval(timerRef.current) }
     }, [next, paused, posts.length])
 
@@ -82,10 +83,10 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
                                 src={story.coverImageUrl}
                                 alt={story.title}
                                 fill
-                                unoptimized
                                 sizes="(max-width: 1024px) 100vw, 62vw"
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                priority
+                                priority={i === 0}
+                                loading={i === 0 ? 'eager' : 'lazy'}
                             />
                         ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-accent-soft to-accent-soft" />
