@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -202,12 +202,18 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
     )
 }
 
-export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory, initialTag }: HomeBlogFeedProps) {
+// Componente minúsculo só para ler searchParams — permite SSR do componente pai
+function CategoryUrlSync({ onSync }: { onSync: (cat: string | null) => void }) {
     const searchParams = useSearchParams()
-    const categoryFromUrl = searchParams.get('category') ?? initialCategory
-    const tagFromUrl = searchParams.get('tag') ?? initialTag
+    useEffect(() => {
+        const cat = searchParams.get('category')
+        onSync(cat)
+    }, [searchParams, onSync])
+    return null
+}
 
-    const validInitial = categoryFromUrl && TABS.some(t => t.value === categoryFromUrl) ? categoryFromUrl : 'all'
+export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, initialCategory, initialTag }: HomeBlogFeedProps) {
+    const validInitial = initialCategory && TABS.some(t => t.value === initialCategory) ? initialCategory : 'all'
     const [activeTab, setActiveTab] = useState(validInitial)
     const availableTags = Object.entries(
         blogPosts.reduce<Record<string, number>>((acc, post) => {
@@ -221,15 +227,8 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
     )
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
         .slice(0, 10)
-    const validInitialTag = tagFromUrl && availableTags.some(([t]) => t === tagFromUrl) ? tagFromUrl : 'all'
+    const validInitialTag = initialTag && availableTags.some(([t]) => t === initialTag) ? initialTag : 'all'
     const [activeTag, setActiveTag] = useState(validInitialTag)
-
-    // Sync com URL quando searchParams mudam (navegação)
-    useEffect(() => {
-        const cat = searchParams.get('category')
-        if (cat && TABS.some(t => t.value === cat)) setActiveTab(cat)
-        else if (!cat) setActiveTab('all')
-    }, [searchParams])
     const [visibleCount, setVisibleCount] = useState(8)
 
     function handleTabChange(value: string) {
@@ -270,6 +269,13 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
 
     return (
         <section className="bg-background pt-3 pb-4 sm:pt-5 sm:pb-6">
+            {/* Sync de categoria via URL — isolado em Suspense para permitir SSR do restante */}
+            <Suspense>
+                <CategoryUrlSync onSync={(cat) => {
+                    if (cat && TABS.some(t => t.value === cat)) setActiveTab(cat)
+                    else if (!cat) setActiveTab('all')
+                }} />
+            </Suspense>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
 
