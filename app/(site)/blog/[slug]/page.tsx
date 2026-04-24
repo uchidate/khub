@@ -296,8 +296,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Cover image */}
         {post.coverImageUrl && (
-          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border">
-            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
+          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border bg-muted/10">
+            <SafeImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
+import { SafeImage } from "@/components/ui/SafeImage"
 import { BLOG_CATEGORY_BY_SLUG, BLOG_CATEGORIES, HOME_FEED_CATEGORIES } from "@/lib/config/categories"
 import { AdBanner } from "@/components/ui/AdBanner"
 
@@ -89,12 +90,13 @@ function HeroBlock({ post }: { post: BlogFeedItem }) {
             style={{ aspectRatio: '16/9' }}
         >
             {post.coverImageUrl ? (
-                <Image
+                <SafeImage
                     src={post.coverImageUrl}
                     alt={post.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 70vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    fallback={<div className="absolute inset-0" style={{ background: getCategoryThumbBg(post.category?.slug) }} />}
                 />
             ) : (
                 <div className="absolute inset-0" style={{ background: getCategoryThumbBg(post.category?.slug) }} />
@@ -154,13 +156,13 @@ function NewspaperSection({ cat, posts }: { cat: typeof BLOG_CATEGORIES[0]; post
             {featured && (
                 <Link href={`/blog/${featured.slug}`} className="group relative block w-full aspect-video overflow-hidden border-b border-border flex-shrink-0">
                     {featured.coverImageUrl ? (
-                        <Image
+                        <SafeImage
                             src={featured.coverImageUrl}
                             alt={featured.title}
                             fill
-                           
                             sizes="(max-width: 640px) 100vw, 40vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            fallback={<div className="absolute inset-0" style={{ background: getCategoryThumbBg(cat.slug) }} />}
                         />
                     ) : (
                         <div className="absolute inset-0" style={{ background: getCategoryThumbBg(cat.slug) }} />
@@ -401,13 +403,13 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                                                 style={!post.coverImageUrl ? { background: getCategoryThumbBg(post.category?.slug) } : undefined}
                                             >
                                                 {post.coverImageUrl ? (
-                                                    <Image
+                                                    <SafeImage
                                                         src={post.coverImageUrl}
                                                         alt={post.title}
                                                         width={80}
                                                         height={58}
-                                                       
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        fallback={<span className="text-[9px] font-bold" style={{ color: getCategoryStyle(post.category?.slug).color }}>{post.category?.name?.slice(0, 2).toUpperCase() ?? 'HH'}</span>}
                                                     />
                                                 ) : (
                                                     <span className="text-[9px] font-bold" style={{ color: getCategoryStyle(post.category?.slug).color }}>
