@@ -2,22 +2,25 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
-import { BlogBlockRenderer, type ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
+import type { ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
 import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { BlogEditButton } from '@/components/blog/BlogEditButton'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
-import { BlogViewTracker } from '@/components/blog/BlogViewTracker'
-import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
 import { applySeoOverride } from '@/lib/seo/apply-override'
+
+const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
+const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
+const BlogViewTracker = dynamic(() => import('@/components/blog/BlogViewTracker').then(m => ({ default: m.BlogViewTracker })))
+const BlogReadingProgress = dynamic(() => import('@/components/blog/BlogReadingProgress').then(m => ({ default: m.BlogReadingProgress })))
 const BASE_URL = SITE_URL
 
 function MarkdownWithAds({ content }: { content: string }) {
@@ -263,6 +266,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
           </div>
         )}
+
+        {/* Ad in-column — visível apenas em mobile/tablet onde a sidebar está oculta */}
+        <div className="xl:hidden mb-8">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} layout="in-article" format="fluid" />
+        </div>
 
         {/* Content — blocks take precedence over markdown */}
         <article>
