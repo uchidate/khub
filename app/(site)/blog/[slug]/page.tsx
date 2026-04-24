@@ -104,7 +104,7 @@ function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-async function fetchRelatedPosts(postId: string, tags: string[], limit = 3) {
+async function fetchRelatedPosts(postId: string, tags: string[], limit = 6) {
   if (tags.length === 0) return []
   return prisma.blogPost.findMany({
     where: {
@@ -148,6 +148,30 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
           {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
         </div>
       </div>
+    </Link>
+  )
+}
+
+function SidebarRelatedCard({ post }: { post: RelatedPost }) {
+  return (
+    <Link href={`/blog/${post.slug}`} className="group block border-b border-border/50 last:border-b-0 py-3">
+      {post.coverImageUrl && (
+        <div className="relative aspect-video w-full rounded-md overflow-hidden mb-2 bg-muted/20">
+          <Image
+            src={post.coverImageUrl}
+            alt={post.title}
+            fill
+            sizes="200px"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      )}
+      <p className="text-[11px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-[#ff2d78] transition-colors">
+        {post.title}
+      </p>
+      <p className="text-[10px] text-muted mt-1 flex items-center gap-1">
+        <Clock size={9} />{post.readingTimeMin} min de leitura
+      </p>
     </Link>
   )
 }
@@ -213,8 +237,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
+      {/* ── Top Ad — full width, todas as telas ── */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" />
+      </div>
+
       <div className="max-w-6xl mx-auto">
-      <div className="flex gap-10 xl:gap-14 items-start">
+      <div className="flex gap-6 xl:gap-8 items-start">
       {/* ── Coluna principal ── */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-8">
@@ -247,7 +276,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           )}
 
           <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-border">
-            {/* Author */}
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
                 {BLOG_AUTHOR_AVATAR_INITIAL}
@@ -267,21 +295,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad in-column — visível apenas em mobile/tablet onde a sidebar está oculta */}
+        {/* Ad in-article — mobile/tablet (sidebar oculta em <xl) */}
         <div className="xl:hidden mb-8">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} layout="in-article" format="fluid" />
         </div>
 
-        {/* Content — blocks take precedence over markdown */}
+        {/* Content */}
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
             ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
             : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
           }
         </article>
-
-        {/* Ad após conteúdo */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-8" />
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -316,19 +341,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Related posts */}
+        {/* Ad entre autor e artigos relacionados */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
+
+        {/* Artigos relacionados — mobile/tablet (sidebar oculta em <xl) */}
         {relatedPosts.length > 0 && (
-          <div className="mt-14 pt-10 border-t border-border">
-            <h2 className="text-lg font-bold text-foreground mb-6">Artigos relacionados</h2>
+          <div className="xl:hidden mt-10 pt-8 border-t border-border">
+            <h2 className="text-base font-bold text-foreground mb-4">Artigos relacionados</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {relatedPosts.map(related => (
+              {relatedPosts.slice(0, 3).map(related => (
                 <RelatedPostCard key={related.slug} post={related} />
               ))}
             </div>
           </div>
         )}
 
-        <div className="mt-10">
+        <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
             Voltar ao Blog
@@ -336,10 +364,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar sticky ── */}
-      <aside className="hidden xl:block w-[300px] shrink-0">
-        <div className="sticky top-6 flex flex-col gap-6">
+      {/* ── Sidebar sticky (xl+) ── */}
+      <aside className="hidden xl:block w-[200px] shrink-0">
+        <div className="sticky top-6 flex flex-col gap-4">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+
+          {relatedPosts.length > 0 && (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="px-3 py-2 bg-surface border-b border-border">
+                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-muted">Artigos sugeridos</p>
+              </div>
+              <div className="px-3">
+                {relatedPosts.map(related => (
+                  <SidebarRelatedCard key={related.slug} post={related} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
