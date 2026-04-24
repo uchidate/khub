@@ -12,6 +12,15 @@ interface AdBannerProps {
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
+// Altura mínima reservada por formato para evitar CLS (layout shift)
+const FORMAT_MIN_HEIGHT: Record<string, number> = {
+    auto: 280,
+    horizontal: 90,
+    rectangle: 250,
+    vertical: 600,
+    fluid: 0,
+}
+
 export function AdBanner({ slot, format = 'auto', layout, className = '', style }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
@@ -22,7 +31,6 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
         const el = containerRef.current
         if (!el) return
 
-        // Só inicializa o ad quando o container entrar na viewport
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting && !pushed.current) {
@@ -36,7 +44,7 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
                     }
                 }
             },
-            { rootMargin: '100px' }
+            { rootMargin: '250px' }
         )
 
         observer.observe(el)
@@ -44,6 +52,8 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
     }, [slot])
 
     if (!CLIENT || !slot) return null
+
+    const minHeight = FORMAT_MIN_HEIGHT[format] ?? 0
 
     return (
         <div ref={containerRef} className={`overflow-hidden ${className}`}>
@@ -54,7 +64,7 @@ export function AdBanner({ slot, format = 'auto', layout, className = '', style 
             </div>
             <ins
                 className="adsbygoogle"
-                style={{ display: 'block', textAlign: 'center', ...style }}
+                style={{ display: 'block', textAlign: 'center', minHeight: minHeight || undefined, ...style }}
                 data-ad-client={CLIENT}
                 data-ad-slot={slot}
                 data-ad-format={format}
