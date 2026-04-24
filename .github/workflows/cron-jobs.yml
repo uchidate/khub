@@ -3,6 +3,7 @@ name: ⏰ Cron Jobs
 # Substitui todos os scheduled tasks do Coolify por chamadas HTTP diretas ao Next.js.
 # Padrão: curl → /api/cron/<endpoint> com Authorization: Bearer CRON_SECRET
 # Nunca usar docker exec — apenas HTTP para evitar OOM kill.
+# --resolve bypassa o Cloudflare indo direto ao servidor (SERVER_IP secret).
 
 on:
   schedule:
@@ -46,8 +47,9 @@ jobs:
     steps:
       - name: POST /api/cron/publish-scheduled
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 -X POST \
-            "$BASE_URL/api/cron/publish-scheduled" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/publish-scheduled" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -64,8 +66,9 @@ jobs:
     steps:
       - name: POST /api/cron/fetch-news
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
-            "$BASE_URL/api/cron/fetch-news" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/fetch-news" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -85,8 +88,9 @@ jobs:
     steps:
       - name: POST /api/cron/tag-news
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
-            "$BASE_URL/api/cron/tag-news" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/tag-news" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -105,8 +109,9 @@ jobs:
     steps:
       - name: POST /api/cron/update-trending
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
-            "$BASE_URL/api/cron/update-trending" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/update-trending" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -123,8 +128,9 @@ jobs:
     steps:
       - name: POST /api/cron/fetch-streaming-signals
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
-            "$BASE_URL/api/cron/fetch-streaming-signals" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/fetch-streaming-signals" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -143,8 +149,9 @@ jobs:
     steps:
       - name: POST /api/cron/sync-discography
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
-            "$BASE_URL/api/cron/sync-discography" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/sync-discography" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -161,8 +168,9 @@ jobs:
     steps:
       - name: POST /api/cron/sync-cast
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
-            "$BASE_URL/api/cron/sync-cast" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/sync-cast" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -181,8 +189,9 @@ jobs:
     steps:
       - name: POST /api/cron/sync-social-links-wikidata
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 600 -X POST \
-            "$BASE_URL/api/cron/sync-social-links-wikidata" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 600 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/sync-social-links-wikidata" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -199,8 +208,9 @@ jobs:
     steps:
       - name: POST /api/cron/artist-visibility
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST \
-            "$BASE_URL/api/cron/artist-visibility" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/artist-visibility" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -217,8 +227,9 @@ jobs:
     steps:
       - name: POST /api/cron/digest
         run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 -X POST \
-            "$BASE_URL/api/cron/digest" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/digest" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
