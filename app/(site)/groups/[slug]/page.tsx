@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { cache } from 'react'
-import { redirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -103,7 +103,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
     // Redirect 301: UUID legado → URL com slug
     if (group?.slug && isCuid(params.slug) && group.slug !== params.slug) {
-        redirect(`/groups/${group.slug}`)
+        permanentRedirect(`/groups/${group.slug}`)
     }
 
     if (!group || group.isHidden) {
