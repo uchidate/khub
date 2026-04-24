@@ -102,6 +102,7 @@ model ArtistGroupMembership {
 
 model Artist {
   id                 String             @id @default(cuid())
+  slug               String?            @unique // URL slug ex: "iu", "bts-jungkook"
   nameRomanized      String
   nameHangul         String?
   birthDate          DateTime?

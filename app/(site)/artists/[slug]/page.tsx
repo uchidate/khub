@@ -31,18 +31,21 @@ export const revalidate = 3600
 export async function generateStaticParams() {
     if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     const artists = await prisma.artist.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false },
-        select: { id: true },
+        where: { isHidden: false, flaggedAsNonKorean: false, slug: { not: null } },
+        select: { slug: true },
         orderBy: { trendingScore: 'desc' },
         take: 200,
     })
-    return artists.map(a => ({ id: a.id }))
+    return artists.map(a => ({ slug: a.slug! }))
 }
 
+const isCuid = (s: string) => /^c[a-z0-9]{24}$/.test(s)
+
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
-const getArtist = cache(async (id: string) => {
-    return prisma.artist.findUnique({
-        where: { id },
+const getArtist = cache(async (slugOrId: string) => {
+    const where = isCuid(slugOrId) ? { id: slugOrId } : { slug: slugOrId }
+    return prisma.artist.findFirst({
+        where,
         include: {
             agency: true,
             albums: { orderBy: { releaseDate: 'desc' }, take: 20 },
@@ -115,9 +118,9 @@ function getSocialPlatform(key: string): SocialPlatform {
     return { icon: Globe, label: key, action: 'Visitar', color: 'text-muted', bg: 'hover:border-border' }
 }
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const artist = await getArtist(params.id)
+    const artist = await getArtist(params.slug)
 
     if (!artist) {
         return {
@@ -134,14 +137,14 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     return applySeoOverride({
         title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}`,
         description: description.slice(0, 160),
-        alternates: { canonical: `${BASE_URL}/artists/${params.id}` },
+        alternates: { canonical: `${BASE_URL}/artists/${artist.slug ?? artist.id}` },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
             images: artist.primaryImageUrl ? [{ url: artist.primaryImageUrl, width: 1200, height: 630, alt: artist.nameRomanized }] : [],
             type: 'profile',
-            url: `${BASE_URL}/artists/${params.id}`,
+            url: `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -149,13 +152,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: description.slice(0, 160),
             images: artist.primaryImageUrl ? [artist.primaryImageUrl] : []
         }
-    }, 'artist', params.id)
+    }, 'artist', artist.id)
 }
 
-export default async function ArtistDetailPage(props: { params: Promise<{ id: string }> }) {
+export default async function ArtistDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
-    const artist = await getArtist(params.id)
+    const artist = await getArtist(params.slug)
 
     if (!artist || artist.isHidden) {
         return (
@@ -174,7 +177,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
     const activeGroupId = artist.memberships.find(m => m.isActive)?.group?.id ?? null
     const productionIds = artist.productions.map(ap => ap.production.id)
     const productionWhere = {
-        artistId: params.id,
+        artistId: artist.id,
         production: {
             flaggedAsNonKorean: false, isHidden: false,
             AND: [
@@ -184,8 +187,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
         },
     }
     const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles, totalProductions, totalAlbums] = await Promise.all([
-        prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: params.id } } } }).catch(() => 0),
-        getTranslation('artist', params.id, 'bio', 'pt-BR').catch(() => null),
+        prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: artist.id } } } }).catch(() => 0),
+        getTranslation('artist', artist.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
         activeGroupId
             ? prisma.artist.findMany({
@@ -204,14 +207,14 @@ export default async function ArtistDetailPage(props: { params: Promise<{ id: st
             where: {
                 status: 'PUBLISHED',
                 isPrivate: false,
-                relatedArtists: { some: { artistId: params.id } },
+                relatedArtists: { some: { artistId: artist.id } },
             },
             select: { slug: true, title: true, excerpt: true, coverImageUrl: true, publishedAt: true, readingTimeMin: true },
             orderBy: { publishedAt: 'desc' },
             take: 6,
         }).catch(() => []),
         prisma.artistProduction.count({ where: productionWhere }).catch(() => artist.productions.length),
-        prisma.album.count({ where: { artistId: params.id } }).catch(() => artist.albums.length),
+        prisma.album.count({ where: { artistId: artist.id } }).catch(() => artist.albums.length),
     ])
 
     // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
