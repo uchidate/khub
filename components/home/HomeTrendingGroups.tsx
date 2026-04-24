@@ -4,6 +4,7 @@ import { nameToGradient } from '@/lib/utils'
 
 export interface TrendingGroup {
     id: string
+    slug?: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null
@@ -28,7 +29,7 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
                     return (
                         <Link
                             key={group.id}
-                            href={`/groups/${group.id}`}
+                            href={`/groups/${group.slug ?? group.id}`}
                             className={`group relative flex items-center gap-2.5 pl-3 pr-3 py-2.5 transition-colors min-h-[48px]
                                 ${idx % 2 === 0 ? 'border-r border-border' : ''}
                                 ${idx < 6 ? 'border-b border-border' : ''}

@@ -40,7 +40,7 @@ const getAgency = cache(async (id: string) =>
             },
             musicalGroups: {
                 select: {
-                    id: true, name: true, nameHangul: true, profileImageUrl: true,
+                    id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true,
                     debutDate: true, disbandDate: true, officialColor: true,
                     _count: { select: { members: true } },
                 },
@@ -126,7 +126,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     "subOrganization": agency.musicalGroups.map(g => ({
                         "@type": "MusicGroup",
                         "name": g.name,
-                        "url": `${BASE_URL}/groups/${g.id}`,
+                        "url": `${BASE_URL}/groups/${g.slug ?? g.id}`,
                     })),
                 } : {}),
                 ...(agency.artists.length > 0 ? {
@@ -464,6 +464,7 @@ function GroupCard({
 }: {
     group: {
         id: string
+        slug?: string | null
         name: string
         nameHangul: string | null
         profileImageUrl: string | null
@@ -478,7 +479,7 @@ function GroupCard({
     const color = group.officialColor ?? accent
     return (
         <Link
-            href={`/groups/${group.id}`}
+            href={`/groups/${group.slug ?? group.id}`}
             className={`group block ${disbanded ? 'opacity-50 hover:opacity-80 transition-opacity' : ''}`}
         >
             <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[var(--c)]/40 transition-all mb-2"

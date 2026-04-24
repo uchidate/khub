@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface Artist {
     id: string
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -20,6 +21,7 @@ interface News {
 
 interface Production {
     id: string
+    slug?: string | null
     titlePt: string
     titleKr: string | null
     type: string
@@ -30,6 +32,7 @@ interface Production {
 
 interface Group {
     id: string
+    slug?: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null

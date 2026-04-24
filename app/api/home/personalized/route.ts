@@ -12,7 +12,7 @@ const getTrendingArtistIds = unstable_cache(
             take: 16,
             orderBy: { trendingScore: 'desc' },
             select: {
-                id: true, nameRomanized: true, nameHangul: true,
+                id: true, slug: true, nameRomanized: true, nameHangul: true,
                 primaryImageUrl: true, roles: true, gender: true, agency: { select: { name: true } },
             },
         })

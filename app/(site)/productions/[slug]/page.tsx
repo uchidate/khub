@@ -28,23 +28,26 @@ export const revalidate = 3600
 export async function generateStaticParams() {
     if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     const productions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false },
-        select: { id: true },
+        where: { isHidden: false, flaggedAsNonKorean: false, slug: { not: null } },
+        select: { slug: true },
         orderBy: { voteAverage: 'desc' },
         take: 200,
     })
-    return productions.map(p => ({ id: p.id }))
+    return productions.map(p => ({ slug: p.slug! }))
 }
 
+const isCuid = (s: string) => /^c[a-z0-9]{24}$/.test(s)
+
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page component)
-const getProduction = cache(async (id: string) => {
-    return prisma.production.findUnique({
-        where: { id },
+const getProduction = cache(async (slugOrId: string) => {
+    const where = isCuid(slugOrId) ? { id: slugOrId } : { slug: slugOrId }
+    return prisma.production.findFirst({
+        where,
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: { select: {
-                    id: true, nameRomanized: true, nameHangul: true,
+                    id: true, slug: true, nameRomanized: true, nameHangul: true,
                     primaryImageUrl: true, roles: true, gender: true,
                 } } },
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
@@ -54,9 +57,9 @@ const getProduction = cache(async (id: string) => {
     }).catch(() => null)
 })
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const production = await getProduction(params.id)
+    const production = await getProduction(params.slug)
 
     if (!production) {
         return {
@@ -87,7 +90,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             : production.titlePt,
         description: fullDescription.slice(0, 160),
         alternates: {
-            canonical: `${BASE_URL}/productions/${params.id}`,
+            canonical: `${BASE_URL}/productions/${production.slug ?? production.id}`,
         },
         openGraph: {
             title: `${production.titlePt} | HallyuHub`,
@@ -99,7 +102,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
                 alt: production.titlePt
             }] : [],
             type: 'video.movie',
-            url: `${BASE_URL}/productions/${params.id}`,
+            url: `${BASE_URL}/productions/${production.slug ?? production.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -107,13 +110,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: fullDescription.slice(0, 160),
             images: production.imageUrl ? [production.imageUrl] : []
         }
-    }, 'production', params.id)
+    }, 'production', production.id)
 }
 
-export default async function ProductionDetailPage(props: { params: Promise<{ id: string }> }) {
+export default async function ProductionDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
 
-    const production = await getProduction(params.id)
+    const production = await getProduction(params.slug)
 
     if (!production || production.isHidden) {
         notFound()
@@ -123,7 +126,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
     const artistIds = production.artists.map(a => a.artist.id)
 
     const relatedSelect = {
-        id: true, titlePt: true, titleKr: true, type: true,
+        id: true, slug: true, titlePt: true, titleKr: true, type: true,
         year: true, imageUrl: true, backdropUrl: true, voteAverage: true,
     } as const
 
@@ -433,7 +436,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                     return (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                             {ordered.map(({ artist, role }) => (
-                                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group">
                                                     <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
                                                         {artist.primaryImageUrl ? (
                                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
@@ -491,7 +494,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ id
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {relatedProductions.map((rel) => (
-                                        <Link key={rel.id} href={`/productions/${rel.id}`} className="group block">
+                                        <Link key={rel.id} href={`/productions/${rel.slug ?? rel.id}`} className="group block">
                                             <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
                                                 {rel.imageUrl || rel.backdropUrl ? (
                                                     <Image

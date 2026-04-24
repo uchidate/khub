@@ -8,6 +8,7 @@ import { getRoleLabel } from '@/lib/utils/role-labels'
 
 type FavoriteItem = {
   id: string
+  slug?: string | null
   type: 'artist' | 'group' | 'production' | 'news'
   // Artist / Group
   nameRomanized?: string
@@ -27,6 +28,7 @@ type FavoriteItem = {
 
 type TrendingArtist = {
   id: string
+  slug?: string | null
   nameRomanized: string
   primaryImageUrl: string | null
 }
@@ -44,9 +46,9 @@ const TYPE_CONFIG = {
 
 function FavoriteCard({ item }: { item: FavoriteItem }) {
   const href =
-    item.type === 'artist' ? `/artists/${item.id}`
-    : item.type === 'group' ? `/groups/${item.id}`
-    : item.type === 'production' ? `/productions/${item.id}`
+    item.type === 'artist' ? `/artists/${item.slug ?? item.id}`
+    : item.type === 'group' ? `/groups/${item.slug ?? item.id}`
+    : item.type === 'production' ? `/productions/${item.slug ?? item.id}`
     : `/news/${item.id}`
 
   const imageUrl = item.primaryImageUrl ?? item.imageUrl ?? null
@@ -146,7 +148,7 @@ export function FavoritesGallery({ trendingArtists }: Props) {
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {trendingArtists.map((artist) => (
-                <Link key={artist.id} href={`/artists/${artist.id}`} className="group block">
+                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group block">
                   <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[#f5f5f7] border border-[#e8e8e8] group-hover:border-[#080808]/20 transition-all mb-2">
                     {artist.primaryImageUrl ? (
                       <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="120px" />

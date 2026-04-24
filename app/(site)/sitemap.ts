@@ -58,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                         { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
                     ],
                 },
-                select: { id: true, updatedAt: true },
+                select: { id: true, slug: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.musicalGroup.findMany({
@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 priority: 0.75,
             })),
             ...productions.map(p => ({
-                url: `${BASE_URL}/productions/${p.id}`,
+                url: `${BASE_URL}/productions/${p.slug ?? p.id}`,
                 lastModified: p.updatedAt,
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,

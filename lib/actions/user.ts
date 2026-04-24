@@ -127,7 +127,7 @@ export async function getDashboardData() {
         prisma.artist.findMany({
             orderBy: { trendingScore: 'desc' },
             take: 6,
-            select: { id: true, nameRomanized: true, primaryImageUrl: true },
+            select: { id: true, slug: true, nameRomanized: true, primaryImageUrl: true },
         }),
         prisma.user.findUnique({
             where: { id: userId },
@@ -245,7 +245,7 @@ export async function getProfileData() {
             take: 4,
             select: {
                 createdAt: true,
-                production: { select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true } },
+                production: { select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true } },
             },
         }),
         prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, bio: true } }),

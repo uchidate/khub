@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
             production: {
                 select: {
                     id: true,
+                    slug: true,
                     titlePt: true,
                     titleKr: true,
                     imageUrl: true,

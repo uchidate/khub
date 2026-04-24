@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
                 },
                 select: {
                     id: true,
+                    slug: true,
                     nameRomanized: true,
                     nameHangul: true,
                     primaryImageUrl: true,
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
                 },
                 select: {
                     id: true,
+                    slug: true,
                     name: true,
                     nameHangul: true,
                     profileImageUrl: true,
@@ -80,6 +82,7 @@ export async function GET(request: NextRequest) {
                 },
                 select: {
                     id: true,
+                    slug: true,
                     titlePt: true,
                     titleKr: true,
                     type: true,

@@ -121,7 +121,7 @@ export function GlobalSearch() {
                                         {results.artists.map((artist) => (
                                             <Link
                                                 key={artist.id}
-                                                href={`/artists/${artist.id}`}
+                                                href={`/artists/${artist.slug ?? artist.id}`}
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
@@ -170,7 +170,7 @@ export function GlobalSearch() {
                                         {results.groups.map((group) => (
                                             <Link
                                                 key={group.id}
-                                                href={`/groups/${group.id}`}
+                                                href={`/groups/${group.slug ?? group.id}`}
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
@@ -214,7 +214,7 @@ export function GlobalSearch() {
                                         {results.productions.map((production) => (
                                             <Link
                                                 key={production.id}
-                                                href={`/productions/${production.id}`}
+                                                href={`/productions/${production.slug ?? production.id}`}
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >

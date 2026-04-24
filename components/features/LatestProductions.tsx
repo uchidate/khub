@@ -6,6 +6,7 @@ import { Sparkles, Calendar, Star, Trophy } from 'lucide-react'
 
 interface LatestProduction {
     id: string
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -74,7 +75,7 @@ export function LatestProductions({
                         style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'both' }}
                     >
                         <Link
-                            href={`/productions/${production.id}`}
+                            href={`/productions/${production.slug ?? production.id}`}
                             className="group block"
                         >
                             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-[#080808] mb-3 shadow-lg">
