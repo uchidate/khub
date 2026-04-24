@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { cache } from 'react'
-import { permanentRedirect } from 'next/navigation'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -23,10 +23,8 @@ import type { Metadata } from 'next'
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
-// force-dynamic: garante que CUIDs legados sejam sempre redirecionados 301
-// sem serem servidos do cache ISR. Reverter para revalidate=3600 após
-// todos os links internos estarem atualizados para slugs.
-export const dynamic = 'force-dynamic'
+// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
+export const revalidate = 3600
 
 // Pré-gera todos os grupos no build → first-paint rápido, melhor SEO e Core Web Vitals
 export async function generateStaticParams() {
@@ -101,12 +99,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function GroupDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     const group = await getGroup(params.slug)
-
-    // Redirect 301: UUID legado → URL com slug
-    console.log('[groups] slug param:', params.slug, '| isCuid:', isCuid(params.slug), '| group.slug:', group?.slug)
-    if (group?.slug && isCuid(params.slug) && group.slug !== params.slug) {
-        permanentRedirect(`/groups/${group.slug}`)
-    }
 
     if (!group || group.isHidden) {
         return (
