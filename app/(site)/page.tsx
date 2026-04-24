@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
-import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
 export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
@@ -191,7 +190,15 @@ const getHomePublicData = unstable_cache(
             }).catch(() => null)
             : null
 
-        const ageFilter = await applyAgeRatingFilter()
+        // unstable_cache não suporta chamadas aninhadas a outro unstable_cache.
+        // Calculamos o filtro de age rating diretamente a partir do settings já buscado.
+        const allowAdult = settings?.allowAdultContent ?? false
+        const ageFilter = allowAdult ? {} : {
+            AND: [
+                { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
+                { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+            ],
+        }
         const latestProductions = await prisma.production.findMany({
             where: { isHidden: false, flaggedAsNonKorean: false, ...ageFilter },
             take: 5,
