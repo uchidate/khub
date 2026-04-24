@@ -6,7 +6,6 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBelowFold } from "@/components/home/HomeBelowFold"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { AdBanner } from "@/components/ui/AdBanner"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
@@ -312,9 +311,6 @@ export default async function Home() {
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
-            </div>
             <HomeBelowFold
                 artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
                 group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}

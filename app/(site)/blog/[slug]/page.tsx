@@ -308,9 +308,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad before related posts */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-10" />
-
         {/* Related posts */}
         {relatedPosts.length > 0 && (
           <div className="mt-14 pt-10 border-t border-border">
@@ -334,7 +331,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* ── Sidebar sticky ── */}
       <aside className="hidden xl:block w-[300px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-6">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
         </div>
       </aside>
