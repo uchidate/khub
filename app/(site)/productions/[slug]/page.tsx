@@ -224,7 +224,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     const castActors = production.artists.slice(0, 10).map(a => ({
         "@type": "Person",
         "name": a.artist.nameRomanized,
-        "url": `${BASE_URL}/artists/${a.artist.id}`,
+        "url": `${BASE_URL}/artists/${a.artist.slug ?? a.artist.id}`,
     }))
 
     return (
@@ -237,10 +237,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 "alternateName": production.titleKr ?? undefined,
                 "description": synopsis?.slice(0, 300) ?? undefined,
                 "image": production.imageUrl ?? undefined,
-                "url": `${BASE_URL}/productions/${production.id}`,
+                "url": `${BASE_URL}/productions/${production.slug ?? production.id}`,
                 "inLanguage": "ko",
                 "countryOfOrigin": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(production.year ? { "datePublished": String(production.year) } : {}),
+                ...(production.releaseDate ? { "dateCreated": new Date(production.releaseDate).toISOString().split('T')[0] } : {}),
+                ...(production.episodeCount && !isMovie ? { "numberOfEpisodes": production.episodeCount } : {}),
                 ...(castActors.length ? { "actor": castActors } : {}),
                 ...(production.tags?.length ? { "genre": production.tags } : {}),
                 ...(production.voteAverage && production.voteAverage > 0 && production.voteCount && production.voteCount > 0 ? {
@@ -258,7 +260,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     { "@type": "ListItem", "position": 1, "name": "Produções", "item": `${BASE_URL}/productions` },
-                    { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.id}` },
+                    { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.slug ?? production.id}` },
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
