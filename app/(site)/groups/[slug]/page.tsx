@@ -46,7 +46,7 @@ const isCuid = (param: string) => /^c[a-z0-9]{24}$/.test(param)
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
 const getGroup = cache(async (slugOrId: string) => {
     const where = isCuid(slugOrId) ? { id: slugOrId } : { slug: slugOrId }
-    return prisma.musicalGroup.findUnique({
+    return prisma.musicalGroup.findFirst({
         where,
         include: {
             agency: true,
