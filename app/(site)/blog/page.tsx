@@ -1,5 +1,6 @@
 export const revalidate = 300
 
+import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -595,7 +596,12 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   </div>
                   <div className="flex flex-col gap-2.5">
                     {gridPosts.map((p, i) => (
-                      <CompactPostCard key={p.id} post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />
+                      <Fragment key={p.id}>
+                        <CompactPostCard post={p} rank={(page - 1) * PAGE_SIZE + i + 1} />
+                        {i === 9 && gridPosts.length > 10 && (
+                          <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                        )}
+                      </Fragment>
                     ))}
                   </div>
                   {totalPages > 1 && (() => {
@@ -680,7 +686,12 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                       </div>
                       <div className="flex flex-col gap-2.5">
                         {compactPosts.map((p, i) => (
-                          <CompactPostCard key={p.id} post={p} rank={gridStart + 6 + i + 1} />
+                          <Fragment key={p.id}>
+                            <CompactPostCard post={p} rank={gridStart + 6 + i + 1} />
+                            {i === 9 && compactPosts.length > 10 && (
+                              <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                            )}
+                          </Fragment>
                         ))}
                       </div>
                     </div>

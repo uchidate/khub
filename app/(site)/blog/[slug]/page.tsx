@@ -1,4 +1,3 @@
-import React from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -21,23 +20,27 @@ import { BlogReadingProgress } from '@/components/blog/BlogReadingProgress'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 const BASE_URL = SITE_URL
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
-
 function MarkdownWithAds({ content }: { content: string }) {
+  // Split on H2/H3 headings to inject ads between sections
   const sections = content.split(/(?=^#{2,3} )/m).filter(Boolean)
   if (sections.length <= 2) {
-    return <MarkdownRenderer content={content} />
+    return (
+      <>
+        <MarkdownRenderer content={content} />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
+      </>
+    )
   }
-  // Inject an ad every 3 sections
-  const AD_EVERY = 3
-  const parts: React.ReactNode[] = []
-  for (let i = 0; i < sections.length; i++) {
-    parts.push(<MarkdownRenderer key={i} content={sections[i]} />)
-    if ((i + 1) % AD_EVERY === 0 && i < sections.length - 1) {
-      parts.push(<AdBanner key={`ad-${i}`} slot={AD_SLOT} format="auto" className="my-8" />)
-    }
-  }
-  return <>{parts}</>
+  const midpoint = Math.floor(sections.length / 2)
+  const firstHalf = sections.slice(0, midpoint).join('')
+  const secondHalf = sections.slice(midpoint).join('')
+  return (
+    <>
+      <MarkdownRenderer content={firstHalf} />
+      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
+      <MarkdownRenderer content={secondHalf} />
+    </>
+  )
 }
 
 // ISR ativo — force-dynamic removido; generateStaticParams pré-renderiza os posts publicados
@@ -207,19 +210,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <div className="max-w-screen-2xl mx-auto">
-      {/* Grid: mobile=1col, xl=left+article+right (ambas sidebars em >=1280px) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr_200px] gap-6 xl:gap-8">
-
-      {/* ── Sidebar ESQUERDA (sticky) ── */}
-      <aside className="hidden xl:block">
-        <div className="sticky top-6">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" />
-        </div>
-      </aside>
-
-      {/* ── Coluna principal — largura máxima para leitura ── */}
-      <div className="min-w-0 max-w-2xl mx-auto w-full">
+      <div className="max-w-6xl mx-auto">
+      <div className="flex gap-10 xl:gap-14 items-start">
+      {/* ── Coluna principal ── */}
+      <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
@@ -278,6 +272,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           }
         </article>
 
+        {/* Ad após conteúdo */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-8" />
+
         {/* Tags */}
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
@@ -311,8 +308,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad before related posts — slot diferente do inline */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_SIDEBAR!} format="auto" className="mt-10" />
+        {/* Ad before related posts */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="mt-10" />
 
         {/* Related posts */}
         {relatedPosts.length > 0 && (
@@ -334,14 +331,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar DIREITA (sticky) ── */}
-      <aside className="hidden xl:block">
-        <div className="sticky top-6">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" />
+      {/* ── Sidebar sticky ── */}
+      <aside className="hidden xl:block w-[300px] shrink-0">
+        <div className="sticky top-6 flex flex-col gap-6">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
         </div>
       </aside>
 
-      </div>{/* fim grid */}
+      </div>{/* fim flex */}
       </div>{/* fim max-w */}
     </PageTransition>
   )
