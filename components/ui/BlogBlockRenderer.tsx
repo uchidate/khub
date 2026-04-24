@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
-import { TwitterEmbed } from '@/components/ui/TwitterEmbed'
-import { InstagramEmbed } from '@/components/ui/InstagramEmbed'
-import { TikTokEmbed } from '@/components/ui/TikTokEmbed'
 import type { BlogBlock } from '@/lib/types/blocks'
+
+const TwitterEmbed = dynamic(() => import('@/components/ui/TwitterEmbed').then(m => ({ default: m.TwitterEmbed })), { ssr: false })
+const InstagramEmbed = dynamic(() => import('@/components/ui/InstagramEmbed').then(m => ({ default: m.InstagramEmbed })), { ssr: false })
+const TikTokEmbed = dynamic(() => import('@/components/ui/TikTokEmbed').then(m => ({ default: m.TikTokEmbed })), { ssr: false })
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE ?? '1740970038'
@@ -38,7 +40,7 @@ function InArticleAd({ id }: { id: string }) {
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
                 <div className="flex-1 h-px bg-border" />
             </div>
-            <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center' }}
+            <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
                 data-ad-layout="in-article" data-ad-format="fluid"
                 data-ad-client={ADSENSE_CLIENT} data-ad-slot={ADSENSE_SLOT}
                 key={id} />
