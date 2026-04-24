@@ -20,10 +20,12 @@
  * Cron sugerido: a cada 6 horas
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
+import { HOME_CACHE_TAG } from '@/app/(site)/page'
 
 export const maxDuration = 120
 
@@ -214,7 +216,10 @@ export async function POST(request: NextRequest) {
     log.info('Trending update started', { requestId })
 
     runUpdateTrending()
-        .then(result => log.info('Trending update completed', { requestId, ...result }))
+        .then(result => {
+            log.info('Trending update completed', { requestId, ...result })
+            revalidateTag(HOME_CACHE_TAG, { expire: 0 })
+        })
         .catch(onCronError(log, 'cron-update-trending', 'Trending update failed'))
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })

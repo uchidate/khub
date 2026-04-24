@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
+export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBelowFold } from "@/components/home/HomeBelowFold"
@@ -9,9 +10,9 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
-// ISR: homepage recacheada a cada 2 minutos
-// Personalização (sessão, filtros) acontece client-side
-export const revalidate = 120
+// ISR: homepage recacheada a cada 10 minutos como fallback.
+// Revalidação antecipada via revalidateTag(HOME_CACHE_TAG) nos crons de publish e trending.
+export const revalidate = 600
 
 // Durante o build local (sem DB), retorna shell vazio para que o build não falhe
 // Em produção, a primeira request popula o cache via ISR
@@ -190,6 +191,14 @@ const getHomePublicData = unstable_cache(
             }).catch(() => null)
             : null
 
+        const ageFilter = await applyAgeRatingFilter()
+        const latestProductions = await prisma.production.findMany({
+            where: { isHidden: false, flaggedAsNonKorean: false, ...ageFilter },
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+        }).catch(() => [])
+
         return {
             trendingArtists,
             featuredPost: featuredPost ? serializePost(featuredPost) : null,
@@ -203,10 +212,11 @@ const getHomePublicData = unstable_cache(
             siteStats: { artists: artistCount, groups: groupCount, productions: productionCount },
             spotlightArtist,
             spotlightProduction,
+            latestProductions,
         }
     },
-    ['home-page-public-data-v14'],
-    { revalidate: 120 },
+    ['home-page-public-data-v15'],
+    { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 
 const SITE_URL = 'https://www.hallyuhub.com.br'
@@ -242,20 +252,9 @@ export default async function Home() {
     // Build local não tem DB — retorna shell mínimo; ISR popula em produção
     if (IS_BUILD) return <div />
 
-    const [publicData, ageRatingFilter] = await Promise.all([
-        getHomePublicData(),
-        applyAgeRatingFilter(),
-    ])
+    const publicData = await getHomePublicData()
 
-    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction } = publicData
-
-    // latestProductions depende de configuração do sistema (cached) — não de sessão
-    const latestProductions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false, ...ageRatingFilter },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-    })
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction, latestProductions } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}

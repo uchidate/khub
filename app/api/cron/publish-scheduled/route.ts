@@ -9,10 +9,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { notifyUsersAboutBlogPost } from '@/lib/services/blog-notification-service'
+import { HOME_CACHE_TAG } from '@/app/(site)/page'
 
 export const maxDuration = 30
 
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    if (published.length > 0) revalidateTag(HOME_CACHE_TAG, { expire: 0 })
     return NextResponse.json({ published: published.length, errors: errors.length, ids: published })
 }
 
