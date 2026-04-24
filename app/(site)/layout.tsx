@@ -54,7 +54,8 @@ export const metadata: Metadata = {
         template: '%s | HallyuHub',
         default: 'HallyuHub — K-Pop, K-Drama e Cultura Coreana'
     },
-    description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
+    description: "Perfis de artistas K-Pop, grupos, doramas e filmes coreanos — tudo em português. O maior portal de Hallyu do Brasil.",
+    keywords: "K-Pop, dorama, dorama coreano, K-Drama, artistas coreanos, grupos K-Pop, Hallyu, cultura coreana, HallyuHub, idol, fandom, bias",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
@@ -63,11 +64,14 @@ export const metadata: Metadata = {
     },
     alternates: {
         canonical: BASE_URL,
-        types: {},
+        languages: {
+            'pt-BR': BASE_URL,
+            'x-default': BASE_URL,
+        },
     },
     openGraph: {
         title: "HallyuHub — K-Pop, K-Drama e Cultura Coreana",
-        description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
+        description: "Perfis de artistas K-Pop, grupos, doramas e filmes coreanos — tudo em português. O maior portal de Hallyu do Brasil.",
         images: [{
             url: `${BASE_URL}/og-image.jpg`,
             width: 1200,
@@ -82,7 +86,7 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         title: "HallyuHub — K-Pop, K-Drama e Cultura Coreana",
-        description: "Perfis completos de artistas K-Pop, grupos, dramas e filmes coreanos — tudo em português. O maior portal Hallyu do Brasil.",
+        description: "Perfis de artistas K-Pop, grupos, doramas e filmes coreanos — tudo em português. O maior portal de Hallyu do Brasil.",
         images: [`${BASE_URL}/og-image.jpg`],
     },
     verification: {
@@ -151,7 +155,7 @@ export default async function RootLayout({
                     "name": "HallyuHub",
                     "url": BASE_URL,
                     "logo": `${BASE_URL}/og-image.jpg`,
-                    "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+                    "description": "O portal definitivo para fãs de K-Pop, doramas e cultura coreana no Brasil.",
                     "inLanguage": "pt-BR",
                     "contactPoint": {
                         "@type": "ContactPoint",
@@ -168,7 +172,7 @@ export default async function RootLayout({
                     "@type": "WebSite",
                     "name": "HallyuHub",
                     "url": BASE_URL,
-                    "description": "O portal definitivo para fãs de K-Pop, K-Dramas e cultura coreana no Brasil.",
+                    "description": "O portal definitivo para fãs de K-Pop, doramas e cultura coreana no Brasil.",
                     "inLanguage": "pt-BR",
                     "potentialAction": {
                         "@type": "SearchAction",

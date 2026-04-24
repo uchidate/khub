@@ -134,10 +134,24 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     const description = artist.bio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
     const isThinContent = !artist.primaryImageUrl && !artist.bio
 
+    const canonicalUrl = `${BASE_URL}/artists/${artist.slug ?? artist.id}`
+    const primaryGroup = artist.memberships?.find(m => m.isActive)?.group ?? artist.memberships?.[0]?.group ?? null
+    const keywords = [
+        artist.nameRomanized,
+        ...(artist.nameHangul ? [artist.nameHangul] : []),
+        ...roles.map(r => `${artist.nameRomanized} ${r}`),
+        ...(primaryGroup ? [`${primaryGroup.name}`, `${artist.nameRomanized} ${primaryGroup.name}`] : []),
+        'K-Pop', 'artista coreano', 'HallyuHub',
+    ].filter(Boolean).join(', ')
+
     return applySeoOverride({
         title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}`,
         description: description.slice(0, 160),
-        alternates: { canonical: `${BASE_URL}/artists/${artist.slug ?? artist.id}` },
+        keywords,
+        alternates: {
+            canonical: canonicalUrl,
+            languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl },
+        },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${artist.nameRomanized} | HallyuHub`,
@@ -257,10 +271,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "alternateName": artist.nameHangul ?? undefined,
                 "description": artist.bio?.slice(0, 300) ?? undefined,
                 "image": artist.primaryImageUrl ?? undefined,
-                "url": `${BASE_URL}/artists/${artist.id}`,
+                "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
                 "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
                 "jobTitle": artist.roles?.[0] ?? undefined,
-                ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name } } : {}),
+                "nationality": { "@type": "Country", "name": "Korea, Republic of" },
+                ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
                 ...(() => {
                     const links = (artist.socialLinks as Record<string, string> | null) ?? {}
@@ -273,7 +288,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     { "@type": "ListItem", "position": 1, "name": "Artistas", "item": `${BASE_URL}/artists` },
-                    { "@type": "ListItem", "position": 2, "name": artist.nameRomanized, "item": `${BASE_URL}/artists/${artist.id}` },
+                    { "@type": "ListItem", "position": 2, "name": artist.nameRomanized, "item": `${BASE_URL}/artists/${artist.slug ?? artist.id}` },
                 ],
             }} />
 

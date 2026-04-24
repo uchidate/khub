@@ -20,11 +20,12 @@ const BASE_URL = SITE_URL
 export async function generateMetadata(): Promise<Metadata> {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => 0)
-    const desc = `${total > 0 ? `${total} ` : ''}dramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, todos em português.`
+    const desc = `${total > 0 ? `${total} ` : ''}doramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, tudo em português.`
     return {
-        title: 'Dramas & Filmes Coreanos',
+        title: 'Doramas & Filmes Coreanos',
         description: desc,
-        alternates: { canonical: `${BASE_URL}/productions` },
+        keywords: 'dorama, dorama coreano, K-Drama, série coreana, filme coreano, K-Pop, Hallyu, assistir dorama, HallyuHub',
+        alternates: { canonical: `${BASE_URL}/productions`, languages: { 'pt-BR': `${BASE_URL}/productions`, 'x-default': `${BASE_URL}/productions` } },
         openGraph: {
             title: 'Dramas & Filmes Coreanos | HallyuHub',
             description: desc,
@@ -63,12 +64,27 @@ export default async function ProductionsPage() {
         <JsonLd data={{
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            "name": "Produções Coreanas | HallyuHub",
-            "description": "Produções coreanas: K-Dramas, filmes e séries. De romances épicos a thrillers de tirar o fôlego.",
+            "name": "Doramas & Filmes Coreanos | HallyuHub",
+            "description": "K-Dramas, doramas e filmes coreanos — perfis completos com elenco, sinopse e avaliações em português.",
             "url": `${BASE_URL}/productions`,
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
+        {heroProductions.length > 0 && (
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "Doramas e Filmes Coreanos em Destaque",
+                "url": `${BASE_URL}/productions`,
+                "numberOfItems": heroProductions.length,
+                "itemListElement": heroProductions.map((p, i) => ({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": `${BASE_URL}/productions/${p.slug ?? p.id}`,
+                    "name": p.titlePt,
+                })),
+            }} />
+        )}
         <PageTransition className="pb-16">
 
             {/* ── Hero ────────────────────────────────────────────── */}
