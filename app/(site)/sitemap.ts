@@ -44,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                         { primaryImageUrl: { not: null } },
                     ],
                 },
-                select: { id: true, updatedAt: true },
+                select: { id: true, slug: true, updatedAt: true },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.production.findMany({
@@ -80,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         return [
             ...primaryRoutes,
             ...artists.map(a => ({
-                url: `${BASE_URL}/artists/${a.id}`,
+                url: `${BASE_URL}/artists/${a.slug ?? a.id}`,
                 lastModified: a.updatedAt,
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,
