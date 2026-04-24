@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SafeImage } from '@/components/ui/SafeImage'
 import { notFound } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { PageTransition } from '@/components/features/PageTransition'
@@ -127,15 +128,20 @@ type RelatedPost = Awaited<ReturnType<typeof fetchRelatedPosts>>[number]
 function RelatedPostCard({ post }: { post: RelatedPost }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
-      {post.coverImageUrl ? (
-        <div className="relative aspect-video rounded-t-2xl overflow-hidden">
-          <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
-        </div>
-      ) : (
-        <div className="aspect-video rounded-t-2xl bg-[#ff2d78]/5 flex items-center justify-center">
-          <span className="text-3xl opacity-30">✦</span>
-        </div>
-      )}
+      <div className="relative aspect-video rounded-t-2xl overflow-hidden bg-[#ff2d78]/5">
+        {post.coverImageUrl ? (
+          <SafeImage
+            src={post.coverImageUrl}
+            alt={post.title}
+            fill
+            sizes="(max-width: 640px) 100vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            fallback={<span className="absolute inset-0 flex items-center justify-center text-3xl opacity-30">✦</span>}
+          />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-3xl opacity-30">✦</span>
+        )}
+      </div>
       <div className="px-4 pb-4 flex flex-col gap-2">
         <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-[#ff2d78] transition-colors line-clamp-2">
           {post.title}
@@ -157,11 +163,11 @@ function SidebarRelatedCard({ post }: { post: RelatedPost }) {
     <Link href={`/blog/${post.slug}`} className="group block border-b border-border/50 last:border-b-0 py-3">
       {post.coverImageUrl && (
         <div className="relative aspect-video w-full rounded-md overflow-hidden mb-2 bg-muted/20">
-          <Image
+          <SafeImage
             src={post.coverImageUrl}
             alt={post.title}
             fill
-            sizes="200px"
+            sizes="(min-width: 1280px) 200px, 0px"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>

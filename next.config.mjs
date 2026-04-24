@@ -246,6 +246,53 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.archive.org',
             },
+            // WordPress CDN genérico — portais de notícias K-pop (i0, i1, i2...)
+            {
+                protocol: 'https',
+                hostname: '*.wp.com',
+            },
+            // Naver — blog.naver.com, postfiles.pstatic.net
+            {
+                protocol: 'https',
+                hostname: '*.pstatic.net',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.naver.com',
+            },
+            // Weverse / Big Hit CDN
+            {
+                protocol: 'https',
+                hostname: '*.weversecdn.net',
+            },
+            // Twitter/X CDN — thumbnails de embed
+            {
+                protocol: 'https',
+                hostname: 'pbs.twimg.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'abs.twimg.com',
+            },
+            // TikTok CDN
+            {
+                protocol: 'https',
+                hostname: '*.tiktokcdn.com',
+            },
+            // Google User Content (fotos de perfil, thumbnails)
+            {
+                protocol: 'https',
+                hostname: '*.googleusercontent.com',
+            },
+            // iMBC / Dispatch / Allkpop CDNs comuns
+            {
+                protocol: 'https',
+                hostname: '*.dispatch.co.kr',
+            },
+            {
+                protocol: 'https',
+                hostname: 'dispatch.co.kr',
+            },
         ],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920],
         imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384, 512],
