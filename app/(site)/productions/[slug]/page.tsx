@@ -28,18 +28,21 @@ export const revalidate = 3600
 export async function generateStaticParams() {
     if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     const productions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false },
-        select: { id: true },
+        where: { isHidden: false, flaggedAsNonKorean: false, slug: { not: null } },
+        select: { slug: true },
         orderBy: { voteAverage: 'desc' },
         take: 200,
     })
-    return productions.map(p => ({ id: p.id }))
+    return productions.map(p => ({ slug: p.slug! }))
 }
 
+const isCuid = (s: string) => /^c[a-z0-9]{24}$/.test(s)
+
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page component)
-const getProduction = cache(async (id: string) => {
-    return prisma.production.findUnique({
-        where: { id },
+const getProduction = cache(async (slugOrId: string) => {
+    const where = isCuid(slugOrId) ? { id: slugOrId } : { slug: slugOrId }
+    return prisma.production.findFirst({
+        where,
         include: {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
@@ -54,9 +57,9 @@ const getProduction = cache(async (id: string) => {
     }).catch(() => null)
 })
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const production = await getProduction(params.id)
+    const production = await getProduction(params.slug)
 
     if (!production) {
         return {
@@ -87,7 +90,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             : production.titlePt,
         description: fullDescription.slice(0, 160),
         alternates: {
-            canonical: `${BASE_URL}/productions/${params.id}`,
+            canonical: `${BASE_URL}/productions/${production.slug ?? production.id}`,
         },
         openGraph: {
             title: `${production.titlePt} | HallyuHub`,
@@ -99,7 +102,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
                 alt: production.titlePt
             }] : [],
             type: 'video.movie',
-            url: `${BASE_URL}/productions/${params.id}`,
+            url: `${BASE_URL}/productions/${production.slug ?? production.id}`,
         },
         twitter: {
             card: 'summary_large_image',
@@ -107,13 +110,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
             description: fullDescription.slice(0, 160),
             images: production.imageUrl ? [production.imageUrl] : []
         }
-    }, 'production', params.id)
+    }, 'production', production.id)
 }
 
-export default async function ProductionDetailPage(props: { params: Promise<{ id: string }> }) {
+export default async function ProductionDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
 
-    const production = await getProduction(params.id)
+    const production = await getProduction(params.slug)
 
     if (!production || production.isHidden) {
         notFound()

@@ -236,6 +236,7 @@ model Album {
 
 model Production {
   id                 String             @id @default(cuid())
+  slug               String?            @unique // URL slug ex: "my-mister", "crash-landing-on-you"
   titlePt            String
   titleKr            String?
   type               String

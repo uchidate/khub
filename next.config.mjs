@@ -20,6 +20,11 @@ const nextConfig = {
                 destination: '/api/r/artists/:id',
                 permanent: true,
             },
+            {
+                source: '/productions/:id(c[a-z0-9]{24})',
+                destination: '/api/r/productions/:id',
+                permanent: true,
+            },
         ]
     },
     async rewrites() {
