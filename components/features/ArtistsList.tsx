@@ -11,6 +11,7 @@ import { PaginationControls } from '@/components/ui/PaginationControls'
 
 export interface Artist {
     id: string
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -32,7 +33,7 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
     const roleLabel = roleLabels[0] ?? ''
 
     return (
-        <Link href={`/artists/${artist.id}`} className="group block rounded-2xl p-2 -m-2">
+        <Link href={`/artists/${artist.slug ?? artist.id}`} className="group block rounded-2xl p-2 -m-2">
             <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm mb-2.5 group-hover:border-accent/30 group-hover:shadow-md transition-all">
                 {artist.primaryImageUrl ? (
                     <Image

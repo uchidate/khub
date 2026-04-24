@@ -44,7 +44,7 @@ export default async function ProductionsPage() {
             orderBy: [{ voteCount: 'desc' }, { voteAverage: 'desc' }],
             take: 5,
             select: {
-                id: true, titlePt: true, titleKr: true, type: true, year: true,
+                id: true, slug: true, titlePt: true, titleKr: true, type: true, year: true,
                 imageUrl: true, backdropUrl: true, voteAverage: true, synopsis: true,
             },
         }).catch(() => []),
@@ -94,7 +94,7 @@ export default async function ProductionsPage() {
 
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
-                            <Link href={`/productions/${spotlight.id}`} className="group flex-1 min-w-0">
+                            <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group flex-1 min-w-0">
                                 <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <TrendingUp size={10} /> Em destaque
                                 </p>
@@ -130,7 +130,7 @@ export default async function ProductionsPage() {
                                 <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0">
                                     <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
                                     {sidePicks.slice(0, 4).map(p => (
-                                        <Link key={p.id} href={`/productions/${p.id}`}
+                                        <Link key={p.id} href={`/productions/${p.slug ?? p.id}`}
                                             className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
                                             <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/15">
                                                 {p.imageUrl ? (

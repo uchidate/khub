@@ -144,6 +144,7 @@ async function handler(request: NextRequest) {
             where: { id: { in: pageIds } },
             select: {
                 id: true,
+                slug: true,
                 titlePt: true,
                 titleKr: true,
                 type: true,
@@ -195,6 +196,7 @@ async function handler(request: NextRequest) {
             orderBy,
             select: {
                 id: true,
+                slug: true,
                 titlePt: true,
                 titleKr: true,
                 type: true,

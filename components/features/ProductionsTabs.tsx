@@ -7,6 +7,8 @@ import { Film, Star, Calendar, Sparkles, Trophy } from 'lucide-react'
 
 interface Production {
     id: string
+
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -78,7 +80,7 @@ export function ProductionsTabs({ latest, topRated }: ProductionsTabsProps) {
                 {productions.map((prod) => (
                     <Link
                         key={prod.id}
-                        href={`/productions/${prod.id}`}
+                        href={`/productions/${prod.slug ?? prod.id}`}
                         className="group block"
                     >
                         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[#080808] mb-2 shadow-md">

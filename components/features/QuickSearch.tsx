@@ -174,7 +174,7 @@ export function QuickSearch() {
                                                 {results.groups.map((group) => (
                                                     <button
                                                         key={group.id}
-                                                        onClick={() => handleNavigate(`/groups/${group.id}`)}
+                                                        onClick={() => handleNavigate(`/groups/${group.slug ?? group.id}`)}
                                                         className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
@@ -211,7 +211,7 @@ export function QuickSearch() {
                                                 {results.productions.map((production) => (
                                                     <button
                                                         key={production.id}
-                                                        onClick={() => handleNavigate(`/productions/${production.id}`)}
+                                                        onClick={() => handleNavigate(`/productions/${production.slug ?? production.id}`)}
                                                         className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-9 h-[52px] rounded-lg overflow-hidden bg-surface flex-shrink-0">

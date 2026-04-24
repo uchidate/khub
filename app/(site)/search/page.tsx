@@ -23,6 +23,7 @@ interface Artist {
 
 interface Group {
     id: string
+    slug?: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null
@@ -30,6 +31,7 @@ interface Group {
 
 interface Production {
     id: string
+    slug?: string | null
     titlePt: string
     titleKr: string | null
     type: string
@@ -225,7 +227,7 @@ function SearchContent() {
                             <SectionHeader icon={<Users size={14} />} title="Grupos" count={groups.length} />
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
                                 {groups.map(group => (
-                                    <Link key={group.id} href={`/groups/${group.id}`}
+                                    <Link key={group.id} href={`/groups/${group.slug ?? group.id}`}
                                         className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
                                         <div className="relative aspect-square rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             {group.profileImageUrl ? (
@@ -253,7 +255,7 @@ function SearchContent() {
                             <SectionHeader icon={<Film size={14} />} title="Produções" count={productions.length} />
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                                 {productions.map(prod => (
-                                    <Link key={prod.id} href={`/productions/${prod.id}`}
+                                    <Link key={prod.id} href={`/productions/${prod.slug ?? prod.id}`}
                                         className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
                                         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             {prod.imageUrl ? (

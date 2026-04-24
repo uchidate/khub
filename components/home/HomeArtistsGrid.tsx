@@ -4,6 +4,8 @@ import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface ArtistItem {
     id: string
+
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     roles: string[]
@@ -53,7 +55,7 @@ export function HomeArtistsGrid({ artists }: HomeArtistsGridProps) {
                     {artists.map((artist, idx) => (
                         <Link
                             key={artist.id}
-                            href={`/artists/${artist.id}`}
+                            href={`/artists/${artist.slug ?? artist.id}`}
                             className="group bg-background p-4 flex flex-col items-center gap-2 hover:bg-accent-soft transition-colors min-h-[44px]"
                         >
                             <div className="flex items-center gap-1.5 self-start w-full mb-1.5">

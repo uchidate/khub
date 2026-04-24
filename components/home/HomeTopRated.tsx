@@ -4,6 +4,7 @@ import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 export interface TopRatedProduction {
     id: string
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -26,7 +27,7 @@ export function HomeTopRated({ productions }: { productions: TopRatedProduction[
                     {productions.slice(0, 9).map((prod, idx) => (
                         <Link
                             key={prod.id}
-                            href={`/productions/${prod.id}`}
+                            href={`/productions/${prod.slug ?? prod.id}`}
                             className={`group flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors min-h-[60px]
                                 ${idx % 3 !== 2 ? 'lg:border-r border-border' : ''}
                                 ${idx % 2 !== 1 ? 'sm:border-r lg:border-r-0 border-border' : ''}

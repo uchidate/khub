@@ -183,7 +183,7 @@ export default async function DashboardPage() {
               {watchingEntries.map((entry: any) => (
                 <Link
                   key={entry.productionId}
-                  href={`/productions/${entry.production.id}`}
+                  href={`/productions/${entry.production.slug ?? entry.production.id}`}
                   className="group flex-shrink-0 flex flex-col gap-2 w-24 md:w-28"
                 >
                   <div className="relative w-24 h-36 md:w-28 md:h-40 rounded-xl overflow-hidden border border-border group-hover:border-teal-500/60 transition-all duration-300 shadow-lg bg-surface">

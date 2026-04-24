@@ -5,6 +5,8 @@ import { nameToGradient } from "@/lib/utils"
 
 interface RandomArtist {
     id: string
+
+    slug?: string | null
     nameRomanized: string
     nameHangul?: string | null
     primaryImageUrl?: string | null
@@ -12,6 +14,8 @@ interface RandomArtist {
 
 interface RandomGroup {
     id: string
+
+    slug?: string | null
     name: string
     nameHangul?: string | null
     profileImageUrl?: string | null
@@ -19,6 +23,8 @@ interface RandomGroup {
 
 interface RandomProduction {
     id: string
+
+    slug?: string | null
     titlePt: string
     posterUrl?: string | null
     year?: number | null
@@ -111,7 +117,7 @@ export function HomeRandomDiscovery({ artist, group, production }: HomeRandomDis
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                         {artist && (
                             <DiscoveryCard
-                                href={`/artists/${artist.id}`}
+                                href={`/artists/${artist.slug ?? artist.id}`}
                                 label="Artista"
                                 icon={User}
                                 name={artist.nameRomanized}
@@ -122,7 +128,7 @@ export function HomeRandomDiscovery({ artist, group, production }: HomeRandomDis
                         )}
                         {group && (
                             <DiscoveryCard
-                                href={`/groups/${group.id}`}
+                                href={`/groups/${group.slug ?? group.id}`}
                                 label="Grupo"
                                 icon={Users}
                                 name={group.name}
@@ -133,7 +139,7 @@ export function HomeRandomDiscovery({ artist, group, production }: HomeRandomDis
                         )}
                         {production && (
                             <DiscoveryCard
-                                href={`/productions/${production.id}`}
+                                href={`/productions/${production.slug ?? production.id}`}
                                 label="Produção"
                                 icon={Film}
                                 name={production.titlePt}

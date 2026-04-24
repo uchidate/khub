@@ -12,6 +12,7 @@ import { nameToGradient } from '@/lib/utils'
 
 type Group = {
     id: string
+    slug?: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null
@@ -239,7 +240,7 @@ export function GroupsList() {
                         const gen = getGeneration(group.debutDate)
                         return (
                             <div key={group.id} className={`group/card relative ${faded ? 'opacity-60 hover:opacity-100 transition-opacity duration-300' : ''}`}>
-                                <Link href={`/groups/${group.id}`} className="group block">
+                                <Link href={`/groups/${group.slug ?? group.id}`} className="group block">
                                     <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm card-hover mb-3 group-hover:shadow-md transition-all">
                                         {group.profileImageUrl ? (
                                             <Image
@@ -304,7 +305,7 @@ export function GroupsList() {
                                     </div>
                                 </Link>
                                 <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
-                                    <AdminQuickEdit href={`/admin/groups/${group.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`} label="Editar" />
+                                    <AdminQuickEdit href={`/admin/groups/${group.slug ?? group.id}?returnTo=${encodeURIComponent(pathname + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`} label="Editar" />
                                 </div>
                             </div>
                         )

@@ -88,7 +88,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             skip,
             orderBy,
             select: {
-                id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
+                id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
                 roles: true, gender: true,
                 memberships: { where: { isActive: true }, select: { group: { select: { id: true, name: true } } }, take: 1 },
                 agency: { select: { name: true } },
@@ -101,7 +101,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             orderBy: { trendingScore: 'desc' },
             take: 5,
             select: {
-                id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
+                id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
                 roles: true, gender: true,
                 memberships: { where: { isActive: true }, select: { group: { select: { name: true } } }, take: 1 },
                 viewCount: true,
@@ -163,7 +163,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             {/* Artista em destaque: portrait + texto juntos */}
-                            <Link href={`/artists/${spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
+                            <Link href={`/artists/${spotlight.slug ?? spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
                                 {/* Portrait card */}
                                 <div className="block shrink-0">
                                     <div className="w-20 md:w-32 lg:w-40 aspect-[3/4] relative rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
@@ -211,7 +211,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                                 <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
                                     <p className="text-white text-[9px] font-bold uppercase tracking-widest mb-1">Também em alta</p>
                                     {sidePicks.slice(0, 4).map(a => (
-                                        <Link key={a.id} href={`/artists/${a.id}`}
+                                        <Link key={a.id} href={`/artists/${a.slug ?? a.id}`}
                                             className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
                                             <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/15">
                                                 {a.primaryImageUrl ? (

@@ -30,6 +30,7 @@ interface SecondaryStory {
 
 interface TrendingArtist extends ArtistForBadge {
     id: string
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     roles: string[]
@@ -42,6 +43,8 @@ interface TrendingArtist extends ArtistForBadge {
 
 interface SpotlightProduction {
     id: string
+
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -285,7 +288,7 @@ export function HomeFrontPage({
                             {safeArtists.length > 0 ? safeArtists.slice(0, 7).map((artist, idx) => (
                                 <Link
                                     key={artist.id}
-                                    href={`/artists/${artist.id}`}
+                                    href={`/artists/${artist.slug ?? artist.id}`}
                                     className="group flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors min-h-[44px]"
                                 >
                                     <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
@@ -341,7 +344,7 @@ export function HomeFrontPage({
                             {safeArtists.map((artist, idx) => (
                                 <Link
                                     key={artist.id}
-                                    href={`/artists/${artist.id}`}
+                                    href={`/artists/${artist.slug ?? artist.id}`}
                                     className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-surface transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
                                 >
                                     <span className="text-[8px] font-bold text-muted/55 leading-none">{String(idx + 1).padStart(2, '0')}</span>
@@ -415,7 +418,7 @@ export function HomeFrontPage({
                             {/* Última produção */}
                             {spotlightProduction && (
                                 <Link
-                                    href={`/productions/${spotlightProduction.id}`}
+                                    href={`/productions/${spotlightProduction.slug ?? spotlightProduction.id}`}
                                     className="flex items-center gap-2.5 border-t border-border/60 pt-2.5 group/prod"
                                 >
                                     <div className="w-9 h-[52px] rounded overflow-hidden flex-shrink-0 bg-surface border border-border/60">
@@ -441,7 +444,7 @@ export function HomeFrontPage({
                             )}
 
                             <Link
-                                href={`/artists/${spotlightArtist.id}`}
+                                href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`}
                                 className="w-full text-center bg-foreground text-background text-[12px] font-semibold rounded-full py-2.5 hover:opacity-90 transition-all"
                             >
                                 Ver perfil →
