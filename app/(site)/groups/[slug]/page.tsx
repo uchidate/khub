@@ -23,9 +23,10 @@ import type { Metadata } from 'next'
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
-// ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
-// ISR ativo — revalidate abaixo substitui force-dynamic
-export const revalidate = 3600
+// force-dynamic: garante que CUIDs legados sejam sempre redirecionados 301
+// sem serem servidos do cache ISR. Reverter para revalidate=3600 após
+// todos os links internos estarem atualizados para slugs.
+export const dynamic = 'force-dynamic'
 
 // Pré-gera todos os grupos no build → first-paint rápido, melhor SEO e Core Web Vitals
 export async function generateStaticParams() {
