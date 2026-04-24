@@ -19,7 +19,12 @@ const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-        return { title: 'Grupos K-Pop', description: 'BTS, BLACKPINK, TWICE e muito mais — perfis completos de grupos K-Pop com formação, discografia e trajetória na indústria coreana.' }
+        return {
+            title: 'Grupos K-Pop',
+            description: 'BTS, BLACKPINK, TWICE e muito mais — perfis completos de grupos K-Pop com formação, discografia e trajetória na indústria coreana.',
+            keywords: 'grupos K-Pop, K-Pop, BTS, BLACKPINK, TWICE, idol coreano, fanclub, fandom, bias, comeback, HallyuHub',
+            alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
+        }
     }
     const total = await prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}grupos K-Pop com perfis completos — formação, integrantes, fanclub, discografia e trajetória na indústria coreana, em português.`
