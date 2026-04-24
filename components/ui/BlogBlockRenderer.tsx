@@ -451,10 +451,12 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                             </div>
                         )
                         : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
+                const nextRow = rows[idx + 1]
+                const nextIsHeading = !Array.isArray(nextRow) && nextRow && !('items' in nextRow) && (nextRow as BlogBlock).type === 'blog_heading'
                 return (
                     <>
                         {el}
-                        {AD_POSITIONS.has(idx + 1) && <InArticleAd key={`ad-${idx}`} id={`ad-${idx}`} />}
+                        {AD_POSITIONS.has(idx + 1) && !nextIsHeading && <InArticleAd key={`ad-${idx}`} id={`ad-${idx}`} />}
                     </>
                 )
             })}
