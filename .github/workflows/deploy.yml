@@ -312,7 +312,9 @@ jobs:
           echo "Aguardando container subir..."
           for i in $(seq 1 18); do
             sleep 10
-            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 \
+              --resolve "staging.hallyuhub.com.br:443:31.97.255.107" \
+              https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
             if [ "$HTTP" = "200" ]; then
               echo "✅ Staging health check OK após $((i * 10))s"
               exit 0
@@ -377,7 +379,10 @@ jobs:
           echo "Aguardando container subir..."
           for i in $(seq 1 18); do
             sleep 10
-            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+            # Acessa via IP direto para evitar bloqueio do Cloudflare nos IPs do GitHub Actions
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 \
+              --resolve "www.hallyuhub.com.br:443:31.97.255.107" \
+              https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
             if [ "$HTTP" = "200" ]; then
               echo "✅ Production health check OK após $((i * 10))s"
               exit 0
