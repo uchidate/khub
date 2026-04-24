@@ -6,6 +6,17 @@ const nextConfig = {
             dynamic: 0,
         },
     },
+    async redirects() {
+        return [
+            // CUIDs legados de grupos → API route que faz lookup do slug no banco
+            // Regex: c + 24 chars alfanuméricos minúsculos (formato CUID)
+            {
+                source: '/groups/:id(c[a-z0-9]{24})',
+                destination: '/api/r/groups/:id',
+                permanent: true,
+            },
+        ]
+    },
     async rewrites() {
         // /um/api/send é servido pela route handler em app/um/api/send/route.ts
         // que passa o IP real do cliente diretamente ao Umami via rede Docker interna
