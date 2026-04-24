@@ -93,8 +93,6 @@ function HeroBlock({ post }: { post: BlogFeedItem }) {
                     src={post.coverImageUrl}
                     alt={post.title}
                     fill
-                    priority
-                   
                     sizes="(max-width: 768px) 100vw, 70vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                 />

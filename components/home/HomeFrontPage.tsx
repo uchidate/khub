@@ -307,7 +307,7 @@ export function HomeFrontPage({
                                     </div>
                                     <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}>
                                         {artist.primaryImageUrl ? (
-                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" priority={idx < 5} />
+                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized || ''} width={36} height={36} className="object-cover w-full h-full" />
                                         ) : (
                                             <span className="text-white text-[8.5px] font-bold">{getInitials(artist.nameRomanized || artist.nameHangul || '?')}</span>
                                         )}
