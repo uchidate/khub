@@ -11,7 +11,7 @@ export function AdSenseLoader() {
         <Script
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`}
             crossOrigin="anonymous"
-            strategy="lazyOnload"
+            strategy="afterInteractive"
         />
     )
 }
