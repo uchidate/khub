@@ -35,7 +35,7 @@ interface Props {
 }
 
 const HomeRandomDiscovery = dynamic(() => import('./HomeRandomDiscovery').then(m => ({ default: m.HomeRandomDiscovery })))
-const HomeRecommended = dynamic(() => import('./HomeRecommended').then(m => ({ default: m.HomeRecommended })), { ssr: false, loading: () => <div className="h-48" /> })
+const HomeRecommended = dynamic(() => import('./HomeRecommended').then(m => ({ default: m.HomeRecommended })), { ssr: false, loading: () => <div className="h-[220px]" /> })
 const HomeBlogFeed = dynamic(() => import('./HomeNewsFeed').then(m => ({ default: m.HomeBlogFeed })))
 const StreamingTopShows = dynamic(() => import('@/components/features/StreamingTopShows').then(m => ({ default: m.StreamingTopShows })))
 const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m => ({ default: m.HomeTrendingGroups })))
@@ -45,7 +45,7 @@ const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
 
 export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats }: Props) {
     return (
-        <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1600px' }}>
+        <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 2400px' }}>
             <HomeRandomDiscovery artist={artist} group={group} production={production} />
             <div className="max-w-7xl mx-auto px-4 py-4">
                 <AdBanner slot={AD_SLOT} format="auto" />

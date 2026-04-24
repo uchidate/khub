@@ -1,11 +1,13 @@
 import Link from "next/link"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
-import { FeaturedCarousel } from "@/components/home/FeaturedCarousel"
 import { nameToGradient } from "@/lib/utils"
-import { FavoriteButton } from "@/components/ui/FavoriteButton"
+
+const FeaturedCarousel = dynamic(() => import("@/components/home/FeaturedCarousel").then(m => ({ default: m.FeaturedCarousel })))
+const FavoriteButton = dynamic(() => import("@/components/ui/FavoriteButton").then(m => ({ default: m.FavoriteButton })))
 
 interface FeaturedStory {
     id: string
