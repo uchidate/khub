@@ -7,6 +7,8 @@ import { nameToGradient } from "@/lib/utils"
 
 interface RecommendedArtist {
     id: string
+
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -107,7 +109,7 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
                         {artists.map((artist, idx) => (
                             <Link
                                 key={artist.id}
-                                href={`/artists/${artist.id}`}
+                                href={`/artists/${artist.slug ?? artist.id}`}
                                 className={`group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0 ${idx >= 6 ? 'hidden sm:flex' : ''}`}
                             >
                                 {/* Avatar */}

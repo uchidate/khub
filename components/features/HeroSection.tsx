@@ -9,6 +9,8 @@ import { ArrowRight, Users, Music2, Film, Newspaper, TrendingUp, Flame } from 'l
 
 interface TrendingArtist {
     id: string
+
+    slug?: string | null
     nameRomanized: string
     primaryImageUrl: string | null
 }
@@ -176,7 +178,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                                     {trendingArtists.slice(0, 5).map((artist, i) => (
                                         <Link
                                             key={artist.id}
-                                            href={`/artists/${artist.id}`}
+                                            href={`/artists/${artist.slug ?? artist.id}`}
                                             className="group flex flex-col items-center gap-1.5"
                                         >
                                             <div className={`relative w-full aspect-square rounded-xl overflow-hidden border transition-all duration-300 ${i === 0 ? 'border-orange-500/50 group-hover:border-orange-400' : 'border-white/10 group-hover:border-neon-pink/50'}`}>
@@ -279,7 +281,7 @@ export function HeroSection({ trendingArtists, latestNews, stats }: HeroSectionP
                             {trendingArtists.slice(0, 8).map((artist) => (
                                 <Link
                                     key={artist.id}
-                                    href={`/artists/${artist.id}`}
+                                    href={`/artists/${artist.slug ?? artist.id}`}
                                     className="flex-shrink-0 flex items-center gap-2 group"
                                 >
                                     <div className="relative w-7 h-7 rounded-full overflow-hidden border border-white/10 group-hover:border-neon-pink/50 transition-all flex-shrink-0">

@@ -4,6 +4,7 @@ import { Music2, ChevronRight } from 'lucide-react'
 
 interface Group {
     id: string
+    slug?: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null
@@ -53,7 +54,7 @@ export function TrendingGroups({ groups }: TrendingGroupsProps) {
                     return (
                         <Link
                             key={group.id}
-                            href={`/groups/${group.id}`}
+                            href={`/groups/${group.slug ?? group.id}`}
                             className="group flex flex-col items-center gap-2 text-center"
                         >
                             <div className={`relative w-full aspect-square rounded-2xl overflow-hidden dark:bg-[#080808] bg-surface dark:border-white/10 border-border border group-hover:border-[#ff2d78]/50 transition-all shadow-lg group-hover:shadow-purple-500/20 group-hover:shadow-xl ${ringClass}`}>

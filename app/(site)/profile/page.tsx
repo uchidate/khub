@@ -240,7 +240,7 @@ export default async function ProfilePage() {
                     {recentFavoriteProductions.map((prod) => (
                       <Link
                         key={prod.id}
-                        href={`/productions/${prod.id}`}
+                        href={`/productions/${prod.slug ?? prod.id}`}
                         className="flex items-center gap-3 p-3 rounded-xl bg-surface hover:bg-[#e8e8e8] border border-border hover:border-[#080808]/15 transition-all group"
                       >
                         <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">

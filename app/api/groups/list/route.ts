@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
             where: { isHidden: false },
             select: {
                 id: true,
+                slug: true,
                 name: true,
                 nameHangul: true,
                 profileImageUrl: true,

@@ -43,7 +43,7 @@ export default async function GroupsPage() {
             orderBy: { trendingScore: 'desc' },
             take: 5,
             select: {
-                id: true, name: true, nameHangul: true, profileImageUrl: true,
+                id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true,
                 debutDate: true, fanClubName: true, trendingScore: true,
                 _count: { select: { members: { where: { isActive: true } } } },
             },
@@ -96,7 +96,7 @@ export default async function GroupsPage() {
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             {/* Grupo em destaque: portrait + texto juntos */}
-                            <Link href={`/groups/${spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
+                            <Link href={`/groups/${spotlight.slug ?? spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
                                 {/* Portrait card */}
                                 <div className="block shrink-0">
                                     <div className="w-20 md:w-32 lg:w-40 aspect-square relative rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
@@ -147,7 +147,7 @@ export default async function GroupsPage() {
                                 <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
                                     <p className="text-white text-[9px] font-bold uppercase tracking-widest mb-1">Também em alta</p>
                                     {sidePicks.slice(0, 4).map(g => (
-                                        <Link key={g.id} href={`/groups/${g.id}`}
+                                        <Link key={g.id} href={`/groups/${g.slug ?? g.id}`}
                                             className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
                                             <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/15">
                                                 {g.profileImageUrl ? (

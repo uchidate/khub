@@ -22,6 +22,7 @@ interface WatchEntry {
     updatedAt: string
     production: {
         id: string
+        slug?: string | null
         titlePt: string
         titleKr: string | null
         imageUrl: string | null
@@ -201,7 +202,7 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
     const { production: p } = entry
     return (
         <div className="group relative flex flex-col">
-            <Link href={`/productions/${p.id}`} className="block">
+            <Link href={`/productions/${p.slug ?? p.id}`} className="block">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface mb-2">
                     {p.imageUrl ? (
                         <Image
@@ -231,7 +232,7 @@ function WatchCard({ entry }: { entry: WatchEntry }) {
                 </div>
             </Link>
             <div className="flex-1 space-y-1">
-                <Link href={`/productions/${p.id}`}>
+                <Link href={`/productions/${p.slug ?? p.id}`}>
                     <h3 className="text-sm font-semibold text-foreground line-clamp-2 hover:text-neon-pink transition-colors leading-tight">
                         {p.titlePt}
                     </h3>

@@ -12,6 +12,7 @@ import { nameToGradient } from '@/lib/utils'
 
 interface Production {
     id: string
+    slug?: string | null
     titlePt: string
     titleKr: string | null
     type: string | null
@@ -74,7 +75,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
     const platforms = (prod.streamingPlatforms as string[] || []).slice(0, 2)
 
     return (
-        <Link href={`/productions/${prod.id}`} className="group block rounded-2xl p-2 -m-2">
+        <Link href={`/productions/${prod.slug ?? prod.id}`} className="group block rounded-2xl p-2 -m-2">
             {/* Poster 2:3 */}
             <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm group-hover:border-accent/40 group-hover:shadow-md transition-all mb-3">
                 {imageUrl ? (
@@ -131,7 +132,7 @@ function FeaturedProductionCard({ prod }: { prod: Production }) {
     const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
 
     return (
-        <Link href={`/productions/${prod.id}`}
+        <Link href={`/productions/${prod.slug ?? prod.id}`}
             className="group sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-lg transition-all duration-300">
             <div className="relative aspect-video sm:aspect-auto sm:w-2/5 sm:min-h-[280px] overflow-hidden bg-surface shrink-0">
                 {imageUrl ? (

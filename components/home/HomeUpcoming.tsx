@@ -4,6 +4,7 @@ import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 export interface UpcomingProduction {
     id: string
+    slug?: string | null
     titlePt: string
     type: string
     releaseDate: string | null
@@ -50,7 +51,7 @@ export function HomeUpcoming({ productions }: { productions: UpcomingProduction[
                         return (
                             <Link
                                 key={prod.id}
-                                href={`/productions/${prod.id}`}
+                                href={`/productions/${prod.slug ?? prod.id}`}
                                 className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-surface transition-colors min-h-[60px]
                                     ${idx % 2 === 0 ? 'sm:border-r border-border' : ''}
                                     ${idx < productions.length - 2 ? 'border-b border-border' : ''}

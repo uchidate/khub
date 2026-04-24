@@ -61,7 +61,7 @@ const getHomePublicData = unstable_cache(
                 take: 12,
                 orderBy: { trendingScore: 'desc' },
                 select: {
-                    id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
+                    id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
                     roles: true, gender: true, trendingScore: true, viewCount: true,
                     trendingRank: true, trendingRankPrev: true, trendingBadgeOverride: true,
                     createdAt: true,
@@ -83,7 +83,7 @@ const getHomePublicData = unstable_cache(
                 where: { isHidden: false, trendingScore: { gt: 0 } },
                 take: 16,
                 orderBy: { trendingScore: 'desc' },
-                select: { id: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
+                select: { id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true, officialColor: true, fanClubName: true, trendingScore: true, agency: { select: { name: true } } },
             }).catch(() => []),
             prisma.systemSettings.findUnique({ where: { id: 'singleton' } }).catch(() => null),
             prisma.blogCategory.findMany({
@@ -186,7 +186,7 @@ const getHomePublicData = unstable_cache(
                     { year: 'desc' },
                     { createdAt: 'desc' },
                 ],
-                select: { id: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+                select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
             }).catch(() => null)
             : null
 

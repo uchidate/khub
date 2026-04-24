@@ -47,7 +47,7 @@ const getProduction = cache(async (slugOrId: string) => {
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: { select: {
-                    id: true, nameRomanized: true, nameHangul: true,
+                    id: true, slug: true, nameRomanized: true, nameHangul: true,
                     primaryImageUrl: true, roles: true, gender: true,
                 } } },
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
@@ -126,7 +126,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     const artistIds = production.artists.map(a => a.artist.id)
 
     const relatedSelect = {
-        id: true, titlePt: true, titleKr: true, type: true,
+        id: true, slug: true, titlePt: true, titleKr: true, type: true,
         year: true, imageUrl: true, backdropUrl: true, voteAverage: true,
     } as const
 
@@ -436,7 +436,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                     return (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                             {ordered.map(({ artist, role }) => (
-                                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group">
+                                                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group">
                                                     <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
                                                         {artist.primaryImageUrl ? (
                                                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
@@ -494,7 +494,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {relatedProductions.map((rel) => (
-                                        <Link key={rel.id} href={`/productions/${rel.id}`} className="group block">
+                                        <Link key={rel.id} href={`/productions/${rel.slug ?? rel.id}`} className="group block">
                                             <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
                                                 {rel.imageUrl || rel.backdropUrl ? (
                                                     <Image

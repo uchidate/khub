@@ -6,6 +6,7 @@ import Image from 'next/image'
 
 export interface MarathonProduction {
     id: string
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -58,7 +59,7 @@ export function HomeMarathon({ productions }: { productions: MarathonProduction[
                     {filtered.slice(0, 10).map((prod, idx) => (
                         <Link
                             key={prod.id}
-                            href={`/productions/${prod.id}`}
+                            href={`/productions/${prod.slug ?? prod.id}`}
                             className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-surface transition-colors min-h-[60px]
                                 ${idx % 2 === 0 ? 'sm:border-r border-border' : ''}
                                 ${idx < filtered.length - 2 ? 'border-b border-border' : ''}

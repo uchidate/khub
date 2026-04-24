@@ -61,7 +61,7 @@ const getArtist = cache(async (slugOrId: string) => {
                     }
                 },
                 include: { production: { select: {
-                    id: true, titlePt: true, type: true, year: true, imageUrl: true,
+                    id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true,
                     voteAverage: true, synopsis: true, tmdbId: true, releaseDate: true,
                     ageRating: true, isAdultContent: true,
                 } } },
@@ -73,7 +73,7 @@ const getArtist = cache(async (slugOrId: string) => {
                 take: 24,
             },
             memberships: {
-                include: { group: { select: { id: true, name: true, nameHangul: true, profileImageUrl: true } } },
+                include: { group: { select: { id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true } } },
                 orderBy: { isActive: 'desc' },
             },
             streamingSignals: {
@@ -321,7 +321,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </span>
                             ))}
                             {activeGroup && (
-                                <Link href={`/groups/${activeGroup.id}`}
+                                <Link href={`/groups/${activeGroup.slug ?? activeGroup.id}`}
                                     className="text-xs font-black px-3 py-1 bg-accent/20 backdrop-blur-sm text-white rounded-full border border-accent/50 hover:bg-accent/30 transition-colors">
                                     {activeGroup.name}
                                 </Link>
@@ -440,7 +440,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                                 {m.isActive ? 'Grupo' : 'Ex-grupo'}
                                             </span>
                                         </div>
-                                        <Link href={`/groups/${m.group.id}`} className={`text-xs md:text-sm font-bold transition-colors ${m.isActive ? 'text-accent hover:underline' : 'text-muted hover:text-foreground'}`}>
+                                        <Link href={`/groups/${m.group.slug ?? m.group.id}`} className={`text-xs md:text-sm font-bold transition-colors ${m.isActive ? 'text-accent hover:underline' : 'text-muted hover:text-foreground'}`}>
                                             {m.group.name}
                                         </Link>
                                     </div>
@@ -555,7 +555,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                         const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis
                                         return (
                                         <div key={production.id} className="relative group/card">
-                                            <Link href={`/productions/${production.id}`}
+                                            <Link href={`/productions/${production.slug ?? production.id}`}
                                                 className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-accent/30 hover:shadow-sm transition-all">
                                                 {/* Poster — proporção 2:3 fixa */}
                                                 <div className="w-24 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
@@ -599,7 +599,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                         const syn = productionTranslations.get(production.id)?.get('synopsis') ?? production.synopsis
                                         return (
                                         <div key={production.id} className="relative group/card">
-                                            <Link href={`/productions/${production.id}`}
+                                            <Link href={`/productions/${production.slug ?? production.id}`}
                                                 className="group flex bg-background rounded-xl border border-border overflow-hidden hover:border-accent/30 hover:shadow-sm transition-all">
                                                 {/* Poster — proporção 2:3 fixa, corte lateral se necessário */}
                                                 <div className="w-28 aspect-[2/3] flex-shrink-0 relative bg-surface self-start">
@@ -630,7 +630,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                                     {syn && <p className="text-[11px] text-muted leading-relaxed line-clamp-3">{syn}</p>}
                                                 </div>
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity p-2 flex-shrink-0 self-start">
-                                                    <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
+                                                    <AdminQuickEdit href={`/admin/productions/${production.slug ?? production.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
                                                 </div>
                                             </Link>
                                         </div>
@@ -679,7 +679,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                         <Users className="w-4 h-4 text-accent" />
                                         <h3 className="text-sm font-black text-foreground uppercase tracking-widest">
                                             Membros de{' '}
-                                            <Link href={`/groups/${activeGroup.id}`} className="text-accent hover:underline transition-colors normal-case tracking-normal">
+                                            <Link href={`/groups/${activeGroup.slug ?? activeGroup.id}`} className="text-accent hover:underline transition-colors normal-case tracking-normal">
                                                 {activeGroup.name}
                                             </Link>
                                         </h3>

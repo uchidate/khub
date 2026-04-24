@@ -54,6 +54,7 @@ const getGroup = cache(async (slugOrId: string) => {
                     artist: {
                         select: {
                             id: true,
+                            slug: true,
                             nameRomanized: true,
                             nameHangul: true,
                             primaryImageUrl: true,
@@ -952,6 +953,7 @@ function MemberGrid({
         leaveDate: Date | null
         artist: {
             id: string
+            slug?: string | null
             nameRomanized: string
             nameHangul: string | null
             primaryImageUrl: string | null
@@ -966,7 +968,7 @@ function MemberGrid({
             {members.map(member => (
                 <Link
                     key={member.id}
-                    href={`/artists/${member.artist.id}`}
+                    href={`/artists/${member.artist.slug ?? member.artist.id}`}
                     className={`group block ${faded ? 'opacity-50 hover:opacity-90 transition-opacity' : ''}`}
                 >
                     <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-surface border border-border member-card-border transition-all duration-300 mb-3 shadow-sm">

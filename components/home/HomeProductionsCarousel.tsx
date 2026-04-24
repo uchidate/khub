@@ -6,6 +6,7 @@ import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
 
 interface ProductionItem {
     id: string
+    slug?: string | null
     titlePt: string
     type: string
     year: number | null
@@ -101,7 +102,7 @@ export function HomeProductionsCarousel({ productions }: HomeProductionsCarousel
                         return (
                             <Link
                                 key={prod.id}
-                                href={`/productions/${prod.id}`}
+                                href={`/productions/${prod.slug ?? prod.id}`}
                                 className="flex-shrink-0 w-48 md:w-56 rounded-xl border border-border bg-background overflow-hidden hover:shadow-md hover:border-accent/30 transition-all group"
                             >
                                 {/* Image area */}

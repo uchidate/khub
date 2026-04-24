@@ -6,6 +6,8 @@ import { getStreamingConfig } from '@/lib/config/streaming-platforms'
 
 interface TrendingArtist {
     id: string
+
+    slug?: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -89,7 +91,7 @@ export function TrendingArtists({ artists }: TrendingArtistsProps) {
                     return (
                         <Link
                             key={artist.id}
-                            href={`/artists/${artist.id}`}
+                            href={`/artists/${artist.slug ?? artist.id}`}
                             className="group block"
                         >
                             <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-[#080808] mb-1.5 ${borderClass}`}>
