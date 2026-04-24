@@ -27,7 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
         title: 'Artistas K-Pop & K-Drama',
         description: desc,
-        alternates: { canonical: `${BASE_URL}/artists` },
+        keywords: 'artistas K-Pop, idol coreano, K-Drama, ator coreano, cantora coreana, K-Pop Brasil, bias, maknae, HallyuHub',
+        alternates: { canonical: `${BASE_URL}/artists`, languages: { 'pt-BR': `${BASE_URL}/artists`, 'x-default': `${BASE_URL}/artists` } },
         openGraph: {
             title: 'Artistas K-Pop & K-Drama | HallyuHub',
             description: desc,
@@ -123,6 +124,21 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
+        {heroArtists.length > 0 && (
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "Artistas K-Pop em Destaque",
+                "url": `${BASE_URL}/artists`,
+                "numberOfItems": heroArtists.length,
+                "itemListElement": heroArtists.map((a, i) => ({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": `${BASE_URL}/artists/${a.slug ?? a.id}`,
+                    "name": a.nameRomanized,
+                })),
+            }} />
+        )}
         <PageTransition className="pb-16">
 
             {/* ── Hero ────────────────────────────────────────────── */}

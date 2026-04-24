@@ -76,10 +76,24 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     const description = group.bio || `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''} - Grupo musical K-pop`
     const isThinContent = !group.profileImageUrl && !group.bio
     const canonicalSlug = group.slug ?? group.id
+    const canonicalUrl = `${BASE_URL}/groups/${canonicalSlug}`
+    const memberNames = group.members?.slice(0, 5).map(m => m.artist.nameRomanized) ?? []
+    const keywords = [
+        group.name,
+        ...(group.nameHangul ? [group.nameHangul] : []),
+        `${group.name} K-Pop`,
+        `${group.name} membros`,
+        ...memberNames,
+        'grupo K-Pop', 'K-Pop Brasil', 'HallyuHub',
+    ].filter(Boolean).join(', ')
     return applySeoOverride({
         title: `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''}`,
         description: description.slice(0, 160),
-        alternates: { canonical: `${BASE_URL}/groups/${canonicalSlug}` },
+        keywords,
+        alternates: {
+            canonical: canonicalUrl,
+            languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl },
+        },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {
             title: `${group.name} | HallyuHub`,
@@ -220,7 +234,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const memberPersons = activeMembers.slice(0, 15).map(m => ({
         "@type": "Person",
         "name": m.artist.nameRomanized,
-        "url": `${BASE_URL}/artists/${m.artist.id}`,
+        "url": `${BASE_URL}/artists/${m.artist.slug ?? m.artist.id}`,
     }))
 
     return (
@@ -244,7 +258,9 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 "alternateName": group.nameHangul ?? undefined,
                 "description": group.bio?.slice(0, 300) ?? undefined,
                 "image": group.profileImageUrl ?? undefined,
-                "url": `${BASE_URL}/groups/${group.id}`,
+                "url": `${BASE_URL}/groups/${group.slug ?? group.id}`,
+                "genre": "K-Pop",
+                "foundingLocation": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(debutYear ? { "foundingDate": String(debutYear) } : {}),
                 ...(disbandYear ? { "dissolutionDate": String(disbandYear) } : {}),
                 ...(group.agency ? { "memberOf": { "@type": "Organization", "name": group.agency.name } } : {}),
@@ -260,7 +276,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     { "@type": "ListItem", "position": 1, "name": "Grupos", "item": `${BASE_URL}/groups` },
-                    { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.id}` },
+                    { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.slug ?? group.id}` },
                 ],
             }} />
             {/* ── HERO ── */}
