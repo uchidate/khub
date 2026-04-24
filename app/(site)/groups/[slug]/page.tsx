@@ -103,6 +103,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const group = await getGroup(params.slug)
 
     // Redirect 301: UUID legado → URL com slug
+    console.log('[groups] slug param:', params.slug, '| isCuid:', isCuid(params.slug), '| group.slug:', group?.slug)
     if (group?.slug && isCuid(params.slug) && group.slug !== params.slug) {
         permanentRedirect(`/groups/${group.slug}`)
     }
