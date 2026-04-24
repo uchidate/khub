@@ -84,13 +84,29 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         ? `${synopsisMeta.slice(0, 120)}...${castNames ? ` Elenco: ${castNames}` : ''}`
         : description
 
+    const canonicalUrl = `${BASE_URL}/productions/${production.slug ?? production.id}`
+    const isMovie = production.type === 'MOVIE' || production.type === 'FILM'
+    const typeLabel = isMovie ? 'Filme' : 'Série'
+    const castNamesForKeywords = production.artists.slice(0, 5).map(a => a.artist.nameRomanized)
+    const keywords = [
+        production.titlePt,
+        ...(production.titleKr ? [production.titleKr] : []),
+        `${production.titlePt} ${typeLabel}`,
+        ...(production.year ? [`${production.titlePt} ${production.year}`] : []),
+        ...castNamesForKeywords,
+        ...(production.tags ?? []),
+        'K-Drama', 'dorama', 'dorama coreano', 'drama coreano', 'HallyuHub',
+    ].filter(Boolean).join(', ')
+
     return applySeoOverride({
         title: production.titleKr
             ? `${production.titlePt} (${production.titleKr})`
             : production.titlePt,
         description: fullDescription.slice(0, 160),
+        keywords,
         alternates: {
-            canonical: `${BASE_URL}/productions/${production.slug ?? production.id}`,
+            canonical: canonicalUrl,
+            languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl },
         },
         openGraph: {
             title: `${production.titlePt} | HallyuHub`,

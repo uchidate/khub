@@ -22,11 +22,12 @@ export async function generateMetadata(): Promise<Metadata> {
         return { title: 'Grupos K-Pop', description: 'BTS, BLACKPINK, TWICE e muito mais — perfis completos de grupos K-Pop com formação, discografia e trajetória na indústria coreana.' }
     }
     const total = await prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0)
-    const desc = `${total > 0 ? `${total} ` : ''}grupos K-Pop com perfis completos — formação, discografia, fandom e trajetória na indústria coreana, em português.`
+    const desc = `${total > 0 ? `${total} ` : ''}grupos K-Pop com perfis completos — formação, integrantes, fanclub, discografia e trajetória na indústria coreana, em português.`
     return {
         title: 'Grupos K-Pop',
         description: desc,
-        alternates: { canonical: `${BASE_URL}/groups` },
+        keywords: 'grupos K-Pop, K-Pop, BTS, BLACKPINK, TWICE, idol coreano, fanclub, fandom, bias, comeback, HallyuHub',
+        alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
         openGraph: {
             title: 'Grupos K-Pop | HallyuHub',
             description: desc,
@@ -64,6 +65,21 @@ export default async function GroupsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
+        {heroGroups.length > 0 && (
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "Grupos K-Pop em Destaque",
+                "url": `${BASE_URL}/groups`,
+                "numberOfItems": heroGroups.length,
+                "itemListElement": heroGroups.map((g, i) => ({
+                    "@type": "ListItem",
+                    "position": i + 1,
+                    "url": `${BASE_URL}/groups/${g.slug ?? g.id}`,
+                    "name": g.name,
+                })),
+            }} />
+        )}
         <PageTransition className="pb-16">
 
             {/* ── Hero ────────────────────────────────────────────── */}
