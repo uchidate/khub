@@ -304,15 +304,15 @@ export default async function Home() {
                     "query-input": "required name=search_term_string",
                 },
             }} />
-            {/* ── Leaderboard — topo, estilo CNN Brasil ── */}
+            {/* ── Leaderboard — topo, estilo portal de notícias ── */}
             <div className="w-full bg-background border-b border-border/40">
-                <div className="max-w-[970px] mx-auto px-4 pt-1 pb-2">
+                <div className="max-w-[970px] mx-auto px-4 pt-1 pb-1 overflow-hidden" style={{ maxHeight: 70 }}>
                     <AdBanner
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
                         format="horizontal"
                         minimal
                         eager
-                        style={{ maxHeight: 90, maxWidth: 970, margin: '0 auto' }}
+                        style={{ maxWidth: 970, margin: '0 auto' }}
                     />
                 </div>
             </div>
