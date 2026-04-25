@@ -579,9 +579,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             </div>
           )}
 
-          {/* Ad acima do grid */}
-          <AdBanner slot={AD_SLOT} layout="in-article" format="fluid" className="mb-8" />
-
           {/* ── Layout: posts + sidebar ────────────────────────── */}
           <div className="grid lg:grid-cols-[1fr_300px] gap-10 xl:gap-14">
 
