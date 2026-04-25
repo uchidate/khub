@@ -303,11 +303,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad in-article — mobile/tablet (sidebar oculta em <xl) */}
-        <div className="xl:hidden mb-8">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} layout="in-article" format="fluid" />
-        </div>
-
         {/* Content */}
         <article>
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
