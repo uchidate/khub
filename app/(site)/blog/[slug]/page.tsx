@@ -245,7 +245,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       }} />
       {/* ── Top Ad — full width, todas as telas ── */}
       <div className="max-w-6xl mx-auto mb-6">
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" minimal hideLabel eager />
       </div>
 
       <div className="max-w-6xl mx-auto">
