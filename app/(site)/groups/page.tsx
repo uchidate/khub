@@ -115,7 +115,6 @@ export default async function GroupsPage() {
                         <div className="flex items-center gap-2">
                             <Users className="w-3.5 h-3.5 text-accent" />
                             <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Grupos K-Pop</span>
-                            <span className="text-white/30 text-xs hidden sm:inline">· {total.toLocaleString('pt-BR')} grupos</span>
                         </div>
 
                         {/* Bottom: destaque + side picks */}
@@ -196,7 +195,7 @@ export default async function GroupsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                     <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
                         <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Grupos</h1>
-                        <p className="text-muted text-sm">{total.toLocaleString('pt-BR')} grupos · K-Pop</p>
+                        <p className="text-muted text-sm">K-Pop</p>
                     </div>
                 </div>
             )}
