@@ -311,6 +311,8 @@ export default async function Home() {
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
                         variant="leaderboard"
                         eager
+                        minimal
+                        hideLabel
                     />
                 </div>
             </div>
