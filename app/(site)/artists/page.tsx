@@ -299,8 +299,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} format="horizontal" className="mb-6" />
-
                 <ArtistsList
                     artists={artists}
                     pagination={{ page, total, pages: Math.ceil(total / limit) }}

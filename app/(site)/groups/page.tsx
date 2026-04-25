@@ -230,7 +230,6 @@ export default async function GroupsPage() {
 
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} format="horizontal" className="mb-6" />
                 <Suspense>
                     <GroupsList />
                 </Suspense>
