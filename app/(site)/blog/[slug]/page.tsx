@@ -362,6 +362,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Multiplex — recomendações patrocinadas no final do artigo */}
+        <AdBanner
+          slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!}
+          format="multiplex"
+          className="mt-10"
+        />
+
         <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />

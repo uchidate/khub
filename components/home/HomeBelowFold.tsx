@@ -72,9 +72,6 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
                     </div>
                 </section>
             )}
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} format="auto" />
-            </div>
             <HomeBlogSection siteStats={siteStats} />
         </div>
     )
