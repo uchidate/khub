@@ -144,6 +144,11 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 })),
             }} />
         )}
+        <div className="w-full bg-background border-b border-border/40">
+            <div className="max-w-[970px] mx-auto px-4 py-1">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} leaderboard eager />
+            </div>
+        </div>
         <PageTransition className="pb-16">
 
             {/* ── Hero ────────────────────────────────────────────── */}
