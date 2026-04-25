@@ -202,31 +202,6 @@ export default async function GroupsPage() {
                 </div>
             )}
 
-            {/* ── Stats strip ─────────────────────────────────────── */}
-            <div className="border-b border-border bg-surface/50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Users size={12} className="text-accent" />
-                        <span className="text-xs text-muted"><span className="font-bold text-foreground">{total.toLocaleString('pt-BR')}</span> grupos</span>
-                    </div>
-                    <div className="w-px h-3 bg-border shrink-0" />
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Mic2 size={12} className="text-accent" />
-                        <span className="text-xs text-muted"><span className="font-bold text-foreground">{totalArtists.toLocaleString('pt-BR')}</span> artistas</span>
-                    </div>
-                    <div className="w-px h-3 bg-border shrink-0" />
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Star size={12} className="text-accent" />
-                        <span className="text-xs text-muted">1ª a 5ª geração K-Pop</span>
-                    </div>
-                    <div className="ml-auto shrink-0">
-                        <Link href="/artists" className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors">
-                            <Mic2 size={11} className="text-accent" />
-                            Ver artistas
-                        </Link>
-                    </div>
-                </div>
-            </div>
 
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
