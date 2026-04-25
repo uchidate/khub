@@ -369,6 +369,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           className="mt-10"
         />
 
+
         <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
