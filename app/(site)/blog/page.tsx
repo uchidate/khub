@@ -346,7 +346,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <div className="w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={AD_SLOT} leaderboard eager />
+          <AdBanner slot={AD_SLOT} variant="leaderboard" eager />
         </div>
       </div>
       <PageTransition className="pb-16">
@@ -621,7 +621,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   )}
 
                   {block2Posts.length > 0 && (
-                    <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                    <AdBanner slot={AD_SLOT} variant="banner" className="my-2" />
                   )}
 
                   {block2Posts.length > 0 && (
@@ -641,7 +641,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
-                      <AdBanner slot={AD_SLOT} format="horizontal" className="mb-6" />
+                      <AdBanner slot={AD_SLOT} variant="banner" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
                           <span className="w-3 h-px bg-muted inline-block" />
@@ -761,7 +761,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               )}
 
               {/* Ad na sidebar */}
-              <AdBanner slot={AD_SLOT} format="rectangle" />
+              <AdBanner slot={AD_SLOT} variant="rectangle" />
 
               {/* Explorar por categoria */}
               <div>
@@ -858,7 +858,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           </div>
 
           {/* Ad final */}
-          <AdBanner slot={AD_SLOT} format="horizontal" className="mt-12" />
+          <AdBanner slot={AD_SLOT} variant="banner" className="mt-12" />
         </div>
 
         <ScrollToTop />
