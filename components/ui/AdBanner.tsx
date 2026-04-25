@@ -2,138 +2,169 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+/**
+ * Variantes de anúncio — cada uma tem tamanhos fixos por breakpoint:
+ *
+ *  leaderboard  topo de página    mobile 320×100 / tablet+ 728×90
+ *  banner       mid-content       mobile 320×50  / tablet+ 728×90
+ *  rectangle    sidebar           300×250 fixo
+ *  fluid        in-article        fluido gerenciado pelo AdSense
+ *  multiplex    widget final       discovery widget (autorelaxed)
+ */
+export type AdVariant = 'leaderboard' | 'banner' | 'rectangle' | 'fluid' | 'multiplex'
+
 interface AdBannerProps {
     slot: string
-    format?: 'auto' | 'horizontal' | 'rectangle' | 'vertical' | 'fluid' | 'multiplex'
-    layout?: 'in-article'
-    className?: string
-    style?: React.CSSProperties
-    /** Remove separadores "Publicidade / Continua abaixo" — para uso em topo de página */
+    variant: AdVariant
+    /** Remove separadores e reduz label — ideal para uso dentro de conteúdo */
     minimal?: boolean
     /** Remove completamente o label "Publicidade" */
     hideLabel?: boolean
-    /** Carrega imediatamente sem IntersectionObserver — usar apenas para ads above-the-fold */
+    /** Carrega imediatamente sem IntersectionObserver */
     eager?: boolean
-    /**
-     * Renderiza dois slots de tamanho fixo (mobile 320×50 + desktop 728×90) sem
-     * data-full-width-responsive, igual ao modelo de portais de notícias como CNN Brasil.
-     * Impede que o AdSense sirva formatos grandes (ex: 300×250) em mobile.
-     */
-    leaderboard?: boolean
+    className?: string
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
-export function AdBanner({
-    slot, format = 'auto', layout, className = '', style,
-    minimal = false, hideLabel = false, eager = false, leaderboard = false,
-}: AdBannerProps) {
+type Size = { w: number; h: number }
+
+function pickSize(variant: AdVariant, vw: number): Size {
+    switch (variant) {
+        case 'leaderboard':
+            return vw < 640 ? { w: 320, h: 100 } : { w: 728, h: 90 }
+        case 'banner':
+            return vw < 640 ? { w: 320, h: 50 } : { w: 728, h: 90 }
+        case 'rectangle':
+            return { w: 300, h: 250 }
+        default:
+            return { w: 320, h: 100 }
+    }
+}
+
+function Label({ minimal, hideLabel }: { minimal: boolean; hideLabel: boolean }) {
+    if (hideLabel) return null
+    if (minimal) return (
+        <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none mb-1">
+            Publicidade
+        </p>
+    )
+    return (
+        <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
+            <div className="flex-1 h-px bg-border" />
+        </div>
+    )
+}
+
+function Footer({ minimal }: { minimal: boolean }) {
+    if (minimal) return null
+    return (
+        <div className="flex items-center gap-3 mt-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Continua abaixo</span>
+            <div className="flex-1 h-px bg-border" />
+        </div>
+    )
+}
+
+export function AdBanner({ slot, variant, minimal = false, hideLabel = false, eager = false, className = '' }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
-    // leaderboard: aguarda hydration para saber o breakpoint real antes de montar o <ins>
-    const [leaderboardSize, setLeaderboardSize] = useState<{ w: number; h: number } | null>(null)
+    // size=null até hydration — evita SSR mismatch e garante que só UM <ins> é criado
+    const [size, setSize] = useState<Size | null>(null)
 
+    const isFixed = variant === 'leaderboard' || variant === 'banner' || variant === 'rectangle'
+
+    // Efeito 1 — determina o tamanho correto (requer window) ou configura observer
     useEffect(() => {
         if (!CLIENT || !slot) return
 
+        if (isFixed) {
+            setSize(pickSize(variant, window.innerWidth))
+            return
+        }
+
+        // fluid / multiplex — push via IntersectionObserver ou imediatamente
         const pushOnce = () => {
             if (pushed.current) return
             pushed.current = true
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
-            } catch { /* AdSense not loaded yet */ }
-        }
-
-        if (leaderboard) {
-            // Determina dimensões reais após hydration — só então monta o <ins> e faz push
-            // Mobile: 320×100 (large mobile banner, padrão portais BR); desktop: 728×90 leaderboard
-            const size = window.innerWidth < 640 ? { w: 320, h: 100 } : { w: 728, h: 90 }
-            setLeaderboardSize(size)
-            // push será feito no próximo efeito após o <ins> ser montado
-            return
+            } catch { /* AdSense ainda não carregou */ }
         }
 
         if (eager) { pushOnce(); return }
 
         const el = containerRef.current
         if (!el) return
-
         const observer = new IntersectionObserver(
-            (entries) => { if (entries[0].isIntersecting) { pushOnce(); observer.disconnect() } },
+            entries => { if (entries[0].isIntersecting) { pushOnce(); observer.disconnect() } },
             { rootMargin: '150px' }
         )
         observer.observe(el)
         return () => observer.disconnect()
-    }, [slot, eager, leaderboard])
+    }, [slot, variant, eager, isFixed])
 
-    // Faz push do leaderboard assim que o <ins> for montado no DOM
+    // Efeito 2 — push do ad fixo assim que o <ins> é montado (size definido)
     useEffect(() => {
-        if (!leaderboardSize || pushed.current) return
+        if (!size || !isFixed || pushed.current) return
         pushed.current = true
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
-        } catch { /* AdSense not loaded yet */ }
-    }, [leaderboardSize])
+        } catch { /* AdSense ainda não carregou */ }
+    }, [size, isFixed])
 
     if (!CLIENT || !slot) return null
 
-    if (leaderboard) {
+    // ── Ads de tamanho fixo (leaderboard, banner, rectangle) ───────────────
+    if (isFixed) {
+        // Placeholder height antes de saber o breakpoint real
+        const ph = variant === 'rectangle' ? 250 : variant === 'leaderboard' ? 100 : 50
+        const h = size?.h ?? ph
+        const w = size?.w ?? (variant === 'rectangle' ? 300 : 320)
+
         return (
             <div className={className}>
-                {!hideLabel && (
-                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
-                )}
-                {/* Placeholder mantém altura reservada; overflow+maxHeight impedem expansão do AdSense */}
-                <div
-                    className="flex justify-center"
-                    style={{ height: leaderboardSize?.h ?? 100, maxHeight: leaderboardSize?.h ?? 100, overflow: 'hidden' }}
-                >
-                    {leaderboardSize && (
+                <Label minimal={minimal} hideLabel={hideLabel} />
+                {/*
+                  Duas camadas de contenção:
+                  1. Container flex com height+maxHeight+overflow:hidden → impede layout shift
+                  2. <ins> com dimensões inline → AdSense respeita width/height explícitos
+                     com data-full-width-responsive="false"
+                */}
+                <div className="flex justify-center" style={{ height: h, maxHeight: h, overflow: 'hidden' }}>
+                    {size && (
                         <ins
                             className="adsbygoogle"
-                            style={{ display: 'inline-block', width: leaderboardSize.w, height: leaderboardSize.h, maxHeight: leaderboardSize.h, overflow: 'hidden' }}
+                            style={{ display: 'inline-block', width: w, height: h, maxHeight: h, overflow: 'hidden' }}
                             data-ad-client={CLIENT}
                             data-ad-slot={slot}
                             data-full-width-responsive="false"
                         />
                     )}
                 </div>
+                <Footer minimal={minimal} />
             </div>
         )
     }
 
+    // ── Fluid / Multiplex ────────────────────────────────────────────────────
     return (
-        <div ref={containerRef} className={`${className}`}>
-            {!minimal && (
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
-                    <div className="flex-1 h-px bg-border" />
-                </div>
-            )}
-            {minimal && !hideLabel && (
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
-            )}
-            <div>
-                <ins
-                    className="adsbygoogle"
-                    style={{ display: 'block', textAlign: 'center', ...style }}
-                    data-ad-client={CLIENT}
-                    data-ad-slot={slot}
-                    data-ad-format={format === 'multiplex' ? 'autorelaxed' : format}
-                    {...(layout ? { 'data-ad-layout': layout } : {})}
-                    {...(format !== 'fluid' && format !== 'multiplex' ? { 'data-full-width-responsive': 'true' } : {})}
-                />
-            </div>
-            {!minimal && (
-                <div className="flex items-center gap-3 mt-3">
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Continua abaixo</span>
-                    <div className="flex-1 h-px bg-border" />
-                </div>
-            )}
+        <div ref={containerRef} className={className}>
+            <Label minimal={minimal} hideLabel={hideLabel} />
+            <ins
+                className="adsbygoogle"
+                style={{ display: 'block', textAlign: 'center' }}
+                data-ad-client={CLIENT}
+                data-ad-slot={slot}
+                data-ad-format={variant === 'multiplex' ? 'autorelaxed' : 'fluid'}
+                {...(variant === 'fluid' ? { 'data-ad-layout': 'in-article' } : {})}
+            />
+            <Footer minimal={minimal} />
         </div>
     )
 }

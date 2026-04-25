@@ -218,7 +218,7 @@ function SearchContent() {
 
                     {/* Ad entre seções */}
                     {showArtists && artists.length > 0 && (showGroups && groups.length > 0 || showProductions && productions.length > 0) && (
-                        <AdBanner slot={AD_SLOT} format="horizontal" className="my-2" />
+                        <AdBanner slot={AD_SLOT} variant="banner" className="my-2" />
                     )}
 
                     {/* Grupos */}
@@ -283,7 +283,7 @@ function SearchContent() {
                     )}
 
                     {/* Ad após resultados */}
-                    <AdBanner slot={AD_SLOT} format="horizontal" className="mt-4" />
+                    <AdBanner slot={AD_SLOT} variant="banner" className="mt-4" />
                 </div>
             ) : null}
         </>
