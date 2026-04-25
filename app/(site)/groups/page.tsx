@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Users, Mic2, TrendingUp, Star } from 'lucide-react'
+import { ArrowRight, Users, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
 import { AdBanner } from "@/components/ui/AdBanner"
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GroupsPage() {
-    const [total, heroGroups, totalArtists] = await Promise.all([
+    const [total, heroGroups] = await Promise.all([
         prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
         prisma.musicalGroup.findMany({
             where: { isHidden: false, profileImageUrl: { not: null } },
@@ -54,7 +54,6 @@ export default async function GroupsPage() {
                 _count: { select: { members: { where: { isActive: true } } } },
             },
         }).catch(() => []),
-        prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
     ])
 
     const [spotlight, ...sidePicks] = heroGroups

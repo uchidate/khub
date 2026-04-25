@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Mic2, Users, TrendingUp, Star, Search } from 'lucide-react'
+import { ArrowRight, Mic2, TrendingUp } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
@@ -87,7 +87,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
     const isFiltered = !!(search || role || groupId || agencyId || memberType)
 
-    const [artists, total, heroArtists, totalGroups] = await Promise.all([
+    const [artists, total, heroArtists] = await Promise.all([
         prisma.artist.findMany({
             where,
             take: limit,
@@ -113,7 +113,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 viewCount: true,
             },
         }) : Promise.resolve([]),
-        prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
     ])
 
     const [spotlight, ...sidePicks] = heroArtists

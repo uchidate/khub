@@ -302,7 +302,7 @@ function CompactPostCard({ post, rank }: { post: PostItem; rank?: number }) {
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string }> }) {
   const { category: activeCategory, tag: activeTag, page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
-  const { hero, posts, mostRead, categories, popularTags, total, totalCategories } = await getPosts(activeCategory, activeTag, page)
+  const { hero, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
   const isFiltered = !!activeCategory || !!activeTag
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
