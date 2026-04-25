@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
@@ -154,7 +155,9 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
             <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
-                    <ArtistFilters initialFilters={{ search, sortBy }} />
+                    <Suspense>
+                        <ArtistFilters initialFilters={{ search, sortBy }} />
+                    </Suspense>
                 </div>
             </div>
 

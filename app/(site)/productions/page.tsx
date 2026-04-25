@@ -96,7 +96,9 @@ export default async function ProductionsPage() {
             {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
             <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
-                    <ProductionsHeroFilter />
+                    <Suspense>
+                        <ProductionsHeroFilter />
+                    </Suspense>
                 </div>
             </div>
 
