@@ -304,8 +304,8 @@ export default async function Home() {
                     "query-input": "required name=search_term_string",
                 },
             }} />
-            {/* ── Leaderboard — topo, estilo portal de notícias ── */}
-            <div className="w-full bg-background border-b border-border/40">
+            {/* ── Leaderboard — só desktop (mobile usa StickyBottomAd) ── */}
+            <div className="hidden sm:block w-full bg-background border-b border-border/40">
                 <div className="max-w-[970px] mx-auto px-4 py-1">
                     <AdBanner
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
