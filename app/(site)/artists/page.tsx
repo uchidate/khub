@@ -182,7 +182,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                         <div className="flex items-center gap-2">
                             <Mic2 className="w-3.5 h-3.5 text-accent" />
                             <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Artistas</span>
-                            <span className="text-white/30 text-xs hidden sm:inline">· {total.toLocaleString('pt-BR')} perfis</span>
                         </div>
 
                         {/* Bottom: destaque + side picks */}
@@ -262,7 +261,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
                         <div className="relative">
                             <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Artistas</h1>
-                            <p className="text-muted text-sm">{total.toLocaleString('pt-BR')} perfis · K-Pop & K-Drama</p>
+                            <p className="text-muted text-sm">K-Pop & K-Drama</p>
                         </div>
                     </div>
                 </div>

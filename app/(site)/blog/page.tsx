@@ -374,9 +374,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-accent" />
                 <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
-                {!isFiltered && total > 0 && (
-                  <span className="text-white/30 text-xs hidden sm:inline">· {total} artigos</span>
-                )}
               </div>
               <Link href="/blog/feed.xml"
                 className="flex items-center gap-1.5 text-white/35 hover:text-white/70 transition-colors text-xs px-2.5 py-1.5 rounded-lg hover:bg-white/10">
