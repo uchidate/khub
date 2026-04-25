@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Mic2, Users, TrendingUp, Star, Search } from 'lucide-react'
+import { ArrowRight, Mic2, TrendingUp } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
@@ -87,7 +87,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
     const isFiltered = !!(search || role || groupId || agencyId || memberType)
 
-    const [artists, total, heroArtists, totalGroups] = await Promise.all([
+    const [artists, total, heroArtists] = await Promise.all([
         prisma.artist.findMany({
             where,
             take: limit,
@@ -113,7 +113,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 viewCount: true,
             },
         }) : Promise.resolve([]),
-        prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
     ])
 
     const [spotlight, ...sidePicks] = heroArtists
@@ -264,34 +263,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                         <div className="relative">
                             <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Artistas</h1>
                             <p className="text-muted text-sm">{total.toLocaleString('pt-BR')} perfis · K-Pop & K-Drama</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Stats strip ─────────────────────────────────────── */}
-            {!isFiltered && page === 1 && (
-                <div className="border-b border-border bg-surface/50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
-                        <div className="flex items-center gap-2 shrink-0">
-                            <Mic2 size={12} className="text-accent" />
-                            <span className="text-xs text-muted"><span className="font-bold text-foreground">{total.toLocaleString('pt-BR')}</span> artistas</span>
-                        </div>
-                        <div className="w-px h-3 bg-border shrink-0" />
-                        <div className="flex items-center gap-2 shrink-0">
-                            <Users size={12} className="text-accent" />
-                            <span className="text-xs text-muted"><span className="font-bold text-foreground">{totalGroups.toLocaleString('pt-BR')}</span> grupos</span>
-                        </div>
-                        <div className="w-px h-3 bg-border shrink-0" />
-                        <div className="flex items-center gap-2 shrink-0">
-                            <Star size={12} className="text-accent" />
-                            <span className="text-xs text-muted">K-Pop, K-Drama & K-Film</span>
-                        </div>
-                        <div className="ml-auto shrink-0">
-                            <Link href="/groups" className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors">
-                                <Users size={11} className="text-accent" />
-                                Ver grupos
-                            </Link>
                         </div>
                     </div>
                 </div>
