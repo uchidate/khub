@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Mic2, TrendingUp } from 'lucide-react'
+import { ArrowRight, TrendingUp } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
+import { ArtistFilters } from "@/components/features/ArtistFilters"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -150,40 +151,32 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         </div>
         <PageTransition className="pb-16">
 
+            {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
+            <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
+                    <ArtistFilters initialFilters={{ search, sortBy }} />
+                </div>
+            </div>
+
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight && !isFiltered ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[460px] overflow-hidden mb-0 bg-black">
-                    {/* Mosaico: top 5 artistas em colunas verticais */}
+                <div className="relative w-full min-h-[360px] md:min-h-[460px] overflow-hidden bg-black">
+                    {/* Mosaico */}
                     <div className="absolute inset-0 flex">
                         {heroArtists.map((a, i) => (
                             <div key={a.id} className="relative flex-1 h-full">
                                 {a.primaryImageUrl ? (
-                                    <Image
-                                        src={a.primaryImageUrl}
-                                        alt=""
-                                        fill
-                                        priority={i === 0}
-                                        sizes="20vw"
-                                        className="object-cover object-top"
-                                    />
+                                    <Image src={a.primaryImageUrl} alt="" fill priority={i === 0} sizes="20vw" className="object-cover object-top" />
                                 ) : (
                                     <div className="w-full h-full" style={{ background: nameToGradient(a.nameRomanized) }} />
                                 )}
                             </div>
                         ))}
                     </div>
-                    {/* Gradientes sobre o mosaico */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
 
-                    {/* Conteúdo */}
-                    <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 min-h-[360px] md:min-h-[460px]">
-                        {/* Topo */}
-                        <div className="flex items-center gap-2">
-                            <Mic2 className="w-3.5 h-3.5 text-accent" />
-                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Artistas</span>
-                        </div>
-
+                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[460px]">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             {/* Artista em destaque: portrait + texto juntos */}
