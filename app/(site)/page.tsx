@@ -306,13 +306,12 @@ export default async function Home() {
             }} />
             {/* ── Leaderboard — topo, estilo portal de notícias ── */}
             <div className="w-full bg-background border-b border-border/40">
-                <div className="max-w-[970px] mx-auto px-4 pt-1 pb-1 overflow-hidden" style={{ maxHeight: 70 }}>
+                <div className="max-w-[970px] mx-auto px-4 py-1">
                     <AdBanner
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
                         format="horizontal"
                         minimal
                         eager
-                        style={{ maxWidth: 970, margin: '0 auto' }}
                     />
                 </div>
             </div>
