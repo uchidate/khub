@@ -449,34 +449,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           )}
         </div>}
 
-        {/* ── Stats strip ───────────────────────────────────────── */}
-        {page === 1 && !isFiltered && total > 0 && (
-          <div className="border-b border-border bg-surface/50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
-              <div className="flex items-center gap-2 shrink-0">
-                <BookOpen size={12} className="text-accent" />
-                <span className="text-xs text-muted"><span className="font-bold text-foreground">{total}</span> artigos</span>
-              </div>
-              <div className="w-px h-3 bg-border shrink-0" />
-              <div className="flex items-center gap-2 shrink-0">
-                <Tag size={12} className="text-accent" />
-                <span className="text-xs text-muted"><span className="font-bold text-foreground">{totalCategories}</span> categorias</span>
-              </div>
-              <div className="w-px h-3 bg-border shrink-0" />
-              <div className="flex items-center gap-2 shrink-0">
-                <TrendingUp size={12} className="text-accent" />
-                <span className="text-xs text-muted">Atualizado semanalmente</span>
-              </div>
-              <div className="ml-auto shrink-0">
-                <Link href="/blog/feed.xml" className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors">
-                  <Rss size={11} className="text-orange-500" />
-                  <span className="hidden sm:inline">Assinar feed</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── Conteúdo principal ────────────────────────────────── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
