@@ -47,7 +47,8 @@ export function AdBanner({
 
         if (leaderboard) {
             // Determina dimensões reais após hydration — só então monta o <ins> e faz push
-            const size = window.innerWidth < 640 ? { w: 320, h: 50 } : { w: 728, h: 90 }
+            // Mobile: 320×100 (large mobile banner, padrão portais BR); desktop: 728×90 leaderboard
+            const size = window.innerWidth < 640 ? { w: 320, h: 100 } : { w: 728, h: 90 }
             setLeaderboardSize(size)
             // push será feito no próximo efeito após o <ins> ser montado
             return
@@ -87,7 +88,7 @@ export function AdBanner({
                 {/* Placeholder mantém altura reservada antes de montar o <ins> */}
                 <div
                     className="flex justify-center"
-                    style={{ height: leaderboardSize?.h ?? 50, overflow: 'hidden' }}
+                    style={{ height: leaderboardSize?.h ?? 100, overflow: 'hidden' }}
                 >
                     {leaderboardSize && (
                         <ins
