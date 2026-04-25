@@ -6,6 +6,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBelowFold } from "@/components/home/HomeBelowFold"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { AdBanner } from "@/components/ui/AdBanner"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
