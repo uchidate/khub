@@ -14,38 +14,47 @@ interface AdBannerProps {
     hideLabel?: boolean
     /** Carrega imediatamente sem IntersectionObserver — usar apenas para ads above-the-fold */
     eager?: boolean
+    /**
+     * Renderiza dois slots de tamanho fixo (mobile 320×50 + desktop 728×90) sem
+     * data-full-width-responsive, igual ao modelo de portais de notícias como CNN Brasil.
+     * Impede que o AdSense sirva formatos grandes (ex: 300×250) em mobile.
+     */
+    leaderboard?: boolean
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
-// Altura máxima por formato — impede que o AdSense expanda além do esperado
-const FORMAT_MAX_HEIGHT: Record<string, number | undefined> = {
-    horizontal: 100,   // leaderboard/banner: 728×90 ou 320×50
-    rectangle:  260,   // medium rectangle: 300×250
-    vertical:   620,
-    auto:       undefined,
-    fluid:      undefined,
-    multiplex:  undefined,
-}
-
 export function AdBanner({
     slot, format = 'auto', layout, className = '', style,
-    minimal = false, hideLabel = false, eager = false,
+    minimal = false, hideLabel = false, eager = false, leaderboard = false,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
+    const pushedMobile = useRef(false)
+    const pushedDesktop = useRef(false)
     const pushed = useRef(false)
 
     useEffect(() => {
-        if (!CLIENT || !slot || pushed.current) return
+        if (!CLIENT || !slot) return
 
-        const push = () => {
-            if (pushed.current) return
-            pushed.current = true
+        const pushOnce = (ref: React.MutableRefObject<boolean>) => {
+            if (ref.current) return
+            ref.current = true
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
             } catch { /* AdSense not loaded yet */ }
         }
+
+        if (leaderboard) {
+            // Push both fixed-size slots immediately (above-the-fold)
+            pushOnce(pushedMobile)
+            pushOnce(pushedDesktop)
+            return
+        }
+
+        if (pushed.current) return
+
+        const push = () => pushOnce(pushed)
 
         if (eager) { push(); return }
 
@@ -58,11 +67,39 @@ export function AdBanner({
         )
         observer.observe(el)
         return () => observer.disconnect()
-    }, [slot, eager])
+    }, [slot, eager, leaderboard])
 
     if (!CLIENT || !slot) return null
 
-    const maxHeight = FORMAT_MAX_HEIGHT[format]
+    if (leaderboard) {
+        return (
+            <div className={className}>
+                {!hideLabel && (
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
+                )}
+                {/* Mobile: banner fixo 320×50 — visível apenas abaixo de sm */}
+                <div className="flex justify-center sm:hidden" style={{ height: 50, overflow: 'hidden' }}>
+                    <ins
+                        className="adsbygoogle"
+                        style={{ display: 'inline-block', width: 320, height: 50 }}
+                        data-ad-client={CLIENT}
+                        data-ad-slot={slot}
+                        data-full-width-responsive="false"
+                    />
+                </div>
+                {/* Desktop: leaderboard fixo 728×90 — visível apenas a partir de sm */}
+                <div className="hidden sm:flex justify-center" style={{ height: 90, overflow: 'hidden' }}>
+                    <ins
+                        className="adsbygoogle"
+                        style={{ display: 'inline-block', width: 728, height: 90 }}
+                        data-ad-client={CLIENT}
+                        data-ad-slot={slot}
+                        data-full-width-responsive="false"
+                    />
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div ref={containerRef} className={`${className}`}>
@@ -76,9 +113,7 @@ export function AdBanner({
             {minimal && !hideLabel && (
                 <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
             )}
-            {/* overflow:hidden + maxHeight no container do <ins> garante que o iframe do AdSense
-                não expanda o layout, independente do formato servido */}
-            <div style={{ overflow: 'hidden', maxHeight }}>
+            <div>
                 <ins
                     className="adsbygoogle"
                     style={{ display: 'block', textAlign: 'center', ...style }}
