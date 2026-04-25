@@ -85,15 +85,15 @@ export function AdBanner({
                 {!hideLabel && (
                     <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
                 )}
-                {/* Placeholder mantém altura reservada antes de montar o <ins> */}
+                {/* Placeholder mantém altura reservada; overflow+maxHeight impedem expansão do AdSense */}
                 <div
                     className="flex justify-center"
-                    style={{ height: leaderboardSize?.h ?? 100, overflow: 'hidden' }}
+                    style={{ height: leaderboardSize?.h ?? 100, maxHeight: leaderboardSize?.h ?? 100, overflow: 'hidden' }}
                 >
                     {leaderboardSize && (
                         <ins
                             className="adsbygoogle"
-                            style={{ display: 'inline-block', width: leaderboardSize.w, height: leaderboardSize.h }}
+                            style={{ display: 'inline-block', width: leaderboardSize.w, height: leaderboardSize.h, maxHeight: leaderboardSize.h, overflow: 'hidden' }}
                             data-ad-client={CLIENT}
                             data-ad-slot={slot}
                             data-full-width-responsive="false"
