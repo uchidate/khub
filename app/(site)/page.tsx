@@ -304,16 +304,16 @@ export default async function Home() {
                     "query-input": "required name=search_term_string",
                 },
             }} />
-            {/* ── Billboard — entre navbar e conteúdo (modelo: globo.com, 970×250) ── */}
-            <div className="w-full bg-background">
+            {/* ── Billboard — entre navbar e conteúdo: sutil no mobile, 970px em desktop ── */}
+            <div className="w-full bg-background hidden sm:block">
                 <div className="max-w-[970px] mx-auto px-4 py-1">
                     <AdBanner
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
-                        format="auto"
+                        format="horizontal"
                         minimal
                         hideLabel
                         eager
-                        style={{ minHeight: 120, maxWidth: 970, margin: '0 auto' }}
+                        style={{ minHeight: 90, maxWidth: 970, margin: '0 auto' }}
                     />
                 </div>
             </div>
