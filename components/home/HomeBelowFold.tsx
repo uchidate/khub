@@ -48,7 +48,7 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
         <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 2400px' }}>
             <HomeRandomDiscovery artist={artist} group={group} production={production} />
             <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} format="auto" />
+                <AdBanner slot={AD_SLOT} format="auto" minimal />
             </div>
             <HomeRecommended />
             <HomeBlogFeed
@@ -58,7 +58,7 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
                 categoryCounts={categoryCountMap}
             />
             <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} format="auto" />
+                <AdBanner slot={AD_SLOT} format="auto" minimal />
             </div>
             {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
@@ -72,9 +72,6 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
                     </div>
                 </section>
             )}
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} format="auto" />
-            </div>
             <HomeBlogSection siteStats={siteStats} />
         </div>
     )
