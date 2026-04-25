@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface AdBannerProps {
     slot: string
@@ -29,16 +29,16 @@ export function AdBanner({
     minimal = false, hideLabel = false, eager = false, leaderboard = false,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
-    const pushedMobile = useRef(false)
-    const pushedDesktop = useRef(false)
     const pushed = useRef(false)
+    // leaderboard: aguarda hydration para saber o breakpoint real antes de montar o <ins>
+    const [leaderboardSize, setLeaderboardSize] = useState<{ w: number; h: number } | null>(null)
 
     useEffect(() => {
         if (!CLIENT || !slot) return
 
-        const pushOnce = (ref: React.MutableRefObject<boolean>) => {
-            if (ref.current) return
-            ref.current = true
+        const pushOnce = () => {
+            if (pushed.current) return
+            pushed.current = true
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
@@ -46,28 +46,35 @@ export function AdBanner({
         }
 
         if (leaderboard) {
-            // Push both fixed-size slots immediately (above-the-fold)
-            pushOnce(pushedMobile)
-            pushOnce(pushedDesktop)
+            // Determina dimensões reais após hydration — só então monta o <ins> e faz push
+            const size = window.innerWidth < 640 ? { w: 320, h: 50 } : { w: 728, h: 90 }
+            setLeaderboardSize(size)
+            // push será feito no próximo efeito após o <ins> ser montado
             return
         }
 
-        if (pushed.current) return
-
-        const push = () => pushOnce(pushed)
-
-        if (eager) { push(); return }
+        if (eager) { pushOnce(); return }
 
         const el = containerRef.current
         if (!el) return
 
         const observer = new IntersectionObserver(
-            (entries) => { if (entries[0].isIntersecting) { push(); observer.disconnect() } },
+            (entries) => { if (entries[0].isIntersecting) { pushOnce(); observer.disconnect() } },
             { rootMargin: '150px' }
         )
         observer.observe(el)
         return () => observer.disconnect()
     }, [slot, eager, leaderboard])
+
+    // Faz push do leaderboard assim que o <ins> for montado no DOM
+    useEffect(() => {
+        if (!leaderboardSize || pushed.current) return
+        pushed.current = true
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+        } catch { /* AdSense not loaded yet */ }
+    }, [leaderboardSize])
 
     if (!CLIENT || !slot) return null
 
@@ -77,25 +84,20 @@ export function AdBanner({
                 {!hideLabel && (
                     <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center mb-1 select-none">Publicidade</p>
                 )}
-                {/* Mobile: banner fixo 320×50 — visível apenas abaixo de sm */}
-                <div className="flex justify-center sm:hidden" style={{ height: 50, overflow: 'hidden' }}>
-                    <ins
-                        className="adsbygoogle"
-                        style={{ display: 'inline-block', width: 320, height: 50 }}
-                        data-ad-client={CLIENT}
-                        data-ad-slot={slot}
-                        data-full-width-responsive="false"
-                    />
-                </div>
-                {/* Desktop: leaderboard fixo 728×90 — visível apenas a partir de sm */}
-                <div className="hidden sm:flex justify-center" style={{ height: 90, overflow: 'hidden' }}>
-                    <ins
-                        className="adsbygoogle"
-                        style={{ display: 'inline-block', width: 728, height: 90 }}
-                        data-ad-client={CLIENT}
-                        data-ad-slot={slot}
-                        data-full-width-responsive="false"
-                    />
+                {/* Placeholder mantém altura reservada antes de montar o <ins> */}
+                <div
+                    className="flex justify-center"
+                    style={{ height: leaderboardSize?.h ?? 50, overflow: 'hidden' }}
+                >
+                    {leaderboardSize && (
+                        <ins
+                            className="adsbygoogle"
+                            style={{ display: 'inline-block', width: leaderboardSize.w, height: leaderboardSize.h }}
+                            data-ad-client={CLIENT}
+                            data-ad-slot={slot}
+                            data-full-width-responsive="false"
+                        />
+                    )}
                 </div>
             </div>
         )
