@@ -344,9 +344,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad entre autor e artigos relacionados */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" className="mt-10" />
-
         {/* Artigos relacionados — mobile/tablet (sidebar oculta em <xl) */}
         {relatedPosts.length > 0 && (
           <div className="xl:hidden mt-10 pt-8 border-t border-border">
@@ -376,7 +373,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>{/* fim coluna principal */}
 
       {/* ── Sidebar sticky (xl+) ── */}
-      <aside className="hidden xl:block w-[200px] shrink-0">
+      <aside className="hidden xl:block w-[300px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-4">
           <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="rectangle" />
 
