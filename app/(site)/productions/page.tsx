@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Film, TrendingUp } from 'lucide-react'
+import { ArrowRight, Film, Star, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
