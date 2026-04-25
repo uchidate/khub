@@ -31,7 +31,7 @@ function MarkdownWithAds({ content }: { content: string }) {
     return (
       <>
         <MarkdownRenderer content={content} />
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="auto" className="my-8" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" minimal className="my-8" />
       </>
     )
   }
@@ -243,9 +243,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      {/* ── Top Ad — full width, todas as telas ── */}
-      <div className="max-w-6xl mx-auto mb-6">
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} format="horizontal" minimal hideLabel eager />
+      {/* ── Top Ad — leaderboard fixo, igual homepage ── */}
+      <div className="w-full bg-background border-b border-border/40 mb-6">
+        <div className="max-w-[970px] mx-auto px-4 py-1">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} leaderboard eager hideLabel />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto">

@@ -496,7 +496,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         )}
 
                         {/* Ad 2 — após elenco/galeria, antes das recomendações */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" className="my-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} format="horizontal" minimal className="my-6" />
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
