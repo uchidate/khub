@@ -15,5 +15,5 @@ export async function GET(
 
     const target = group?.slug ?? group?.id ?? id
     const base = process.env.NEXTAUTH_URL ?? 'https://www.hallyuhub.com.br'
-    return NextResponse.redirect(`${base}/groups/${target}`, { status: 308 })
+    return NextResponse.redirect(`${base}/groups/${target}`, { status: 301 })
 }
