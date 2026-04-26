@@ -15,6 +15,7 @@ import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
+import { TagFilter } from '@/components/blog/TagFilter'
 
 const BASE_URL = SITE_URL
 const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
@@ -81,7 +82,7 @@ async function getPosts(category?: string, tag?: string, page = 1) {
         SELECT unnest(tags) as tag, count(*) as count
         FROM "BlogPost"
         WHERE status = 'PUBLISHED' AND "isPrivate" = false
-        GROUP BY tag ORDER BY count DESC LIMIT 16
+        GROUP BY tag ORDER BY count DESC LIMIT 60
       `,
       prisma.blogPost.count({ where: PUBLIC_WHERE }),
       prisma.blogCategory.count(),
@@ -319,7 +320,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const normalizedPopularTags = Array.from(tagCountMap.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([tag, count]) => ({ tag, count }))
-    .slice(0, 14)
 
   const featPost = page > 1 ? null : (isFiltered ? posts[0] : hero)
   const heroId = featPost?.id
@@ -489,36 +489,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               </div>
             </div>
 
-            {/* Tags */}
+            {/* Tags — com busca e expansão */}
             {normalizedPopularTags.length > 0 && (
-              <div className="relative">
-                <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
-                <div className="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-background/95 to-transparent z-10 sm:hidden" />
-                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap sm:flex-wrap">
-                  <Tag size={10} className="text-muted shrink-0 ml-1" />
-                  {normalizedPopularTags.map(({ tag }) => {
-                    const ts = getTagStyle(tag)
-                    const isActiveTag = activeTag === tag
-                    const href = isActiveTag
-                      ? (activeCategory ? `/blog?category=${activeCategory}` : '/blog')
-                      : (activeCategory ? `/blog?category=${activeCategory}&tag=${encodeURIComponent(tag)}` : `/blog?tag=${encodeURIComponent(tag)}`)
-                    return (
-                      <Link
-                        key={tag} href={href} scroll={false}
-                        className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap"
-                        style={{
-                          color: isActiveTag ? '#fff' : ts.color,
-                          backgroundColor: isActiveTag ? ts.color : ts.bg,
-                          outline: isActiveTag ? `2px solid ${ts.color}` : 'none',
-                          outlineOffset: '1px',
-                        }}
-                      >
-                        {tag}
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
+              <TagFilter
+                tags={normalizedPopularTags}
+                activeTag={activeTag}
+                activeCategory={activeCategory}
+              />
             )}
           </div>
 
