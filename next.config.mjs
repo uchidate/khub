@@ -6,32 +6,16 @@ const nextConfig = {
             dynamic: 0,
         },
     },
-    async redirects() {
-        return [
-            // CUIDs legados de grupos → API route que faz lookup do slug no banco
-            // Regex: c + 24 chars alfanuméricos minúsculos (formato CUID)
-            {
-                source: '/groups/:id(c[a-z0-9]{24})',
-                destination: '/api/r/groups/:id',
-                permanent: true,
-            },
-            {
-                source: '/artists/:id(c[a-z0-9]{24})',
-                destination: '/api/r/artists/:id',
-                permanent: true,
-            },
-            {
-                source: '/productions/:id(c[a-z0-9]{24})',
-                destination: '/api/r/productions/:id',
-                permanent: true,
-            },
-        ]
-    },
     async rewrites() {
         // /um/api/send é servido pela route handler em app/um/api/send/route.ts
         // que passa o IP real do cliente diretamente ao Umami via rede Docker interna
+        // CUIDs legados → rewrite interno para API route que resolve o slug e retorna
+        // 301 — resulta em um único redirect 301 visível para browser/Googlebot
         return [
             { source: '/um/script.js', destination: 'https://umami.hallyuhub.com.br/script.js' },
+            { source: '/groups/:id(c[a-z0-9]{24})', destination: '/api/r/groups/:id' },
+            { source: '/artists/:id(c[a-z0-9]{24})', destination: '/api/r/artists/:id' },
+            { source: '/productions/:id(c[a-z0-9]{24})', destination: '/api/r/productions/:id' },
         ]
     },
     async headers() {
