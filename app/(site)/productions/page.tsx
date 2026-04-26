@@ -2,9 +2,10 @@ import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Film, Star, TrendingUp } from 'lucide-react'
+import { ArrowRight, Star, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
+import { ProductionsHeroFilter } from "@/components/features/ProductionsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -87,15 +88,23 @@ export default async function ProductionsPage() {
         )}
         <div className="w-full bg-background border-b border-border/40">
             <div className="max-w-[970px] mx-auto px-4 py-1">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} variant="leaderboard" eager />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} variant="leaderboard" eager minimal hideLabel />
             </div>
         </div>
         <PageTransition className="pb-16">
 
+            {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
+            <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
+                    <Suspense>
+                        <ProductionsHeroFilter />
+                    </Suspense>
+                </div>
+            </div>
+
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden">
-                    {/* Backdrop de fundo */}
+                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black">
                     <Image
                         src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
                         alt={spotlight.titlePt}
@@ -105,13 +114,7 @@ export default async function ProductionsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
-                    <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 min-h-[360px] md:min-h-[440px]">
-                        {/* Topo */}
-                        <div className="flex items-center gap-2">
-                            <Film className="w-3.5 h-3.5 text-accent" />
-                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Dramas & Filmes</span>
-                        </div>
-
+                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px]">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group flex-1 min-w-0">
@@ -183,7 +186,7 @@ export default async function ProductionsPage() {
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                 <Suspense>
-                    <ProductionsList />
+                    <ProductionsList hideFilter />
                 </Suspense>
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} variant="banner" className="mt-8 mb-4" />
                 <ScrollToTop />

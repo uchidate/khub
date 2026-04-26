@@ -246,7 +246,7 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.archive.org',
             },
-            // Naver — postfiles.pstatic.net (imagens de notícias K-pop)
+            // Naver — blog.naver.com, postfiles.pstatic.net
             {
                 protocol: 'https',
                 hostname: '*.pstatic.net',

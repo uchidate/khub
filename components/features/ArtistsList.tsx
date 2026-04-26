@@ -3,7 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArtistFilters, type ArtistFilterValues } from './ArtistFilters'
+import type { ArtistFilterValues } from './ArtistFilters'
 import { getRoleLabels } from '@/lib/utils/role-labels'
 import { nameToGradient } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -98,10 +98,6 @@ export function ArtistsList({ artists, pagination, initialFilters }: ArtistsList
         sortBy: searchParams.get('sortBy') || 'trending',
     }
 
-    const handleFilterChange = (filters: ArtistFilterValues) => {
-        router.push(buildUrl(filters, 1))
-    }
-
     const handlePageChange = (p: number) => {
         router.push(buildUrl(currentFilters, p))
     }
@@ -112,7 +108,6 @@ export function ArtistsList({ artists, pagination, initialFilters }: ArtistsList
 
     return (
         <div id="artists-list">
-            <ArtistFilters onFilterChange={handleFilterChange} initialFilters={initialFilters} />
 
             {artists.length === 0 && (
                 <EmptyState title="Nenhum artista encontrado" description="Tente ajustar os filtros" bordered />

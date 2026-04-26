@@ -3,9 +3,10 @@ import type { Metadata } from "next"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Users, TrendingUp } from 'lucide-react'
+import { ArrowRight, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
+import { GroupsHeroFilter } from "@/components/features/GroupsHeroFilter"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -86,10 +87,19 @@ export default async function GroupsPage() {
         )}
         <div className="w-full bg-background border-b border-border/40">
             <div className="max-w-[970px] mx-auto px-4 py-1">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} variant="leaderboard" eager />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} variant="leaderboard" eager minimal hideLabel />
             </div>
         </div>
         <PageTransition className="pb-16">
+
+            {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
+            <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
+                    <Suspense>
+                        <GroupsHeroFilter />
+                    </Suspense>
+                </div>
+            </div>
 
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight ? (
@@ -110,13 +120,7 @@ export default async function GroupsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
 
-                    <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10 min-h-[360px] md:min-h-[440px]">
-                        {/* Topo */}
-                        <div className="flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-accent" />
-                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Grupos K-Pop</span>
-                        </div>
-
+                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px]">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             {/* Grupo em destaque: portrait + texto juntos */}
@@ -204,7 +208,7 @@ export default async function GroupsPage() {
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                 <Suspense>
-                    <GroupsList />
+                    <GroupsList hideFilter />
                 </Suspense>
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_GROUP!} variant="banner" className="mt-8 mb-4" />
                 <ScrollToTop />

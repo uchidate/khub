@@ -211,7 +211,7 @@ function AgeRatingBadge({ rating }: { rating: string }) {
     )
 }
 
-export function ProductionsList() {
+export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -316,7 +316,7 @@ export function ProductionsList() {
     return (
         <div id="productions-list">
             {/* Filters */}
-            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+            {!hideFilter && <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
                 <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold text-foreground/90 inline-flex items-center gap-2">
                         <SlidersHorizontal className="w-3.5 h-3.5 text-muted" />
@@ -431,7 +431,7 @@ export function ProductionsList() {
                     </div>
                 </div>
 
-            </div>
+            </div>}
 
             {/* Loading */}
             {isLoading && <ProductionsSkeleton />}

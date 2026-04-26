@@ -5,60 +5,44 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 
-export interface ArtistFilterValues {
-    search?: string
-    role?: string
-    groupId?: string
-    agencyId?: string
-    memberType?: string
-    sortBy?: string
-}
-
-interface ArtistFiltersProps {
-    initialFilters?: ArtistFilterValues
-    /** hero=true: overlay translúcido sem sticky, para uso dentro do card hero */
-    hero?: boolean
-}
-
 const SORT_OPTIONS = [
-    { value: 'trending', label: 'Em alta' },
+    { value: 'popular', label: 'Em alta' },
     { value: 'name', label: 'A–Z' },
 ]
 
-export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFiltersProps) {
+interface Props {
+    hero?: boolean
+}
+
+export function ProductionsHeroFilter({ hero = false }: Props) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
-    const [search, setSearch] = useState(initialFilters.search || '')
-    const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'trending')
-
-    const initialSearch = initialFilters.search || ''
-    const initialSortBy = initialFilters.sortBy || 'trending'
+    const [search, setSearch] = useState(searchParams.get('search') || '')
+    const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'popular')
 
     const buildUrl = (s: string, sort: string) => {
         const params = new URLSearchParams(searchParams.toString())
         if (s) params.set('search', s); else params.delete('search')
-        if (sort && sort !== 'trending') params.set('sortBy', sort); else params.delete('sortBy')
+        if (sort && sort !== 'popular') params.set('sortBy', sort); else params.delete('sortBy')
         params.delete('page')
         return params.toString() ? `${pathname}?${params}` : pathname
     }
 
     useEffect(() => {
-        if (search === initialSearch) return
         const timer = setTimeout(() => router.push(buildUrl(search, sortBy)), 400)
         return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search])
 
     useEffect(() => {
-        if (sortBy === initialSortBy) return
         router.push(buildUrl(search, sortBy))
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortBy])
 
-    const clear = () => { setSearch(''); setSortBy('trending') }
-    const hasActive = !!(search || sortBy !== 'trending')
+    const clear = () => { setSearch(''); setSortBy('popular') }
+    const hasActive = !!(search || sortBy !== 'popular')
 
     if (hero) {
         return (
@@ -68,7 +52,7 @@ export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFilte
                         type="text"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        placeholder="Buscar artistas..."
+                        placeholder="Buscar drama ou filme..."
                         className="w-full px-4 pr-9 py-2 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/40 transition-all backdrop-blur-sm"
                     />
                     {search
@@ -102,7 +86,7 @@ export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFilte
 
     return (
         <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-            <SearchInput value={search} onChange={setSearch} placeholder="Buscar artistas..." />
+            <SearchInput value={search} onChange={setSearch} placeholder="Buscar drama ou filme..." />
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1">
                     {SORT_OPTIONS.map(opt => (
