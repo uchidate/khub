@@ -860,8 +860,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             </aside>
           </div>
 
-          {/* Ad final */}
-          <AdBanner slot={SLOT_BANNER} variant="auto" className="mt-12" />
         </div>
 
         <ScrollToTop />
