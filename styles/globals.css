@@ -30,6 +30,16 @@
     --color-ticker-divider:  rgba(255, 255, 255, 0.08);
     /* Navbar translucida */
     --color-navbar-scrolled: rgba(255, 255, 255, 0.85);
+    /* Alturas fixas para cálculo de offsets sticky */
+    --ticker-h: 30px;
+    --nav-h: 52px;
+  }
+
+  @media (min-width: 640px) {
+    :root { --nav-h: 60px; }
+  }
+  @media (min-width: 1024px) {
+    :root { --nav-h: 64px; }
   }
 
   /* ── Dark theme ── */
