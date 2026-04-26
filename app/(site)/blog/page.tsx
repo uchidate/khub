@@ -145,7 +145,7 @@ function EditorialMainCard({ post }: { post: PostItem }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-xl transition-all duration-300 h-full min-h-[340px]"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-xl transition-all duration-300 h-full min-h-[340px] sm:min-h-[420px]"
     >
       {/* Imagem de fundo */}
       <BlogImage
@@ -194,36 +194,35 @@ function EditorialMainCard({ post }: { post: PostItem }) {
   )
 }
 
-// Card menor para o par do lado direito no magazine grid
+// Card menor para o par do lado direito no magazine grid — vertical com imagem topo
 function EditorialSideCard({ post, priority }: { post: PostItem; priority?: boolean }) {
   const cfg = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex gap-3 p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all duration-200"
+      className="group flex flex-col rounded-xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 flex-1"
     >
-      {/* Thumbnail */}
-      <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted/20">
-        <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="80px" priority={priority}
-          className="object-cover group-hover:scale-[1.05] transition-transform duration-300"
+      <div className="relative aspect-[16/9] overflow-hidden bg-muted/20 shrink-0">
+        <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 240px" priority={priority}
+          className="object-cover group-hover:scale-[1.05] transition-transform duration-500"
           fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` : '#f5f5f5'}
         />
-      </div>
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            <CategoryBadge category={post.category} size="xs" />
-            {isRecent(post.publishedAt) && (
-              <span className="px-1.5 py-0.5 bg-accent/10 text-accent rounded text-[9px] font-bold">Novo</span>
-            )}
-          </div>
-          <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
-            {post.title}
-          </p>
+        <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
+          <CategoryBadge category={post.category} size="xs" />
+          {isRecent(post.publishedAt) && (
+            <span className="px-1.5 py-0.5 bg-accent text-white rounded-full text-[9px] font-bold">Novo</span>
+          )}
         </div>
-        <PostMeta post={post} size="xs" />
       </div>
-      <ChevronRight size={12} className="text-muted opacity-0 group-hover:opacity-50 transition-all shrink-0 mt-1" />
+      <div className="flex flex-col gap-1.5 p-3 flex-1">
+        <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
+          {post.title}
+        </p>
+        <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
+          <PostMeta post={post} size="xs" />
+          <ChevronRight size={11} className="text-muted opacity-0 group-hover:opacity-50 group-hover:translate-x-0.5 transition-all shrink-0" />
+        </div>
+      </div>
     </Link>
   )
 }
@@ -234,7 +233,7 @@ function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 h-full"
+      className="group flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-lg transition-all duration-300 h-full"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-muted/20 shrink-0">
         <BlogImage
@@ -251,7 +250,7 @@ function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
         )}
       </div>
       <div className="flex flex-col gap-2.5 p-4 flex-1">
-        <h2 className="font-bold text-foreground text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
+        <h2 className="font-bold text-foreground text-[13px] leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
           {post.title}
         </h2>
         {post.excerpt && (
@@ -352,7 +351,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <PageTransition className="pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
-        {page === 1 && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
+        {page === 1 && <div className="relative w-full min-h-[460px] md:min-h-[580px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -406,7 +405,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   )}
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl md:text-[2.6rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
+                <h1 className="text-[1.6rem] sm:text-3xl md:text-[2.8rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
                   {featPost.title}
                 </h1>
 
@@ -450,7 +449,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* ── Filter bar sticky ─────────────────────────────── */}
-          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
+          <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
             {/* Categorias */}
             <div className="relative">
               <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
@@ -596,26 +595,27 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               ) : (
                 <>
                 {!isFiltered && (
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-5 flex items-center gap-1.5">
-                    <span className="w-3 h-px bg-muted inline-block" />
-                    Publicações recentes
-                  </p>
+                  <div className="flex items-center gap-3 mb-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5 shrink-0">
+                      <span className="w-3 h-px bg-muted inline-block" />
+                      Publicações recentes
+                    </p>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] text-muted shrink-0">{total} artigos</span>
+                  </div>
                 )}
 
               {gridPosts.length > 0 ? (
                 <div className="space-y-8">
 
-                  {/* ── Magazine grid: 1 grande + 2 lado a lado ── */}
+                  {/* ── Magazine grid: 1 grande + 2 verticais ── */}
                   {magazineMain && (
                     <div className="grid sm:grid-cols-[3fr_2fr] gap-4 items-stretch">
                       <EditorialMainCard post={magazineMain} />
-                      <div className="flex flex-col gap-3">
+                      <div className="flex flex-col gap-3 h-full">
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {magazineSide.length < 2 && (
-                          <div className="flex-1 rounded-xl border border-dashed border-border bg-surface/30" />
-                        )}
                       </div>
                     </div>
                   )}
