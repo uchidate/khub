@@ -406,7 +406,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
             {/* ── CONTEÚDO ── */}
             <div className="px-4 sm:px-12 md:px-20 py-8 lg:py-12">
-                <div className="grid lg:grid-cols-[280px_1fr_300px] gap-8 lg:gap-12 max-w-[1800px] mx-auto">
+                <div className="grid lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 max-w-[1400px] mx-auto">
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:sticky lg:top-24 lg:self-start">
@@ -755,12 +755,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>
 
-                    {/* ── SIDEBAR DIREITA (sticky ads) ── */}
-                    <aside className="hidden xl:block">
-                        <div className="sticky top-24 flex flex-col gap-6">
-                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} variant="rectangle" />
-                        </div>
-                    </aside>
 
                 </div>
             </div>
