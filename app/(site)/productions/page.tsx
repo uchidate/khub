@@ -88,7 +88,7 @@ export default async function ProductionsPage() {
         )}
         <div className="w-full bg-background border-b border-border/40">
             <div className="max-w-[970px] mx-auto px-4 py-1">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} variant="leaderboard" eager minimal hideLabel />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" eager minimal hideLabel />
             </div>
         </div>
         <PageTransition className="pb-16">
@@ -188,7 +188,7 @@ export default async function ProductionsPage() {
                 <Suspense>
                     <ProductionsList hideFilter />
                 </Suspense>
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_PRODUCTION!} variant="banner" className="mt-8 mb-4" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" className="mt-8 mb-4" />
                 <ScrollToTop />
             </div>
         </PageTransition>

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!
 
 interface Artist {
     id: string
@@ -218,7 +218,7 @@ function SearchContent() {
 
                     {/* Ad entre seções */}
                     {showArtists && artists.length > 0 && (showGroups && groups.length > 0 || showProductions && productions.length > 0) && (
-                        <AdBanner slot={AD_SLOT} variant="banner" className="my-2" />
+                        <AdBanner slot={AD_SLOT} variant="auto" className="my-2" />
                     )}
 
                     {/* Grupos */}
@@ -283,7 +283,7 @@ function SearchContent() {
                     )}
 
                     {/* Ad após resultados */}
-                    <AdBanner slot={AD_SLOT} variant="banner" className="mt-4" />
+                    <AdBanner slot={AD_SLOT} variant="auto" className="mt-4" />
                 </div>
             ) : null}
         </>

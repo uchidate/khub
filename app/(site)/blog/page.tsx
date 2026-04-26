@@ -17,7 +17,10 @@ import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
 
 const BASE_URL = SITE_URL
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
+const SLOT_LEADERBOARD = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!
+const SLOT_RECTANGLE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!
+const SLOT_BANNER = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!
+const SLOT_IN_ARTICLE_2 = process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_2!
 
 export const metadata: Metadata = {
   title: 'Blog K-Pop & K-Drama',
@@ -346,7 +349,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <div className="w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={AD_SLOT} variant="leaderboard" eager minimal hideLabel />
+          <AdBanner slot={SLOT_LEADERBOARD} variant="leaderboard" eager minimal hideLabel />
         </div>
       </div>
       <PageTransition className="pb-16">
@@ -621,7 +624,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   )}
 
                   {block2Posts.length > 0 && (
-                    <AdBanner slot={AD_SLOT} variant="banner" className="my-2" />
+                    <AdBanner slot={SLOT_BANNER} variant="auto" className="my-2" />
                   )}
 
                   {block2Posts.length > 0 && (
@@ -641,7 +644,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
-                      <AdBanner slot={AD_SLOT} variant="banner" className="mb-6" />
+                      <AdBanner slot={SLOT_IN_ARTICLE_2} variant="fluid" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted flex items-center gap-1.5">
                           <span className="w-3 h-px bg-muted inline-block" />
@@ -761,7 +764,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               )}
 
               {/* Ad na sidebar */}
-              <AdBanner slot={AD_SLOT} variant="rectangle" />
+              <AdBanner slot={SLOT_RECTANGLE} variant="rectangle" />
 
               {/* Explorar por categoria */}
               <div>
@@ -857,8 +860,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             </aside>
           </div>
 
-          {/* Ad final */}
-          <AdBanner slot={AD_SLOT} variant="banner" className="mt-12" />
         </div>
 
         <ScrollToTop />

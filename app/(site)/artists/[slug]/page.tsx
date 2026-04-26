@@ -542,7 +542,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         )}
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} variant="banner" minimal className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
 
                         {/* Filmography */}
                         <section>
@@ -754,7 +754,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>
-
 
                 </div>
             </div>
