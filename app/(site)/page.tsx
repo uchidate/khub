@@ -55,6 +55,7 @@ const getHomePublicData = unstable_cache(
             artistCount,
             groupCount,
             productionCount,
+            topAgencies,
         ] = await Promise.all([
             prisma.artist.findMany({
                 where: { flaggedAsNonKorean: false, isHidden: false, nameRomanized: { not: '' } },
@@ -92,6 +93,14 @@ const getHomePublicData = unstable_cache(
             prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0),
             prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
             prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }).catch(() => 0),
+            prisma.agency.findMany({
+                take: 12,
+                orderBy: { artists: { _count: 'desc' } },
+                select: {
+                    id: true, name: true, logoUrl: true, accentColor: true, type: true,
+                    _count: { select: { artists: true, musicalGroups: true } },
+                },
+            }).catch(() => []),
         ])
 
         // ── Slots editoriais ──────────────────────────────────────────────────
@@ -220,9 +229,10 @@ const getHomePublicData = unstable_cache(
             spotlightArtist,
             spotlightProduction,
             latestProductions,
+            topAgencies,
         }
     },
-    ['home-page-public-data-v15'],
+    ['home-page-public-data-v16'],
     { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 
@@ -261,7 +271,7 @@ export default async function Home() {
 
     const publicData = await getHomePublicData()
 
-    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction, latestProductions } = publicData
+    const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction, latestProductions, topAgencies } = publicData
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -337,6 +347,7 @@ export default async function Home() {
                 trendingGroups={trendingGroups}
                 hasStreaming={hasStreaming}
                 siteStats={siteStats}
+                topAgencies={topAgencies}
             />
             <ScrollToTop />
         </div>

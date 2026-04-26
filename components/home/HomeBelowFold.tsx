@@ -20,6 +20,12 @@ interface RandomArtist { id: string; nameRomanized: string; nameHangul: string |
 interface RandomGroup { id: string; name: string; nameHangul: string | null; profileImageUrl: string | null }
 interface RandomProduction { id: string; titlePt: string; posterUrl: string | null; year: number | null }
 
+interface AgencyItem {
+    id: string; name: string; logoUrl: string | null
+    accentColor: string | null; type: string
+    _count: { artists: number; musicalGroups: number }
+}
+
 interface Props {
     artist: RandomArtist | null
     group: RandomGroup | null
@@ -32,6 +38,7 @@ interface Props {
     trendingGroups: TrendingGroup[]
     hasStreaming: boolean
     siteStats: SiteStats
+    topAgencies: AgencyItem[]
 }
 
 const HomeRandomDiscovery = dynamic(() => import('./HomeRandomDiscovery').then(m => ({ default: m.HomeRandomDiscovery })), { loading: () => <div className="h-28" /> })
@@ -40,10 +47,11 @@ const HomeBlogFeed = dynamic(() => import('./HomeNewsFeed').then(m => ({ default
 const StreamingTopShows = dynamic(() => import('@/components/features/StreamingTopShows').then(m => ({ default: m.StreamingTopShows })), { loading: () => <div className="h-[400px]" /> })
 const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m => ({ default: m.HomeTrendingGroups })), { loading: () => <div className="h-[400px]" /> })
 const HomeBlogSection = dynamic(() => import('./HomeBlogSection').then(m => ({ default: m.HomeBlogSection })), { loading: () => <div className="h-48" /> })
+import { HomeTopAgencies } from './HomeTopAgencies'
 
 const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!
 
-export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats }: Props) {
+export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats, topAgencies }: Props) {
     return (
         <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 2400px' }}>
             <HomeRandomDiscovery artist={artist} group={group} production={production} />
@@ -72,6 +80,7 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
                     </div>
                 </section>
             )}
+            <HomeTopAgencies agencies={topAgencies} />
             <HomeBlogSection siteStats={siteStats} />
         </div>
     )
