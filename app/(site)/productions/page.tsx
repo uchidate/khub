@@ -104,75 +104,107 @@ export default async function ProductionsPage() {
 
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black">
-                    <Image
-                        src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
-                        alt={spotlight.titlePt}
-                        fill priority sizes="100vw"
-                        className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
-
-                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px]">
-                        {/* Bottom: destaque + side picks */}
-                        <div className="flex items-end gap-6 mt-auto">
-                            <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group flex-1 min-w-0">
-                                <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <TrendingUp size={10} /> Em destaque
-                                </p>
-                                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
-                                    {spotlight.titlePt}
-                                </h1>
-                                {spotlight.titleKr && (
-                                    <p className="text-white/50 text-sm mb-3">{spotlight.titleKr}</p>
-                                )}
-                                <div className="flex items-center gap-3 flex-wrap">
-                                    {spotlight.type && <span className="text-white/60 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
-                                    {spotlight.year && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-white/60 text-xs">{spotlight.year}</span>
-                                        </>
-                                    )}
-                                    {spotlight.voteAverage && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
-                                                <Star size={10} fill="currentColor" />{spotlight.voteAverage.toFixed(1)}
-                                            </span>
-                                        </>
-                                    )}
-                                    <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
-                                        Ver produção <ArrowRight size={13} />
-                                    </span>
-                                </div>
-                            </Link>
-
-                            {sidePicks.length > 0 && (
-                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0">
-                                    <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
-                                    {sidePicks.slice(0, 4).map(p => (
-                                        <Link key={p.id} href={`/productions/${p.slug ?? p.id}`}
-                                            className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-                                            <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/15">
-                                                {p.imageUrl ? (
-                                                    <Image src={p.imageUrl} alt={p.titlePt} fill sizes="32px" className="object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full" style={{ background: nameToGradient(p.titlePt) }} />
-                                                )}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-white text-xs font-semibold truncate group-hover:text-accent transition-colors">{p.titlePt}</p>
-                                                <p className="text-white/40 text-[10px]">{p.year ?? ''}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group block">
+                    {/* Mobile: imagem em cima, texto embaixo separado */}
+                    <div className="md:hidden">
+                        <div className="relative w-full aspect-video overflow-hidden bg-black">
+                            <Image
+                                src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
+                                alt={spotlight.titlePt}
+                                fill priority sizes="100vw"
+                                className="object-cover object-top"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
+                            <span className="absolute top-3 left-3 flex items-center gap-1 text-white/80 text-[10px] font-bold uppercase tracking-widest bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
+                                <TrendingUp size={9} /> Em destaque
+                            </span>
+                        </div>
+                        <div className="bg-black px-4 py-4">
+                            <h1 className="text-xl font-black text-white leading-tight mb-1 group-hover:text-accent transition-colors">
+                                {spotlight.titlePt}
+                            </h1>
+                            {spotlight.titleKr && (
+                                <p className="text-white/40 text-sm mb-2">{spotlight.titleKr}</p>
                             )}
+                            <div className="flex items-center gap-3 flex-wrap">
+                                {spotlight.type && <span className="text-white/50 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
+                                {spotlight.year && <><span className="text-white/20">·</span><span className="text-white/50 text-xs">{spotlight.year}</span></>}
+                                {spotlight.voteAverage && (
+                                    <><span className="text-white/20">·</span>
+                                    <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                                        <Star size={10} fill="currentColor" />{spotlight.voteAverage.toFixed(1)}
+                                    </span></>
+                                )}
+                                <span className="ml-auto text-[12px] font-bold text-accent flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    Ver produção <ArrowRight size={12} />
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    {/* Desktop: full-bleed hero com texto sobreposto */}
+                    <div className="hidden md:block relative w-full min-h-[440px] overflow-hidden bg-black">
+                        <Image
+                            src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
+                            alt={spotlight.titlePt}
+                            fill priority sizes="100vw"
+                            className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
+
+                        <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-6 lg:px-12 pb-10 min-h-[440px]">
+                            <div className="flex items-end gap-6 mt-auto">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                        <TrendingUp size={10} /> Em destaque
+                                    </p>
+                                    <h1 className="text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
+                                        {spotlight.titlePt}
+                                    </h1>
+                                    {spotlight.titleKr && (
+                                        <p className="text-white/50 text-sm mb-3">{spotlight.titleKr}</p>
+                                    )}
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {spotlight.type && <span className="text-white/60 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
+                                        {spotlight.year && <><span className="text-white/30">·</span><span className="text-white/60 text-xs">{spotlight.year}</span></>}
+                                        {spotlight.voteAverage && (
+                                            <><span className="text-white/30">·</span>
+                                            <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                                                <Star size={10} fill="currentColor" />{spotlight.voteAverage.toFixed(1)}
+                                            </span></>
+                                        )}
+                                        <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                                            Ver produção <ArrowRight size={13} />
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {sidePicks.length > 0 && (
+                                    <div className="flex flex-col gap-2 w-[200px] shrink-0">
+                                        <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
+                                        {sidePicks.slice(0, 4).map(p => (
+                                            <Link key={p.id} href={`/productions/${p.slug ?? p.id}`}
+                                                className="group/side flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                                                <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/15">
+                                                    {p.imageUrl ? (
+                                                        <Image src={p.imageUrl} alt={p.titlePt} fill sizes="32px" className="object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full" style={{ background: nameToGradient(p.titlePt) }} />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-white text-xs font-semibold truncate group-hover/side:text-accent transition-colors">{p.titlePt}</p>
+                                                    <p className="text-white/40 text-[10px]">{p.year ?? ''}</p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </Link>
             ) : (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                     <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
