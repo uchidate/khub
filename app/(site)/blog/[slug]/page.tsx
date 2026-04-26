@@ -31,7 +31,7 @@ function MarkdownWithAds({ content }: { content: string }) {
     return (
       <>
         <MarkdownRenderer content={content} />
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} variant="banner" minimal className="my-8" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_1!} variant="fluid" minimal className="my-8" />
       </>
     )
   }
@@ -41,7 +41,7 @@ function MarkdownWithAds({ content }: { content: string }) {
   return (
     <>
       <MarkdownRenderer content={firstHalf} />
-      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} variant="banner" minimal className="my-8" />
+      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_1!} variant="fluid" minimal className="my-8" />
       <MarkdownRenderer content={secondHalf} />
     </>
   )
@@ -246,7 +246,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* ── Top Ad — leaderboard fixo, igual homepage ── */}
       <div className="w-full bg-background border-b border-border/40 mb-6">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} variant="leaderboard" eager hideLabel />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" eager hideLabel />
         </div>
       </div>
 
@@ -358,7 +358,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Multiplex — recomendações patrocinadas no final do artigo */}
         <AdBanner
-          slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!}
+          slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!}
           variant="multiplex"
           className="mt-10"
         />
@@ -374,7 +374,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* ── Sidebar sticky (xl+) ── */}
       <aside className="hidden xl:block w-[300px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-4">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE!} variant="rectangle" />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!} variant="rectangle" />
 
           {relatedPosts.length > 0 && (
             <div className="border border-border rounded-lg overflow-hidden">

@@ -542,7 +542,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         )}
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} variant="banner" minimal className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
 
                         {/* Filmography */}
                         <section>
@@ -758,7 +758,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     {/* ── SIDEBAR DIREITA (sticky ads) ── */}
                     <aside className="hidden xl:block">
                         <div className="sticky top-24 flex flex-col gap-6">
-                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTIST!} variant="rectangle" />
+                            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!} variant="rectangle" />
                         </div>
                     </aside>
 
