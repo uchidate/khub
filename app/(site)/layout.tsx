@@ -197,7 +197,7 @@ export default async function RootLayout({
                         <AuthGateModal />
                         <PWAInstaller />
                         <CookieBanner />
-                        <StickyBottomAd />
+                        {/* StickyBottomAd desativado */}
                         <BottomNav />
                         <SiteFooter />
                     </div>

@@ -63,14 +63,22 @@ function GroupsSkeleton() {
     )
 }
 
-export function GroupsList() {
+export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const [groups, setGroups] = useState<Group[]>([])
-    const [search, setSearch] = useState('')
+    const [search, setSearch] = useState(searchParams.get('search') || '')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
     const [generationFilter, setGenerationFilter] = useState<string>('all')
-    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'recent' | 'members' | 'popular'>('popular')
+    const [sortBy, setSortBy] = useState<'name' | 'debut' | 'recent' | 'members' | 'popular'>(
+        (searchParams.get('sortBy') as 'name' | 'popular') || 'popular'
+    )
+
+    useEffect(() => {
+        setSearch(searchParams.get('search') || '')
+        setSortBy((searchParams.get('sortBy') as 'name' | 'popular') || 'popular')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams.toString()])
 
     useEffect(() => {
         fetch('/api/groups/list?full=true')
@@ -127,7 +135,7 @@ export function GroupsList() {
         <div id="groups-list">
 
             {/* Filtros */}
-            <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+            {!hideFilter && <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
                 {/* Busca */}
                 <SearchInput
                     value={search}
@@ -225,7 +233,7 @@ export function GroupsList() {
                         </button>
                     </div>
                 )}
-            </div>
+            </div>}
 
             {/* Grid */}
             {filtered.length === 0 ? (

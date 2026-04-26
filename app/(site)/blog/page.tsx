@@ -346,7 +346,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <div className="w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={AD_SLOT} variant="leaderboard" eager />
+          <AdBanner slot={AD_SLOT} variant="leaderboard" eager minimal hideLabel />
         </div>
       </div>
       <PageTransition className="pb-16">
