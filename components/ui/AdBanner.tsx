@@ -29,14 +29,16 @@ const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 
 type Size = { w: number; h: number }
 
-// Mobile (<640px): tamanho fixo. Desktop: null = Google decide (full-width-responsive)
-function pickSize(variant: AdVariant, vw: number): Size | null {
-    if (variant === 'rectangle') return { w: 300, h: 250 }
-    if (vw >= 640) return null  // desktop: responsive
+function pickSize(variant: AdVariant, vw: number): Size {
     switch (variant) {
-        case 'leaderboard': return { w: 320, h: 100 }
-        case 'banner':      return { w: 320, h: 50 }
-        default:            return { w: 320, h: 100 }
+        case 'leaderboard':
+            return vw < 640 ? { w: 320, h: 100 } : { w: 728, h: 90 }
+        case 'banner':
+            return vw < 640 ? { w: 320, h: 50 } : { w: 728, h: 90 }
+        case 'rectangle':
+            return { w: 300, h: 250 }
+        default:
+            return { w: 320, h: 100 }
     }
 }
 
@@ -70,112 +72,78 @@ function Footer({ minimal }: { minimal: boolean }) {
 export function AdBanner({ slot, variant, minimal = false, hideLabel = false, eager = false, className = '' }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
-    // undefined = pré-hydration | null = desktop responsivo | Size = mobile fixo
-    const [size, setSize] = useState<Size | null | undefined>(undefined)
+    // size=null até hydration — evita SSR mismatch e garante que só UM <ins> é criado
+    const [size, setSize] = useState<Size | null>(null)
 
-    // rectangle é sempre fixo; leaderboard/banner são fixos só no mobile
-    const isFixed = variant === 'rectangle'
-    const isSizedOnMobile = variant === 'leaderboard' || variant === 'banner'
+    const isFixed = variant === 'leaderboard' || variant === 'banner' || variant === 'rectangle'
 
-    const pushAd = () => {
-        if (pushed.current) return
-        pushed.current = true
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
-        } catch { /* AdSense ainda não carregou */ }
-    }
-
-    // Efeito 1 — determina tamanho (mobile=fixo, desktop=null) ou configura observer
+    // Efeito 1 — determina o tamanho correto (requer window) ou configura observer
     useEffect(() => {
         if (!CLIENT || !slot) return
 
-        if (isFixed || isSizedOnMobile) {
+        if (isFixed) {
             setSize(pickSize(variant, window.innerWidth))
             return
         }
 
         // fluid / multiplex — push via IntersectionObserver ou imediatamente
-        if (eager) { pushAd(); return }
+        const pushOnce = () => {
+            if (pushed.current) return
+            pushed.current = true
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+            } catch { /* AdSense ainda não carregou */ }
+        }
+
+        if (eager) { pushOnce(); return }
 
         const el = containerRef.current
         if (!el) return
         const observer = new IntersectionObserver(
-            entries => { if (entries[0].isIntersecting) { pushAd(); observer.disconnect() } },
+            entries => { if (entries[0].isIntersecting) { pushOnce(); observer.disconnect() } },
             { rootMargin: '150px' }
         )
         observer.observe(el)
         return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slot, variant, eager, isFixed, isSizedOnMobile])
+    }, [slot, variant, eager, isFixed])
 
-    // Efeito 2 — push assim que o <ins> é montado após size definido
+    // Efeito 2 — push do ad fixo assim que o <ins> é montado (size definido)
     useEffect(() => {
-        if (size === undefined) return        // ainda não hidratou
-        if (size !== null) { pushAd(); return } // mobile fixo ou rectangle
-        // desktop responsivo: push imediato (sem dimensões fixas)
-        if (isSizedOnMobile) pushAd()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [size])
+        if (!size || !isFixed || pushed.current) return
+        pushed.current = true
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+        } catch { /* AdSense ainda não carregou */ }
+    }, [size, isFixed])
 
     if (!CLIENT || !slot) return null
 
-    // ── Rectangle — sempre fixo 300×250 ────────────────────────────────────
-    if (isFixed && size) {
+    // ── Ads de tamanho fixo (leaderboard, banner, rectangle) ───────────────
+    if (isFixed) {
+        // Placeholder height antes de saber o breakpoint real
+        const ph = variant === 'rectangle' ? 250 : variant === 'leaderboard' ? 100 : 50
+        const h = size?.h ?? ph
+        const w = size?.w ?? (variant === 'rectangle' ? 300 : 320)
+
         return (
             <div className={className}>
                 <Label minimal={minimal} hideLabel={hideLabel} />
-                <div className="flex justify-center" style={{ height: size.h, maxHeight: size.h, overflow: 'hidden' }}>
-                    <ins
-                        className="adsbygoogle"
-                        style={{ display: 'inline-block', width: size.w, height: size.h }}
-                        data-ad-client={CLIENT}
-                        data-ad-slot={slot}
-                        data-full-width-responsive="false"
-                    />
-                </div>
-                <Footer minimal={minimal} />
-            </div>
-        )
-    }
-
-    // ── Leaderboard / Banner — fixo no mobile, responsivo no desktop ────────
-    if (isSizedOnMobile) {
-        if (size === null) {
-            // Desktop: Google decide o tamanho
-            return (
-                <div className={className}>
-                    <Label minimal={minimal} hideLabel={hideLabel} />
-                    <ins
-                        className="adsbygoogle"
-                        style={{ display: 'block' }}
-                        data-ad-client={CLIENT}
-                        data-ad-slot={slot}
-                        data-full-width-responsive="true"
-                    />
-                    <Footer minimal={minimal} />
-                </div>
-            )
-        }
-        if (size) {
-            // Mobile: tamanho fixo com contenção
-            return (
-                <div className={className}>
-                    <Label minimal={minimal} hideLabel={hideLabel} />
-                    <div className="flex justify-center" style={{ height: size.h, maxHeight: size.h, overflow: 'hidden' }}>
+                <div className="flex justify-center" style={{ height: h, maxHeight: h, overflow: 'hidden' }}>
+                    {size && (
                         <ins
                             className="adsbygoogle"
-                            style={{ display: 'inline-block', width: size.w, height: size.h }}
+                            style={{ display: 'inline-block', width: w, height: h, maxHeight: h, overflow: 'hidden' }}
                             data-ad-client={CLIENT}
                             data-ad-slot={slot}
                             data-full-width-responsive="false"
                         />
-                    </div>
-                    <Footer minimal={minimal} />
+                    )}
                 </div>
-            )
-        }
-        return null // aguardando hydration
+                <Footer minimal={minimal} />
+            </div>
+        )
     }
 
     // ── Fluid / Multiplex ────────────────────────────────────────────────────
