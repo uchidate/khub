@@ -12,6 +12,7 @@ on:
     - cron: '0 */6 * * *'   # A cada 6h   → update-trending
     - cron: '0 * * * *'     # Horário      → sync-discography, sync-cast
     - cron: '0 2 * * *'     # 02:00 UTC    → sync-social-links, artist-visibility, digest
+    - cron: '0 3 * * *'     # 03:00 UTC    → fetch-streaming-shows
 
   workflow_dispatch:
     inputs:
@@ -25,6 +26,7 @@ on:
           - tag-news
           - update-trending
           - fetch-streaming-signals
+          - fetch-streaming-shows
           - sync-discography
           - sync-cast
           - sync-social-links
@@ -171,6 +173,27 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
             --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
             -X POST "$BASE_URL/api/cron/sync-cast" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  # ─── Diário 03:00 UTC ──────────────────────────────────────────────────────
+
+  fetch-streaming-shows:
+    name: 🎬 Atualizar top shows de streaming
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'fetch-streaming-shows')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
+    steps:
+      - name: POST /api/cron/fetch-streaming-shows
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/fetch-streaming-shows" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
