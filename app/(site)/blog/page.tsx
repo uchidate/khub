@@ -7,7 +7,7 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown, Mail, Search } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown, Mail } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -15,7 +15,6 @@ import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
-import { BlogSearch } from '@/components/blog/BlogSearch'
 
 const BASE_URL = SITE_URL
 const SLOT_LEADERBOARD = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!
@@ -98,26 +97,9 @@ function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function formatRelativeDate(date: Date | string | null | undefined): string {
-  if (!date) return ''
-  const diff = Date.now() - new Date(date).getTime()
-  const mins = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  if (mins < 60) return `há ${mins}min`
-  if (hours < 24) return `há ${hours}h`
-  if (days < 7) return `há ${days} ${days === 1 ? 'dia' : 'dias'}`
-  if (days < 30) return `há ${Math.floor(days / 7)} sem.`
-  return formatDate(date)
-}
-
 function isRecent(date: Date | string | null | undefined) {
   if (!date) return false
   return Date.now() - new Date(date).getTime() < 7 * 24 * 60 * 60 * 1000
-}
-
-function isTrending(viewCount: number) {
-  return viewCount >= 100
 }
 
 type PostItem = {
@@ -149,7 +131,7 @@ function PostMeta({ post, size = 'sm', light = false }: {
   const colorCls = light ? 'text-white/55' : 'text-muted'
   return (
     <div className={`flex items-center flex-wrap ${cls} ${colorCls}`}>
-      {post.publishedAt && <span>{formatRelativeDate(post.publishedAt)}</span>}
+      {post.publishedAt && <span>{formatDate(post.publishedAt)}</span>}
       {post.readingTimeMin > 0 && (
         <span className="flex items-center gap-1"><Clock size={size === 'xs' ? 9 : 10} />{post.readingTimeMin} min</span>
       )}
@@ -166,36 +148,32 @@ function EditorialMainCard({ post }: { post: PostItem }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-2xl transition-all duration-500 h-full min-h-[420px] sm:min-h-[480px]"
+      className="group relative flex flex-col rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-xl transition-all duration-300 h-full min-h-[340px]"
     >
       {/* Imagem de fundo */}
       <BlogImage
         src={post.coverImageUrl} alt={post.title} fill priority
         sizes="(max-width: 640px) 100vw, 55vw"
-        className="object-cover group-hover:scale-[1.04] transition-transform duration-700"
+        className="object-cover group-hover:scale-[1.03] transition-transform duration-700"
         fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}55)` : '#0d0d1a'}
       />
 
-      {/* Gradiente — concentrado na base para expor mais a foto */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
-
-      {/* Spacer — empurra todo o texto para o fundo */}
-      <div className="flex-1" />
+      {/* Gradiente sobre imagem */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
       {/* Conteúdo no rodapé */}
-      <div className="relative z-10 p-5 sm:p-6 flex flex-col gap-2.5">
-        {/* Badges */}
+      <div className="relative z-10 mt-auto p-5 sm:p-6 flex flex-col gap-2.5">
         <div className="flex items-center gap-2 flex-wrap">
           {post.featured && (
-            <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">⭐ Destaque</span>
+            <span className="px-2 py-0.5 bg-yellow-400/90 text-yellow-900 rounded-full text-[10px] font-bold uppercase tracking-wider">Destaque</span>
           )}
           {isRecent(post.publishedAt) && (
-            <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
+            <span className="px-2 py-0.5 bg-accent text-white rounded-full text-[10px] font-bold uppercase tracking-wider">Novo</span>
           )}
           {post.category && (() => {
             const c = BLOG_CATEGORY_BY_SLUG[post.category!.slug]
             return c ? (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
                 style={{ backgroundColor: c.color, color: '#fff' }}>
                 {post.category!.name}
               </span>
@@ -206,17 +184,12 @@ function EditorialMainCard({ post }: { post: PostItem }) {
           {post.title}
         </h2>
         {post.excerpt && (
-          <p className="text-white/60 text-xs leading-relaxed line-clamp-2">{post.excerpt}</p>
+          <p className="text-white/60 text-xs leading-relaxed line-clamp-2 hidden sm:block">{post.excerpt}</p>
         )}
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-black text-white/80 shrink-0">
-              {BLOG_AUTHOR_AVATAR_INITIAL}
-            </div>
-            <PostMeta post={post} size="xs" light />
-          </div>
-          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-white text-[11px] font-bold group-hover:gap-2.5 transition-all whitespace-nowrap shrink-0">
-            Ler artigo <ArrowRight size={11} />
+          <PostMeta post={post} size="xs" light />
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-accent group-hover:gap-2.5 transition-all whitespace-nowrap">
+            Ler <ArrowRight size={12} />
           </span>
         </div>
       </div>
@@ -230,31 +203,30 @@ function EditorialSideCard({ post, priority }: { post: PostItem; priority?: bool
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group relative flex flex-col rounded-xl overflow-hidden border border-border bg-surface hover:border-accent/40 hover:shadow-md transition-all duration-300 flex-1"
+      className="group flex gap-3 p-3.5 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all duration-200"
     >
-      {/* Imagem */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted/20 shrink-0">
-        <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="300px" priority={priority}
-          className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+      {/* Thumbnail */}
+      <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted/20">
+        <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="80px" priority={priority}
+          className="object-cover group-hover:scale-[1.05] transition-transform duration-300"
           fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` : '#f5f5f5'}
         />
-        {isRecent(post.publishedAt) && (
-          <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-accent text-white rounded-full text-[9px] font-bold uppercase">Novo</span>
-        )}
-        {isTrending(post.viewCount) && (
-          <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-orange-500/90 text-white rounded-full text-[9px] font-bold flex items-center gap-0.5"><TrendingUp size={8} />Em alta</span>
-        )}
       </div>
-      {/* Texto */}
-      <div className="p-3 flex flex-col gap-1.5 flex-1">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <CategoryBadge category={post.category} size="xs" />
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+            <CategoryBadge category={post.category} size="xs" />
+            {isRecent(post.publishedAt) && (
+              <span className="px-1.5 py-0.5 bg-accent/10 text-accent rounded text-[9px] font-bold">Novo</span>
+            )}
+          </div>
+          <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+            {post.title}
+          </p>
         </div>
-        <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors flex-1">
-          {post.title}
-        </p>
         <PostMeta post={post} size="xs" />
       </div>
+      <ChevronRight size={12} className="text-muted opacity-0 group-hover:opacity-50 transition-all shrink-0 mt-1" />
     </Link>
   )
 }
@@ -276,9 +248,6 @@ function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
         />
         <div className="absolute top-2.5 left-2.5 flex gap-1">
           <CategoryBadge category={post.category} />
-          {isTrending(post.viewCount) && (
-            <span className="px-1.5 py-0.5 bg-orange-500/90 text-white rounded-full text-[9px] font-bold flex items-center gap-0.5"><TrendingUp size={8} />Em alta</span>
-          )}
         </div>
         {isRecent(post.publishedAt) && (
           <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-accent text-white rounded-full text-[9px] font-bold uppercase">Novo</span>
@@ -290,19 +259,6 @@ function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
         </h2>
         {post.excerpt && (
           <p className="text-[12px] text-muted line-clamp-2 leading-relaxed">{post.excerpt}</p>
-        )}
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {post.tags.slice(0, 2).map(tag => {
-              const ts = getTagStyle(tag)
-              return (
-                <span key={tag} className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold"
-                  style={{ color: ts.color, backgroundColor: ts.bg }}>
-                  {tag}
-                </span>
-              )
-            })}
-          </div>
         )}
         <div className="pt-2.5 border-t border-border mt-auto flex items-center justify-between gap-2">
           <PostMeta post={post} size="xs" />
@@ -396,8 +352,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           <AdBanner slot={SLOT_LEADERBOARD} variant="leaderboard" eager minimal hideLabel />
         </div>
       </div>
-      <div className="pb-16">
-      {/* ── Hero — só na página 1 ─────────────────────────────── */}
+      <PageTransition className="pb-16">
+
+        {/* ── Hero — só na página 1 ─────────────────────────────── */}
         {page === 1 && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
@@ -414,9 +371,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
 
           {/* Conteúdo */}
-          <div className="absolute inset-0 z-10 flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10">
-            {/* Topo — apenas RSS no canto direito */}
-            <div className="flex justify-end">
+          <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10">
+            {/* Topo */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
+                <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
+              </div>
               <Link href="/blog/feed.xml"
                 className="flex items-center gap-1.5 text-white/35 hover:text-white/70 transition-colors text-xs px-2.5 py-1.5 rounded-lg hover:bg-white/10">
                 <Rss size={12} />
@@ -492,7 +453,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
 
           {/* ── Filter bar sticky ─────────────────────────────── */}
-          <div style={{ top: 'var(--nav-h, 52px)' }} className="sticky z-20 bg-background -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12 py-3 border-b border-border mb-8 space-y-2">
             {/* Categorias */}
             <div className="relative">
               <div className="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-background/95 to-transparent z-10 sm:hidden" />
@@ -757,9 +718,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
             {/* ── Sidebar ──────────────────────────────────────── */}
             <aside className="space-y-7">
 
-              {/* Busca */}
-              <BlogSearch />
-
               {/* Mais lidos */}
               {mostRead.length > 0 && (
                 <div>
@@ -869,13 +827,43 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               )}
 
+              {/* Newsletter CTA */}
+              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail size={14} className="text-accent shrink-0" />
+                  <p className="text-xs font-black uppercase tracking-wider text-accent">Newsletter</p>
+                </div>
+                <p className="text-sm font-bold text-foreground mb-1">Novidades do universo Hallyu</p>
+                <p className="text-[11px] text-muted leading-relaxed mb-4">
+                  Receba os melhores artigos sobre K-Pop, K-Drama e cultura coreana direto no seu e-mail.
+                </p>
+                <Link
+                  href="/settings"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-90 transition-all"
+                >
+                  Criar conta gratuita <ArrowRight size={12} />
+                </Link>
+              </div>
+
+              {/* RSS */}
+              <Link
+                href="/blog/feed.xml"
+                className="flex items-center gap-2.5 text-xs text-muted hover:text-foreground transition-colors border border-border rounded-xl px-3.5 py-3 hover:bg-surface group"
+              >
+                <Rss size={14} className="text-orange-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-foreground text-xs">Feed RSS</p>
+                  <p className="text-[10px] opacity-60">Receba novos artigos no seu leitor</p>
+                </div>
+                <ArrowRight size={12} className="ml-auto opacity-0 group-hover:opacity-50 transition-opacity" />
+              </Link>
             </aside>
           </div>
 
         </div>
 
         <ScrollToTop />
-      </div>
+      </PageTransition>
     </>
   )
 }

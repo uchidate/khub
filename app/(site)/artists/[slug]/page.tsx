@@ -213,7 +213,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     memberships: { some: { groupId: activeGroupId, isActive: true } },
                 },
                 take: 8,
-                select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
+                select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
                 orderBy: { trendingScore: 'desc' },
             }).catch(() => [])
             : Promise.resolve([]),
@@ -464,11 +464,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             </div>
                         </div>
 
-                        {/* Contagem do aniversário */}
-                        {artist.birthDate && (
-                            <AnniversaryCountdown date={artist.birthDate instanceof Date ? artist.birthDate.toISOString() : String(artist.birthDate)} label="aniversário" />
-                        )}
-
                         {/* Redes Sociais */}
                         {Object.keys(socialLinks).length > 0 && (
                             <div className="rounded-2xl bg-background border border-border overflow-hidden">
@@ -494,9 +489,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </div>
                             </div>
                         )}
-
-                        {/* Ad rectangle na sidebar */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!} variant="rectangle" minimal />
 
                     </div>
 
@@ -548,6 +540,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </ul>
                             </section>
                         )}
+
+                        {/* Ad: após bio, antes da filmografia */}
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
 
                         {/* Filmography */}
                         <section>
@@ -700,7 +695,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </div>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
                                     {relatedArtists.map(ra => (
-                                        <Link key={ra.id} href={`/artists/${ra.slug ?? ra.id}`}
+                                        <Link key={ra.id} href={`/artists/${ra.id}`}
                                             className="flex flex-col items-center gap-2 p-3 rounded-xl bg-background border border-border hover:border-accent/30 hover:shadow-sm transition-all group/ra text-center">
                                             <div className="relative w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden flex-shrink-0 bg-surface border-2 border-border group-hover/ra:border-accent/40 transition-colors">
                                                 {ra.primaryImageUrl ? (
@@ -726,7 +721,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {blogArticles.length > 0 && (
                             <section>
                                 <h2 className="text-sm font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                                    <Newspaper className="w-4 h-4 text-accent" />
+                                    <Film className="w-4 h-4 text-accent" />
                                     Artigos
                                 </h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -758,9 +753,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
 
                         {/* Instagram Feed — temporariamente oculto */}
-
-                        {/* Ad no fim do conteúdo principal */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
                     </div>
 
                 </div>
