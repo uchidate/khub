@@ -424,7 +424,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Nome Real" value={artist.birthName} />
                                 )}
                                 {birthDateFormatted && (
-                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={age !== null ? `${birthDateFormatted} (${age} anos)` : birthDateFormatted} />
+                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={birthDateFormatted} />
                                 )}
                                 {artist.placeOfBirth && (
                                     <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} label="Naturalidade" value={artist.placeOfBirth} />
@@ -759,7 +759,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
                         {/* Instagram Feed — temporariamente oculto */}
 
-                        {/* Segundo ad: no fim do conteúdo principal */}
+                        {/* Ad no fim do conteúdo principal */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
                     </div>
 
