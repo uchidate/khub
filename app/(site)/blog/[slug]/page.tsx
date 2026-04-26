@@ -192,9 +192,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const blocks = Array.isArray((post as unknown as { blocks: unknown }).blocks)
     ? (post as unknown as { blocks: BlogBlock[] }).blocks
     : []
-  const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card').map(b => (b as { artistId: string }).artistId)))
-  const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card').map(b => (b as { productionId: string }).productionId)))
-  const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card').map(b => (b as { groupId: string }).groupId)))
+  const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card' && (b as { artistId?: string }).artistId).map(b => (b as { artistId: string }).artistId)))
+  const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card' && (b as { productionId?: string }).productionId).map(b => (b as { productionId: string }).productionId)))
+  const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card' && (b as { groupId?: string }).groupId).map(b => (b as { groupId: string }).groupId)))
   const [artists, productions, groups, relatedPosts] = await Promise.all([
     artistIds.length > 0
       ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
