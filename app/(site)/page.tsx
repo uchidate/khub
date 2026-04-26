@@ -309,7 +309,7 @@ export default async function Home() {
                 <div className="max-w-[970px] mx-auto px-4 py-1">
                     <AdBanner
                         slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP ?? '2213592800'}
-                        variant="leaderboard"
+                        variant="auto"
                         eager
                         minimal
                         hideLabel

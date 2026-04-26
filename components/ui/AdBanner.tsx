@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 
 /**
- * Variantes de anúncio — cada uma tem tamanhos fixos por breakpoint:
+ * Variantes de anúncio:
  *
- *  leaderboard  topo de página    mobile 320×100 / tablet+ 728×90
- *  banner       mid-content       mobile 320×50  / tablet+ 728×90
+ *  leaderboard  topo de página    mobile 320×100 / desktop 728×90  (fixo)
+ *  banner       mid-content       mobile 320×50  / desktop 728×90  (fixo)
  *  rectangle    sidebar           300×250 fixo
  *  fluid        in-article        fluido gerenciado pelo AdSense
  *  multiplex    widget final       discovery widget (autorelaxed)
+ *  auto         responsivo        Google decide tamanho e formato
  */
-export type AdVariant = 'leaderboard' | 'banner' | 'rectangle' | 'fluid' | 'multiplex'
+export type AdVariant = 'leaderboard' | 'banner' | 'rectangle' | 'fluid' | 'multiplex' | 'auto'
 
 interface AdBannerProps {
     slot: string
@@ -72,21 +73,33 @@ function Footer({ minimal }: { minimal: boolean }) {
 export function AdBanner({ slot, variant, minimal = false, hideLabel = false, eager = false, className = '' }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
-    // size=null até hydration — evita SSR mismatch e garante que só UM <ins> é criado
     const [size, setSize] = useState<Size | null>(null)
 
     const isFixed = variant === 'leaderboard' || variant === 'banner' || variant === 'rectangle'
+    const isFluid = variant === 'fluid' || variant === 'multiplex' || variant === 'auto'
 
-    // Efeito 1 — determina o tamanho correto (requer window) ou configura observer
+    // Efeito 1 — tamanho fixo: calcula após hydration (requer window)
     useEffect(() => {
         if (!CLIENT || !slot) return
-
         if (isFixed) {
             setSize(pickSize(variant, window.innerWidth))
-            return
         }
+    }, [slot, variant, isFixed])
 
-        // fluid / multiplex — push via IntersectionObserver ou imediatamente
+    // Efeito 2 — push do ad fixo assim que o <ins> é montado
+    useEffect(() => {
+        if (!size || !isFixed || pushed.current) return
+        pushed.current = true
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+        } catch { /* AdSense ainda não carregou */ }
+    }, [size, isFixed])
+
+    // Efeito 3 — fluid/multiplex/auto: push via IntersectionObserver ou imediatamente
+    useEffect(() => {
+        if (!CLIENT || !slot || !isFluid) return
+
         const pushOnce = () => {
             if (pushed.current) return
             pushed.current = true
@@ -106,23 +119,12 @@ export function AdBanner({ slot, variant, minimal = false, hideLabel = false, ea
         )
         observer.observe(el)
         return () => observer.disconnect()
-    }, [slot, variant, eager, isFixed])
-
-    // Efeito 2 — push do ad fixo assim que o <ins> é montado (size definido)
-    useEffect(() => {
-        if (!size || !isFixed || pushed.current) return
-        pushed.current = true
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
-        } catch { /* AdSense ainda não carregou */ }
-    }, [size, isFixed])
+    }, [slot, variant, eager, isFluid])
 
     if (!CLIENT || !slot) return null
 
     // ── Ads de tamanho fixo (leaderboard, banner, rectangle) ───────────────
     if (isFixed) {
-        // Placeholder height antes de saber o breakpoint real
         const ph = variant === 'rectangle' ? 250 : variant === 'leaderboard' ? 100 : 50
         const h = size?.h ?? ph
         const w = size?.w ?? (variant === 'rectangle' ? 300 : 320)
@@ -141,6 +143,24 @@ export function AdBanner({ slot, variant, minimal = false, hideLabel = false, ea
                         />
                     )}
                 </div>
+                <Footer minimal={minimal} />
+            </div>
+        )
+    }
+
+    // ── Auto (responsivo — Google decide tamanho) ────────────────────────────
+    if (variant === 'auto') {
+        return (
+            <div ref={containerRef} className={className}>
+                <Label minimal={minimal} hideLabel={hideLabel} />
+                <ins
+                    className="adsbygoogle"
+                    style={{ display: 'block' }}
+                    data-ad-client={CLIENT}
+                    data-ad-slot={slot}
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"
+                />
                 <Footer minimal={minimal} />
             </div>
         )
