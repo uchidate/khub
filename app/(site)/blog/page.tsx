@@ -15,6 +15,7 @@ import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
+import { rankPosts } from '@/lib/blog/scoring'
 
 const BASE_URL = SITE_URL
 const SLOT_LEADERBOARD = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!
@@ -34,8 +35,14 @@ export const metadata: Metadata = {
 }
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
-const EMPTY_POSTS = { hero: null, posts: [], mostRead: [], categories: [], popularTags: [], total: 0, totalCategories: 0 }
+const EMPTY_POSTS = { hero: null, editorialIds: [] as string[], posts: [], mostRead: [], categories: [], popularTags: [], total: 0, totalCategories: 0 }
 const PAGE_SIZE = 20
+
+const POST_SELECT = {
+  id: true, slug: true, title: true, excerpt: true, coverImageUrl: true,
+  publishedAt: true, readingTimeMin: true, viewCount: true, featured: true, tags: true,
+  category: { select: { id: true, name: true, slug: true } },
+}
 
 async function getPosts(category?: string, tag?: string, page = 1) {
   if (process.env.SKIP_BUILD_STATIC_GENERATION) return EMPTY_POSTS
@@ -45,26 +52,43 @@ async function getPosts(category?: string, tag?: string, page = 1) {
       ...(category ? { category: { slug: category } } : {}),
       ...(tag ? { tags: { has: tag } } : {}),
     }
-    const [hero, posts, mostRead, categories, popularTags, total, totalCategories] = await Promise.all([
-      page === 1 ? prisma.blogPost.findFirst({
-        where: PUBLIC_WHERE,
-        orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
-        select: {
-          id: true, slug: true, title: true, excerpt: true, coverImageUrl: true,
-          publishedAt: true, readingTimeMin: true, viewCount: true, featured: true, tags: true,
-          category: { select: { id: true, name: true, slug: true } },
-        },
-      }) : Promise.resolve(null),
+
+    // Candidatos para seleção editorial automática (apenas página 1 sem filtro)
+    const editorialCandidatesPromise = page === 1 && !category && !tag
+      ? Promise.all([
+          // Top 30 mais recentes
+          prisma.blogPost.findMany({
+            where: PUBLIC_WHERE,
+            orderBy: { publishedAt: 'desc' },
+            take: 30,
+            select: POST_SELECT,
+          }),
+          // Top 10 mais vistos nos últimos 60 dias (captura trending menos recente)
+          prisma.blogPost.findMany({
+            where: {
+              ...PUBLIC_WHERE,
+              publishedAt: { gte: new Date(Date.now() - 60 * 86_400_000) },
+            },
+            orderBy: { viewCount: 'desc' },
+            take: 10,
+            select: POST_SELECT,
+          }),
+        ]).then(([recent, trending]) => {
+          // Mescla e deduplica
+          const seen = new Set<string>()
+          const merged = [...recent, ...trending].filter(p => !seen.has(p.id) && seen.add(p.id))
+          return rankPosts(merged)
+        })
+      : Promise.resolve([] as PostItem[])
+
+    const [editorialRanked, posts, mostRead, categories, popularTags, total, totalCategories] = await Promise.all([
+      editorialCandidatesPromise,
       prisma.blogPost.findMany({
         where,
         orderBy: { publishedAt: 'desc' },
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
-        select: {
-          id: true, slug: true, title: true, excerpt: true, coverImageUrl: true,
-          publishedAt: true, readingTimeMin: true, viewCount: true, featured: true, tags: true,
-          category: { select: { id: true, name: true, slug: true } },
-        },
+        select: POST_SELECT,
       }),
       !category && !tag ? prisma.blogPost.findMany({
         where: PUBLIC_WHERE,
@@ -89,7 +113,15 @@ async function getPosts(category?: string, tag?: string, page = 1) {
       prisma.blogPost.count({ where: PUBLIC_WHERE }),
       prisma.blogCategory.count(),
     ])
-    return { hero, posts, mostRead, categories, popularTags, total, totalCategories }
+
+    // Hero e cards editoriais vêm do ranking automático (página 1 sem filtro)
+    // Em filtro/página 2+ cai de volta para o primeiro post da listagem
+    const hero = editorialRanked[0] ?? null
+    const editorialIds = editorialRanked.slice(0, 4).map(p => p.id)
+
+    // Injeta posts editoriais no topo da listagem se não aparecerem já na página atual
+    // (garante que hero/magazine não fiquem duplicados no grid abaixo)
+    return { hero, editorialIds, posts, mostRead, categories, popularTags, total, totalCategories }
   } catch { return EMPTY_POSTS }
 }
 
@@ -309,7 +341,7 @@ function CompactPostCard({ post, rank }: { post: PostItem; rank?: number }) {
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string }> }) {
   const { category: activeCategory, tag: activeTag, page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
-  const { hero, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
+  const { hero, editorialIds, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
   const isFiltered = !!activeCategory || !!activeTag
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -331,14 +363,34 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
   const featPost = page > 1 ? null : (isFiltered ? posts[0] : hero)
   const heroId = featPost?.id
-  const gridPosts = posts.filter(p => p.id !== heroId)
+
+  // IDs dos posts no editorial automático — excluídos do grid de recentes
+  const editorialSet = new Set(editorialIds)
 
   const activeCatConfig = activeCategory ? BLOG_CATEGORY_BY_SLUG[activeCategory] : null
 
-  // Magazine grid: posts 0-1 no editorial (main+side), posts 2+ no grid normal
-  const magazineMain = gridPosts[0]
-  const magazineSide = gridPosts.slice(1, 3)
-  const gridStart = 3
+  // Magazine grid: usa ranking editorial automático (sem filtro, página 1)
+  // Em filtro/página 2+: cai de volta para posições da listagem
+  const editorialPostsMap = new Map(
+    [hero, ...posts].filter(Boolean).map(p => [p!.id, p!])
+  )
+
+  const magazineMain = !isFiltered && page === 1 && editorialIds[1]
+    ? (editorialPostsMap.get(editorialIds[1]) ?? posts.find(p => p.id !== heroId))
+    : posts.find(p => p.id !== heroId) ?? null
+
+  const magazineSideIds = !isFiltered && page === 1
+    ? editorialIds.slice(2, 4)
+    : []
+
+  const magazineSide = magazineSideIds.length > 0
+    ? magazineSideIds.map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts
+    : posts.filter(p => p.id !== heroId && p.id !== magazineMain?.id).slice(0, 2)
+
+  const editorialUsed = new Set([heroId, magazineMain?.id, ...magazineSide.map(p => p.id)])
+  const gridPosts = posts.filter(p => !editorialUsed.has(p.id))
+
+  const gridStart = 0
   const block2Posts = gridPosts.slice(gridStart, gridStart + 6)
   const compactPosts = gridPosts.slice(gridStart + 6)
 

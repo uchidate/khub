@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
+import { rankPosts } from "@/lib/blog/scoring"
 export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
@@ -21,6 +22,7 @@ const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 const POST_SELECT = {
     id: true, slug: true, title: true, excerpt: true,
     coverImageUrl: true, publishedAt: true, readingTimeMin: true,
+    featured: true, viewCount: true,
     category: { select: { name: true, slug: true } },
     tags: true,
 } as const
@@ -118,22 +120,38 @@ const getHomePublicData = unstable_cache(
                     select: POST_SELECT,
                 }).catch(() => [])
                 : [],
-            // Feed + fallback: exclui os que já estão nos slots
-            // take:30 garante posts suficientes por categoria nas seções do feed
-            prisma.blogPost.findMany({
-                where: {
-                    status: 'PUBLISHED',
-                    ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
-                },
-                take: 30,
-                orderBy: [{ featured: 'desc' }, { publishedAt: 'desc' }],
-                select: POST_SELECT,
-            }).catch(() => []),
+            // Feed + fallback: busca candidatos para ranking automático
+            // Mescla os 30 mais recentes + 10 mais vistos (60 dias) para capturar trending
+            Promise.all([
+                prisma.blogPost.findMany({
+                    where: {
+                        status: 'PUBLISHED',
+                        ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
+                    },
+                    take: 30,
+                    orderBy: { publishedAt: 'desc' },
+                    select: POST_SELECT,
+                }).catch(() => []),
+                prisma.blogPost.findMany({
+                    where: {
+                        status: 'PUBLISHED',
+                        publishedAt: { gte: new Date(Date.now() - 60 * 86_400_000) },
+                        ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
+                    },
+                    take: 10,
+                    orderBy: { viewCount: 'desc' },
+                    select: POST_SELECT,
+                }).catch(() => []),
+            ]).then(([recent, trending]) => {
+                const seen = new Set<string>()
+                const merged = [...recent, ...trending].filter(p => !seen.has(p.id) && seen.add(p.id))
+                return rankPosts(merged)
+            }),
         ])
 
         const slottedById = Object.fromEntries(slottedPostsRaw.map(p => [p.id, p]))
 
-        // Resolve slots — fallback para os mais recentes se slot vazio
+        // Resolve slots — fallback para ranking automático se slot vazio
         const fallback = fallbackPostsRaw
         const featuredPost = settings?.homeFeaturedPostId
             ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
