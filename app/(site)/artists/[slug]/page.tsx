@@ -14,6 +14,7 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
@@ -266,13 +267,18 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             <ViewTracker artistId={artist.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
-                "@type": "Person",
+                "@type": artist.roles?.some(r => ['singer', 'rapper', 'dancer', 'vocalist', 'idol'].includes(r.toLowerCase()))
+                    ? ["Person", "MusicArtist"] : "Person",
                 "name": artist.nameRomanized,
-                "alternateName": artist.nameHangul ?? undefined,
-                "description": artist.bio?.slice(0, 300) ?? undefined,
+                "alternateName": [
+                    ...(artist.nameHangul ? [artist.nameHangul] : []),
+                    ...(artist.stageNames ?? []),
+                ].filter(Boolean),
+                "description": (artist.bio ?? artist.analiseEditorial)?.slice(0, 300) ?? undefined,
                 "image": artist.primaryImageUrl ?? undefined,
                 "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
                 "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
+                "birthPlace": artist.placeOfBirth ? { "@type": "Place", "name": artist.placeOfBirth } : undefined,
                 "jobTitle": artist.roles?.[0] ?? undefined,
                 "nationality": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
@@ -540,6 +546,48 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </ul>
                             </section>
                         )}
+
+                        {/* YouTube / TikTok CTAs */}
+                        {(() => {
+                            const links = (artist.socialLinks as Record<string, string> | null) ?? {}
+                            const youtubeUrl = Object.entries(links).find(([k]) => k.toLowerCase().includes('youtube'))?.[1]
+                            const tiktokUrl = Object.entries(links).find(([k]) => k.toLowerCase().includes('tiktok'))?.[1]
+                            if (!youtubeUrl && !tiktokUrl) return null
+                            return (
+                                <div className="flex flex-wrap gap-3">
+                                    {youtubeUrl && (
+                                        <a
+                                            href={youtubeUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2.5 px-5 py-3 rounded-xl bg-[#FF0000]/10 border border-[#FF0000]/30 text-[#FF0000] hover:bg-[#FF0000]/20 transition-all group font-bold text-sm"
+                                        >
+                                            <Youtube className="w-5 h-5" />
+                                            Assistir no YouTube
+                                            <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                                        </a>
+                                    )}
+                                    {tiktokUrl && (
+                                        <a
+                                            href={tiktokUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2.5 px-5 py-3 rounded-xl bg-white/5 border border-white/20 text-white hover:bg-white/10 transition-all group font-bold text-sm"
+                                        >
+                                            <span className="text-base leading-none">▶</span>
+                                            Seguir no TikTok
+                                            <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                                        </a>
+                                    )}
+                                </div>
+                            )
+                        })()}
+
+                        {/* Compartilhar */}
+                        <ShareButtons
+                            title={artist.nameRomanized}
+                            url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`}
+                        />
 
                         {/* Ad: após bio, antes da filmografia */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />

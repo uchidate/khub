@@ -8,16 +8,18 @@ const NAV_COLUMNS = [
             { label: 'Artistas', href: '/artists' },
             { label: 'Grupos', href: '/groups' },
             { label: 'Produções', href: '/productions' },
+            { label: 'Calendário', href: '/calendario' },
             { label: 'Agências', href: '/agencies' },
         ],
     },
     {
-        heading: 'Blog',
+        heading: 'Descobrir',
         links: [
-            { label: 'Todos os artigos', href: '/blog' },
+            { label: 'Quiz K-Pop', href: '/quiz' },
+            { label: 'Melhores Dramas', href: '/melhores-dramas' },
+            { label: 'Blog', href: '/blog' },
             { label: 'K-Pop', href: '/blog?category=k-pop' },
             { label: 'K-Drama', href: '/blog?category=k-drama' },
-            { label: 'Grupos', href: '/blog?category=grupos' },
         ],
     },
     {
