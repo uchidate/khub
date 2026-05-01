@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { Calendar, Cake, Film, Star, ChevronRight } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
     title: 'Calendário K-Pop e K-Drama | HallyuHub',

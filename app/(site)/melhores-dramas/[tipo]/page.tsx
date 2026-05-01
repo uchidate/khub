@@ -9,7 +9,7 @@ import { ShareButtons } from '@/components/ui/ShareButtons'
 import { Star, Film, Tv, ExternalLink } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants/site'
 
-export const revalidate = 86400
+export const dynamic = 'force-dynamic'
 
 interface ListicleConfig {
     title: string
@@ -55,10 +55,6 @@ const CONFIGS: Record<string, ListicleConfig> = {
         where: { isHidden: false, type: 'movie', voteAverage: { gte: 7 } },
         intro: 'O cinema coreano ganhou reconhecimento mundial com "Parasita" (2020), primeiro filme não em inglês a vencer o Oscar de Melhor Filme. Mas essa tradição de qualidade vem de décadas de produções extraordinárias.',
     },
-}
-
-export async function generateStaticParams() {
-    return Object.keys(CONFIGS).map(tipo => ({ tipo }))
 }
 
 export async function generateMetadata(props: { params: Promise<{ tipo: string }> }): Promise<Metadata> {
