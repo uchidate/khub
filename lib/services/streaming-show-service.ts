@@ -195,5 +195,15 @@ async function syncSource(source: string): Promise<ShowSyncResult> {
 
 export async function syncStreamingShows(): Promise<ShowSyncResult[]> {
     if (!TMDB_API_KEY) throw new Error('TMDB_API_KEY não configurado')
-    return Promise.all(STREAMING_TAB_ORDER.map(syncSource))
+    return Promise.all([...STREAMING_TAB_ORDER, 'trending_global'].map(syncSource))
+}
+
+/** Retorna tmdbIds de shows no top N de qualquer fonte que ainda não têm Production linkada */
+export async function getUnmatchedStreamingTmdbIds(topN = 10): Promise<string[]> {
+    const rows = await prisma.streamingShow.findMany({
+        where: { productionId: null, rank: { lte: topN } },
+        select: { tmdbId: true },
+        distinct: ['tmdbId'],
+    })
+    return rows.map(r => r.tmdbId)
 }
