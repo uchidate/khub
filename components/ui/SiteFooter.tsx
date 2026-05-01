@@ -8,6 +8,7 @@ const NAV_COLUMNS = [
             { label: 'Artistas', href: '/artists' },
             { label: 'Grupos', href: '/groups' },
             { label: 'Produções', href: '/productions' },
+            { label: 'Calendário', href: '/calendario' },
             { label: 'Agências', href: '/agencies' },
         ],
     },
