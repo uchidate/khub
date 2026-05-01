@@ -13,12 +13,13 @@ const NAV_COLUMNS = [
         ],
     },
     {
-        heading: 'Blog',
+        heading: 'Descobrir',
         links: [
-            { label: 'Todos os artigos', href: '/blog' },
+            { label: 'Quiz K-Pop', href: '/quiz' },
+            { label: 'Melhores Dramas', href: '/melhores-dramas' },
+            { label: 'Blog', href: '/blog' },
             { label: 'K-Pop', href: '/blog?category=k-pop' },
             { label: 'K-Drama', href: '/blog?category=k-drama' },
-            { label: 'Grupos', href: '/blog?category=grupos' },
         ],
     },
     {
