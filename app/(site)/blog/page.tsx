@@ -7,7 +7,7 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown, Mail } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -892,36 +892,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               )}
 
-              {/* Newsletter CTA */}
-              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Mail size={14} className="text-accent shrink-0" />
-                  <p className="text-xs font-black uppercase tracking-wider text-accent">Newsletter</p>
-                </div>
-                <p className="text-sm font-bold text-foreground mb-1">Novidades do universo Hallyu</p>
-                <p className="text-[11px] text-muted leading-relaxed mb-4">
-                  Receba os melhores artigos sobre K-Pop, K-Drama e cultura coreana direto no seu e-mail.
-                </p>
-                <Link
-                  href="/settings"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-90 transition-all"
-                >
-                  Criar conta gratuita <ArrowRight size={12} />
-                </Link>
-              </div>
-
-              {/* RSS */}
-              <Link
-                href="/blog/feed.xml"
-                className="flex items-center gap-2.5 text-xs text-muted hover:text-foreground transition-colors border border-border rounded-xl px-3.5 py-3 hover:bg-surface group"
-              >
-                <Rss size={14} className="text-orange-500 shrink-0" />
-                <div>
-                  <p className="font-semibold text-foreground text-xs">Feed RSS</p>
-                  <p className="text-[10px] opacity-60">Receba novos artigos no seu leitor</p>
-                </div>
-                <ArrowRight size={12} className="ml-auto opacity-0 group-hover:opacity-50 transition-opacity" />
-              </Link>
             </aside>
           </div>
 

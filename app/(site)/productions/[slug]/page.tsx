@@ -13,6 +13,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { Film } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -494,6 +495,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             </div>
                         )}
+
+                        {/* Compartilhar */}
+                        <ShareButtons
+                            title={production.titlePt}
+                            url={`${BASE_URL}/productions/${production.slug ?? production.id}`}
+                        />
 
                         {/* Ad 2 — após elenco/galeria, antes das recomendações */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-6" />

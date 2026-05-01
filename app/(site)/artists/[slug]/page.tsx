@@ -14,6 +14,7 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
@@ -540,6 +541,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </ul>
                             </section>
                         )}
+
+                        {/* Compartilhar */}
+                        <ShareButtons
+                            title={artist.nameRomanized}
+                            url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`}
+                        />
 
                         {/* Ad: após bio, antes da filmografia */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-4" />
