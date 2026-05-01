@@ -37,10 +37,13 @@ export function getBadgeDisplay(badge: TrendingBadge): BadgeDisplay | null {
   return BADGE_BASE[badge]
 }
 
+// Delta visível máximo — saltos maiores (ex: cron reativado, ranking resetado) são suprimidos
+const MAX_VISIBLE_DELTA = 20
+
 /**
  * Retorna o badge completo de um artista, com label dinâmico:
  * - SUBINDO com delta → "↑5" (verde)
- * - Falling significativa (≥ 3) → "↓3" (vermelho muted) — mesmo sem badge formal
+ * - Queda significativa (≥ 3, ≤ MAX_VISIBLE_DELTA, fora do top 5) → "↓3" (vermelho muted)
  * - HOT / NOVO → labels estáticos
  * - null → sem badge
  */
@@ -49,14 +52,17 @@ export function getArtistBadgeDisplay(artist: ArtistForBadge): BadgeDisplay | nu
   const delta = getRankDelta(artist)
 
   if (badge === 'SUBINDO') {
-    const label = delta !== null && delta > 0 ? `↑${Math.min(delta, 99)}` : '↑'
+    const absDelta = delta !== null ? Math.abs(delta) : 0
+    const label = delta !== null && delta > 0 && absDelta <= MAX_VISIBLE_DELTA ? `↑${absDelta}` : '↑'
     return { label, className: BADGE_BASE.SUBINDO.className }
   }
 
-  // Mostra queda apenas quando significativa e não absurda (salto de rank pode ser streaming signal)
-  if (!badge && delta !== null && delta <= -8 && delta >= -999) {
+  // Mostra queda apenas se: queda real (delta negativo), dentro do limite visível,
+  // e artista fora do top 5 (top 5 com queda pequena não precisa de aviso).
+  const rank = artist.trendingRank ?? 999
+  if (!badge && delta !== null && delta <= -3 && delta >= -MAX_VISIBLE_DELTA && rank > 5) {
     return {
-      label: `↓${Math.min(Math.abs(delta), 99)}`,
+      label: `↓${Math.abs(delta)}`,
       className: 'bg-red-500/10 text-red-400',
     }
   }
