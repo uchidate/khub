@@ -11,12 +11,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     const where = slug.match(/^c[a-z0-9]{24}$/) ? { id: slug } : { slug }
     const artist = await prisma.artist.findFirst({
         where,
-        select: { nameRomanized: true, nameHangul: true, primaryImageUrl: true, profileImageUrl: true },
+        select: { nameRomanized: true, nameHangul: true, primaryImageUrl: true },
     })
 
     const name = artist?.nameRomanized ?? 'Artista'
     const hangul = artist?.nameHangul ?? ''
-    const imageUrl = artist?.primaryImageUrl ?? artist?.profileImageUrl ?? null
+    const imageUrl = artist?.primaryImageUrl ?? null
 
     return new ImageResponse(
         (
