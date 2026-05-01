@@ -237,15 +237,26 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 "name": production.titlePt,
                 "alternateName": production.titleKr ?? undefined,
                 "description": synopsis?.slice(0, 300) ?? undefined,
-                "image": production.imageUrl ?? undefined,
+                "image": production.backdropUrl ?? production.imageUrl ?? undefined,
                 "url": `${BASE_URL}/productions/${production.slug ?? production.id}`,
                 "inLanguage": "ko",
                 "countryOfOrigin": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(production.year ? { "datePublished": String(production.year) } : {}),
-                ...(production.releaseDate ? { "dateCreated": new Date(production.releaseDate).toISOString().split('T')[0] } : {}),
+                ...(production.releaseDate ? { "startDate": new Date(production.releaseDate).toISOString().split('T')[0] } : {}),
                 ...(production.episodeCount && !isMovie ? { "numberOfEpisodes": production.episodeCount } : {}),
+                ...(production.seasonCount && !isMovie ? { "numberOfSeasons": production.seasonCount } : {}),
+                ...(production.network ? { "productionCompany": { "@type": "Organization", "name": production.network } } : {}),
                 ...(castActors.length ? { "actor": castActors } : {}),
                 ...(production.tags?.length ? { "genre": production.tags } : {}),
+                ...(production.ageRating ? { "contentRating": production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+` } : {}),
+                ...(production.trailerUrl ? {
+                    "trailer": {
+                        "@type": "VideoObject",
+                        "name": `Trailer — ${production.titlePt}`,
+                        "embedUrl": production.trailerUrl,
+                        "thumbnailUrl": production.imageUrl ?? undefined,
+                    }
+                } : {}),
                 ...(production.voteAverage && production.voteAverage > 0 && production.voteCount && production.voteCount > 0 ? {
                     "aggregateRating": {
                         "@type": "AggregateRating",
