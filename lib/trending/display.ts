@@ -58,9 +58,9 @@ export function getArtistBadgeDisplay(artist: ArtistForBadge): BadgeDisplay | nu
   }
 
   // Mostra queda apenas se: queda real (delta negativo), dentro do limite visível,
-  // e artista fora do top 5 (top 5 com queda pequena não precisa de aviso).
+  // e artista fora do top 10 (top 10 já é destaque — badge de queda é ruído).
   const rank = artist.trendingRank ?? 999
-  if (!badge && delta !== null && delta <= -3 && delta >= -MAX_VISIBLE_DELTA && rank > 5) {
+  if (!badge && delta !== null && delta <= -3 && delta >= -MAX_VISIBLE_DELTA && rank > 10) {
     return {
       label: `↓${Math.abs(delta)}`,
       className: 'bg-red-500/10 text-red-400',
