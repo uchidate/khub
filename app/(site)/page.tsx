@@ -6,6 +6,7 @@ export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBelowFold } from "@/components/home/HomeBelowFold"
+import { HomeTodaysBirthdays, type BirthdayArtist } from "@/components/home/HomeTodaysBirthdays"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
@@ -289,6 +290,35 @@ export default async function Home() {
 
     const publicData = await getHomePublicData()
 
+    // Birthdays: not cached — must be fresh daily
+    const todaysBirthdays = await (async (): Promise<BirthdayArtist[]> => {
+        try {
+            const now = new Date()
+            const month = now.getUTCMonth() + 1
+            const day = now.getUTCDate()
+            const year = now.getUTCFullYear()
+            const artists = await prisma.artist.findMany({
+                where: {
+                    isHidden: false,
+                    flaggedAsNonKorean: false,
+                    birthDate: { not: null },
+                },
+                select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, birthDate: true },
+                orderBy: { trendingScore: 'desc' },
+                take: 500,
+            })
+            return artists
+                .filter(a => {
+                    const bd = a.birthDate!
+                    return bd.getUTCMonth() + 1 === month && bd.getUTCDate() === day
+                })
+                .slice(0, 8)
+                .map(a => ({ id: a.id, slug: a.slug, nameRomanized: a.nameRomanized, nameHangul: a.nameHangul, primaryImageUrl: a.primaryImageUrl, age: year - a.birthDate!.getUTCFullYear() }))
+        } catch {
+            return []
+        }
+    })()
+
     const { trendingArtists, featuredPost, carouselPosts, secondaryPosts, sidebarPosts, feedPosts, streamingShowsRaw, trendingGroups, categoryCountMap, siteStats, spotlightArtist, spotlightProduction, latestProductions, topAgencies } = publicData
 
     // Agrupa streaming shows por plataforma
@@ -353,6 +383,7 @@ export default async function Home() {
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
+            <HomeTodaysBirthdays artists={todaysBirthdays} />
             <HomeBelowFold
                 artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
                 group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}
