@@ -122,6 +122,10 @@ services:
     container_name: hallyuhub-cadvisor
     restart: unless-stopped
     privileged: true
+    command:
+      - '--housekeeping_interval=30s'
+      - '--docker_only=true'
+      - '--disable_metrics=disk,diskIO,network,tcp,udp,percpu,sched,process'
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
