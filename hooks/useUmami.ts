@@ -36,5 +36,23 @@ export function useUmami() {
 
     trackFilterApply: (filterType: string, value: string) =>
       track('filter_apply', { filter: filterType, value }),
+
+    trackScrollDepth: (depth: 25 | 50 | 75 | 100, slug: string) =>
+      track('scroll_depth', { depth, slug }),
+
+    trackQuizStart: () =>
+      track('quiz_start'),
+
+    trackQuizAnswer: (correct: boolean, questionIndex: number) =>
+      track('quiz_answer', { correct, question: questionIndex }),
+
+    trackQuizComplete: (score: number, total: number) =>
+      track('quiz_complete', { score, total, pct: Math.round((score / total) * 100) }),
+
+    trackBlogNav: (from: string, to: string, direction: 'prev' | 'next') =>
+      track('blog_nav', { from, to, direction }),
+
+    trackAdClick: (variant: string, position: string) =>
+      track('ad_click', { variant, position }),
   }
 }
