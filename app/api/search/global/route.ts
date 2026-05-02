@@ -5,7 +5,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
 import { withLogging } from '@/lib/server/withLogging'
-import { searchProductionsUnaccent, searchArtistsUnaccent, searchGroupsUnaccent } from '@/lib/utils/search-unaccent'
+import { searchProductionsUnaccent, searchArtistsUnaccent, searchGroupsUnaccent, searchBlogPostsUnaccent } from '@/lib/utils/search-unaccent'
 
 const log = createLogger('SEARCH')
 
@@ -17,7 +17,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
-    const types = searchParams.get('types')?.split(',') || ['artists', 'productions']
+    const types = searchParams.get('types')?.split(',') || ['artists', 'productions', 'articles']
     const limit = Math.min(10, Math.max(1, parseInt(searchParams.get('limit') || '5')))
 
     if (!query || query.trim().length < 2) {
@@ -37,8 +37,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
         // Aplicar filtro de classificação etária
         const ageRatingFilter = await applyAgeRatingFilter()
 
-        // Buscar em paralelo com suporte a unaccent (accent-insensitive)
-        const [artists, productions, groups] = await Promise.all([
+        const [artists, productions, groups, articles] = await Promise.all([
             types.includes('artists')
                 ? searchArtistsUnaccent(searchTerm, limit)
                 : [],
@@ -48,14 +47,17 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             types.includes('groups')
                 ? searchGroupsUnaccent(searchTerm, limit)
                 : [],
+            types.includes('articles')
+                ? searchBlogPostsUnaccent(searchTerm, limit)
+                : [],
         ])
 
-        const total = artists.length + productions.length + groups.length
+        const total = artists.length + productions.length + groups.length + articles.length
 
         return NextResponse.json({
             artists,
             groups,
-            news: [],
+            articles,
             productions,
             total,
             query: searchTerm

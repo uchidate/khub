@@ -6,6 +6,7 @@ export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
 import { HomeBelowFold } from "@/components/home/HomeBelowFold"
+import { HomeQuizBanner } from "@/components/home/HomeQuizBanner"
 import { HomeTodaysBirthdays, type BirthdayArtist } from "@/components/home/HomeTodaysBirthdays"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
@@ -384,6 +385,7 @@ export default async function Home() {
                 spotlightProduction={spotlightProduction}
             />
             <HomeTodaysBirthdays artists={todaysBirthdays} />
+            <HomeQuizBanner />
             <HomeBelowFold
                 artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
                 group={randomGroup ? { id: randomGroup.id, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}

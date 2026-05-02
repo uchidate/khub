@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ShareButtons } from '@/components/ui/ShareButtons'
 import { Star, Film, Tv, ExternalLink } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants/site'
+import { AdBanner } from '@/components/ui/AdBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,6 +110,8 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
                     <ShareButtons title={config.title} url={pageUrl} />
                 </header>
 
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" className="mb-8" />
+
                 {/* List */}
                 {productions.length === 0 ? (
                     <div className="text-center py-16 text-muted">
@@ -202,7 +205,8 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
                 )}
 
                 {/* Bottom share */}
-                <div className="mt-12 pt-8 border-t border-border">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-10 mb-2" />
+                <div className="mt-8 pt-8 border-t border-border">
                     <p className="text-sm text-muted mb-4">Gostou da lista? Compartilhe com seus amigos!</p>
                     <ShareButtons title={config.title} url={pageUrl} />
                 </div>

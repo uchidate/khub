@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Search, X, Command, User, Film, Newspaper, Loader2, TrendingUp, Users } from 'lucide-react'
+import { Search, X, Command, User, Film, BookOpen, Loader2, TrendingUp, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -237,26 +237,26 @@ export function QuickSearch() {
                                         </div>
                                     )}
 
-                                    {/* Notícias */}
-                                    {results.news.length > 0 && (
+                                    {/* Artigos */}
+                                    {results.articles.length > 0 && (
                                         <div className="p-3">
                                             <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
-                                                <Newspaper className="w-3.5 h-3.5" />
-                                                Notícias ({results.news.length})
+                                                <BookOpen className="w-3.5 h-3.5" />
+                                                Artigos ({results.articles.length})
                                             </div>
                                             <div className="space-y-0.5">
-                                                {results.news.map((item) => (
+                                                {results.articles.map((item) => (
                                                     <button
                                                         key={item.id}
-                                                        onClick={() => handleNavigate(`/news/${item.id}`)}
+                                                        onClick={() => handleNavigate(`/blog/${item.slug}`)}
                                                         className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
-                                                            {item.imageUrl ? (
-                                                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover" sizes="40px" />
+                                                            {item.coverImageUrl ? (
+                                                                <Image src={item.coverImageUrl} alt={item.title} fill className="object-cover" sizes="40px" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-muted">
-                                                                    <Newspaper size={16} />
+                                                                    <BookOpen size={16} />
                                                                 </div>
                                                             )}
                                                         </div>

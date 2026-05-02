@@ -122,3 +122,36 @@ export async function searchGroupsUnaccent(
     `
     return rows
 }
+
+type BlogPostSearchResult = {
+    id: string
+    slug: string
+    title: string
+    excerpt: string | null
+    coverImageUrl: string | null
+    publishedAt: Date
+}
+
+/**
+ * Busca artigos de blog com suporte a acentos no título
+ */
+export async function searchBlogPostsUnaccent(
+    searchTerm: string,
+    limit = 5
+): Promise<BlogPostSearchResult[]> {
+    const pattern = `%${searchTerm}%`
+
+    const rows = await prisma.$queryRaw<BlogPostSearchResult[]>`
+        SELECT b.id, b.slug, b.title, b.excerpt, b."coverImageUrl", b."publishedAt"
+        FROM "BlogPost" b
+        WHERE b.status = 'PUBLISHED'
+          AND b."isPrivate" = false
+          AND (
+            unaccent(b.title) ILIKE unaccent(${pattern})
+            OR unaccent(b.excerpt) ILIKE unaccent(${pattern})
+          )
+        ORDER BY b."publishedAt" DESC
+        LIMIT ${limit}
+    `
+    return rows
+}
