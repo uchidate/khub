@@ -196,7 +196,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
 
             {/* Ad: entre filtros e grid */}
             <AdBanner
-                slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_NEWS_LIST ?? ''}
+                slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? ''}
                 variant="banner"
                 className="my-6"
             />

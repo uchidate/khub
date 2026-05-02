@@ -435,3 +435,8 @@ textarea:focus-visible {
   @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl;
 }
 
+
+/* AdSense — colapsar slots não preenchidos sem deixar espaço vazio */
+ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
+}

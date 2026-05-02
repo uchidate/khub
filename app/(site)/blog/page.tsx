@@ -18,10 +18,8 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { rankPosts } from '@/lib/blog/scoring'
 
 const BASE_URL = SITE_URL
-const SLOT_LEADERBOARD = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!
-const SLOT_RECTANGLE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!
-const SLOT_BANNER = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!
-const SLOT_IN_ARTICLE_2 = process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_2!
+const SLOT_AUTO = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
+const SLOT_FLUID = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!
 
 export const metadata: Metadata = {
   title: 'Blog K-Pop & K-Drama',
@@ -405,7 +403,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <div className="w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={SLOT_LEADERBOARD} variant="auto" eager minimal hideLabel />
+          <AdBanner slot={SLOT_AUTO} variant="auto" eager minimal hideLabel />
         </div>
       </div>
       <PageTransition className="pb-16">
@@ -685,7 +683,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   )}
 
                   {block2Posts.length > 0 && (
-                    <AdBanner slot={SLOT_BANNER} variant="auto" className="my-2" />
+                    <AdBanner slot={SLOT_AUTO} variant="auto" className="my-2" />
                   )}
 
                   {block2Posts.length > 0 && (
@@ -707,7 +705,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
-                      <AdBanner slot={SLOT_IN_ARTICLE_2} variant="fluid" className="mb-6" />
+                      <AdBanner slot={SLOT_FLUID} variant="fluid" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-2 shrink-0">
                           <ArrowRight size={12} className="text-muted/50" />
@@ -829,7 +827,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               )}
 
               {/* Ad na sidebar */}
-              <AdBanner slot={SLOT_RECTANGLE} variant="rectangle" />
+              <AdBanner slot={SLOT_AUTO} variant="auto" />
 
               {/* Explorar por categoria */}
               <div>

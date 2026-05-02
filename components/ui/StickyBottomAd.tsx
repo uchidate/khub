@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE ?? '1740970038'
+const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? '1740970038'
 const AUTO_DISMISS_MS = 15_000
 
 export function StickyBottomAd() {

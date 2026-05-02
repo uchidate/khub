@@ -12,7 +12,7 @@ const InstagramEmbed = dynamic(() => import('@/components/ui/InstagramEmbed').th
 const TikTokEmbed = dynamic(() => import('@/components/ui/TikTokEmbed').then(m => ({ default: m.TikTokEmbed })), { ssr: false })
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE ?? '1740970038'
+const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? '1740970038'
 
 function InArticleAd({ id }: { id: string }) {
     const containerRef = useRef<HTMLDivElement>(null)

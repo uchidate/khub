@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
 
 interface Artist {
     id: string
