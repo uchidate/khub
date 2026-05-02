@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Trophy, RefreshCw, ChevronRight, CheckCircle2, XCircle, Sparkles, Share2, Flame, Zap, Clock, BookOpen } from 'lucide-react'
+import { AdBanner } from '@/components/ui/AdBanner'
 
 interface Question {
     id: number
@@ -529,6 +530,7 @@ export function QuizClient() {
     const [streak, setStreak] = useState(0)
     const [points, setPoints] = useState(0)
     const [showStreak, setShowStreak] = useState(false)
+    const [feedbackAnim, setFeedbackAnim] = useState<'correct' | 'wrong' | null>(null)
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     const q = questions[current]
@@ -586,9 +588,12 @@ export function QuizClient() {
                 setShowStreak(true)
                 setTimeout(() => setShowStreak(false), 1500)
             }
+            setFeedbackAnim('correct')
         } else {
             setStreak(0)
+            setFeedbackAnim('wrong')
         }
+        setTimeout(() => setFeedbackAnim(null), 600)
     }, [selected, answers, current, questions, timeLeft, streak, stopTimer])
 
     // Timer
@@ -606,6 +611,8 @@ export function QuizClient() {
                     newAnswers[current] = -1
                     setAnswers(newAnswers)
                     setStreak(0)
+                    setFeedbackAnim('wrong')
+                    setTimeout(() => setFeedbackAnim(null), 600)
                     return 0
                 }
                 return t - 1
@@ -658,6 +665,18 @@ export function QuizClient() {
                     @keyframes confetti-fall {
                         0% { transform: translateY(0) rotate(0deg); opacity: 1; }
                         100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+                    }
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        20% { transform: translateX(-6px); }
+                        40% { transform: translateX(6px); }
+                        60% { transform: translateX(-4px); }
+                        80% { transform: translateX(4px); }
+                    }
+                    @keyframes pop {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.04); }
+                        100% { transform: scale(1); }
                     }
                 `}</style>
                 <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
@@ -721,6 +740,13 @@ export function QuizClient() {
                             </div>
                         )}
 
+                        {/* AdSense — resultado é o melhor momento (usuário parou, lê) */}
+                        <AdBanner
+                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!}
+                            variant="rectangle"
+                            className="mb-4"
+                        />
+
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => {
@@ -763,9 +789,22 @@ export function QuizClient() {
                 </div>
             )}
 
+            <style>{`
+                @keyframes shake {
+                    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+                }
+                @keyframes pop {
+                    0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)}
+                }
+            `}</style>
             <div
                 className="max-w-xl w-full"
-                style={{ opacity: animating ? 0 : 1, transform: animating ? 'translateY(4px)' : 'translateY(0)', transition: 'opacity 0.2s, transform 0.2s' }}
+                style={{
+                    opacity: animating ? 0 : 1,
+                    transform: animating ? 'translateY(4px)' : 'translateY(0)',
+                    transition: 'opacity 0.2s, transform 0.2s',
+                    animation: feedbackAnim === 'wrong' ? 'shake 0.4s ease' : feedbackAnim === 'correct' ? 'pop 0.3s ease' : 'none',
+                }}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -858,8 +897,10 @@ export function QuizClient() {
                 {showExplanation && (
                     <div className={`rounded-xl border p-4 mb-3 text-sm leading-relaxed ${selected === q.correct ? 'border-green-500/30 bg-green-500/5 text-green-300' : 'border-red-500/30 bg-red-500/5 text-red-300'}`}>
                         {selected === -1
-                            ? <p className="font-bold mb-1">⏱ Tempo esgotado!</p>
-                            : <p className="font-bold mb-1">{selected === q.correct ? '✓ Correto!' : '✗ Incorreto'}</p>
+                            ? <p className="font-bold mb-1 text-base">⏱ Tempo esgotado!</p>
+                            : selected === q.correct
+                                ? <p className="font-bold mb-1 text-base">{streak >= 3 ? '🔥 Em chamas!' : streak >= 2 ? '⚡ Sequência!' : '✓ Correto!'}</p>
+                                : <p className="font-bold mb-1 text-base">✗ Incorreto</p>
                         }
                         <p className="text-xs opacity-90 mb-2">{q.explanation}</p>
                         {q.relatedHref && (
