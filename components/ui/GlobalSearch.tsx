@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, X, Loader2, User, Newspaper, Film, TrendingUp, Users } from 'lucide-react'
+import { Search, X, Loader2, User, BookOpen, Film, TrendingUp, Users } from 'lucide-react'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 
@@ -232,27 +232,27 @@ export function GlobalSearch() {
                                 </div>
                             )}
 
-                            {/* News */}
-                            {results.news.length > 0 && (
+                            {/* Artigos */}
+                            {results.articles.length > 0 && (
                                 <div className="p-3">
                                     <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff2d78]">
-                                        <Newspaper className="w-3.5 h-3.5" />
-                                        Notícias ({results.news.length})
+                                        <BookOpen className="w-3.5 h-3.5" />
+                                        Artigos ({results.articles.length})
                                     </div>
                                     <div className="space-y-0.5">
-                                        {results.news.map((newsItem) => (
+                                        {results.articles.map((article) => (
                                             <Link
-                                                key={newsItem.id}
-                                                href={`/news/${newsItem.id}`}
+                                                key={article.id}
+                                                href={`/blog/${article.slug}`}
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex items-start gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-foreground text-[13px] group-hover:text-[#ff2d78] transition-colors line-clamp-2 leading-tight">
-                                                        {newsItem.title}
+                                                        {article.title}
                                                     </p>
                                                     <p className="text-xs text-muted mt-1">
-                                                        {new Date(newsItem.publishedAt).toLocaleDateString('pt-BR', {
+                                                        {new Date(article.publishedAt).toLocaleDateString('pt-BR', {
                                                             day: '2-digit',
                                                             month: 'short'
                                                         })}

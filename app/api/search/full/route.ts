@@ -4,6 +4,7 @@ import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
+import { searchBlogPostsUnaccent } from '@/lib/utils/search-unaccent'
 
 const log = createLogger('SEARCH-FULL')
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     try {
         const ageRatingFilter = await applyAgeRatingFilter()
 
-        const [artists, groups, productions] = await Promise.all([
+        const [artists, groups, productions, articles] = await Promise.all([
             prisma.artist.findMany({
                 where: {
                     flaggedAsNonKorean: false,
@@ -94,9 +95,11 @@ export async function GET(request: NextRequest) {
                 orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
                 take: 30,
             }),
+
+            searchBlogPostsUnaccent(searchTerm, 20),
         ])
 
-        return NextResponse.json({ artists, groups, news: [], productions })
+        return NextResponse.json({ artists, groups, articles, productions })
     } catch (error: unknown) {
         log.error('Full search error', { error: getErrorMessage(error) })
         return NextResponse.json({ error: 'Search failed' }, { status: 500 })

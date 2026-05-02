@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
-import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star } from 'lucide-react'
+import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star, BookOpen } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
@@ -40,13 +40,23 @@ interface Production {
     voteAverage: number | null
 }
 
+interface Article {
+    id: string
+    slug: string
+    title: string
+    excerpt: string | null
+    coverImageUrl: string | null
+    publishedAt: string
+}
+
 interface SearchData {
     artists: Artist[]
     groups: Group[]
     productions: Production[]
+    articles: Article[]
 }
 
-type FilterType = 'all' | 'artists' | 'groups' | 'productions'
+type FilterType = 'all' | 'artists' | 'groups' | 'productions' | 'articles'
 
 function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
     return (
@@ -99,18 +109,21 @@ function SearchContent() {
     const artists = deferredData?.artists ?? []
     const groups = deferredData?.groups ?? []
     const productions = deferredData?.productions ?? []
-    const total = artists.length + groups.length + productions.length
+    const articles = deferredData?.articles ?? []
+    const total = artists.length + groups.length + productions.length + articles.length
 
     const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode }[] = [
         { key: 'all', label: 'Todos', count: total, icon: <Search size={13} /> },
         { key: 'artists', label: 'Artistas', count: artists.length, icon: <User size={13} /> },
         { key: 'groups', label: 'Grupos', count: groups.length, icon: <Users size={13} /> },
         { key: 'productions', label: 'Produções', count: productions.length, icon: <Film size={13} /> },
+        { key: 'articles', label: 'Artigos', count: articles.length, icon: <BookOpen size={13} /> },
     ]
 
     const showArtists = activeFilter === 'all' || activeFilter === 'artists'
     const showGroups = activeFilter === 'all' || activeFilter === 'groups'
     const showProductions = activeFilter === 'all' || activeFilter === 'productions'
+    const showArticles = activeFilter === 'all' || activeFilter === 'articles'
 
     return (
         <>
@@ -276,6 +289,35 @@ function SearchContent() {
                                         </div>
                                         <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prod.titlePt}</p>
                                         <p className="text-[10px] text-muted mt-0.5">{prod.type}{prod.year ? ` · ${prod.year}` : ''}</p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Artigos */}
+                    {showArticles && articles.length > 0 && (
+                        <section>
+                            <SectionHeader icon={<BookOpen size={14} />} title="Artigos" count={articles.length} />
+                            <div className="space-y-3">
+                                {articles.map(article => (
+                                    <Link key={article.id} href={`/blog/${article.slug}`}
+                                        className="group flex items-start gap-4 p-3 -mx-3 rounded-xl hover:bg-surface-hover transition-colors">
+                                        {article.coverImageUrl && (
+                                            <div className="relative w-20 h-14 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+                                                <Image src={article.coverImageUrl} alt={article.title} fill
+                                                    sizes="80px" className="object-cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{article.title}</p>
+                                            {article.excerpt && (
+                                                <p className="text-xs text-muted mt-1 line-clamp-1">{article.excerpt}</p>
+                                            )}
+                                            <p className="text-[10px] text-muted/70 mt-1">
+                                                {new Date(article.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </p>
+                                        </div>
                                     </Link>
                                 ))}
                             </div>

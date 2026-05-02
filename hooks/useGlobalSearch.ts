@@ -11,12 +11,13 @@ interface Artist {
     trendingScore: number
 }
 
-interface News {
+interface Article {
     id: string
+    slug: string
     title: string
-    imageUrl: string | null
-    publishedAt: Date
-    tags: string[]
+    excerpt: string | null
+    coverImageUrl: string | null
+    publishedAt: string
 }
 
 interface Production {
@@ -42,73 +43,60 @@ interface Group {
 interface SearchResults {
     artists: Artist[]
     groups: Group[]
-    news: News[]
+    articles: Article[]
     productions: Production[]
     total: number
     query: string
 }
 
+const EMPTY: SearchResults = { artists: [], groups: [], articles: [], productions: [], total: 0, query: '' }
+
 export function useGlobalSearch() {
     const [query, setQuery] = useState('')
-    const [results, setResults] = useState<SearchResults>({
-        artists: [],
-        groups: [],
-        news: [],
-        productions: [],
-        total: 0,
-        query: ''
-    })
+    const [results, setResults] = useState<SearchResults>(EMPTY)
     const [isLoading, setIsLoading] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const abortControllerRef = useRef<AbortController | null>(null)
 
     const search = useCallback(async (searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
-            setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
+            setResults(EMPTY)
             setIsLoading(false)
             return
         }
 
-        // Cancelar busca anterior se existir
         if (abortControllerRef.current) {
             abortControllerRef.current.abort()
         }
 
-        // Criar novo AbortController
         abortControllerRef.current = new AbortController()
-
         setIsLoading(true)
 
         try {
             const response = await fetch(
-                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5&types=artists,groups,productions,news`,
+                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5&types=artists,groups,productions,articles`,
                 { signal: abortControllerRef.current.signal }
             )
 
-            if (!response.ok) {
-                throw new Error('Search failed')
-            }
+            if (!response.ok) throw new Error('Search failed')
 
             const data = await response.json()
             setResults(data)
         } catch (error: any) {
-            // Ignorar erro de abort (é esperado quando cancelamos)
             if (error.name !== 'AbortError') {
-                console.error('Search error:', error)
-                setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: searchTerm })
+                setResults({ ...EMPTY, query: searchTerm })
             }
         } finally {
             setIsLoading(false)
         }
     }, [])
 
-    // Debounce da busca (300ms)
     useEffect(() => {
         const timer = setTimeout(() => {
             if (query.trim().length >= 2) {
                 search(query)
             } else {
-                setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
+                setResults(EMPTY)
             }
         }, 300)
 
@@ -117,7 +105,7 @@ export function useGlobalSearch() {
 
     const clearSearch = useCallback(() => {
         setQuery('')
-        setResults({ artists: [], groups: [], news: [], productions: [], total: 0, query: '' })
+        setResults(EMPTY)
         setIsOpen(false)
     }, [])
 
