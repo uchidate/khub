@@ -401,7 +401,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <div className="w-full bg-background border-b border-border/40">
+      <div className="hidden md:block w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
           <AdBanner slot={SLOT_AUTO} variant="auto" eager minimal hideLabel />
         </div>
