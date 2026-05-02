@@ -395,7 +395,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     </section>
                 )}
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY!} variant="banner" className="mb-12" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AGENCY!} variant="auto" className="mb-12" />
 
                 {/* ── Elenco — só mostra se tem artistas diretos ───────────────── */}
                 {agency.artists.length > 0 && (

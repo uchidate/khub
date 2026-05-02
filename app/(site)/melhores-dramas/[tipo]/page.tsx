@@ -110,7 +110,7 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
                     <ShareButtons title={config.title} url={pageUrl} />
                 </header>
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" className="mb-8" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="auto" className="mb-8" />
 
                 {/* List */}
                 {productions.length === 0 ? (

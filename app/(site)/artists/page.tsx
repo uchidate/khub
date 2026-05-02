@@ -145,11 +145,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 })),
             }} />
         )}
-        <div className="w-full bg-background border-b border-border/40">
-            <div className="max-w-[970px] mx-auto px-4 py-1">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" eager minimal hideLabel />
-            </div>
-        </div>
         <PageTransition className="pb-16">
 
             {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
@@ -262,6 +257,11 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     </div>
                 </div>
             )}
+
+            {/* Ad após hero — viewability alta sem penalizar fold */}
+            <div className="max-w-[970px] mx-auto px-4 py-2">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="auto" minimal hideLabel />
+            </div>
 
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">

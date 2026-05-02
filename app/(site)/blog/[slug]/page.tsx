@@ -15,6 +15,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { AdBanner } from '@/components/ui/AdBanner'
+import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 
@@ -257,13 +258,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      {/* ── Top Ad — leaderboard fixo, igual homepage ── */}
-      <div className="w-full bg-background border-b border-border/40 mb-6">
-        <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="leaderboard" eager hideLabel />
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto">
       <div className="flex gap-6 xl:gap-8 items-start">
       {/* ── Coluna principal ── */}
@@ -316,6 +310,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <SafeImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
           </div>
         )}
+
+        {/* Ad após cover image — melhor viewability, sem CLS acima do fold */}
+        <div className="mb-8">
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="auto" hideLabel />
+        </div>
 
         {/* Content */}
         <article>
@@ -473,6 +472,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       </div>{/* fim flex */}
       </div>{/* fim max-w */}
+      <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} />
     </PageTransition>
   )
 }
