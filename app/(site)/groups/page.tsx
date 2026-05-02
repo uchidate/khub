@@ -200,11 +200,6 @@ export default async function GroupsPage() {
             )}
 
 
-            {/* Ad após hero — viewability alta sem penalizar fold */}
-            <div className="max-w-[970px] mx-auto px-4 py-2">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!} variant="auto" minimal hideLabel />
-            </div>
-
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                 <Suspense>
