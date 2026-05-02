@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useUmami } from '@/hooks/useUmami'
 
 interface Artist {
     id: string
@@ -58,6 +59,8 @@ export function useGlobalSearch() {
     const [isOpen, setIsOpen] = useState(false)
     const abortControllerRef = useRef<AbortController | null>(null)
 
+    const { trackSearch } = useUmami()
+
     const search = useCallback(async (searchTerm: string) => {
         if (searchTerm.trim().length < 2) {
             setResults(EMPTY)
@@ -82,6 +85,7 @@ export function useGlobalSearch() {
 
             const data = await response.json()
             setResults(data)
+            trackSearch(searchTerm, data.total ?? 0)
         } catch (error: any) {
             if (error.name !== 'AbortError') {
                 setResults({ ...EMPTY, query: searchTerm })

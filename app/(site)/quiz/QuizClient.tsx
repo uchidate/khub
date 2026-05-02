@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Trophy, RefreshCw, ChevronRight, CheckCircle2, XCircle, Sparkles, Share2, Flame, Zap, Clock, BookOpen } from 'lucide-react'
 import { AdBanner } from '@/components/ui/AdBanner'
+import { useUmami } from '@/hooks/useUmami'
 
 interface Question {
     id: number
@@ -532,6 +533,9 @@ export function QuizClient() {
     const [showStreak, setShowStreak] = useState(false)
     const [feedbackAnim, setFeedbackAnim] = useState<'correct' | 'wrong' | null>(null)
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const startTracked = useRef(false)
+
+    const { trackQuizStart, trackQuizAnswer, trackQuizComplete } = useUmami()
 
     const q = questions[current]
     const score = answers.filter((a, i) => a === questions[i]?.correct).length
@@ -578,7 +582,13 @@ export function QuizClient() {
         newAnswers[current] = idx
         setAnswers(newAnswers)
 
+        if (!startTracked.current) {
+            startTracked.current = true
+            trackQuizStart()
+        }
+
         const isCorrect = idx === questions[current].correct
+        trackQuizAnswer(isCorrect, current)
         if (isCorrect) {
             const timeBonus = Math.floor(timeLeft * 5)
             const newStreak = streak + 1
@@ -632,6 +642,7 @@ export function QuizClient() {
                 setShowExplanation(false)
             } else {
                 setFinished(true)
+                trackQuizComplete(score, questions.length)
             }
             setAnimating(false)
         }, 200)

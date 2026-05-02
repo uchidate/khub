@@ -23,6 +23,7 @@ const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRendere
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
 const BlogViewTracker = dynamic(() => import('@/components/blog/BlogViewTracker').then(m => ({ default: m.BlogViewTracker })))
 const BlogReadingProgress = dynamic(() => import('@/components/blog/BlogReadingProgress').then(m => ({ default: m.BlogReadingProgress })))
+const BlogNavLink = dynamic(() => import('@/components/blog/BlogNavLink').then(m => ({ default: m.BlogNavLink })))
 const BASE_URL = SITE_URL
 
 function MarkdownWithAds({ content }: { content: string }) {
@@ -420,24 +421,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {(prevPost || nextPost) && (
           <div className="mt-8 pt-8 border-t border-border grid grid-cols-2 gap-3">
             <div>
-              {prevPost && (
-                <Link href={`/blog/${prevPost.slug}`} className="group flex flex-col gap-1.5 p-3 rounded-xl border border-border hover:border-accent/40 hover:bg-surface transition-all h-full">
-                  <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-muted">
-                    <ArrowLeft size={10} /> Anterior
-                  </span>
-                  <span className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prevPost.title}</span>
-                </Link>
-              )}
+              {prevPost && <BlogNavLink slug={prevPost.slug} title={prevPost.title} direction="prev" currentSlug={slug} />}
             </div>
             <div>
-              {nextPost && (
-                <Link href={`/blog/${nextPost.slug}`} className="group flex flex-col gap-1.5 p-3 rounded-xl border border-border hover:border-accent/40 hover:bg-surface transition-all text-right h-full">
-                  <span className="flex items-center justify-end gap-1 text-[10px] font-black uppercase tracking-widest text-muted">
-                    Próximo <ArrowRight size={10} />
-                  </span>
-                  <span className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{nextPost.title}</span>
-                </Link>
-              )}
+              {nextPost && <BlogNavLink slug={nextPost.slug} title={nextPost.title} direction="next" currentSlug={slug} />}
             </div>
           </div>
         )}

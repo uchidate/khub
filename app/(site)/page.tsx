@@ -363,18 +363,6 @@ export default async function Home() {
                     "query-input": "required name=search_term_string",
                 },
             }} />
-            {/* ── Leaderboard topo — tamanho fixo: 320×50 mobile / 728×90 desktop ── */}
-            <div className="w-full bg-background border-b border-border/40">
-                <div className="max-w-[970px] mx-auto px-4 py-1">
-                    <AdBanner
-                        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD ?? '3545263450'}
-                        variant="auto"
-                        eager
-                        minimal
-                        hideLabel
-                    />
-                </div>
-            </div>
 
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
