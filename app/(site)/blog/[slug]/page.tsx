@@ -8,7 +8,7 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { Clock, Eye, ArrowLeft, Tag, Calendar } from 'lucide-react'
+import { Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
 
@@ -195,7 +195,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card' && (b as { artistId?: string }).artistId).map(b => (b as { artistId: string }).artistId)))
   const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card' && (b as { productionId?: string }).productionId).map(b => (b as { productionId: string }).productionId)))
   const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card' && (b as { groupId?: string }).groupId).map(b => (b as { groupId: string }).groupId)))
-  const [artists, productions, groups, relatedPosts] = await Promise.all([
+  const [artists, productions, groups, relatedPosts, prevPost, nextPost] = await Promise.all([
     artistIds.length > 0
       ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
       : [],
@@ -206,6 +206,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
       : [],
     fetchRelatedPosts(post.id, post.tags).catch(() => []),
+    post.publishedAt
+      ? prisma.blogPost.findFirst({
+          where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { lt: post.publishedAt } },
+          orderBy: { publishedAt: 'desc' },
+          select: { slug: true, title: true, coverImageUrl: true },
+        }).catch(() => null)
+      : null,
+    post.publishedAt
+      ? prisma.blogPost.findFirst({
+          where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { gt: post.publishedAt } },
+          orderBy: { publishedAt: 'asc' },
+          select: { slug: true, title: true, coverImageUrl: true },
+        }).catch(() => null)
+      : null,
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),
@@ -356,12 +370,78 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Artistas mencionados no artigo */}
+        {artists.length > 0 && (
+          <div className="mt-10 pt-8 border-t border-border">
+            <p className="text-xs font-black uppercase tracking-widest text-muted mb-4">Mencionados neste artigo</p>
+            <div className="flex flex-wrap gap-3">
+              {artists.map(artist => (
+                <Link
+                  key={artist.id}
+                  href={`/artists/${artist.id}`}
+                  className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
+                >
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface-hover flex-shrink-0">
+                    {artist.primaryImageUrl ? (
+                      <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover object-top" sizes="32px" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted">{artist.nameRomanized[0]}</div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">{artist.nameRomanized}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Banner Quiz */}
+        <Link
+          href="/quiz"
+          className="group mt-10 flex items-center gap-4 p-4 rounded-2xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
+        >
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+            <Trophy className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-foreground group-hover:text-accent transition-colors">Quanto você sabe sobre K-Pop e K-Drama?</p>
+            <p className="text-xs text-muted">Faça o quiz do HallyuHub — 10 perguntas, perguntas novas a cada rodada</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        </Link>
+
         {/* Multiplex — recomendações patrocinadas no final do artigo */}
         <AdBanner
           slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!}
           variant="multiplex"
           className="mt-10"
         />
+
+        {/* Navegação anterior / próximo */}
+        {(prevPost || nextPost) && (
+          <div className="mt-8 pt-8 border-t border-border grid grid-cols-2 gap-3">
+            <div>
+              {prevPost && (
+                <Link href={`/blog/${prevPost.slug}`} className="group flex flex-col gap-1.5 p-3 rounded-xl border border-border hover:border-accent/40 hover:bg-surface transition-all h-full">
+                  <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-muted">
+                    <ArrowLeft size={10} /> Anterior
+                  </span>
+                  <span className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prevPost.title}</span>
+                </Link>
+              )}
+            </div>
+            <div>
+              {nextPost && (
+                <Link href={`/blog/${nextPost.slug}`} className="group flex flex-col gap-1.5 p-3 rounded-xl border border-border hover:border-accent/40 hover:bg-surface transition-all text-right h-full">
+                  <span className="flex items-center justify-end gap-1 text-[10px] font-black uppercase tracking-widest text-muted">
+                    Próximo <ArrowRight size={10} />
+                  </span>
+                  <span className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{nextPost.title}</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
