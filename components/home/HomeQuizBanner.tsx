@@ -9,7 +9,7 @@ const PREVIEW_QUESTIONS = [
 
 export function HomeQuizBanner() {
     return (
-        <section className="px-4 sm:px-6 lg:px-12 py-6">
+        <section className="bg-background px-4 sm:px-6 lg:px-12 py-4 pb-8">
             <div className="max-w-7xl mx-auto">
                 <Link
                     href="/quiz"
