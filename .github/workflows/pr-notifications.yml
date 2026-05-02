@@ -24,7 +24,7 @@ jobs:
 
       - name: 🔔 Notify - New PR
         if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review'
-        uses: slackapi/slack-github-action@v3.0.1
+        uses: slackapi/slack-github-action@v3.0.3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
           webhook-type: incoming-webhook
@@ -81,7 +81,7 @@ jobs:
 
       - name: ✅ Notify - PR Approved
         if: github.event.review.state == 'approved'
-        uses: slackapi/slack-github-action@v3.0.1
+        uses: slackapi/slack-github-action@v3.0.3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
           webhook-type: incoming-webhook
@@ -119,7 +119,7 @@ jobs:
 
       - name: ❌ Notify - Changes Requested
         if: github.event.review.state == 'changes_requested'
-        uses: slackapi/slack-github-action@v3.0.1
+        uses: slackapi/slack-github-action@v3.0.3
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
           webhook-type: incoming-webhook
