@@ -42,10 +42,10 @@ export function HomeTodaysBirthdays({ artists }: Props) {
                     {/* Card destaque — primeiro aniversariante */}
                     <Link
                         href={`/artists/${featured.slug ?? featured.id}`}
-                        className="group relative flex-shrink-0 w-48 rounded-2xl overflow-hidden border border-pink-500/20 hover:border-pink-500/50 transition-all duration-300"
+                        className="group relative flex-shrink-0 w-32 rounded-xl overflow-hidden border border-pink-500/20 hover:border-pink-500/50 transition-all duration-300"
                     >
                         {/* Imagem de fundo */}
-                        <div className="relative h-56 bg-surface">
+                        <div className="relative h-40 bg-surface">
                             {featured.primaryImageUrl ? (
                                 <Image
                                     src={featured.primaryImageUrl}
@@ -89,9 +89,9 @@ export function HomeTodaysBirthdays({ artists }: Props) {
                         <Link
                             key={artist.id}
                             href={`/artists/${artist.slug ?? artist.id}`}
-                            className="group relative flex-shrink-0 w-32 rounded-2xl overflow-hidden border border-border hover:border-pink-500/40 transition-all duration-300"
+                            className="group relative flex-shrink-0 w-24 rounded-xl overflow-hidden border border-border hover:border-pink-500/40 transition-all duration-300"
                         >
-                            <div className="relative h-56 bg-surface">
+                            <div className="relative h-40 bg-surface">
                                 {artist.primaryImageUrl ? (
                                     <Image
                                         src={artist.primaryImageUrl}
