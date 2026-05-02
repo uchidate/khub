@@ -144,7 +144,8 @@ export async function searchBlogPostsUnaccent(
     const rows = await prisma.$queryRaw<BlogPostSearchResult[]>`
         SELECT b.id, b.slug, b.title, b.excerpt, b."coverImageUrl", b."publishedAt"
         FROM "BlogPost" b
-        WHERE b."isPublished" = true
+        WHERE b.status = 'PUBLISHED'
+          AND b."isPrivate" = false
           AND (
             unaccent(b.title) ILIKE unaccent(${pattern})
             OR unaccent(b.excerpt) ILIKE unaccent(${pattern})
