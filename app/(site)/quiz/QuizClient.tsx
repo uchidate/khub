@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { Trophy, RefreshCw, ChevronRight, CheckCircle2, XCircle, Sparkles, Share2 } from 'lucide-react'
 
@@ -13,7 +13,7 @@ interface Question {
     category: 'k-pop' | 'k-drama' | 'cultura' | 'história'
 }
 
-const QUESTIONS: Question[] = [
+const ALL_QUESTIONS: Question[] = [
     {
         id: 1,
         question: 'Qual grupo de K-Pop detém o recorde de mais álbuns vendidos na história da Coreia do Sul?',
@@ -94,6 +94,86 @@ const QUESTIONS: Question[] = [
         explanation: 'O TWICE é composto por 9 membros: Nayeon, Jeongyeon, Momo, Sana, Jihyo, Mina, Dahyun, Chaeyoung e Tzuyu. O grupo foi formado em 2015 pela JYP Entertainment.',
         category: 'k-pop',
     },
+    {
+        id: 11,
+        question: 'Qual grupo lançou o álbum "Map of the Soul: Persona"?',
+        options: ['EXO', 'BTS', 'SEVENTEEN', 'GOT7'],
+        correct: 1,
+        explanation: '"Map of the Soul: Persona" foi lançado pelo BTS em abril de 2019 e bateu recordes de pré-venda na Coreia do Sul.',
+        category: 'k-pop',
+    },
+    {
+        id: 12,
+        question: 'Em "Goblin", qual ator interpreta o imortal Goblin?',
+        options: ['Lee Min-ho', 'Hyun Bin', 'Gong Yoo', 'Ji Chang-wook'],
+        correct: 2,
+        explanation: 'Gong Yoo interpretou Kim Shin, o Goblin imortal, no drama "Guardian: The Lonely and Great God" (2016-2017), um dos mais assistidos da história do tvN.',
+        category: 'k-drama',
+    },
+    {
+        id: 13,
+        question: 'O que é "daebak" em coreano?',
+        options: ['Que pena!', 'Incrível / que sorte!', 'Obrigado', 'Com licença'],
+        correct: 1,
+        explanation: '"Daebak" (대박) é uma expressão popular que significa algo incrível, impressionante ou uma grande sorte. É muito usada em K-Dramas e pelo fandom.',
+        category: 'cultura',
+    },
+    {
+        id: 14,
+        question: 'Qual grupo feminino ficou famoso pelo hit "Ddu-Du Ddu-Du"?',
+        options: ['TWICE', 'Red Velvet', 'BLACKPINK', 'aespa'],
+        correct: 2,
+        explanation: '"Ddu-Du Ddu-Du" do BLACKPINK foi lançado em 2018 e se tornou um dos MVs de K-Pop feminino mais vistos de todos os tempos no YouTube.',
+        category: 'k-pop',
+    },
+    {
+        id: 15,
+        question: 'Qual drama coreano aborda o tema de estudantes num jogo mortal por dinheiro?',
+        options: ['Alice', 'Sweet Home', 'Squid Game', 'Dark Hole'],
+        correct: 2,
+        explanation: 'Squid Game (오징어 게임) retrata personagens endividados competindo em jogos infantis com consequências letais. Lançado em 2021, tornou-se fenômeno global.',
+        category: 'k-drama',
+    },
+    {
+        id: 16,
+        question: 'Qual é a capital da Coreia do Sul, cenário de grande parte dos K-Dramas?',
+        options: ['Busan', 'Incheon', 'Seul', 'Daegu'],
+        correct: 2,
+        explanation: 'Seul (서울) é a capital e maior cidade da Coreia do Sul, com cerca de 10 milhões de habitantes. É o centro cultural e econômico do país.',
+        category: 'cultura',
+    },
+    {
+        id: 17,
+        question: 'Qual empresa gerencia o grupo BTS?',
+        options: ['SM Entertainment', 'YG Entertainment', 'JYP Entertainment', 'HYBE'],
+        correct: 3,
+        explanation: 'O BTS é gerenciado pela HYBE (anteriormente Big Hit Entertainment). A empresa foi fundada por Bang Si-hyuk e abriu capital na bolsa sul-coreana em 2020.',
+        category: 'k-pop',
+    },
+    {
+        id: 18,
+        question: 'O que é "mukbang"?',
+        options: ['Dança coreana tradicional', 'Transmissão ao vivo comendo grandes quantidades de comida', 'Estilo de maquiagem', 'Tipo de música folclórica'],
+        correct: 1,
+        explanation: '"Mukbang" (먹방) combina os termos coreanos para "comer" e "transmissão". É um formato de conteúdo onde o criador come grandes quantidades de comida ao vivo.',
+        category: 'cultura',
+    },
+    {
+        id: 19,
+        question: 'Qual ator sul-coreano protagonizou o filme "Parasita", vencedor do Oscar 2020?',
+        options: ['Lee Byung-hun', 'Song Kang-ho', 'Choi Min-sik', 'Ha Jung-woo'],
+        correct: 1,
+        explanation: 'Song Kang-ho é o protagonista de "Parasita" (기생충), dirigido por Bong Joon-ho. O filme ganhou o Oscar de Melhor Filme em 2020, sendo o primeiro filme não anglófono a vencer.',
+        category: 'história',
+    },
+    {
+        id: 20,
+        question: 'Qual grupo é conhecido pelo conceito "School Trilogy" em seus primeiros álbuns?',
+        options: ['SHINee', 'BTS', 'INFINITE', 'B.A.P'],
+        correct: 1,
+        explanation: 'O BTS iniciou sua carreira com a "School Trilogy" (2013-2014): "2 Cool 4 Skool", "O!RUL8,2?" e "Skool Luv Affair", abordando temas de juventude e pressão escolar.',
+        category: 'k-pop',
+    },
 ]
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -103,24 +183,54 @@ const CATEGORY_COLORS: Record<string, string> = {
     'história': 'text-amber-400 bg-amber-400/10 border-amber-400/20',
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+    'k-pop': 'K-Pop',
+    'k-drama': 'K-Drama',
+    'cultura': 'Cultura',
+    'história': 'História',
+}
+
+function shuffle<T>(arr: T[]): T[] {
+    const a = [...arr]
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+}
+
+const QUIZ_SIZE = 10
+
 function getResult(score: number, total: number) {
     const pct = score / total
-    if (pct === 1) return { title: 'Expert Hallyu! 🏆', desc: 'Você é um verdadeiro especialista! Seu conhecimento sobre a cultura coreana é impressionante.' }
-    if (pct >= 0.8) return { title: 'Fã dedicado! ⭐', desc: 'Muito bem! Você conhece K-Pop e K-Drama de verdade. Só faltou um pouquinho para a perfeição.' }
-    if (pct >= 0.6) return { title: 'Bom conhecimento! 👏', desc: 'Você sabe bastante sobre o universo Hallyu! Continue explorando o site para aprender mais.' }
-    if (pct >= 0.4) return { title: 'Ainda aprendendo! 📚', desc: 'Você está no caminho certo! Explore mais artigos no HallyuHub para aprofundar seu conhecimento.' }
-    return { title: 'Iniciante Hallyu! 🌱', desc: 'Todo mundo começa de algum lugar! Explore nosso site para descobrir o universo do K-Pop e K-Drama.' }
+    if (pct === 1) return { title: 'Expert Hallyu! 🏆', desc: 'Você é um verdadeiro especialista! Seu conhecimento sobre a cultura coreana é impressionante.', color: 'text-amber-400' }
+    if (pct >= 0.8) return { title: 'Fã dedicado! ⭐', desc: 'Muito bem! Você conhece K-Pop e K-Drama de verdade. Só faltou um pouquinho para a perfeição.', color: 'text-accent' }
+    if (pct >= 0.6) return { title: 'Bom conhecimento! 👏', desc: 'Você sabe bastante sobre o universo Hallyu! Continue explorando o site para aprender mais.', color: 'text-blue-400' }
+    if (pct >= 0.4) return { title: 'Ainda aprendendo! 📚', desc: 'Você está no caminho certo! Explore mais artigos no HallyuHub para aprofundar seu conhecimento.', color: 'text-purple-400' }
+    return { title: 'Iniciante Hallyu! 🌱', desc: 'Todo mundo começa de algum lugar! Explore nosso site para descobrir o universo do K-Pop e K-Drama.', color: 'text-muted' }
 }
 
 export function QuizClient() {
+    const [questions, setQuestions] = useState<Question[]>(() => shuffle(ALL_QUESTIONS).slice(0, QUIZ_SIZE))
     const [current, setCurrent] = useState(0)
     const [selected, setSelected] = useState<number | null>(null)
-    const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null))
+    const [answers, setAnswers] = useState<(number | null)[]>(Array(QUIZ_SIZE).fill(null))
     const [finished, setFinished] = useState(false)
     const [showExplanation, setShowExplanation] = useState(false)
+    const [animating, setAnimating] = useState(false)
 
-    const q = QUESTIONS[current]
-    const score = answers.filter((a, i) => a === QUESTIONS[i].correct).length
+    const q = questions[current]
+    const score = answers.filter((a, i) => a === questions[i]?.correct).length
+
+    const scoreByCategory = useMemo(() => {
+        const map: Record<string, { correct: number; total: number }> = {}
+        questions.forEach((qu, i) => {
+            if (!map[qu.category]) map[qu.category] = { correct: 0, total: 0 }
+            map[qu.category].total++
+            if (answers[i] === qu.correct) map[qu.category].correct++
+        })
+        return map
+    }, [questions, answers])
 
     const handleSelect = useCallback((idx: number) => {
         if (selected !== null) return
@@ -132,48 +242,76 @@ export function QuizClient() {
     }, [selected, answers, current])
 
     const handleNext = useCallback(() => {
-        if (current < QUESTIONS.length - 1) {
-            setCurrent(c => c + 1)
-            setSelected(null)
-            setShowExplanation(false)
-        } else {
-            setFinished(true)
-        }
-    }, [current])
+        setAnimating(true)
+        setTimeout(() => {
+            if (current < questions.length - 1) {
+                setCurrent(c => c + 1)
+                setSelected(null)
+                setShowExplanation(false)
+            } else {
+                setFinished(true)
+            }
+            setAnimating(false)
+        }, 200)
+    }, [current, questions.length])
 
     const handleReset = useCallback(() => {
+        setQuestions(shuffle(ALL_QUESTIONS).slice(0, QUIZ_SIZE))
         setCurrent(0)
         setSelected(null)
-        setAnswers(Array(QUESTIONS.length).fill(null))
+        setAnswers(Array(QUIZ_SIZE).fill(null))
         setFinished(false)
         setShowExplanation(false)
     }, [])
 
-    const shareText = `Fiz o quiz do HallyuHub e acertei ${score} de ${QUESTIONS.length} perguntas sobre K-Pop e K-Drama! 🎵 Tente você também:`
+    const shareText = `Fiz o quiz do HallyuHub e acertei ${score} de ${questions.length} perguntas sobre K-Pop e K-Drama! 🎵 Tente você também:`
     const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://www.hallyuhub.com.br/quiz'
 
     if (finished) {
-        const result = getResult(score, QUESTIONS.length)
+        const result = getResult(score, questions.length)
         return (
             <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
                 <div className="max-w-md w-full text-center">
-                    <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-6 animate-bounce">
                         <Trophy className="w-10 h-10 text-accent" />
                     </div>
-                    <h1 className="text-3xl font-black text-foreground mb-2">{result.title}</h1>
-                    <div className="text-6xl font-black text-accent mb-2">{score}<span className="text-2xl text-muted font-normal">/{QUESTIONS.length}</span></div>
+                    <h1 className={`text-3xl font-black mb-2 ${result.color}`}>{result.title}</h1>
+                    <div className="text-6xl font-black text-foreground mb-2">
+                        {score}<span className="text-2xl text-muted font-normal">/{questions.length}</span>
+                    </div>
                     <p className="text-muted text-sm mb-8 leading-relaxed">{result.desc}</p>
 
-                    {/* Answer summary */}
+                    {/* Score por categoria */}
+                    <div className="bg-surface border border-border rounded-2xl p-4 mb-4 text-left">
+                        <p className="text-xs font-black uppercase tracking-widest text-muted mb-3">Por categoria</p>
+                        <div className="space-y-2.5">
+                            {Object.entries(scoreByCategory).map(([cat, { correct, total }]) => (
+                                <div key={cat} className="flex items-center gap-3">
+                                    <span className={`text-[10px] font-black uppercase tracking-wider border rounded-full px-2 py-0.5 flex-shrink-0 ${CATEGORY_COLORS[cat]}`}>
+                                        {CATEGORY_LABELS[cat]}
+                                    </span>
+                                    <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-accent rounded-full transition-all duration-700"
+                                            style={{ width: `${(correct / total) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-xs font-bold text-foreground w-10 text-right">{correct}/{total}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Resumo por questão */}
                     <div className="bg-surface border border-border rounded-2xl p-4 mb-6 text-left">
                         <p className="text-xs font-black uppercase tracking-widest text-muted mb-3">Resumo</p>
                         <div className="space-y-1.5">
-                            {QUESTIONS.map((q, i) => (
-                                <div key={q.id} className="flex items-center gap-2">
-                                    {answers[i] === q.correct
+                            {questions.map((qu, i) => (
+                                <div key={qu.id} className="flex items-center gap-2">
+                                    {answers[i] === qu.correct
                                         ? <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
                                         : <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />}
-                                    <span className="text-xs text-foreground truncate">{q.question.slice(0, 50)}...</span>
+                                    <span className="text-xs text-foreground truncate">{qu.question.slice(0, 55)}…</span>
                                 </div>
                             ))}
                         </div>
@@ -195,7 +333,7 @@ export function QuizClient() {
                             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-border bg-surface text-foreground text-sm font-bold hover:bg-surface-hover transition-all"
                         >
                             <RefreshCw className="w-4 h-4" />
-                            Jogar novamente
+                            Jogar novamente (perguntas novas)
                         </button>
                         <Link
                             href="/blog"
@@ -212,24 +350,38 @@ export function QuizClient() {
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-            <div className="max-w-xl w-full">
+            <div className={`max-w-xl w-full transition-opacity duration-200 ${animating ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}`}
+                style={{ transition: 'opacity 0.2s, transform 0.2s' }}>
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-2xl font-black text-foreground mb-1">Quiz Hallyu</h1>
-                    <p className="text-muted text-sm">Teste seus conhecimentos sobre K-Pop e K-Drama</p>
+                    <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5 mb-3">
+                        <Trophy className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-xs font-black text-accent uppercase tracking-wider">Quiz Hallyu</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-foreground mb-1">Teste seus conhecimentos</h1>
+                    <p className="text-muted text-sm">K-Pop, K-Drama e cultura coreana</p>
                 </div>
 
                 {/* Progress */}
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-muted font-semibold">Pergunta {current + 1} de {QUESTIONS.length}</span>
-                        <span className="text-xs text-accent font-bold">{score} acertos</span>
+                        <span className="text-xs text-muted font-semibold">Pergunta {current + 1} de {questions.length}</span>
+                        <span className="text-xs text-accent font-bold">{score} acerto{score !== 1 ? 's' : ''}</span>
                     </div>
                     <div className="h-1.5 bg-surface rounded-full overflow-hidden">
                         <div
                             className="h-full bg-accent rounded-full transition-all duration-500"
-                            style={{ width: `${((current) / QUESTIONS.length) * 100}%` }}
+                            style={{ width: `${(current / questions.length) * 100}%` }}
                         />
+                    </div>
+                    <div className="flex gap-1 mt-2">
+                        {questions.map((_, i) => (
+                            <div key={i} className={`flex-1 h-0.5 rounded-full transition-all duration-300 ${
+                                i < current
+                                    ? answers[i] === questions[i].correct ? 'bg-green-400' : 'bg-red-400'
+                                    : i === current ? 'bg-accent' : 'bg-surface'
+                            }`} />
+                        ))}
                     </div>
                 </div>
 
@@ -237,7 +389,7 @@ export function QuizClient() {
                 <div className="bg-surface border border-border rounded-2xl p-6 mb-4">
                     <div className="flex items-center gap-2 mb-4">
                         <span className={`text-[10px] font-black uppercase tracking-wider border rounded-full px-2.5 py-1 ${CATEGORY_COLORS[q.category]}`}>
-                            {q.category}
+                            {CATEGORY_LABELS[q.category]}
                         </span>
                     </div>
                     <p className="text-base font-bold text-foreground leading-snug mb-6">{q.question}</p>
@@ -248,14 +400,14 @@ export function QuizClient() {
                             if (selected !== null) {
                                 if (idx === q.correct) cls = 'border-green-500/50 bg-green-500/10 text-green-400'
                                 else if (idx === selected) cls = 'border-red-500/50 bg-red-500/10 text-red-400'
-                                else cls = 'border-border bg-background text-muted opacity-50'
+                                else cls = 'border-border bg-background text-muted opacity-40'
                             }
                             return (
                                 <button
                                     key={idx}
                                     onClick={() => handleSelect(idx)}
                                     disabled={selected !== null}
-                                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-3 ${cls} ${selected === null ? 'cursor-pointer' : 'cursor-default'}`}
+                                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-3 ${cls} ${selected === null ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default'}`}
                                 >
                                     <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[11px] font-black flex-shrink-0">
                                         {String.fromCharCode(65 + idx)}
@@ -271,7 +423,7 @@ export function QuizClient() {
 
                 {/* Explanation */}
                 {showExplanation && (
-                    <div className={`rounded-xl border p-4 mb-4 text-sm leading-relaxed ${selected === q.correct ? 'border-green-500/30 bg-green-500/5 text-green-300' : 'border-red-500/30 bg-red-500/5 text-red-300'}`}>
+                    <div className={`rounded-xl border p-4 mb-4 text-sm leading-relaxed transition-all duration-300 ${selected === q.correct ? 'border-green-500/30 bg-green-500/5 text-green-300' : 'border-red-500/30 bg-red-500/5 text-red-300'}`}>
                         <p className="font-bold mb-1">{selected === q.correct ? '✓ Correto!' : '✗ Incorreto'}</p>
                         <p className="text-xs opacity-90">{q.explanation}</p>
                     </div>
@@ -281,9 +433,9 @@ export function QuizClient() {
                 {selected !== null && (
                     <button
                         onClick={handleNext}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-white font-bold text-sm hover:opacity-90 transition-all"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-white font-bold text-sm hover:opacity-90 transition-all active:scale-[0.99]"
                     >
-                        {current < QUESTIONS.length - 1 ? (
+                        {current < questions.length - 1 ? (
                             <><ChevronRight className="w-4 h-4" />Próxima pergunta</>
                         ) : (
                             <><Trophy className="w-4 h-4" />Ver resultado</>
