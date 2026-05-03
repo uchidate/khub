@@ -675,9 +675,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {magazineSide.length < 2 && (
-                          <div className="rounded-xl border border-dashed border-border bg-surface/30" />
-                        )}
+                        {Array.from({ length: 2 - magazineSide.length }).map((_, i) => (
+                          <div key={i} className="rounded-xl border border-dashed border-border bg-surface/30" />
+                        ))}
                       </div>
                     </div>
                   )}
