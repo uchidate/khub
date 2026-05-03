@@ -7,7 +7,7 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -434,11 +434,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 <Sparkles className="w-3.5 h-3.5 text-accent" />
                 <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
               </div>
-              <Link href="/blog/feed.xml"
-                className="flex items-center gap-1.5 text-white/35 hover:text-white/70 transition-colors text-xs px-2.5 py-1.5 rounded-lg hover:bg-white/10">
-                <Rss size={12} />
-                <span className="hidden sm:inline">RSS</span>
-              </Link>
             </div>
 
             {/* Artigo em destaque */}
