@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDE_RAIL!
 const IS_DEV = process.env.NODE_ENV === 'development'
-
-// Mostra quando há pelo menos 160px de espaço de cada lado do max-w-7xl (1280px)
-// threshold: 1280 + 160*2 + 16*2 (padding) = 1632px
 const THRESHOLD = 1632
 
 export function SideRailAds() {
     const [visible, setVisible] = useState(false)
+    const pushedLeft = useRef(false)
+    const pushedRight = useRef(false)
 
     useEffect(() => {
         const check = () => setVisible(window.innerWidth >= THRESHOLD)
@@ -19,22 +19,48 @@ export function SideRailAds() {
         return () => window.removeEventListener('resize', check)
     }, [])
 
-    // Em dev, mostra sempre independente da largura (para testar posicionamento)
-    if (!IS_DEV && !visible) return null
+    useEffect(() => {
+        if (IS_DEV || !CLIENT || !SLOT || !visible) return
+        try {
+            if (!pushedLeft.current) {
+                pushedLeft.current = true
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+            }
+            if (!pushedRight.current) {
+                pushedRight.current = true
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+            }
+        } catch { /* AdSense ainda não carregou */ }
+    }, [visible])
+
+    if (IS_DEV) {
+        if (!visible) return null
+        const rail = (side: 'left' | 'right') => (
+            <div key={side} className={`fixed ${side}-2 top-1/2 -translate-y-1/2 w-[160px] h-[600px] flex flex-col items-center justify-center z-20 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded`}>
+                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Side Rail</span>
+                <span className="text-[9px] font-mono text-amber-600/70 dark:text-amber-400/70 select-none mt-1">160×600</span>
+                <span className="text-[9px] font-mono text-amber-500/50 select-none">wide skyscraper</span>
+                <span className="text-[8px] font-mono text-amber-500/40 select-none mt-1">slot: {SLOT}</span>
+            </div>
+        )
+        return <>{rail('left')}{rail('right')}</>
+    }
+
+    if (!CLIENT || !SLOT || !visible) return null
 
     const rail = (side: 'left' | 'right') => (
-        <div className={`fixed ${side}-2 top-1/2 -translate-y-1/2 w-[160px] h-[600px] flex flex-col items-center justify-center z-20 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded`}>
-            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Side Rail</span>
-            <span className="text-[9px] font-mono text-amber-600/70 dark:text-amber-400/70 select-none mt-1">160×600</span>
-            <span className="text-[9px] font-mono text-amber-500/50 select-none">wide skyscraper</span>
-            <span className="text-[8px] font-mono text-amber-500/40 select-none mt-1">slot: {SLOT}</span>
+        <div key={side} className={`fixed ${side}-2 top-1/2 -translate-y-1/2 w-[160px] z-20`}>
+            <ins
+                className="adsbygoogle"
+                style={{ display: 'inline-block', width: '160px', height: '600px' }}
+                data-ad-client={CLIENT}
+                data-ad-slot={SLOT}
+                data-ad-format="vertical"
+            />
         </div>
     )
 
-    return (
-        <>
-            {rail('left')}
-            {rail('right')}
-        </>
-    )
+    return <>{rail('left')}{rail('right')}</>
 }
