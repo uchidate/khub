@@ -168,16 +168,16 @@ const getHomePublicData = unstable_cache(
             ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
             : fallback[0]
 
+        const featuredId = featuredPost?.id
         const secondaryPosts = settings?.homeSecondaryPostIds?.length
             ? settings.homeSecondaryPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 4)
-            : fallback.slice(1, 5)
+            : fallback.filter(p => p.id !== featuredId).slice(0, 4)
 
         const sidebarPosts = settings?.homeSidebarPostIds?.length
             ? settings.homeSidebarPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 8)
             : fallback.slice(0, 8)
 
         // Feed exclui tudo que aparece nos slots
-        const featuredId = featuredPost?.id
         const secondaryIds = new Set(secondaryPosts.map(p => p.id))
         const feedPosts = fallbackPostsRaw.filter(
             p => !carouselIds.has(p.id) && p.id !== featuredId && !secondaryIds.has(p.id)

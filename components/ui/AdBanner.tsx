@@ -104,14 +104,16 @@ export function AdBanner({
 
     if (!CLIENT || !slot) return null
 
-    // Colapsar completamente quando não preenchido
+    // filled === false → não renderizar nada
     if (filled === false) return null
 
     const isFluid = variant === 'fluid'
     const isMultiplex = variant === 'multiplex'
 
     return (
-        <div ref={containerRef} className={className}>
+        <div ref={containerRef} className={filled === null ? '' : className}
+            style={filled === null ? { position: 'absolute', visibility: 'hidden', pointerEvents: 'none', height: 0, overflow: 'hidden' } : undefined}
+        >
             {!hideLabel && (
                 <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
                     {filled === null ? '' : 'Publicidade'}
