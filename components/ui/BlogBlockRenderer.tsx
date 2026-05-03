@@ -6,17 +6,20 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { BlogBlock } from '@/lib/types/blocks'
+import { useAdFilled } from '@/hooks/useAdFilled'
 
 const TwitterEmbed = dynamic(() => import('@/components/ui/TwitterEmbed').then(m => ({ default: m.TwitterEmbed })), { ssr: false })
 const InstagramEmbed = dynamic(() => import('@/components/ui/InstagramEmbed').then(m => ({ default: m.InstagramEmbed })), { ssr: false })
 const TikTokEmbed = dynamic(() => import('@/components/ui/TikTokEmbed').then(m => ({ default: m.TikTokEmbed })), { ssr: false })
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BLOG_ARTICLE ?? '1740970038'
+const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID
 
 function InArticleAd({ id }: { id: string }) {
     const containerRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
+    const { insRef, filled } = useAdFilled(ADSENSE_SLOT)
+
     useEffect(() => {
         if (pushed.current || !containerRef.current) return
         const observer = new IntersectionObserver(
@@ -32,15 +35,18 @@ function InArticleAd({ id }: { id: string }) {
         observer.observe(containerRef.current)
         return () => observer.disconnect()
     }, [])
-    if (!ADSENSE_CLIENT) return null
+
+    if (!ADSENSE_CLIENT || filled === false) return null
     return (
         <div ref={containerRef} className="my-8 overflow-hidden">
-            <div className="flex items-center gap-3 mb-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
-                <div className="flex-1 h-px bg-border" />
-            </div>
-            <ins className="adsbygoogle" style={{ display: 'block', textAlign: 'center', minHeight: '100px' }}
+            {filled === true && (
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/50 select-none">Publicidade</span>
+                    <div className="flex-1 h-px bg-border" />
+                </div>
+            )}
+            <ins ref={insRef} className="adsbygoogle" style={{ display: 'block', textAlign: 'center' }}
                 data-ad-layout="in-article" data-ad-format="fluid"
                 data-ad-client={ADSENSE_CLIENT} data-ad-slot={ADSENSE_SLOT}
                 key={id} />

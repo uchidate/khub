@@ -453,7 +453,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         )}
 
                         {/* Ad 1 — in-article após sinopse/tags, posição de maior atenção */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_1!} variant="fluid" className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" className="my-4" />
 
                         {/* Cast */}
                         {production.artists.length > 0 && (
@@ -514,7 +514,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         />
 
                         {/* Ad 2 — após elenco/galeria, antes das recomendações */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" minimal className="my-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="my-6" />
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
@@ -683,7 +683,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         </div>
 
                         {/* Ad 3 — sidebar rectangle, visível enquanto o usuário lê o conteúdo principal */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!} variant="rectangle" className="mt-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-6" />
                     </div>
                 </div>
             </div>

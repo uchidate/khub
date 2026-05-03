@@ -753,8 +753,8 @@ export function QuizClient() {
 
                         {/* AdSense — resultado é o melhor momento (usuário parou, lê) */}
                         <AdBanner
-                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!}
-                            variant="rectangle"
+                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!}
+                            variant="auto"
                             className="mb-4"
                         />
 

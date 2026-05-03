@@ -134,7 +134,7 @@ export default function ContatoPage() {
 
                     {/* Ad */}
                     <AdBanner
-                        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_CONTACT ?? ''}
+                        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? ''}
                         variant="auto"
                         className="mb-8"
                     />

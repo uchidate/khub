@@ -121,7 +121,7 @@ export default async function CalendarioPage() {
                     </p>
                 </div>
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!} variant="auto" className="mb-6" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mb-6" />
 
                 <CalendarioClient
                     birthdays={birthdays}

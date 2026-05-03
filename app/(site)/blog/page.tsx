@@ -7,7 +7,7 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, Rss, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
@@ -18,10 +18,8 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { rankPosts } from '@/lib/blog/scoring'
 
 const BASE_URL = SITE_URL
-const SLOT_LEADERBOARD = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD!
-const SLOT_RECTANGLE = process.env.NEXT_PUBLIC_ADSENSE_SLOT_RECTANGLE!
-const SLOT_BANNER = process.env.NEXT_PUBLIC_ADSENSE_SLOT_BANNER!
-const SLOT_IN_ARTICLE_2 = process.env.NEXT_PUBLIC_ADSENSE_SLOT_IN_ARTICLE_2!
+const SLOT_AUTO = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
+const SLOT_FLUID = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!
 
 export const metadata: Metadata = {
   title: 'Blog K-Pop & K-Drama',
@@ -146,7 +144,7 @@ function CategoryBadge({ category, size = 'sm' }: { category: { name: string; sl
   const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
   return (
     <span
-      className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}
+      className={`self-start w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}
       style={{ backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151' }}
     >
       {category.name}
@@ -379,13 +377,15 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     ? (editorialPostsMap.get(editorialIds[1]) ?? posts.find(p => p.id !== heroId))
     : posts.find(p => p.id !== heroId) ?? null
 
-  const magazineSideIds = !isFiltered && page === 1
-    ? editorialIds.slice(2, 4)
-    : []
-
-  const magazineSide = magazineSideIds.length > 0
-    ? magazineSideIds.map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts
-    : posts.filter(p => p.id !== heroId && p.id !== magazineMain?.id).slice(0, 2)
+  const magazineSide = (() => {
+    const fromEditorial = (!isFiltered && page === 1)
+      ? (editorialIds.slice(2, 4).map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts)
+      : []
+    if (fromEditorial.length >= 2) return fromEditorial
+    const used = new Set([heroId, magazineMain?.id, ...fromEditorial.map(p => p.id)])
+    const fallback = posts.filter(p => !used.has(p.id)).slice(0, 2 - fromEditorial.length)
+    return [...fromEditorial, ...fallback]
+  })()
 
   const editorialUsed = new Set([heroId, magazineMain?.id, ...magazineSide.map(p => p.id)])
   const gridPosts = posts.filter(p => !editorialUsed.has(p.id))
@@ -403,9 +403,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <div className="w-full bg-background border-b border-border/40">
+      <div className="hidden md:block w-full bg-background border-b border-border/40">
         <div className="max-w-[970px] mx-auto px-4 py-1">
-          <AdBanner slot={SLOT_LEADERBOARD} variant="auto" eager minimal hideLabel />
+          <AdBanner slot={SLOT_AUTO} variant="auto" eager minimal hideLabel />
         </div>
       </div>
       <PageTransition className="pb-16">
@@ -434,11 +434,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 <Sparkles className="w-3.5 h-3.5 text-accent" />
                 <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
               </div>
-              <Link href="/blog/feed.xml"
-                className="flex items-center gap-1.5 text-white/35 hover:text-white/70 transition-colors text-xs px-2.5 py-1.5 rounded-lg hover:bg-white/10">
-                <Rss size={12} />
-                <span className="hidden sm:inline">RSS</span>
-              </Link>
             </div>
 
             {/* Artigo em destaque */}
@@ -677,15 +672,15 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {magazineSide.length < 2 && (
-                          <div className="rounded-xl border border-dashed border-border bg-surface/30" />
-                        )}
+                        {magazineSide.length < 2 && Array.from({ length: 2 - magazineSide.length }).map((_, i) => (
+                          <div key={i} className="rounded-xl border border-dashed border-border bg-surface/30 hidden sm:block" />
+                        ))}
                       </div>
                     </div>
                   )}
 
                   {block2Posts.length > 0 && (
-                    <AdBanner slot={SLOT_BANNER} variant="auto" className="my-2" />
+                    <AdBanner slot={SLOT_AUTO} variant="auto" className="my-2" />
                   )}
 
                   {block2Posts.length > 0 && (
@@ -707,7 +702,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
-                      <AdBanner slot={SLOT_IN_ARTICLE_2} variant="fluid" className="mb-6" />
+                      <AdBanner slot={SLOT_FLUID} variant="fluid" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-2 shrink-0">
                           <ArrowRight size={12} className="text-muted/50" />
@@ -829,7 +824,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               )}
 
               {/* Ad na sidebar */}
-              <AdBanner slot={SLOT_RECTANGLE} variant="rectangle" />
+              <AdBanner slot={SLOT_AUTO} variant="auto" />
 
               {/* Explorar por categoria */}
               <div>
