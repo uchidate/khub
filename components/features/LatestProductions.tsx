@@ -33,7 +33,7 @@ export function LatestProductions({
     const isNew = (createdAt?: string) => {
         if (!createdAt) return false
         const daysSinceAdded = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
-        return daysSinceAdded < 7
+        return daysSinceAdded < 3
     }
 
     const displayTitle = title ?? (variant === 'top' ? 'Mais Bem Avaliados' : 'Recém Adicionados')
