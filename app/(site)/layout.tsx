@@ -141,7 +141,7 @@ export default async function RootLayout({
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted' });
                     gtag('config', 'G-KHWW1EGSK3');
                 `}</Script>
                 {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
