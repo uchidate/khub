@@ -75,7 +75,7 @@ function formatRelativeDate(iso: string | null): string {
     } catch { return '' }
 }
 
-function isNew(iso: string | null, days = 7): boolean {
+function isNew(iso: string | null, days = 3): boolean {
     if (!iso) return false
     return Date.now() - new Date(iso).getTime() < days * 24 * 60 * 60 * 1000
 }
