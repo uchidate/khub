@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { useAdFilled } from '@/hooks/useAdFilled'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SESSION_KEY = 'sticky_ad_closed'
@@ -10,21 +11,17 @@ interface Props {
     slot: string
 }
 
-/**
- * Banner fixo mobile-only no bottom da tela.
- * Aparece após 30% de scroll, fechável, não reaparece na mesma sessão.
- */
 export function StickyAdBanner({ slot }: Props) {
     const [visible, setVisible] = useState(false)
     const [dismissed, setDismissed] = useState(false)
     const pushed = useRef(false)
+    const { insRef, filled } = useAdFilled(slot)
 
     useEffect(() => {
         if (!CLIENT || !slot) return
         if (sessionStorage.getItem(SESSION_KEY)) return
 
         const threshold = document.documentElement.scrollHeight * 0.3
-
         const onScroll = () => {
             if (window.scrollY > threshold) {
                 setVisible(true)
@@ -49,28 +46,34 @@ export function StickyAdBanner({ slot }: Props) {
         sessionStorage.setItem(SESSION_KEY, '1')
     }
 
-    if (!CLIENT || !slot || dismissed || !visible) return null
+    if (!CLIENT || !slot || dismissed || !visible || filled === false) return null
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden animate-slide-up">
             <div className="relative bg-background border-t border-border shadow-lg">
-                <button
-                    onClick={close}
-                    aria-label="Fechar anúncio"
-                    className="absolute -top-7 right-3 bg-background border border-border rounded-t-lg px-2 py-0.5 flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
-                >
-                    <X className="w-3 h-3" /> Fechar
-                </button>
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center pt-1 select-none">
-                    Publicidade
-                </p>
+                {filled === true && (
+                    <button
+                        onClick={close}
+                        aria-label="Fechar anúncio"
+                        className="absolute -top-7 right-3 bg-background border border-border rounded-t-lg px-2 py-0.5 flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
+                    >
+                        <X className="w-3 h-3" /> Fechar
+                    </button>
+                )}
+                {filled === true && (
+                    <p className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center pt-1 select-none">
+                        Publicidade
+                    </p>
+                )}
                 <div className="flex justify-center pb-1">
                     <ins
+                        ref={insRef}
                         className="adsbygoogle"
-                        style={{ display: 'inline-block', width: 320, height: 50 }}
+                        style={{ display: 'block' }}
                         data-ad-client={CLIENT}
                         data-ad-slot={slot}
-                        data-full-width-responsive="false"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"
                     />
                 </div>
             </div>

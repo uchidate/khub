@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { useAdFilled } from '@/hooks/useAdFilled'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? '1740970038'
+const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO
 const AUTO_DISMISS_MS = 15_000
 
 export function StickyBottomAd() {
@@ -12,6 +13,7 @@ export function StickyBottomAd() {
     const [dismissed, setDismissed] = useState(false)
     const sentinelRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
+    const { insRef, filled } = useAdFilled(SLOT)
 
     useEffect(() => {
         const el = sentinelRef.current
@@ -42,7 +44,7 @@ export function StickyBottomAd() {
     return (
         <>
             <div ref={sentinelRef} className="absolute top-[300px] left-0 h-px w-px pointer-events-none" aria-hidden />
-            {CLIENT && !dismissed && visible && (
+            {CLIENT && !dismissed && visible && filled === true && (
                 <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 animate-[slideUp_250ms_ease-out]"
                     style={{ background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
                 >
@@ -58,11 +60,12 @@ export function StickyBottomAd() {
                         </button>
                     </div>
                     <ins
+                        ref={insRef}
                         className="adsbygoogle"
                         style={{ display: 'block' }}
                         data-ad-client={CLIENT}
                         data-ad-slot={SLOT}
-                        data-ad-format="horizontal"
+                        data-ad-format="auto"
                         data-full-width-responsive="true"
                     />
                 </div>
