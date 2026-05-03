@@ -485,7 +485,7 @@ function shuffle<T>(arr: T[]): T[] {
     return a
 }
 
-const QUIZ_SIZE = 10
+const QUIZ_SIZE = 15
 const TIME_PER_QUESTION = 15
 
 function getResult(score: number, total: number) {
@@ -690,7 +690,7 @@ export function QuizClient() {
                         100% { transform: scale(1); }
                     }
                 `}</style>
-                <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
+                <div className="min-h-screen bg-background px-4 py-10 pb-28 sm:pb-16 flex items-start justify-center">
                     <div className="max-w-md w-full">
                         {/* Header resultado */}
                         <div className={`text-center rounded-2xl bg-gradient-to-b ${result.bg} border border-border p-8 mb-4`}>
@@ -791,7 +791,7 @@ export function QuizClient() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <div className="min-h-screen bg-background px-4 pt-8 pb-28 sm:pb-16 flex items-start justify-center">
             {/* Streak popup */}
             {showStreak && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-amber-500 text-white text-sm font-black px-4 py-2 rounded-full shadow-lg animate-bounce">
@@ -819,14 +819,12 @@ export function QuizClient() {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <div className="text-center flex-1">
-                        <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5">
-                            <Trophy className="w-3.5 h-3.5 text-accent" />
-                            <span className="text-xs font-black text-accent uppercase tracking-wider">Quiz Hallyu</span>
-                        </div>
+                    <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 rounded-full px-4 py-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-xs font-black text-accent uppercase tracking-wider">Quiz Hallyu</span>
                     </div>
                     {/* Pontos e streak */}
-                    <div className="flex items-center gap-3 absolute right-4 sm:right-8">
+                    <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1">
                             <Zap className="w-3.5 h-3.5 text-amber-400" />
                             <span className="text-xs font-black text-amber-400">{points}</span>
@@ -870,14 +868,14 @@ export function QuizClient() {
 
                 {/* Question card */}
                 <div className="bg-surface border border-border rounded-2xl p-5 mb-3">
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-2 mb-3">
                         <span className={`text-[10px] font-black uppercase tracking-wider border rounded-full px-2.5 py-1 ${CATEGORY_COLORS[q.category]}`}>
                             {CATEGORY_LABELS[q.category]}
                         </span>
                     </div>
-                    <p className="text-base font-bold text-foreground leading-snug mb-5">{q.question}</p>
+                    <p className="text-base sm:text-lg font-bold text-foreground leading-snug mb-5">{q.question}</p>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                         {q.options.map((opt, idx) => {
                             let cls = 'border-border bg-background text-foreground hover:border-accent/40 hover:bg-accent/5'
                             if (selected !== null) {
@@ -890,12 +888,12 @@ export function QuizClient() {
                                     key={idx}
                                     onClick={() => handleSelect(idx)}
                                     disabled={selected !== null}
-                                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-3 ${cls} ${selected === null ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default'}`}
+                                    className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm font-semibold transition-all flex items-center gap-3 ${cls} ${selected === null ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default'}`}
                                 >
-                                    <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                                    <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-[10px] font-black flex-shrink-0">
                                         {String.fromCharCode(65 + idx)}
                                     </span>
-                                    <span className="flex-1">{opt}</span>
+                                    <span className="flex-1 leading-snug">{opt}</span>
                                     {selected !== null && idx === q.correct && <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
                                     {selected !== null && idx === selected && idx !== q.correct && <XCircle className="w-4 h-4 flex-shrink-0" />}
                                 </button>
@@ -926,18 +924,20 @@ export function QuizClient() {
                     </div>
                 )}
 
-                {/* Next */}
+                {/* Next — sticky no mobile */}
                 {selected !== null && (
-                    <button
-                        onClick={handleNext}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-white font-bold text-sm hover:opacity-90 transition-all active:scale-[0.99]"
-                    >
-                        {current < questions.length - 1 ? (
-                            <><ChevronRight className="w-4 h-4" />Próxima pergunta</>
-                        ) : (
-                            <><Trophy className="w-4 h-4" />Ver resultado</>
-                        )}
-                    </button>
+                    <div className="fixed bottom-[70px] sm:bottom-auto sm:static left-0 right-0 px-4 sm:px-0 pb-3 sm:pb-0 bg-background/95 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none border-t border-border/40 sm:border-0 pt-3 sm:pt-0 z-30">
+                        <button
+                            onClick={handleNext}
+                            className="w-full flex items-center justify-center gap-2 py-4 sm:py-3.5 rounded-xl bg-accent text-white font-bold text-sm hover:opacity-90 transition-all active:scale-[0.99]"
+                        >
+                            {current < questions.length - 1 ? (
+                                <><ChevronRight className="w-4 h-4" />Próxima pergunta</>
+                            ) : (
+                                <><Trophy className="w-4 h-4" />Ver resultado</>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
