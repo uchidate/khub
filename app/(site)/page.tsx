@@ -178,7 +178,7 @@ const getHomePublicData = unstable_cache(
                 .map(id => slottedById[id])
                 .filter(Boolean)
                 .slice(0, 5)
-            : []
+            : fallbackPostsRaw.slice(0, 5)
 
         // Feed exclui tudo que aparece nos slots e no featured
         const featuredId = featuredPost?.id
