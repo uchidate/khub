@@ -317,15 +317,15 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     style={{ background: `linear-gradient(to top, ${toRgba(accent, 0.15)}, transparent)` }} />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-6 lg:px-12">
-                    <div className="max-w-7xl mx-auto">
+                <div className="absolute top-24 md:top-28 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+                    <div>
                         <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} onDark className="" />
                     </div>
                 </div>
 
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
-                    <div className="max-w-7xl mx-auto">
+                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
+                    <div>
                     <div className="flex flex-col gap-3 max-w-3xl">
                         {/* Status badges */}
                         <div className="flex items-center gap-2 flex-wrap">
