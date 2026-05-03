@@ -9,8 +9,8 @@ const PREVIEW_QUESTIONS = [
 
 export function HomeQuizBanner() {
     return (
-        <section className="bg-background px-4 sm:px-6 lg:px-12 py-4 pb-8">
-            <div className="max-w-7xl mx-auto">
+        <section className="bg-background py-4 pb-8">
+            <div className="max-w-7xl mx-auto px-4">
                 <Link
                     href="/quiz"
                     className="group relative flex flex-col sm:flex-row items-center gap-6 bg-surface border border-border hover:border-accent/40 rounded-2xl p-6 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-surface-hover"
