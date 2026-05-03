@@ -20,7 +20,7 @@ export function HomeTodaysBirthdays({ artists }: Props) {
 
     return (
         <section className="bg-background py-6">
-            <div className="max-w-7xl mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-2 mb-4">
                     <Cake className="w-4 h-4 text-pink-400 flex-shrink-0" />
                     <span className="text-xs font-black uppercase tracking-widest text-pink-400">
