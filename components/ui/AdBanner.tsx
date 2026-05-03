@@ -111,9 +111,7 @@ export function AdBanner({
     const isMultiplex = variant === 'multiplex'
 
     return (
-        <div ref={containerRef} className={filled === null ? '' : className}
-            style={filled === null ? { position: 'absolute', visibility: 'hidden', pointerEvents: 'none', height: 0, overflow: 'hidden' } : undefined}
-        >
+        <div ref={containerRef} className={className}>
             {!hideLabel && (
                 <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
                     {filled === null ? '' : 'Publicidade'}
