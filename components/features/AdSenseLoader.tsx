@@ -11,9 +11,7 @@ export function AdSenseLoader() {
         <Script
             id="adsense-loader"
             async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data-ad-client={CLIENT}
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`}
             crossOrigin="anonymous"
             strategy="afterInteractive"
         />
