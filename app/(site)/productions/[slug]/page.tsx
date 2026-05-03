@@ -297,7 +297,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
 
                 {/* Breadcrumbs + actions */}
-                <div className="relative z-10 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2"><div>
+                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs
                         items={[
                             { label: 'Produções', href: '/productions' },
@@ -317,10 +317,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             className="bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-sm"
                         />
                     </div>
-                </div></div>
+                </div>
 
                 {/* Hero content */}
-                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-16 mt-auto">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-16 mt-auto">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
