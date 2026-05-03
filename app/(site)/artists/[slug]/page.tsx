@@ -591,7 +591,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-4"  devLabel="Artista · Após Bio" />
 
                         {/* Filmography */}
                         <section>
@@ -727,7 +727,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             <DiscographySection albums={artist.albums} />
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-4"  devLabel="Artista · In-Article" />
 
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
@@ -803,7 +803,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         )}
 
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="mt-2" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="mt-2"  devLabel="Artista · Relacionados" />
 
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>

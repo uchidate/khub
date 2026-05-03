@@ -60,7 +60,7 @@ export function StickyBottomAd() {
                 className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center justify-center bg-black/60 pointer-events-none"
                 style={{ width: w, height: h, bottom }}
             >
-                <span className="text-[8px] font-mono text-white/20 select-none">{w}×{h} · slot: {SLOT}</span>
+                <span className="text-[8px] font-mono text-white/30 select-none">📢 Âncora Bottom · {w}×{h}</span>
             </div>
         )
     }

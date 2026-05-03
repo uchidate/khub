@@ -20,10 +20,19 @@ interface AdBannerProps {
     hideLabel?: boolean
     eager?: boolean
     className?: string
+    devLabel?: string
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const IS_DEV = process.env.NODE_ENV === 'development'
+
+const SLOT_NAMES: Record<string, string> = {
+    [process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!]:       'Auto Geral',
+    [process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!]:    'Sidebar Detalhe',
+    [process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!]:      'Blog In-Article',
+    [process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!]:       'Homepage',
+    [process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!]:  'Multiplex',
+}
 
 const DEV_INFO: Record<AdVariant, { size: string; format: string; use: string }> = {
     auto:      { size: '728×90 desktop / 320×50 mobile', format: 'auto responsivo', use: 'uso geral' },
@@ -43,6 +52,7 @@ export function AdBanner({
     hideLabel = false,
     eager = false,
     className = '',
+    devLabel,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const insRef = useRef<HTMLModElement>(null)
@@ -120,7 +130,7 @@ export function AdBanner({
                 : 'h-[250px]'
         return (
             <div className={`relative flex flex-col items-center justify-center gap-1 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded overflow-hidden ${heightClass} ${className}`}>
-                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Anúncio</span>
+                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 {devLabel ?? SLOT_NAMES[slot] ?? 'Anúncio'}</span>
                 <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5">
                     <span className="text-[10px] font-mono text-amber-700 dark:text-amber-300 select-none">{info.size}</span>
                     <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
