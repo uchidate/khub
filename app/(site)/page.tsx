@@ -294,10 +294,11 @@ export default async function Home() {
     // Birthdays: not cached — must be fresh daily
     const todaysBirthdays = await (async (): Promise<BirthdayArtist[]> => {
         try {
-            const now = new Date()
-            const month = now.getUTCMonth() + 1
-            const day = now.getUTCDate()
-            const year = now.getUTCFullYear()
+            // Usa horário de Brasília (UTC-3) para não virar o dia às 21h
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+            const month = now.getMonth() + 1
+            const day = now.getDate()
+            const year = now.getFullYear()
             const artists = await prisma.artist.findMany({
                 where: {
                     isHidden: false,
