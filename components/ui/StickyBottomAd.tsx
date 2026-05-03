@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { useAdFilled } from '@/hooks/useAdFilled'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR
 const IS_DEV = process.env.NODE_ENV === 'development'
 const AUTO_DISMISS_MS = 15_000
+// BottomNav mobile height
+const BOTTOM_NAV_H = 62
 
 export function StickyBottomAd() {
     const [visible, setVisible] = useState(false)
@@ -15,7 +16,6 @@ export function StickyBottomAd() {
     const [isMobile, setIsMobile] = useState<boolean | null>(null)
     const sentinelRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
-    const { insRef, filled } = useAdFilled(SLOT)
 
     useEffect(() => {
         const calc = () => setIsMobile(window.innerWidth < 640)
@@ -42,7 +42,7 @@ export function StickyBottomAd() {
     }, [visible])
 
     useEffect(() => {
-        if (!visible || pushed.current || !CLIENT) return
+        if (!visible || pushed.current || !CLIENT || !SLOT) return
         pushed.current = true
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,14 +53,14 @@ export function StickyBottomAd() {
     if (IS_DEV) {
         if (isMobile === null) return null
         const w = isMobile ? 320 : 728
-        const h = isMobile ? 100 : 90
-        const bottom = isMobile ? 70 : 0
+        const h = isMobile ? 50 : 90
+        const bottom = isMobile ? BOTTOM_NAV_H : 0
         return (
             <div
-                className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center justify-center bg-black/60 pointer-events-none"
+                className="fixed left-1/2 -translate-x-1/2 z-[190] flex items-center justify-center bg-amber-500/10 border-2 border-dashed border-amber-500/50"
                 style={{ width: w, height: h, bottom }}
             >
-                <span className="text-[8px] font-mono text-white/30 select-none">📢 Âncora Bottom · {w}×{h}</span>
+                <span className="text-[9px] font-mono text-amber-600/60 dark:text-amber-400/60 select-none">📢 Âncora · {w}×{h} · slot: {SLOT}</span>
             </div>
         )
     }
@@ -68,9 +68,15 @@ export function StickyBottomAd() {
     return (
         <>
             <div ref={sentinelRef} className="absolute top-[300px] left-0 h-px w-px pointer-events-none" aria-hidden />
-            {CLIENT && !dismissed && visible && filled === true && (
-                <div className="fixed bottom-[70px] sm:bottom-0 left-0 right-0 z-40 animate-[slideUp_250ms_ease-out]"
-                    style={{ background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+            {CLIENT && SLOT && !dismissed && visible && (
+                <div
+                    className="fixed left-0 right-0 z-[190] animate-[slideUp_250ms_ease-out]"
+                    style={{
+                        bottom: isMobile ? BOTTOM_NAV_H : 0,
+                        background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)',
+                        backdropFilter: 'blur(8px)',
+                        borderTop: '1px solid rgba(255,255,255,0.06)',
+                    }}
                 >
                     <div className="flex items-center justify-between px-3 pt-1 pb-0.5">
                         <span className="text-[9px] font-medium uppercase tracking-widest text-muted/40 select-none">Publicidade</span>
@@ -83,15 +89,16 @@ export function StickyBottomAd() {
                             <span className="hidden sm:inline">fechar</span>
                         </button>
                     </div>
-                    <ins
-                        ref={insRef}
-                        className="adsbygoogle"
-                        style={{ display: 'block' }}
-                        data-ad-client={CLIENT}
-                        data-ad-slot={SLOT}
-                        data-ad-format="auto"
-                        data-full-width-responsive="true"
-                    />
+                    {/* overflow-hidden força altura máxima mesmo se AdSense tentar expandir */}
+                    <div className="flex justify-center pb-1" style={{ maxHeight: `${isMobile ? 50 : 90}px`, overflow: 'hidden' }}>
+                        <ins
+                            className="adsbygoogle"
+                            style={{ display: 'inline-block', width: `${isMobile ? 320 : 728}px`, height: `${isMobile ? 50 : 90}px` }}
+                            data-ad-client={CLIENT}
+                            data-ad-slot={SLOT}
+                            data-ad-format="fixed"
+                        />
+                    </div>
                 </div>
             )}
         </>
