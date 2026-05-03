@@ -10,6 +10,7 @@ import { HomeQuizBanner } from "@/components/home/HomeQuizBanner"
 import { HomeTodaysBirthdays, type BirthdayArtist } from "@/components/home/HomeTodaysBirthdays"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { HomeNavbarAd } from "@/components/ui/HomeNavbarAd"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
@@ -344,6 +345,8 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
+            {/* Leaderboard abaixo da navbar — tamanho fixo: 320×50 mobile / 728×90 desktop */}
+            <HomeNavbarAd />
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
