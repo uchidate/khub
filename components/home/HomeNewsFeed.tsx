@@ -501,7 +501,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
                         </div>
 
                         {/* Ad entre Em destaque e Explorar categorias */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="px-3 py-2 border-b border-border" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!} variant="auto" minimal className="px-3 py-2 border-b border-border" />
 
                         {/* Explorar categorias */}
                         <div className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted px-4 py-2.5 border-t border-b border-border bg-surface/35">

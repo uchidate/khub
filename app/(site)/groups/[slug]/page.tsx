@@ -117,7 +117,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
     if (!group || group.isHidden) {
         return (
-            <div className="py-8 md:py-12 px-4 sm:px-12 md:px-20">
+            <div className="py-8 md:py-12 px-4 sm:px-6 lg:px-12">
                 <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: 'Não Encontrado' }]} />
                 <ErrorMessage
                     title="Grupo não encontrado"
@@ -317,12 +317,15 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     style={{ background: `linear-gradient(to top, ${toRgba(accent, 0.15)}, transparent)` }} />
 
                 {/* Breadcrumbs */}
-                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-12 md:px-20">
-                    <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} onDark className="" />
+                <div className="absolute top-24 md:top-28 left-0 right-0 px-4 sm:px-6 lg:px-12">
+                    <div className="max-w-7xl mx-auto">
+                        <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} onDark className="" />
+                    </div>
                 </div>
 
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-14">
+                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
+                    <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col gap-3 max-w-3xl">
                         {/* Status badges */}
                         <div className="flex items-center gap-2 flex-wrap">
@@ -431,11 +434,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </div>
                         )}
                     </div>
+                    </div>
                 </div>
             </div>
             {/* ── CONTEÚDO ── */}
-            <div className="px-4 sm:px-12 md:px-20 py-12">
-                <div className="max-w-[1600px] mx-auto mb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12">
+                <div className="mb-8">
                     <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
                         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-3">Navegação rápida</p>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -460,7 +464,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         </div>
                     </div>
                 </div>
-                <div className="grid lg:grid-cols-3 gap-12 max-w-[1600px] mx-auto">
+                <div className="grid lg:grid-cols-3 gap-12">
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-8 lg:col-span-1">
@@ -719,7 +723,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="my-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-6" />
 
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (

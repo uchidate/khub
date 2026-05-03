@@ -49,7 +49,7 @@ const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m =
 const HomeBlogSection = dynamic(() => import('./HomeBlogSection').then(m => ({ default: m.HomeBlogSection })), { loading: () => <div className="h-48" /> })
 import { HomeTopAgencies } from './HomeTopAgencies'
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
+const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!
 
 export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats, topAgencies }: Props) {
     return (

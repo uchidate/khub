@@ -21,6 +21,7 @@ import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
 import { AdSenseLoader } from "@/components/features/AdSenseLoader"
 import { StickyBottomAd } from "@/components/ui/StickyBottomAd"
+import { SideRailAds } from "@/components/ui/SideRailAds"
 
 const getTickerPosts = unstable_cache(
     async () => {
@@ -186,6 +187,7 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
+                    <SideRailAds />
                     <div className="min-h-screen flex flex-col">
                         <TickerWrapper posts={tickerPosts} />
                         <NavBar />
@@ -197,7 +199,7 @@ export default async function RootLayout({
                         <AuthGateModal />
                         <PWAInstaller />
                         <CookieBanner />
-                        {/* StickyBottomAd desativado */}
+                        <StickyBottomAd />
                         <BottomNav />
                         <SiteFooter />
                     </div>

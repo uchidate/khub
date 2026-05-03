@@ -23,6 +23,13 @@ interface AdBannerProps {
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
+const IS_DEV = process.env.NODE_ENV === 'development'
+
+const DEV_INFO: Record<AdVariant, { size: string; format: string; use: string }> = {
+    auto:      { size: '728×90 desktop / 320×50 mobile', format: 'auto responsivo', use: 'uso geral' },
+    fluid:     { size: 'variável',                        format: 'fluid in-article', use: 'dentro de artigos' },
+    multiplex: { size: 'variável',                        format: 'autorelaxed',      use: 'discovery no final' },
+}
 
 function normalizeVariant(v: AdVariantLegacy = 'auto'): AdVariant {
     if (v === 'leaderboard' || v === 'banner' || v === 'rectangle') return 'auto'
@@ -46,7 +53,7 @@ export function AdBanner({
 
     // Push do ad via IntersectionObserver (ou eager)
     useEffect(() => {
-        if (!CLIENT || !slot) return
+        if (IS_DEV || !CLIENT || !slot) return
 
         const pushOnce = () => {
             if (pushed.current) return
@@ -80,7 +87,7 @@ export function AdBanner({
     // Detectar se o AdSense preencheu ou não o slot
     // O AdSense seta data-ad-status="unfilled" quando não há anúncio disponível
     useEffect(() => {
-        if (!CLIENT || !slot) return
+        if (IS_DEV || !CLIENT || !slot) return
         const ins = insRef.current
         if (!ins) return
 
@@ -101,6 +108,30 @@ export function AdBanner({
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
     }, [slot])
+
+    if (IS_DEV) {
+        const info = DEV_INFO[variant]
+        // Heights match real ad sizes per breakpoint:
+        // auto: 50px mobile / 90px desktop (leaderboard)
+        // fluid/multiplex: 250px (variable content)
+        const heightClass =
+            variant === 'auto'
+                ? 'h-[50px] sm:h-[90px]'
+                : 'h-[250px]'
+        return (
+            <div className={`relative flex flex-col items-center justify-center gap-1 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded overflow-hidden ${heightClass} ${className}`}>
+                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Anúncio</span>
+                <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5">
+                    <span className="text-[10px] font-mono text-amber-700 dark:text-amber-300 select-none">{info.size}</span>
+                    <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
+                    <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.format}</span>
+                    <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
+                    <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
+                </div>
+                <span className="text-[9px] font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{eager ? ' · eager' : ''}</span>
+            </div>
+        )
+    }
 
     if (!CLIENT || !slot) return null
 
