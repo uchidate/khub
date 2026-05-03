@@ -6,7 +6,6 @@ import { X } from 'lucide-react'
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR
 const IS_DEV = process.env.NODE_ENV === 'development'
-const AUTO_DISMISS_MS = 15_000
 // BottomNav mobile height
 const BOTTOM_NAV_H = 62
 
@@ -34,12 +33,6 @@ export function StickyBottomAd() {
         observer.observe(el)
         return () => observer.disconnect()
     }, [])
-
-    useEffect(() => {
-        if (!visible) return
-        const t = setTimeout(() => setDismissed(true), AUTO_DISMISS_MS)
-        return () => clearTimeout(t)
-    }, [visible])
 
     useEffect(() => {
         if (!visible || pushed.current || !CLIENT || !SLOT) return
