@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useAdFilled } from '@/hooks/useAdFilled'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO
+const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP
 
 export function StickyTopAd() {
     const pushed = useRef(false)
