@@ -56,7 +56,7 @@
     "nprogress": "^0.2.0",
     "open": "^11.0.0",
     "openai": "^6.32.0",
-    "prisma": "^7.6.0",
+    "prisma": "^7.8.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
