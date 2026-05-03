@@ -153,38 +153,34 @@ const getHomePublicData = unstable_cache(
 
         const slottedById = Object.fromEntries(slottedPostsRaw.map(p => [p.id, p]))
 
-        // Resolve slots — fallback para ranking automático se slot vazio
-        const fallback = fallbackPostsRaw
+        // Carousel — calculado primeiro para excluir dos demais slots
+        const carouselPosts = settings?.homeCarouselPostIds?.length
+            ? settings.homeCarouselPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 5)
+            : [...fallbackPostsRaw]
+                .sort((a, b) => new Date(b.publishedAt ?? 0).getTime() - new Date(a.publishedAt ?? 0).getTime())
+                .slice(0, 5)
+        const carouselIds = new Set(carouselPosts.map(p => p.id))
+
+        // Fallback excluindo posts já no carousel
+        const fallback = fallbackPostsRaw.filter(p => !carouselIds.has(p.id))
+
         const featuredPost = settings?.homeFeaturedPostId
             ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
             : fallback[0]
 
         const secondaryPosts = settings?.homeSecondaryPostIds?.length
-            ? settings.homeSecondaryPostIds
-                .map(id => slottedById[id])
-                .filter(Boolean)
-                .slice(0, 4)
+            ? settings.homeSecondaryPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 4)
             : fallback.slice(1, 5)
 
         const sidebarPosts = settings?.homeSidebarPostIds?.length
-            ? settings.homeSidebarPostIds
-                .map(id => slottedById[id])
-                .filter(Boolean)
-                .slice(0, 8)
+            ? settings.homeSidebarPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 8)
             : fallback.slice(0, 8)
 
-        const carouselPosts = settings?.homeCarouselPostIds?.length
-            ? settings.homeCarouselPostIds
-                .map(id => slottedById[id])
-                .filter(Boolean)
-                .slice(0, 5)
-            : fallbackPostsRaw.slice(0, 5)
-
-        // Feed exclui tudo que aparece nos slots e no featured
+        // Feed exclui tudo que aparece nos slots
         const featuredId = featuredPost?.id
         const secondaryIds = new Set(secondaryPosts.map(p => p.id))
         const feedPosts = fallbackPostsRaw.filter(
-            p => p.id !== featuredId && !secondaryIds.has(p.id)
+            p => !carouselIds.has(p.id) && p.id !== featuredId && !secondaryIds.has(p.id)
         )
 
         const categoryCountMap = Object.fromEntries(
