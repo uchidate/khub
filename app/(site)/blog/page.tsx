@@ -403,11 +403,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <AdBanner slot={SLOT_AUTO} variant="auto" eager minimal hideLabel className="hidden md:block w-full max-w-[970px] mx-auto px-4 py-1" />
       <PageTransition className="pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
-        {page === 1 && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
+        {page === 1 && featPost && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />

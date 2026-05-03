@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton } from '@/components/admin/AdminButton'
-import { Save, Search, X, Star, LayoutGrid, BookMarked, Loader2, Layers } from 'lucide-react'
+import { Save, Search, X, Star, LayoutGrid, BookMarked, Loader2, Layers, Sparkles, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -245,6 +245,7 @@ function SlotPicker({
     selected, onSelect, onRemove,
     blockedBySlot,
     max = 1,
+    hideHeader = false,
 }: {
     label: string
     icon: React.ReactNode
@@ -254,6 +255,7 @@ function SlotPicker({
     onRemove: (id: string) => void
     blockedBySlot?: Map<string, string>
     max?: number
+    hideHeader?: boolean
 }) {
     const { query, setQuery, results, loading } = usePostSearch()
     const [open, setOpen] = useState(false)
@@ -281,17 +283,19 @@ function SlotPicker({
     }, [open])
 
     return (
-        <div className="rounded-xl border border-border bg-background">
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface rounded-t-xl">
-                <span className="text-accent">{icon}</span>
-                <div>
-                    <p className="text-[13px] font-bold text-foreground">{label}</p>
-                    <p className="text-[11px] text-muted">{description}</p>
+        <div className={hideHeader ? 'space-y-2' : 'rounded-xl border border-border bg-background'}>
+            {!hideHeader && (
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface rounded-t-xl">
+                    <span className="text-accent">{icon}</span>
+                    <div>
+                        <p className="text-[13px] font-bold text-foreground">{label}</p>
+                        <p className="text-[11px] text-muted">{description}</p>
+                    </div>
+                    <span className="ml-auto text-[11px] text-muted font-medium">{selected.length}/{max}</span>
                 </div>
-                <span className="ml-auto text-[11px] text-muted font-medium">{selected.length}/{max}</span>
-            </div>
+            )}
 
-            <div className="p-3 space-y-2">
+            <div className={hideHeader ? 'space-y-2' : 'p-3 space-y-2'}>
                 {/* Selected posts */}
                 {selected.map((post, idx) => (
                     <PostCard
@@ -414,6 +418,14 @@ export default function HomepageConfigPage() {
     const [secondaryPosts, setSecondaryPosts] = useState<PostSummary[]>([])
     const [sidebarPosts, setSidebarPosts] = useState<PostSummary[]>([])
     const [spotlightArtist, setSpotlightArtist] = useState<ArtistSummary | null>(null)
+    const [autoPreview, setAutoPreview] = useState<PostSummary[]>([])
+
+    useEffect(() => {
+        fetch('/api/admin/blog?status=PUBLISHED&limit=5&sortBy=publishedAt&sortOrder=desc')
+            .then(r => r.json() as Promise<{ data?: PostSummary[] }>)
+            .then(d => setAutoPreview(d.data ?? []))
+            .catch(() => {})
+    }, [])
 
     const featuredId = featuredPost?.id ?? null
     const carouselIds = carouselPosts.map(p => p.id)
@@ -523,16 +535,57 @@ export default function HomepageConfigPage() {
                 </div>
 
                 {/* Carrossel do Hero */}
-                <SlotPicker
-                    label="Carrossel do Hero"
-                    icon={<Layers size={15} />}
-                    description="Até 5 artigos que rotacionam automaticamente no hero da homepage (substitui o Card principal quando preenchido)"
-                    selected={carouselPosts}
-                    onSelect={p => setCarouselPosts(prev => [...prev, p])}
-                    onRemove={id => setCarouselPosts(prev => prev.filter(p => p.id !== id))}
-                    blockedBySlot={blockedForCarousel}
-                    max={5}
-                />
+                <div className="rounded-xl border border-border bg-background overflow-hidden">
+                    <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-surface">
+                        <span className="text-accent"><Layers size={15} /></span>
+                        <div className="flex-1">
+                            <p className="text-[13px] font-bold text-foreground">Carrossel do Hero</p>
+                            <p className="text-[11px] text-muted">Até 5 artigos que rotacionam no hero. Vazio = site preenche automaticamente com os mais recentes.</p>
+                        </div>
+                        <span className="text-[11px] text-muted font-medium">{carouselPosts.length}/5</span>
+                        {carouselPosts.length > 0 && (
+                            <button
+                                onClick={() => setCarouselPosts([])}
+                                className="flex items-center gap-1 text-[10px] font-semibold text-muted hover:text-red-400 transition-colors px-2 py-1 rounded border border-border hover:border-red-400/40"
+                            >
+                                <Trash2 size={10} /> Limpar
+                            </button>
+                        )}
+                    </div>
+
+                    {carouselPosts.length === 0 && (
+                        <div className="px-4 py-3 border-b border-dashed border-border bg-accent/5">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Sparkles size={12} className="text-accent" />
+                                <span className="text-[11px] font-bold text-accent uppercase tracking-wider">Modo automático ativo</span>
+                            </div>
+                            <p className="text-[11px] text-muted mb-2">O carrossel será preenchido automaticamente com os 5 artigos mais recentes:</p>
+                            <div className="space-y-1">
+                                {autoPreview.map((p, i) => (
+                                    <div key={p.id} className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold text-muted/50 w-3">{i + 1}</span>
+                                        <span className="text-[11px] text-muted truncate">{p.title}</span>
+                                        {p.category && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-surface border border-border text-muted shrink-0">{p.category.name}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="p-3">
+                        <SlotPicker
+                            label=""
+                            icon={null}
+                            description=""
+                            selected={carouselPosts}
+                            onSelect={p => setCarouselPosts(prev => [...prev, p])}
+                            onRemove={id => setCarouselPosts(prev => prev.filter(p => p.id !== id))}
+                            blockedBySlot={blockedForCarousel}
+                            max={5}
+                            hideHeader
+                        />
+                    </div>
+                </div>
 
                 {/* Card principal */}
                 <SlotPicker
