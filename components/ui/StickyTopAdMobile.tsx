@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useAdFilled } from '@/hooks/useAdFilled'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME_TOP
+const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_LEADERBOARD
 
 export function StickyTopAd() {
     const pushed = useRef(false)
@@ -22,24 +22,18 @@ export function StickyTopAd() {
     if (!CLIENT || !SLOT || filled === false) return null
 
     return (
-        <div
-            className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30 bg-background border-b border-border/40"
-            style={{ maxHeight: 70, overflow: 'hidden' }}
-        >
-            {filled === true && (
-                <p className="text-[8px] font-semibold uppercase tracking-widest text-muted/30 text-center pt-0.5 select-none">
-                    Publicidade
-                </p>
-            )}
-            <ins
-                ref={insRef}
-                className="adsbygoogle"
-                style={{ display: 'block' }}
-                data-ad-client={CLIENT}
-                data-ad-slot={SLOT}
-                data-ad-format="auto"
-                data-full-width-responsive="true"
-            />
+        <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30 w-full bg-background border-b border-border/40 max-h-[56px] sm:max-h-[100px] overflow-hidden">
+            <div className="max-w-[970px] mx-auto px-4">
+                <ins
+                    ref={insRef}
+                    className="adsbygoogle"
+                    style={{ display: 'block' }}
+                    data-ad-client={CLIENT}
+                    data-ad-slot={SLOT}
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"
+                />
+            </div>
         </div>
     )
 }
