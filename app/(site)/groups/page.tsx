@@ -205,7 +205,7 @@ export default async function GroupsPage() {
                 <Suspense>
                     <GroupsList hideFilter />
                 </Suspense>
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4"  devLabel="Grupos · Fim Lista" />
                 <ScrollToTop />
             </div>
         </PageTransition>

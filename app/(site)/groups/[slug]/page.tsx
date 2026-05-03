@@ -723,7 +723,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-6"  devLabel="Grupo · Sidebar Conteúdo" />
 
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (
@@ -845,7 +845,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-6" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-6"  devLabel="Grupo · In-Article" />
 
                         {/* Estado vazio */}
                         {group.members.length === 0 && (

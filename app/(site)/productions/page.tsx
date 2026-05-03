@@ -183,7 +183,7 @@ export default async function ProductionsPage() {
                 <Suspense>
                     <ProductionsList hideFilter />
                 </Suspense>
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4"  devLabel="Produções · Fim Lista" />
                 <ScrollToTop />
             </div>
         </PageTransition>

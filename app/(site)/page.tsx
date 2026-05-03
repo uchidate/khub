@@ -346,8 +346,8 @@ export default async function Home() {
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
             {/* DEV ONLY — testar posição de anúncio abaixo da navbar */}
             <div className="w-full border-b border-border/40">
-                <div className="max-w-[970px] mx-auto px-4 py-1">
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!} variant="auto" minimal hideLabel eager />
+                <div className="max-w-[970px] mx-auto px-4">
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME!} variant="auto" minimal hideLabel eager  devLabel="Home · Abaixo Navbar" />
                 </div>
             </div>
             <JsonLd data={{

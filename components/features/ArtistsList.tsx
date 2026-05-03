@@ -116,7 +116,7 @@ export function ArtistsList({ artists, pagination, initialFilters }: ArtistsList
 
             {artists.length > 0 && (
                 <>
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4" />
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4"  devLabel="Artistas · Topo Lista" />
                     <p className="text-xs text-muted mb-5">
                         {total.toLocaleString('pt-BR')} artistas
                         {totalPages > 1 && ` · pág. ${currentPage} de ${totalPages}`}

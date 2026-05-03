@@ -40,7 +40,7 @@ function InArticleAd({ id }: { id: string }) {
     if (!IS_DEV && (!ADSENSE_CLIENT || filled === false)) return null
     if (IS_DEV) return (
         <div className="my-8 h-[250px] flex items-center justify-center bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded">
-            <span className="text-[9px] font-mono text-amber-600/70 select-none">📢 fluid in-article · slot: {ADSENSE_SLOT}</span>
+            <span className="text-[9px] font-mono text-amber-600/70 select-none">📢 Blog In-Article · slot: {ADSENSE_SLOT}</span>
         </div>
     )
     return (
