@@ -177,7 +177,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
     if (!artist || artist.isHidden) {
         return (
-            <div className="pb-20 px-4 sm:px-12 md:px-20">
+            <div className="pb-20 px-4 sm:px-6 lg:px-12">
                 <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: 'Não Encontrado' }]} />
                 <ErrorMessage
                     title="Artista não encontrado"
@@ -319,7 +319,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
                 {/* Breadcrumbs + Favorite */}
-                <div className="absolute top-4 md:top-5 left-0 right-0 px-4 sm:px-12 md:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 z-10">
+                <div className="absolute top-4 md:top-5 left-0 right-0 px-4 sm:px-6 lg:px-12 z-10"><div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} onDark className="" />
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <AdminQuickEdit href={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
@@ -328,11 +328,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista"
                             className="bg-black/40 border border-white/10 backdrop-blur-sm" />
                     </div>
-                </div>
+                </div></div>
 
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-12 md:px-20 pb-10 md:pb-14">
-                    <div className="flex items-end gap-8">
+                <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
+                    <div className="max-w-7xl mx-auto flex items-end gap-8">
                     <div className="flex flex-col gap-2 flex-1 min-w-0">
                         {/* Roles + group + birthday countdown */}
                         <div className="flex items-center gap-2 flex-wrap">
@@ -411,8 +411,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             </div>
 
             {/* ── CONTEÚDO ── */}
-            <div className="px-4 sm:px-12 md:px-20 py-8 lg:py-12">
-                <div className="grid lg:grid-cols-[280px_1fr] gap-8 lg:gap-12 max-w-[1400px] mx-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 lg:py-12">
+                <div className="grid lg:grid-cols-[280px_1fr] gap-8 lg:gap-12">
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:sticky lg:top-24 lg:self-start">
@@ -495,6 +495,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </div>
                             </div>
                         )}
+
 
                     </div>
 
@@ -590,7 +591,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
 
                         {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="my-4" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-4" />
 
                         {/* Filmography */}
                         <section>
@@ -802,7 +803,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         )}
 
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-2" />
+                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="mt-2" />
 
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>

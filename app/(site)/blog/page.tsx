@@ -405,6 +405,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
+        {/* DEV ONLY — testar posição de anúncio abaixo da navbar */}
+        <div className="w-full border-b border-border/40">
+          <div className="max-w-[970px] mx-auto px-4 py-1">
+            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal hideLabel eager />
+          </div>
+        </div>
+
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
         {page === 1 && featPost && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (

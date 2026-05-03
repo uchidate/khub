@@ -14,6 +14,7 @@ const TikTokEmbed = dynamic(() => import('@/components/ui/TikTokEmbed').then(m =
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID
+const IS_DEV = process.env.NODE_ENV === 'development'
 
 function InArticleAd({ id }: { id: string }) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -36,7 +37,12 @@ function InArticleAd({ id }: { id: string }) {
         return () => observer.disconnect()
     }, [])
 
-    if (!ADSENSE_CLIENT || filled === false) return null
+    if (!IS_DEV && (!ADSENSE_CLIENT || filled === false)) return null
+    if (IS_DEV) return (
+        <div className="my-8 h-[250px] flex items-center justify-center bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded">
+            <span className="text-[9px] font-mono text-amber-600/70 select-none">📢 fluid in-article · slot: {ADSENSE_SLOT}</span>
+        </div>
+    )
     return (
         <div ref={containerRef} className="my-8 overflow-hidden">
             {filled === true && (

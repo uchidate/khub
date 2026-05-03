@@ -8,6 +8,7 @@ import { Users } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
 type Group = {
@@ -236,6 +237,9 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
             </div>}
 
             {/* Grid */}
+            {filtered.length > 0 && (
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4" />
+            )}
             {filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"
