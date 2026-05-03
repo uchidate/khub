@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDE_RAIL!
@@ -8,6 +9,7 @@ const IS_DEV = process.env.NODE_ENV === 'development'
 const THRESHOLD = 1632
 
 export function SideRailAds() {
+    const pathname = usePathname()
     const [visible, setVisible] = useState(false)
     const pushedLeft = useRef(false)
     const pushedRight = useRef(false)
@@ -34,6 +36,8 @@ export function SideRailAds() {
             }
         } catch { /* AdSense ainda não carregou */ }
     }, [visible])
+
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return null
 
     if (IS_DEV) {
         const rail = (side: 'left' | 'right') => (

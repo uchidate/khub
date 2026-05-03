@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR
@@ -11,6 +12,7 @@ const AUTO_DISMISS_MS = 15_000
 const BOTTOM_NAV_H = 62
 
 export function StickyBottomAd() {
+    const pathname = usePathname()
     const [visible, setVisible] = useState(false)
     const [dismissed, setDismissed] = useState(false)
     const [isMobile, setIsMobile] = useState<boolean | null>(null)
@@ -49,6 +51,8 @@ export function StickyBottomAd() {
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
         } catch {}
     }, [visible])
+
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return null
 
     if (IS_DEV) {
         if (isMobile === null) return null
