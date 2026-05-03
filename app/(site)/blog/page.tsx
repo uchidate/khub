@@ -377,13 +377,15 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     ? (editorialPostsMap.get(editorialIds[1]) ?? posts.find(p => p.id !== heroId))
     : posts.find(p => p.id !== heroId) ?? null
 
-  const magazineSideIds = !isFiltered && page === 1
-    ? editorialIds.slice(2, 4)
-    : []
-
-  const magazineSide = magazineSideIds.length > 0
-    ? magazineSideIds.map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts
-    : posts.filter(p => p.id !== heroId && p.id !== magazineMain?.id).slice(0, 2)
+  const magazineSide = (() => {
+    const fromEditorial = (!isFiltered && page === 1)
+      ? (editorialIds.slice(2, 4).map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts)
+      : []
+    if (fromEditorial.length >= 2) return fromEditorial
+    const used = new Set([heroId, magazineMain?.id, ...fromEditorial.map(p => p.id)])
+    const fallback = posts.filter(p => !used.has(p.id)).slice(0, 2 - fromEditorial.length)
+    return [...fromEditorial, ...fallback]
+  })()
 
   const editorialUsed = new Set([heroId, magazineMain?.id, ...magazineSide.map(p => p.id)])
   const gridPosts = posts.filter(p => !editorialUsed.has(p.id))
@@ -675,8 +677,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                         {magazineSide.map((p, i) => (
                           <EditorialSideCard key={p.id} post={p} priority={i === 0} />
                         ))}
-                        {Array.from({ length: 2 - magazineSide.length }).map((_, i) => (
-                          <div key={i} className="rounded-xl border border-dashed border-border bg-surface/30" />
+                        {magazineSide.length < 2 && Array.from({ length: 2 - magazineSide.length }).map((_, i) => (
+                          <div key={i} className="rounded-xl border border-dashed border-border bg-surface/30 hidden sm:block" />
                         ))}
                       </div>
                     </div>
