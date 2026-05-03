@@ -144,7 +144,7 @@ function CategoryBadge({ category, size = 'sm' }: { category: { name: string; sl
   const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
   return (
     <span
-      className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}
+      className={`self-start w-fit px-2 py-0.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap ${size === 'xs' ? 'text-[9px]' : 'text-[10px]'}`}
       style={{ backgroundColor: cfg?.bg ?? '#f3f4f6', color: cfg?.color ?? '#374151' }}
     >
       {category.name}
