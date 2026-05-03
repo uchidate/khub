@@ -36,7 +36,6 @@ export function SideRailAds() {
     }, [visible])
 
     if (IS_DEV) {
-        if (!visible) return null
         const rail = (side: 'left' | 'right') => (
             <div key={side} className={`fixed ${side}-2 top-1/2 -translate-y-1/2 w-[160px] h-[600px] flex flex-col items-center justify-center z-20 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded`}>
                 <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Side Rail</span>
