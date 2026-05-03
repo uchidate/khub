@@ -49,7 +49,9 @@ export function HomeNavbarAd() {
     if (!CLIENT || !SLOT) return null
 
     return (
-        <div className="w-full border-b border-border/40 flex justify-center py-1">
+        // overflow-hidden + maxHeight garante que o AdSense não expande além do tamanho fixo,
+        // mesmo que o slot esteja configurado como responsivo no dashboard
+        <div className="w-full border-b border-border/40 flex justify-center py-1" style={{ maxHeight: `${h + 8}px`, overflow: 'hidden' }}>
             <ins
                 className="adsbygoogle"
                 style={{ display: 'inline-block', width: w, height: h }}
