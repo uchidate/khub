@@ -297,7 +297,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
 
                 {/* Breadcrumbs + actions */}
-                <div className="relative z-10 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="relative z-10 pt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2"><div>
                     <Breadcrumbs
                         items={[
                             { label: 'Produções', href: '/productions' },
