@@ -403,7 +403,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <AdBanner slot={SLOT_AUTO} variant="auto" eager minimal hideLabel className="hidden md:block w-full max-w-[970px] mx-auto px-4 py-1" />
       <PageTransition className="pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
