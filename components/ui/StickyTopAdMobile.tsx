@@ -23,7 +23,7 @@ export function StickyTopAd() {
 
     return (
         <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30 w-full bg-background border-b border-border/40 max-h-[56px] sm:max-h-[100px] overflow-hidden">
-            <div className="max-w-[970px] mx-auto px-4 py-1">
+            <div className="max-w-[970px] mx-auto px-4">
                 <ins
                     ref={insRef}
                     className="adsbygoogle"
