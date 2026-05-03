@@ -31,8 +31,16 @@ export function HomeNavbarAd() {
     if (IS_DEV) {
         return (
             <div className="w-full border-b border-border/40 flex justify-center py-1">
-                <div style={{ width: w, height: h }} className="flex items-center justify-center bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded">
-                    <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Home Navbar · {w}×{h}</span>
+                <div style={{ width: w, height: h }} className="relative flex flex-col items-center justify-center gap-1 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded overflow-hidden">
+                    <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 Home · Abaixo Navbar</span>
+                    <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5">
+                        <span className="text-[10px] font-mono text-amber-700 dark:text-amber-300 select-none">{w}×{h}</span>
+                        <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
+                        <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">fixed size</span>
+                        <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
+                        <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">leaderboard</span>
+                    </div>
+                    <span className="text-[9px] font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {SLOT}</span>
                 </div>
             </div>
         )
