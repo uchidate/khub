@@ -379,11 +379,14 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
   const magazineSide = (() => {
     const fromEditorial = (!isFiltered && page === 1)
-      ? (editorialIds.slice(2, 4).map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts)
+      ? (editorialIds.slice(2, 4).map(id => editorialPostsMap.get(id)).filter(Boolean) as typeof posts).filter(p => p.coverImageUrl)
       : []
     if (fromEditorial.length >= 2) return fromEditorial
     const used = new Set([heroId, magazineMain?.id, ...fromEditorial.map(p => p.id)])
-    const fallback = posts.filter(p => !used.has(p.id)).slice(0, 2 - fromEditorial.length)
+    const available = posts.filter(p => !used.has(p.id))
+    // Priorizar posts com foto
+    const withPhoto = available.filter(p => p.coverImageUrl)
+    const fallback = (withPhoto.length >= 2 - fromEditorial.length ? withPhoto : available).slice(0, 2 - fromEditorial.length)
     return [...fromEditorial, ...fallback]
   })()
 
