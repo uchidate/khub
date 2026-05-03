@@ -406,8 +406,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       }} />
       <PageTransition className="pb-16">
 
-        {/* Anúncio fixo abaixo da navbar — mesmo padrão da homepage */}
-        <HomeNavbarAd />
+        {/* Anúncio fixo abaixo da navbar — apenas desktop */}
+        <div className="hidden sm:block"><HomeNavbarAd /></div>
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
         {page === 1 && featPost && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">

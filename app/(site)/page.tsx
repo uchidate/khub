@@ -345,8 +345,8 @@ export default async function Home() {
 
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
-            {/* Leaderboard abaixo da navbar — tamanho fixo: 320×50 mobile / 728×90 desktop */}
-            <HomeNavbarAd />
+            {/* Leaderboard abaixo da navbar — apenas desktop */}
+            <div className="hidden sm:block"><HomeNavbarAd /></div>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
