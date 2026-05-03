@@ -496,7 +496,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             </div>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal hideLabel />
 
                     </div>
 

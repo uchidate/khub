@@ -2,12 +2,14 @@
 
 import { useRef, useState, useEffect } from 'react'
 
+const IS_DEV = process.env.NODE_ENV === 'development'
+
 export function useAdFilled(slot: string | undefined, timeoutMs = 4000) {
     const insRef = useRef<HTMLModElement>(null)
     const [filled, setFilled] = useState<boolean | null>(null)
 
     useEffect(() => {
-        if (!slot) { setFilled(false); return }
+        if (IS_DEV || !slot) { if (!IS_DEV) setFilled(false); return }
         const ins = insRef.current
         if (!ins) return
 
