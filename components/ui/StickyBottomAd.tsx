@@ -12,9 +12,17 @@ const AUTO_DISMISS_MS = 15_000
 export function StickyBottomAd() {
     const [visible, setVisible] = useState(false)
     const [dismissed, setDismissed] = useState(false)
+    const [isMobile, setIsMobile] = useState<boolean | null>(null)
     const sentinelRef = useRef<HTMLDivElement>(null)
     const pushed = useRef(false)
     const { insRef, filled } = useAdFilled(SLOT)
+
+    useEffect(() => {
+        const calc = () => setIsMobile(window.innerWidth < 640)
+        calc()
+        window.addEventListener('resize', calc)
+        return () => window.removeEventListener('resize', calc)
+    }, [])
 
     useEffect(() => {
         const el = sentinelRef.current
@@ -42,18 +50,20 @@ export function StickyBottomAd() {
         } catch {}
     }, [visible])
 
-    if (IS_DEV) return (
-        <>
-            {/* Mobile: 320×100 */}
-            <div className="sm:hidden fixed bottom-[70px] left-1/2 -translate-x-1/2 z-40 w-[320px] h-[100px] flex items-center justify-center bg-black/60 pointer-events-none">
-                <span className="text-[8px] font-mono text-white/20 select-none">slot: {SLOT}</span>
+    if (IS_DEV) {
+        if (isMobile === null) return null
+        const w = isMobile ? 320 : 728
+        const h = isMobile ? 100 : 90
+        const bottom = isMobile ? 70 : 0
+        return (
+            <div
+                className="fixed left-1/2 -translate-x-1/2 z-40 flex items-center justify-center bg-black/60 pointer-events-none"
+                style={{ width: w, height: h, bottom }}
+            >
+                <span className="text-[8px] font-mono text-white/20 select-none">{w}×{h} · slot: {SLOT}</span>
             </div>
-            {/* Desktop: 728×90 */}
-            <div className="hidden sm:flex fixed bottom-0 left-1/2 -translate-x-1/2 z-40 w-[728px] h-[90px] items-center justify-center bg-black/60 pointer-events-none">
-                <span className="text-[8px] font-mono text-white/20 select-none">slot: {SLOT}</span>
-            </div>
-        </>
-    )
+        )
+    }
 
     return (
         <>
