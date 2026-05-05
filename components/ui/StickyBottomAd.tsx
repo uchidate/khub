@@ -62,25 +62,22 @@ export function StickyBottomAd() {
                 borderTop: '1px solid rgba(255,255,255,0.06)',
             }}
         >
-            <div className="flex items-center justify-between px-3 pt-1 pb-0.5">
-                <span className="text-[9px] font-medium uppercase tracking-widest text-muted/40 select-none">Publicidade</span>
+            <div className="flex items-center justify-end px-2 pt-0.5">
                 <button
                     onClick={() => setDismissed(true)}
-                    className="flex items-center gap-1 text-[9px] text-muted/40 hover:text-muted transition-colors"
+                    className="flex items-center gap-0.5 text-[9px] text-muted/30 hover:text-muted/60 transition-colors"
                     aria-label="Fechar anúncio"
                 >
-                    <X size={10} />
-                    <span className="hidden sm:inline">fechar</span>
+                    <X size={9} />
                 </button>
             </div>
-            <div className="flex justify-center pb-1" style={{ maxHeight: `${h}px`, overflow: 'hidden' }}>
+            <div className="flex justify-center" style={{ height: `${h}px`, overflow: 'hidden' }}>
                 <ins
                     className="adsbygoogle"
                     style={{ display: 'inline-block', width: `${w}px`, height: `${h}px` }}
                     data-ad-client={CLIENT}
-                    data-ad-slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO}
-                    data-ad-format="auto"
-                    data-full-width-responsive="false"
+                    data-ad-slot={SLOT}
+                    data-ad-format="fixed"
                 />
             </div>
         </div>
