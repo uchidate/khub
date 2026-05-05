@@ -10,6 +10,7 @@ import {
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
   TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon, ChevronDown,
+  ShoppingBag,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -117,6 +118,7 @@ const navSections: NavSection[] = [
       { href: '/admin/hidden', label: 'Ocultos', icon: EyeOff },
       { href: '/admin/agencies',  label: 'Agências',  icon: Building2 },
       { href: '/admin/streaming', label: 'Streaming', icon: Tv },
+      { href: '/admin/loja', label: 'Loja', icon: ShoppingBag },
     ],
   },
 
