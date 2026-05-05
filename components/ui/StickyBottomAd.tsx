@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR
+const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO
 const IS_DEV = process.env.NODE_ENV === 'development'
 const BOTTOM_NAV_H = 62
 
@@ -78,8 +78,9 @@ export function StickyBottomAd() {
                     className="adsbygoogle"
                     style={{ display: 'inline-block', width: `${w}px`, height: `${h}px` }}
                     data-ad-client={CLIENT}
-                    data-ad-slot={SLOT}
-                    data-ad-format="fixed"
+                    data-ad-slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO}
+                    data-ad-format="auto"
+                    data-full-width-responsive="false"
                 />
             </div>
         </div>
