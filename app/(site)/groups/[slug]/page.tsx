@@ -19,6 +19,7 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
+import { permanentRedirect } from 'next/navigation'
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
@@ -114,6 +115,11 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function GroupDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     const group = await getGroup(params.slug)
+
+    // Redireciona ID puro para URL canônica com slug (301 permanente para SEO)
+    if (group && isCuid(params.slug) && group.slug && group.slug !== params.slug) {
+        permanentRedirect(`/groups/${group.slug}`)
+    }
 
     if (!group || group.isHidden) {
         return (

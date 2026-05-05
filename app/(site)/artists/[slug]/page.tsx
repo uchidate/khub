@@ -20,6 +20,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
+import { permanentRedirect } from "next/navigation"
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
@@ -174,6 +175,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const params = await props.params;
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
     const artist = await getArtist(params.slug)
+
+    // Redireciona ID puro para URL canônica com slug (301 permanente para SEO)
+    if (artist && isCuid(params.slug) && artist.slug && artist.slug !== params.slug) {
+        permanentRedirect(`/artists/${artist.slug}`)
+    }
 
     if (!artist || artist.isHidden) {
         return (

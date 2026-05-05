@@ -3,7 +3,7 @@ import { applySeoOverride } from '@/lib/seo/apply-override'
 import { getTranslation } from "@/lib/translations"
 import Link from "next/link"
 import Image from "next/image"
-import { notFound } from "next/navigation"
+import { notFound, permanentRedirect } from "next/navigation"
 import { cache } from "react"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -139,6 +139,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         notFound()
     }
 
+    // Redireciona ID puro para URL canônica com slug (301 permanente para SEO)
+    if (isCuid(params.slug) && production.slug && production.slug !== params.slug) {
+        permanentRedirect(`/productions/${production.slug}`)
+    }
+
     const tags = (production.tags || []) as string[]
     const artistIds = production.artists.map(a => a.artist.id)
 
@@ -255,6 +260,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         "name": `Trailer — ${production.titlePt}`,
                         "embedUrl": production.trailerUrl,
                         "thumbnailUrl": production.imageUrl ?? undefined,
+                        "uploadDate": production.releaseDate
+                            ? new Date(production.releaseDate).toISOString().split('T')[0]
+                            : production.year
+                                ? `${production.year}-01-01`
+                                : new Date().toISOString().split('T')[0],
+                        "description": `Trailer oficial de ${production.titlePt}`,
                     }
                 } : {}),
                 ...(production.voteAverage && production.voteAverage > 0 && production.voteCount && production.voteCount > 0 ? {
