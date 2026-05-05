@@ -22,14 +22,15 @@ export function StickyBottomAd() {
         return () => window.removeEventListener('resize', calc)
     }, [])
 
+    // Push só depois que isMobile é resolvido — garante que <ins> está no DOM
     useEffect(() => {
-        if (pushed.current || !CLIENT || !SLOT) return
+        if (pushed.current || !CLIENT || !SLOT || isMobile === null) return
         pushed.current = true
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
         } catch {}
-    }, [])
+    }, [isMobile])
 
     if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return null
 
@@ -54,23 +55,21 @@ export function StickyBottomAd() {
 
     return (
         <div
-            className="fixed left-0 right-0 z-[190] animate-[slideUp_250ms_ease-out]"
+            className="fixed left-0 right-0 z-[190] animate-[slideUp_250ms_ease-out] relative"
             style={{
                 bottom,
-                background: 'rgba(var(--color-background-rgb, 15 15 20), 0.92)',
+                background: 'rgba(var(--color-background-rgb, 15 15 20), 0.95)',
                 backdropFilter: 'blur(8px)',
                 borderTop: '1px solid rgba(255,255,255,0.06)',
             }}
         >
-            <div className="flex items-center justify-end px-2 pt-0.5">
-                <button
-                    onClick={() => setDismissed(true)}
-                    className="flex items-center gap-0.5 text-[9px] text-muted/30 hover:text-muted/60 transition-colors"
-                    aria-label="Fechar anúncio"
-                >
-                    <X size={9} />
-                </button>
-            </div>
+            <button
+                onClick={() => setDismissed(true)}
+                className="absolute top-0.5 right-1 text-muted/30 hover:text-muted/60 transition-colors z-10"
+                aria-label="Fechar anúncio"
+            >
+                <X size={10} />
+            </button>
             <div className="flex justify-center" style={{ height: `${h}px`, overflow: 'hidden' }}>
                 <ins
                     className="adsbygoogle"
