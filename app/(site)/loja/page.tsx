@@ -12,6 +12,7 @@ async function getProducts() {
             id: true, name: true, price: true, originalPrice: true,
             imageUrl: true, affiliateUrl: true, store: true, category: true,
             badge: true, rating: true, soldCount: true, tags: true,
+            featured: true, position: true,
         },
     }).catch(() => [])
 }

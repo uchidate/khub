@@ -1,0 +1,1 @@
+ALTER TABLE "StoreProduct" ADD COLUMN "clickCount" INTEGER NOT NULL DEFAULT 0;

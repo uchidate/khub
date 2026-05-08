@@ -11,12 +11,13 @@ const STORE_LABELS: Record<string, string> = {
 }
 
 interface ShopeeCardProps {
+    id?: string
     name: string
     price: string
     originalPrice?: string
     rating?: number
-    sold?: string        // legado
-    soldCount?: string   // do banco
+    sold?: string
+    soldCount?: string
     imageUrl: string
     affiliateUrl: string
     badge?: string
@@ -24,7 +25,13 @@ interface ShopeeCardProps {
     store?: string
 }
 
+function trackClick(id?: string) {
+    if (!id) return
+    fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
+}
+
 export function ShopeeCard({
+    id,
     name,
     price,
     originalPrice,
@@ -45,6 +52,7 @@ export function ShopeeCard({
                 href={affiliateUrl}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
+                onClick={() => trackClick(id)}
                 className="flex gap-3 p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-orange-400/40 transition-all group"
             >
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted/10">
@@ -67,6 +75,7 @@ export function ShopeeCard({
             href={affiliateUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
+            onClick={() => trackClick(id)}
             className="flex flex-col rounded-2xl bg-surface border border-border/40 hover:border-orange-400/40 hover:shadow-lg hover:shadow-orange-500/5 transition-all group overflow-hidden"
         >
             <div className="relative aspect-square bg-muted/10">
