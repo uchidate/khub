@@ -11,6 +11,7 @@ import { HomeTodaysBirthdays, type BirthdayArtist } from "@/components/home/Home
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { HomeNavbarAd } from "@/components/ui/HomeNavbarAd"
+import { HomeLojaDestaque } from "@/components/home/HomeLojaDestaque"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
@@ -288,6 +289,17 @@ export default async function Home() {
 
     const publicData = await getHomePublicData()
 
+    const featuredProducts = await prisma.storeProduct.findMany({
+        where: { isActive: true, featured: true },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+        take: 4,
+        select: {
+            id: true, name: true, price: true, originalPrice: true,
+            imageUrl: true, affiliateUrl: true, store: true, category: true,
+            badge: true, rating: true, soldCount: true,
+        },
+    }).catch(() => [])
+
     // Birthdays: not cached — must be fresh daily
     const todaysBirthdays = await (async (): Promise<BirthdayArtist[]> => {
         try {
@@ -373,6 +385,7 @@ export default async function Home() {
                 spotlightProduction={spotlightProduction}
             />
             <HomeTodaysBirthdays artists={todaysBirthdays} />
+            <HomeLojaDestaque products={featuredProducts} />
             <HomeQuizBanner />
             <HomeBelowFold
                 artist={randomArtist ? { id: randomArtist.id, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}

@@ -1,0 +1,1 @@
+javascript:(function(){var s=document.createElement('script');s.src='https://www.hallyuhub.com.br/bookmarklet-shopee.js?v=1';document.body.appendChild(s)})()

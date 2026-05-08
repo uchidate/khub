@@ -1198,3 +1198,29 @@ model ViewEventHourly {
   @@index([date, slot])
   @@index([entityType, date])
 }
+
+// ─── Loja — Produtos afiliados ────────────────────────────────────────────────
+model StoreProduct {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  price         String             // "R$ 89,90"
+  originalPrice String?            // "R$ 129,90" — exibido tachado
+  imageUrl      String
+  affiliateUrl  String
+  store         String   @default("shopee") // "shopee" | "amazon" | "mercadolivre" | "outro"
+  category      String             // "kpop_album" | "lightstick" | "kbeauty" | "kdrama" | "clothing" | "acessorios"
+  badge         String?            // "-30%" | "Top vendas" | "Novo" | null
+  rating        Float?
+  soldCount     String?            // "2.3k" — texto livre vindo da loja
+  isActive      Boolean  @default(true)
+  featured      Boolean  @default(false)
+  position      Int      @default(0)  // ordem de exibição (menor = primeiro)
+  tags          String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([category, isActive, position])
+  @@index([store, isActive])
+  @@index([featured, isActive])
+}
