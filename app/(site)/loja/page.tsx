@@ -1,37 +1,23 @@
-import { ShopeeCard, ShopeeSectionHeader } from '@/components/ui/ShopeeCard'
 import { ShoppingBag } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { LojaClient } from '@/components/ui/LojaClient'
 
 export const dynamic = 'force-dynamic'
-
-const CATEGORY_LABELS: Record<string, string> = {
-    kpop_album:   'Álbuns K-Pop',
-    lightstick:   'Lightsticks',
-    kbeauty:      'K-Beauty',
-    kdrama:       'K-Drama',
-    clothing:     'Roupas',
-    acessorios:   'Acessórios',
-    photocard:    'Photocards',
-    outros:       'Outros',
-}
 
 async function getProducts() {
     return prisma.storeProduct.findMany({
         where: { isActive: true },
         orderBy: [{ category: 'asc' }, { position: 'asc' }, { createdAt: 'desc' }],
+        select: {
+            id: true, name: true, price: true, originalPrice: true,
+            imageUrl: true, affiliateUrl: true, store: true, category: true,
+            badge: true, rating: true, soldCount: true, tags: true,
+        },
     }).catch(() => [])
 }
 
 export default async function LojaPage() {
     const products = await getProducts()
-
-    // Agrupar por categoria
-    const grouped = products.reduce<Record<string, typeof products>>((acc, p) => {
-        if (!acc[p.category]) acc[p.category] = []
-        acc[p.category].push(p)
-        return acc
-    }, {})
-
     const hasProducts = products.length > 0
 
     return (
@@ -50,46 +36,14 @@ export default async function LojaPage() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
+            <div className="max-w-6xl mx-auto px-4 py-8">
                 {!hasProducts ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
                         <ShoppingBag className="w-12 h-12 opacity-20" />
                         <p className="text-sm">Em breve — produtos selecionados chegando!</p>
                     </div>
                 ) : (
-                    Object.entries(grouped).map(([category, items]) => (
-                        <section key={category}>
-                            <ShopeeSectionHeader
-                                title={CATEGORY_LABELS[category] || category}
-                                store={items[0]?.store}
-                            />
-                            {items.length <= 3 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {items.map(p => (
-                                        <ShopeeCard key={p.id} {...p}
-                                            affiliateUrl={p.affiliateUrl}
-                                            rating={p.rating ?? undefined}
-                                            originalPrice={p.originalPrice ?? undefined}
-                                            badge={p.badge ?? undefined}
-                                            soldCount={p.soldCount ?? undefined}
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {items.map(p => (
-                                        <ShopeeCard key={p.id} {...p}
-                                            affiliateUrl={p.affiliateUrl}
-                                            rating={p.rating ?? undefined}
-                                            originalPrice={p.originalPrice ?? undefined}
-                                            badge={p.badge ?? undefined}
-                                            soldCount={p.soldCount ?? undefined}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    ))
+                    <LojaClient products={products} />
                 )}
             </div>
         </div>

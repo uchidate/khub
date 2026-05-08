@@ -67,7 +67,7 @@ export default function AdminLojaPage() {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [form, setForm] = useState(EMPTY_FORM)
     const [saving, setSaving] = useState(false)
-    const { toast } = useToast()
+    const { addToast: toast } = useToast()
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -104,7 +104,7 @@ export default function AdminLojaPage() {
 
     const save = async () => {
         if (!form.name || !form.price || !form.imageUrl || !form.affiliateUrl) {
-            toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
+            toast({ type: 'error', message: 'Preencha os campos obrigatórios' })
             return
         }
         setSaving(true)
@@ -121,12 +121,12 @@ export default function AdminLojaPage() {
         const method = editingId ? 'PATCH' : 'POST'
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         if (res.ok) {
-            toast({ title: editingId ? 'Produto atualizado' : 'Produto criado' })
+            toast({ type: 'success', message: editingId ? 'Produto atualizado' : 'Produto criado' })
             closeForm()
             load()
         } else {
             const err = await res.json().catch(() => ({}))
-            toast({ title: err.error || 'Erro ao salvar', variant: 'destructive' })
+            toast({ type: 'error', message: err.error || 'Erro ao salvar' })
         }
         setSaving(false)
     }
@@ -143,7 +143,7 @@ export default function AdminLojaPage() {
     const remove = async (p: StoreProduct) => {
         if (!confirm(`Excluir "${p.name}"?`)) return
         await fetch(`/api/admin/store/${p.id}`, { method: 'DELETE' })
-        toast({ title: 'Produto removido' })
+        toast({ type: 'success', message: 'Produto removido' })
         load()
     }
 
@@ -157,11 +157,11 @@ export default function AdminLojaPage() {
     ).sort(([a], [b]) => a.localeCompare(b))
 
     return (
-        <AdminLayout title="Loja — Produtos Afiliados" icon={<ShoppingBag className="w-5 h-5" />}>
+        <AdminLayout title="Loja — Produtos Afiliados">
             {/* Barra de ações */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
-                <AdminButton onClick={openNew} icon={<Plus className="w-4 h-4" />}>
-                    Novo produto
+                <AdminButton onClick={openNew}>
+                    <Plus className="w-4 h-4 inline mr-1" />Novo produto
                 </AdminButton>
                 <select
                     value={filterCategory}
@@ -321,9 +321,11 @@ export default function AdminLojaPage() {
                             <button onClick={closeForm} className="text-sm text-muted hover:text-foreground px-4 py-2">
                                 Cancelar
                             </button>
-                            <AdminButton onClick={save} disabled={saving}
-                                icon={saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}>
-                                {saving ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar produto'}
+                            <AdminButton onClick={save} disabled={saving}>
+                                {saving
+                                    ? <><RefreshCw className="w-4 h-4 animate-spin inline mr-1" />Salvando...</>
+                                    : <><Check className="w-4 h-4 inline mr-1" />{editingId ? 'Atualizar' : 'Criar produto'}</>
+                                }
                             </AdminButton>
                         </div>
                     </div>
@@ -339,8 +341,8 @@ export default function AdminLojaPage() {
                 <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
                     <Package className="w-10 h-10 opacity-30" />
                     <p className="text-sm">Nenhum produto cadastrado ainda.</p>
-                    <AdminButton onClick={openNew} icon={<Plus className="w-4 h-4" />}>
-                        Adicionar primeiro produto
+                    <AdminButton onClick={openNew}>
+                        <Plus className="w-4 h-4 inline mr-1" />Adicionar primeiro produto
                     </AdminButton>
                 </div>
             ) : (
