@@ -14,8 +14,6 @@ import { JsonLd } from '@/components/seo/JsonLd'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
-import { AdBanner } from '@/components/ui/AdBanner'
-import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
@@ -34,7 +32,6 @@ function MarkdownWithAds({ content }: { content: string }) {
     return (
       <>
         <MarkdownRenderer content={content} />
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-8" />
       </>
     )
   }
@@ -44,7 +41,6 @@ function MarkdownWithAds({ content }: { content: string }) {
   return (
     <>
       <MarkdownRenderer content={firstHalf} />
-      <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-8" />
       <MarkdownRenderer content={secondHalf} />
     </>
   )
@@ -313,10 +309,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Ad após cover image — melhor viewability, sem CLS acima do fold */}
-        <div className="mb-8">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" hideLabel />
-        </div>
 
         {/* Content */}
         <article>
@@ -411,13 +403,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
         </Link>
 
-        {/* Multiplex — recomendações patrocinadas no final do artigo */}
-        <AdBanner
-          slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!}
-          variant="multiplex"
-          className="mt-10"
-        />
-
         {/* Navegação anterior / próximo */}
         {(prevPost || nextPost) && (
           <div className="mt-8 pt-8 border-t border-border grid grid-cols-2 gap-3">
@@ -447,8 +432,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* ── Sidebar sticky (xl+) ── */}
       <aside className="hidden xl:block w-[300px] shrink-0">
         <div className="sticky top-6 flex flex-col gap-4">
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" />
-
           {relatedPosts.length > 0 && (
             <div className="border border-border rounded-lg overflow-hidden">
               <div className="px-3 py-2 bg-surface border-b border-border">
@@ -466,7 +449,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       </div>{/* fim flex */}
       </div>{/* fim max-w */}
-      <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
     </PageTransition>
   )
 }

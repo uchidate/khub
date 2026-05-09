@@ -5,7 +5,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabels } from "@/lib/utils/role-labels"
 import { getStreamingConfig } from "@/lib/config/streaming-platforms"
-import { AdBanner } from "@/components/ui/AdBanner"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
@@ -17,7 +16,6 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { getTranslation, getTranslations } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
@@ -604,9 +602,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             title={`Produtos ${artist.nameRomanized}`}
                         />
 
-                        {/* Ad: após bio, antes da filmografia */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-4"  devLabel="Artista · Após Bio" />
-
                         {/* Filmography */}
                         <section>
                             <div className="flex items-center gap-3 mb-5">
@@ -741,8 +736,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             <DiscographySection albums={artist.albums} />
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-4"  devLabel="Artista · In-Article" />
-
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
                             <section>
@@ -817,15 +810,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         )}
 
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="mt-2"  devLabel="Artista · Relacionados" />
-
                         {/* Instagram Feed — temporariamente oculto */}
                     </div>
 
                 </div>
             </div>
             <ScrollToTop />
-            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     )
 }

@@ -8,7 +8,6 @@ import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
 import { GroupsHeroFilter } from "@/components/features/GroupsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { nameToGradient } from '@/lib/utils'
@@ -208,7 +207,6 @@ export default async function GroupsPage() {
                 <ScrollToTop />
             </div>
         </PageTransition>
-        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

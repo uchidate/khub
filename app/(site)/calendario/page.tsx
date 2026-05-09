@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
@@ -127,8 +126,6 @@ export default async function CalendarioPage() {
                     </p>
                 </div>
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mb-6" />
-
                 <CalendarioClient
                     birthdays={birthdays}
                     releases={releases}
@@ -143,7 +140,6 @@ export default async function CalendarioPage() {
                     }))}
                 />
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
             </div>
         </div>
     )

@@ -15,9 +15,7 @@ import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-g
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
 import { nameToGradient } from '@/lib/utils'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
-import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
@@ -736,8 +734,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-6"  devLabel="Grupo · Sidebar Conteúdo" />
-
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (
                             <section id="relacionados">
@@ -858,8 +854,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" minimal className="my-6"  devLabel="Grupo · In-Article" />
-
                         {/* Estado vazio */}
                         {group.members.length === 0 && (
                             <div className="bg-surface rounded-2xl border border-border p-12 text-center">
@@ -872,7 +866,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 </div>
             </div>
             <ScrollToTop />
-            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     );
 }
