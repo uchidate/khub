@@ -42,6 +42,7 @@ interface Product {
     tags: string[]
 }
 
+
 function parsePrice(priceStr: string): number {
     return parseFloat(priceStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0
 }
@@ -214,7 +215,7 @@ export function LojaClient({ products }: { products: Product[] }) {
                 Object.entries(grouped!).map(([category, items]) => (
                     <section key={category}>
                         <ShopeeSectionHeader title={CATEGORY_LABELS[category] ?? category} store={items[0]?.store} />
-                        <div className={`grid gap-3 ${items.length <= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {items.map(p => (
                                 <ShopeeCard key={p.id} {...p}
                                     rating={p.rating ?? undefined}
