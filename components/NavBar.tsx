@@ -32,6 +32,7 @@ const NavBar = () => {
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
         { label: "Calendário", href: "/calendario" },
+        { label: "Loja", href: "/loja" },
     ]
 
     const navBg = isScrolled

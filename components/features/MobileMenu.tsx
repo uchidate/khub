@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useSession, signOut } from "next-auth/react"
-import { Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag } from "lucide-react"
+import { Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
 
 interface MobileMenuProps {
@@ -17,6 +17,7 @@ const LINK_ICONS: Record<string, React.ElementType> = {
   "/groups":      Users,
   "/productions": Film,
   "/blog":        PenLine,
+  "/calendario":  Calendar,
   "/loja":        ShoppingBag,
 }
 
