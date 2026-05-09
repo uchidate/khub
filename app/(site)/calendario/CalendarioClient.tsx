@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Cake, Film, ChevronRight, Search, X, Sparkles, ShoppingBag } from 'lucide-react'
+import { Cake, Film, ChevronRight, X, Sparkles, ShoppingBag } from 'lucide-react'
 import { FilterPills } from '@/components/ui/FilterPills'
 
 export interface StoreProductCard {
@@ -303,13 +303,12 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
             <div className="flex flex-col sm:flex-row gap-3">
                 <FilterPills options={filterOptions} value={filter} onChange={setFilter} />
                 <div className="relative flex-1 max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                     <input
                         type="text"
                         placeholder="Buscar artista ou drama..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full h-full pl-8 pr-8 py-2.5 bg-surface border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                        className="w-full h-full px-3 pr-8 py-2.5 bg-surface border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
                     />
                     {search && (
                         <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
