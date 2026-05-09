@@ -224,6 +224,44 @@ export type BlogHighlightBlock = {
     attribution?: string
 }
 
+export type BlogListBlock = {
+    type: 'blog_list'
+    items: string[]
+    ordered?: boolean
+}
+
+export type BlogProsConsBlock = {
+    type: 'blog_pros_cons'
+    pros: string[]
+    cons: string[]
+    title?: string
+}
+
+export type BlogStepsBlock = {
+    type: 'blog_steps'
+    steps: { title: string; text: string }[]
+    title?: string
+}
+
+export type BlogProductCardBlock = {
+    type: 'blog_product_card'
+    name: string
+    imageUrl: string
+    price: string
+    originalPrice?: string
+    badge?: string
+    rating?: number
+    affiliateUrl: string
+    cta?: string
+}
+
+export type BlogComparisonBlock = {
+    type: 'blog_comparison'
+    title?: string
+    columns: string[]
+    rows: { label: string; values: string[] }[]
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -245,6 +283,11 @@ export type BlogBlock =
     | BlogCalloutBlock
     | BlogCuriosityBlock
     | BlogHighlightBlock
+    | BlogListBlock
+    | BlogProsConsBlock
+    | BlogStepsBlock
+    | BlogProductCardBlock
+    | BlogComparisonBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -269,6 +312,11 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_highlight:        'Destaque Visual',
     blog_spotify:          'Spotify',
     blog_timeline:         'Linha do Tempo',
+    blog_list:             'Lista',
+    blog_pros_cons:        'Prós e Contras',
+    blog_steps:            'Passo a Passo',
+    blog_product_card:     'Card de Produto',
+    blog_comparison:       'Tabela Comparativa',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'

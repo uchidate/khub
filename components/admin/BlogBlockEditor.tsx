@@ -34,6 +34,11 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_callout:         <Zap className="w-3.5 h-3.5" />,
     blog_curiosity:       <Zap className="w-3.5 h-3.5" />,
     blog_highlight:       <Quote className="w-3.5 h-3.5" />,
+    blog_list:            <AlignLeft className="w-3.5 h-3.5" />,
+    blog_pros_cons:       <BarChart2 className="w-3.5 h-3.5" />,
+    blog_steps:           <ChevronRight className="w-3.5 h-3.5" />,
+    blog_product_card:    <Star className="w-3.5 h-3.5" />,
+    blog_comparison:      <BarChart2 className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -57,15 +62,20 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_callout:         'bg-rose-500/20 text-rose-300 border-rose-500/30',
     blog_curiosity:       'bg-pink-500/20 text-pink-300 border-pink-500/30',
     blog_highlight:       'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    blog_list:            'bg-slate-500/20 text-slate-300 border-slate-500/30',
+    blog_pros_cons:       'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    blog_steps:           'bg-orange-500/20 text-orange-300 border-orange-500/30',
+    blog_product_card:    'bg-orange-500/20 text-orange-300 border-orange-500/30',
+    blog_comparison:      'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
 
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
-    { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
+    { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_list', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
-    { label: 'Layout',    types: ['blog_timeline'] },
-    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating'] },
+    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison'] },
+    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card'] },
 ]
 
 // ─── Default block factory ────────────────────────────────────────────────────
@@ -92,6 +102,11 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_callout':         return { type, variant: 'fact', title: '', text: '' }
         case 'blog_curiosity':       return { type, text: '', emoji: '💡' }
         case 'blog_highlight':       return { type, text: '', attribution: '' }
+        case 'blog_list':            return { type, items: [''], ordered: false }
+        case 'blog_pros_cons':       return { type, pros: [''], cons: [''], title: '' }
+        case 'blog_steps':           return { type, steps: [{ title: '', text: '' }], title: '' }
+        case 'blog_product_card':    return { type, name: '', imageUrl: '', price: '', affiliateUrl: '', cta: 'Comprar na Shopee' }
+        case 'blog_comparison':      return { type, columns: ['Opção A', 'Opção B'], rows: [{ label: '', values: ['', ''] }], title: '' }
     }
 }
 
@@ -662,6 +677,11 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_callout':         return block.title || block.text.slice(0, 60) || '(vazio)'
         case 'blog_curiosity':       return block.text.slice(0, 60) || '(vazio)'
         case 'blog_highlight':       return block.text.slice(0, 60) || '(vazio)'
+        case 'blog_list':            return `${block.items.length} item(ns)`
+        case 'blog_pros_cons':       return `${block.pros.length} prós, ${block.cons.length} contras`
+        case 'blog_steps':           return `${block.steps.length} passo(s)`
+        case 'blog_product_card':    return block.name || '(sem produto)'
+        case 'blog_comparison':      return block.title || `${block.columns.length} colunas`
     }
 }
 
