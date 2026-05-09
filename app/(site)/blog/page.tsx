@@ -14,7 +14,6 @@ import prisma from '@/lib/prisma'
 import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
-import { HomeNavbarAd } from '@/components/ui/HomeNavbarAd'
 import { rankPosts } from '@/lib/blog/scoring'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 
@@ -402,9 +401,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         inLanguage: 'pt-BR',
       }} />
       <PageTransition className="pb-16">
-
-        {/* Anúncio fixo abaixo da navbar — apenas desktop */}
-        <div className="hidden sm:block"><HomeNavbarAd /></div>
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
         {page === 1 && featPost && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
