@@ -12,9 +12,9 @@ export function LojaBanner() {
                     <span className="text-xs font-bold uppercase tracking-widest opacity-90">Apoie o HallyuHub</span>
                 </div>
                 <p className="text-lg font-black leading-tight">
-                    Compre com nosso link e ganhe o mesmo produto — a gente ganha uma comissão
+                    Compre pelo nosso link e ajude o HallyuHub a crescer
                 </p>
-                <p className="text-sm opacity-80 mt-1">Sem custo extra pra você. É a melhor forma de apoiar o site.</p>
+                <p className="text-sm opacity-80 mt-1">Mesmo produto, mesmo preço — a gente recebe uma comissão da loja.</p>
             </div>
         </div>
     )
