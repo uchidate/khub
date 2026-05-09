@@ -278,7 +278,6 @@ export default function MLImportarPage() {
                                 {/* Imagem */}
                                 <div className="aspect-square bg-surface flex items-center justify-center overflow-hidden">
                                     {product.imageUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
                                             src={product.imageUrl}
                                             alt={product.name}
