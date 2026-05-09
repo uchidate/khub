@@ -128,14 +128,6 @@ export default async function RootLayout({
                 <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
-                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    <script
-                        key="adsense"
-                        async
-                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-                        crossOrigin="anonymous"
-                    />
-                )}
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
@@ -150,6 +142,15 @@ export default async function RootLayout({
                     gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted' });
                     gtag('config', 'G-KHWW1EGSK3');
                 `}</Script>
+                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
+                    <Script
+                        id="adsense-loader"
+                        async
+                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
+                        crossOrigin="anonymous"
+                        strategy="afterInteractive"
+                    />
+                )}
                 {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
                     <UmamiScript websiteId={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
                 )}
