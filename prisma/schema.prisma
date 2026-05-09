@@ -1225,3 +1225,19 @@ model StoreProduct {
   @@index([store, isActive])
   @@index([featured, isActive])
 }
+
+model StoreCoupon {
+  id          String   @id @default(cuid())
+  code        String
+  description String
+  discount    String
+  minPurchase String?
+  store       String   @default("shopee")
+  affiliateUrl String
+  expiresAt   DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expiresAt, isActive])
+}

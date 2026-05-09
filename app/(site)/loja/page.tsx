@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { LojaBanner } from '@/components/ui/LojaBanner'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
+import { LojaCupons } from '@/components/ui/LojaCupons'
 import { SITE_URL } from '@/lib/constants/site'
 
 export const dynamic = 'force-dynamic'
@@ -107,6 +108,7 @@ export default async function LojaPage() {
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
                 {/* Banner editorial */}
                 <LojaBanner />
+                <LojaCupons />
 
                 {!hasProducts ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">

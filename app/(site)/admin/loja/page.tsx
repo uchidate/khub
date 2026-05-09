@@ -165,6 +165,9 @@ export default function AdminLojaPage() {
                 <AdminButton onClick={openNew}>
                     <Plus className="w-4 h-4 inline mr-1" />Novo produto
                 </AdminButton>
+                <a href="/admin/loja/cupons" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-foreground hover:border-orange-400/50 transition-colors">
+                    🏷️ Cupons do dia
+                </a>
                 <select
                     value={filterCategory}
                     onChange={e => setFilterCategory(e.target.value)}
