@@ -73,7 +73,9 @@ export async function GET(request: NextRequest) {
         .map(r => {
             const pid = (r.catalog_product_id as string) || (r.id as string)
             const title = r.name as string
-            let img = (r.thumbnail as string) || ''
+            // /products/search retorna pictures[], não thumbnail
+            const pictures = r.pictures as { url?: string; secure_url?: string }[] | undefined
+            let img = pictures?.[0]?.secure_url ?? pictures?.[0]?.url ?? (r.thumbnail as string) ?? ''
             img = img.replace(/-[A-Z]\.jpg/, '-O.jpg').replace('http://', 'https://')
             const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
             const price = buyBox?.price
