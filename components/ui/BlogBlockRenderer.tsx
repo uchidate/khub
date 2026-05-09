@@ -707,9 +707,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
             )
 
         case 'blog_product_card': {
-            const discount = block.originalPrice
-                ? Math.round((1 - parseFloat(block.price.replace(/[^0-9,]/g,'').replace(',','.')) / parseFloat(block.originalPrice.replace(/[^0-9,]/g,'').replace(',','.'))) * 100)
-                : null
             return (
                 <div className="my-8 rounded-2xl border border-orange-500/20 bg-orange-500/[.03] overflow-hidden">
                     <div className="flex gap-4 p-4">
@@ -717,11 +714,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                         <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-foreground leading-snug mb-2 line-clamp-2">{block.name}</p>
-                            <div className="flex items-baseline gap-2 mb-1">
-                                <span className="text-xl font-black text-orange-500">R$ {block.price}</span>
-                                {block.originalPrice && <span className="text-xs text-muted line-through">R$ {block.originalPrice}</span>}
-                                {discount && discount > 0 && <span className="text-[10px] font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-full">-{discount}%</span>}
-                            </div>
                             {block.rating && (
                                 <p className="text-xs text-muted mb-3">{'★'.repeat(Math.round(block.rating))} {block.rating.toFixed(1)}</p>
                             )}

@@ -67,8 +67,8 @@ function ImportForm() {
     }, [params])
 
     const save = async () => {
-        if (!form.name || !form.price || !form.imageUrl || !form.affiliateUrl) {
-            addToast({ type: 'error', message: 'Preencha nome, preço, imagem e link de afiliado' })
+        if (!form.name || !form.imageUrl || !form.affiliateUrl) {
+            addToast({ type: 'error', message: 'Preencha nome, imagem e link de afiliado' })
             return
         }
         setSaving(true)
@@ -140,10 +140,7 @@ function ImportForm() {
                         {field('Nome do produto *', 'name', 'BTS — Anthology Album [Proof]', true)}
                         {field('Link de afiliado *', 'affiliateUrl', 'https://s.shopee.com.br/...', true)}
                         {field('URL da imagem *', 'imageUrl', 'https://down-br.img.susercontent.com/...', true)}
-                        {field('Preço atual *', 'price', 'R$ 89,90')}
-                        {field('Preço original (tachado)', 'originalPrice', 'R$ 129,90')}
-
-                        <div>
+<div>
                             <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Loja</label>
                             <select value={form.store} onChange={e => setForm(f => ({ ...f, store: e.target.value }))}
                                 className="w-full text-sm bg-background border border-border rounded-lg px-3 py-2 text-foreground">

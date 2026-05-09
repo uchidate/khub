@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     const { name, description, price, originalPrice, imageUrl, affiliateUrl,
         store, category, badge, rating, soldCount, isActive, featured, position, tags } = body
 
-    if (!name || !price || !imageUrl || !affiliateUrl || !category) {
-        return NextResponse.json({ error: 'Campos obrigatórios: name, price, imageUrl, affiliateUrl, category' }, { status: 400 })
+    if (!name || !imageUrl || !affiliateUrl || !category) {
+        return NextResponse.json({ error: 'Campos obrigatórios: name, imageUrl, affiliateUrl, category' }, { status: 400 })
     }
 
     const product = await prisma.storeProduct.create({
