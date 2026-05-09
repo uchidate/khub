@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
+import { LojaCupons } from '@/components/ui/LojaCupons'
 import { ShoppingBag, ArrowRight } from 'lucide-react'
 
 interface Product {
@@ -61,6 +62,9 @@ export function HomeLojaDestaque({ products }: { products: Product[] }) {
                         />
                     ))}
                 </div>
+
+                {/* Cupons do dia */}
+                <LojaCupons compact />
 
                 {/* Footer CTA */}
                 <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-center">
