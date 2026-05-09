@@ -9,8 +9,8 @@ import { FilterPills } from '@/components/ui/FilterPills'
 export interface StoreProductCard {
     id: string
     name: string
-    price: string
-    originalPrice?: string
+    price?: string | null
+    originalPrice?: string | null
     imageUrl: string
     affiliateUrl: string
     store: string | null
@@ -291,7 +291,6 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                     <Image src={p.imageUrl} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
                                 </div>
                                 <p className="text-[10px] font-medium text-foreground leading-tight line-clamp-2 mb-0.5">{p.name}</p>
-                                <p className="text-[11px] font-black text-orange-500">{p.price}</p>
                             </a>
                         ))}
                     </div>
