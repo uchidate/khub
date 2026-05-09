@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import Image from 'next/image'
 import { X, Upload, Trash2, Check, ImageIcon, Loader2 } from 'lucide-react'
 
 interface MediaFile {
@@ -126,7 +125,8 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
                                     onClick={() => setSelected(f.url)}
                                     className={`relative group rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-square bg-surface ${selected === f.url ? 'border-[#ff2d78]' : 'border-transparent hover:border-border'}`}
                                 >
-                                    <Image src={f.url} alt={f.filename} fill className="object-cover" unoptimized />
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={f.url} alt={f.filename} className="absolute inset-0 w-full h-full object-cover" />
                                     {selected === f.url && (
                                         <div className="absolute inset-0 bg-[#ff2d78]/20 flex items-center justify-center">
                                             <Check className="w-6 h-6 text-white drop-shadow-md" />
