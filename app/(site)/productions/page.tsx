@@ -42,7 +42,7 @@ export default async function ProductionsPage() {
     const [total, heroProductions] = await Promise.all([
         prisma.production.count({ where: baseWhere }).catch(() => 0),
         prisma.production.findMany({
-            where: { ...baseWhere, OR: [{ backdropUrl: { not: null } }, { imageUrl: { not: null } }], voteAverage: { gte: 7 } },
+            where: { ...baseWhere, OR: [{ backdropUrl: { not: null } }, { imageUrl: { not: null } }], voteAverage: { gte: 7 }, voteCount: { not: null } },
             orderBy: [{ voteCount: 'desc' }, { voteAverage: 'desc' }],
             take: 5,
             select: {
