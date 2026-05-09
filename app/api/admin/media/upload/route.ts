@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import { writeFile, mkdir } from 'fs/promises'
+import { mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
 import sharp from 'sharp'

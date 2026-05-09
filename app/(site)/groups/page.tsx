@@ -7,7 +7,6 @@ import { ArrowRight, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
 import { GroupsHeroFilter } from "@/components/features/GroupsHeroFilter"
-import { AdBanner } from "@/components/ui/AdBanner"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -44,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GroupsPage() {
-    const [total, heroGroups] = await Promise.all([
+    const [_total, heroGroups] = await Promise.all([
         prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
         prisma.musicalGroup.findMany({
             where: { isHidden: false, profileImageUrl: { not: null } },

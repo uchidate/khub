@@ -604,6 +604,7 @@ export function QuizClient() {
             setFeedbackAnim('wrong')
         }
         setTimeout(() => setFeedbackAnim(null), 600)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selected, answers, current, questions, timeLeft, streak, stopTimer])
 
     // Timer
@@ -646,6 +647,7 @@ export function QuizClient() {
             }
             setAnimating(false)
         }, 200)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [current, questions.length, stopTimer])
 
     const handleReset = useCallback(() => {
