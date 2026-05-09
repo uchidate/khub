@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
-import { Search, Loader2, Package, CheckSquare, Square, Import } from 'lucide-react'
+import { Search, Loader2, Package, CheckSquare, Square, Import, ExternalLink, Star } from 'lucide-react'
 import Image from 'next/image'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -21,6 +21,9 @@ interface MLProduct {
     affiliateUrl: string
     category: string
     store: string
+    price: string | null
+    rating: number | null
+    reviewCount: number | null
 }
 
 export default function MLImportarPage() {
@@ -198,15 +201,35 @@ export default function MLImportarPage() {
                                     <p className="text-[11px] font-semibold text-foreground leading-tight line-clamp-2">
                                         {product.name}
                                     </p>
-                                    <select
-                                        value={cat}
-                                        onChange={e => setCategoryOverrides(prev => ({ ...prev, [product.id]: e.target.value }))}
-                                        className="w-full text-[10px] rounded-lg border border-border bg-surface px-1.5 py-1 focus:outline-none"
-                                    >
-                                        {CATEGORY_OPTIONS.map(([val, label]) => (
-                                            <option key={val} value={val}>{label}</option>
-                                        ))}
-                                    </select>
+                                    {product.price && (
+                                        <p className="text-[12px] font-black text-green-500">{product.price}</p>
+                                    )}
+                                    {product.rating && (
+                                        <div className="flex items-center gap-1">
+                                            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                            <span className="text-[10px] text-muted">{product.rating}{product.reviewCount ? ` (${product.reviewCount})` : ''}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-1">
+                                        <select
+                                            value={cat}
+                                            onChange={e => setCategoryOverrides(prev => ({ ...prev, [product.id]: e.target.value }))}
+                                            className="flex-1 text-[10px] rounded-lg border border-border bg-surface px-1.5 py-1 focus:outline-none"
+                                        >
+                                            {CATEGORY_OPTIONS.map(([val, label]) => (
+                                                <option key={val} value={val}>{label}</option>
+                                            ))}
+                                        </select>
+                                        <a
+                                            href={product.affiliateUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1 rounded-lg border border-border hover:border-accent/50 text-muted hover:text-accent transition-colors"
+                                            title="Ver no ML"
+                                        >
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         )

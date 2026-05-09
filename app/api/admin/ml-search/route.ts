@@ -75,6 +75,12 @@ export async function GET(request: NextRequest) {
             const title = r.name as string
             let img = (r.thumbnail as string) || ''
             img = img.replace(/-[A-Z]\.jpg/, '-O.jpg').replace('http://', 'https://')
+            const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
+            const price = buyBox?.price
+                ? `R$ ${Number(buyBox.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                : null
+            const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
+            const reviewCount = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
             return {
                 id:           pid,
                 name:         title,
@@ -82,6 +88,9 @@ export async function GET(request: NextRequest) {
                 affiliateUrl: `https://www.mercadolivre.com.br/p/${pid}?affId=${userId}`,
                 category:     detectCategory(title),
                 store:        'mercadolivre',
+                price,
+                rating:       rating ? Math.round(rating * 10) / 10 : null,
+                reviewCount:  reviewCount ?? null,
             }
         })
 
