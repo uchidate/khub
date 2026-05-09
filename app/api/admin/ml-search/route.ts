@@ -17,6 +17,11 @@ const KPOP_KEYWORDS = [
 ]
 
 function getToken(): { access_token: string; user_id: number } | null {
+    // Produção: ler de env vars
+    if (process.env.ML_ACCESS_TOKEN && process.env.ML_USER_ID) {
+        return { access_token: process.env.ML_ACCESS_TOKEN, user_id: Number(process.env.ML_USER_ID) }
+    }
+    // Dev: ler do arquivo local
     try {
         return JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf-8'))
     } catch {
