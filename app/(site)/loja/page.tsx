@@ -1,10 +1,25 @@
+import type { Metadata } from 'next'
 import { ShoppingBag, Sparkles, Clock } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { LojaBanner } from '@/components/ui/LojaBanner'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
+import { SITE_URL } from '@/lib/constants/site'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+    title: 'Vitrine K-Pop | HallyuHub',
+    description: 'Produtos K-Pop, K-Beauty e K-Drama selecionados: álbuns, lightsticks, photocards, skincare coreana e muito mais. Comprar pelo nosso link apoia o HallyuHub.',
+    keywords: 'kpop produtos, lightstick, photocard, album kpop, kbeauty, skincare coreana, kdrama, comprar kpop brasil',
+    alternates: { canonical: `${SITE_URL}/loja` },
+    openGraph: {
+        title: 'Vitrine K-Pop — HallyuHub',
+        description: 'Curadoria de produtos K-Pop, K-Beauty e K-Drama. Comprar pelo nosso link apoia o site sem custo extra.',
+        url: `${SITE_URL}/loja`,
+        type: 'website',
+    },
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
     kpop_album: 'Álbuns K-Pop', lightstick: 'Lightsticks', kbeauty: 'K-Beauty',
@@ -44,8 +59,37 @@ export default async function LojaPage() {
     // Novidades: só exibe se houver produtos que NÃO estão já em todos (evita duplicar quando há poucos)
     const showNovidades = novidades.length > 0 && novidades.length < products.length
 
+    const jsonLd = hasProducts ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Vitrine K-Pop HallyuHub',
+        description: 'Produtos K-Pop, K-Beauty e K-Drama selecionados pela curadoria HallyuHub',
+        url: `${SITE_URL}/loja`,
+        numberOfItems: products.length,
+        itemListElement: products.slice(0, 20).map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+                '@type': 'Product',
+                name: p.name,
+                image: p.imageUrl,
+                offers: {
+                    '@type': 'Offer',
+                    price: p.price.replace(/[^0-9,.]/g, '').replace(',', '.'),
+                    priceCurrency: 'BRL',
+                    availability: 'https://schema.org/InStock',
+                    url: p.affiliateUrl,
+                },
+                ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, bestRating: 5 } } : {}),
+            },
+        })),
+    } : null
+
     return (
         <div className="min-h-screen bg-background pb-20">
+            {jsonLd && (
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            )}
             {/* Header */}
             <div className="bg-gradient-to-br from-orange-500/10 via-background to-background border-b border-border/40">
                 <div className="max-w-6xl mx-auto px-4 py-10">
