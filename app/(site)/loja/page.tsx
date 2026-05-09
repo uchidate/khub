@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
+import { ShopeeCard } from '@/components/ui/ShopeeCard'
 import { LojaCupons } from '@/components/ui/LojaCupons'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { SITE_URL } from '@/lib/constants/site'
@@ -92,7 +93,29 @@ export default async function LojaPage() {
                         <p className="text-sm">Em breve — produtos selecionados chegando!</p>
                     </div>
                 ) : (
-                    <LojaClient products={products} />
+                    <>
+                        {/* Destaques */}
+                        {products.filter(p => p.featured).length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Sparkles className="w-4 h-4 text-orange-500" />
+                                    <h2 className="text-sm font-bold text-foreground">Destaques</h2>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {products.filter(p => p.featured).slice(0, 4).map(p => (
+                                        <ShopeeCard key={p.id} {...p}
+                                            rating={p.rating ?? undefined}
+                                            badge={p.badge ?? undefined}
+                                            soldCount={p.soldCount ?? undefined}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Catálogo com filtros */}
+                        <LojaClient products={products} />
+                    </>
                 )}
             </div>
             </div>
