@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
 import { Search, Loader2, Package, CheckSquare, Square, Import, ExternalLink, Star } from 'lucide-react'
-import Image from 'next/image'
 
 const CATEGORY_LABELS: Record<string, string> = {
     kpop_album: 'Álbum K-Pop', lightstick: 'Lightstick', kbeauty: 'K-Beauty',
@@ -41,7 +40,7 @@ export default function MLImportarPage() {
         setResults([])
         setSelected(new Set())
         try {
-            const res = await fetch(`/api/admin/ml-search?q=${encodeURIComponent(query)}&limit=30`)
+            const res = await fetch(`/api/admin/ml-search?q=${encodeURIComponent(query)}&limit=50`)
             const data = await res.json()
             if (!res.ok) throw new Error(data.error || 'Erro na busca')
             setResults(data.results || [])
@@ -180,19 +179,16 @@ export default function MLImportarPage() {
                                 </div>
 
                                 {/* Imagem */}
-                                <div className="aspect-square relative bg-surface">
+                                <div className="aspect-square bg-surface flex items-center justify-center overflow-hidden">
                                     {product.imageUrl ? (
-                                        <Image
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
                                             src={product.imageUrl}
                                             alt={product.name}
-                                            fill
-                                            className="object-contain p-2"
-                                            sizes="(max-width: 640px) 50vw, 20vw"
+                                            className="w-full h-full object-contain p-2"
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <Package className="w-8 h-8 text-muted opacity-30" />
-                                        </div>
+                                        <Package className="w-8 h-8 text-muted opacity-30" />
                                     )}
                                 </div>
 

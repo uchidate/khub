@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q')?.trim()
-    const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 50)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 50)
 
     if (!q) return NextResponse.json({ error: 'Parâmetro q obrigatório' }, { status: 400 })
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (!token) return NextResponse.json({ error: 'Token ML não encontrado. Execute scripts/mercadolivre/auth.py' }, { status: 503 })
 
     const res = await fetch(
-        `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}`,
+        `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&status=active`,
         { headers: { Authorization: `Bearer ${token.access_token}` } }
     )
 
@@ -65,18 +65,36 @@ export async function GET(request: NextRequest) {
     const data = await res.json()
     const userId = String(token.user_id)
 
-    const results = (data.results as Record<string, unknown>[])
+    const filtered = (data.results as Record<string, unknown>[])
         .filter(r => {
             const title = (r.name as string || '').toLowerCase()
             return KPOP_KEYWORDS.some(k => title.includes(k))
         })
-        .map(r => {
+
+    // Buscar og:image da página do ML para cada produto (thumbnail confiável)
+    async function getOgImage(pid: string): Promise<string> {
+        try {
+            const pageRes = await fetch(`https://www.mercadolivre.com.br/p/${pid}`, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot)' },
+                signal: AbortSignal.timeout(4000),
+            })
+            const html = await pageRes.text()
+            const match = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/)
+                       ?? html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:image"/)
+            return match?.[1] ?? ''
+        } catch {
+            return ''
+        }
+    }
+
+    const results = await Promise.all(
+        filtered.map(async r => {
             const pid = (r.catalog_product_id as string) || (r.id as string)
             const title = r.name as string
-            // /products/search retorna pictures[], não thumbnail
-            const pictures = r.pictures as { url?: string; secure_url?: string }[] | undefined
-            let img = pictures?.[0]?.secure_url ?? pictures?.[0]?.url ?? (r.thumbnail as string) ?? ''
-            img = img.replace(/-[A-Z]\.jpg/, '-O.jpg').replace('http://', 'https://')
+            // Tentar pictures[] da API primeiro, senão buscar og:image
+            const pictures = r.pictures as { url?: string }[] | undefined
+            const apiImg = pictures?.[0]?.url ?? ''
+            const imageUrl = apiImg || await getOgImage(pid)
             const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
             const price = buyBox?.price
                 ? `R$ ${Number(buyBox.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
@@ -86,7 +104,7 @@ export async function GET(request: NextRequest) {
             return {
                 id:           pid,
                 name:         title,
-                imageUrl:     img,
+                imageUrl,
                 affiliateUrl: `https://www.mercadolivre.com.br/p/${pid}?affId=${userId}`,
                 category:     detectCategory(title),
                 store:        'mercadolivre',
@@ -95,6 +113,7 @@ export async function GET(request: NextRequest) {
                 reviewCount:  reviewCount ?? null,
             }
         })
+    )
 
-    return NextResponse.json({ results, total: data.paging?.total ?? 0 })
+    return NextResponse.json({ results: results.filter(r => r.imageUrl), total: data.paging?.total ?? 0 })
 }
