@@ -12,7 +12,7 @@ const createSchema = z.object({
   title: z.string().min(3).max(200),
   contentMd: z.string().min(1),
   excerpt: z.string().max(600).optional(),
-  coverImageUrl: z.string().url().optional().or(z.literal('')),
+  coverImageUrl: z.string().optional().nullable(),
   categoryId: z.string().optional(),
   tags: z.array(z.string()).max(10).optional(),
   blocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),

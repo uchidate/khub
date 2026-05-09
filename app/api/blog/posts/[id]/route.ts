@@ -11,7 +11,7 @@ const updateSchema = z.object({
   title: z.string().min(3).max(200).optional(),
   contentMd: z.string().min(1).optional(),
   excerpt: z.string().max(600).optional().nullable(),
-  coverImageUrl: z.string().url().optional().nullable().or(z.literal('')),
+  coverImageUrl: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   tags: z.array(z.string()).max(10).optional(),
   blocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),

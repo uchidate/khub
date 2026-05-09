@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X, Blocks, FileText, Layout } from 'lucide-react'
+import { Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X, Blocks, FileText, Layout, ImageIcon } from 'lucide-react'
 import { BlogBlockEditor } from '@/components/admin/BlogBlockEditor'
 import { SeoChecklist } from '@/components/admin/SeoChecklist'
+import { MediaPicker } from '@/components/admin/MediaPicker'
 import type { BlogBlock, BlogTemplate } from '@/lib/types/blocks'
 import { BLOG_TEMPLATE_BLOCKS, BLOG_TEMPLATE_LABELS } from '@/lib/types/blocks'
 
@@ -66,6 +67,7 @@ function WritePageContent() {
   const [content, setContent] = useState('')    // markdown fallback
   const [excerpt, setExcerpt] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [focusKeyword, setFocusKeyword] = useState('')
@@ -76,6 +78,7 @@ function WritePageContent() {
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [versionNote, setVersionNote] = useState('')
   const [postId, setPostId] = useState<string | null>(editId)
   const [postStatus, setPostStatus] = useState<string>('DRAFT')
@@ -183,17 +186,20 @@ function WritePageContent() {
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data))
       if (!postId) setPostId(data.id)
       setPostStatus(data.status)
       setSaveState('saved')
+      setSaveError(null)
       localStorage.removeItem(AUTOSAVE_KEY)
       setVersionNote('')
-    } catch {
+      setTimeout(() => setSaveState('idle'), 3000)
+    } catch (err) {
+      console.error('[SAVE ERROR]', err)
       setSaveState('error')
+      setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
-      setTimeout(() => setSaveState('idle'), 3000)
     }
   }
 
@@ -295,7 +301,12 @@ function WritePageContent() {
           }`}>{statusLabels[postStatus] ?? postStatus}</span>
 
           {saveState === 'saved' && <CheckCircle size={16} className="text-green-500" />}
-          {saveState === 'error' && <XCircle size={16} className="text-red-500" />}
+          {saveState === 'error' && (
+            <span className="flex items-center gap-1 text-red-500 text-xs">
+              <XCircle size={16} />
+              {saveError}
+            </span>
+          )}
 
           <button onClick={handleSave} disabled={saving || !title || !hasContent}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-sm font-medium transition-all disabled:opacity-40">
@@ -401,17 +412,37 @@ function WritePageContent() {
 
           {/* Cover image */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Imagem de capa (URL)</label>
-            <input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Imagem de capa</label>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => setShowMediaPicker(true)}
+                  className="flex items-center gap-1 text-[10px] font-semibold text-[#ff2d78] hover:text-[#e0245e] transition-colors">
+                  <ImageIcon className="w-3 h-3" />
+                  {coverImageUrl ? 'Trocar' : 'Escolher da biblioteca'}
+                </button>
+                {coverImageUrl && (
+                  <button onClick={() => setCoverImageUrl('')} className="text-[10px] text-muted hover:text-red-500 transition-colors">Remover</button>
+                )}
+              </div>
+            </div>
             {coverImageUrl && (
-              <div className="relative rounded-lg overflow-hidden border border-border h-28 bg-surface">
+              <div className="relative rounded-lg overflow-hidden border border-border h-28 bg-surface cursor-pointer" onClick={() => setShowMediaPicker(true)}>
                 <img src={coverImageUrl} alt="capa" className="w-full h-full object-cover"
                   onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
               </div>
             )}
+            <input value={coverImageUrl} onChange={e => setCoverImageUrl(e.target.value)}
+              placeholder="Ou cole uma URL externa..."
+              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
           </div>
+
+          {showMediaPicker && (
+            <MediaPicker
+              value={coverImageUrl}
+              onChange={url => setCoverImageUrl(url)}
+              onClose={() => setShowMediaPicker(false)}
+            />
+          )}
 
           {/* Category */}
           <div className="space-y-2">
