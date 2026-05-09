@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { ContactForm } from '@/components/features/ContactForm'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { Mail, Instagram, HelpCircle, FileText, Handshake } from 'lucide-react'
 import Link from 'next/link'
 
@@ -132,12 +131,6 @@ export default function ContatoPage() {
                         <ContactForm />
                     </div>
 
-                    {/* Ad */}
-                    <AdBanner
-                        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? ''}
-                        variant="auto"
-                        className="mb-8"
-                    />
 
                     {/* Links rápidos */}
                     <div className="flex flex-wrap gap-2">

@@ -9,7 +9,6 @@ import { HomeBelowFold } from "@/components/home/HomeBelowFold"
 import { HomeQuizBanner } from "@/components/home/HomeQuizBanner"
 import { HomeTodaysBirthdays, type BirthdayArtist } from "@/components/home/HomeTodaysBirthdays"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { HomeNavbarAd } from "@/components/ui/HomeNavbarAd"
 import { HomeLojaDestaque } from "@/components/home/HomeLojaDestaque"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
@@ -402,7 +401,6 @@ export default async function Home() {
                 topAgencies={topAgencies}
             />
             <ScrollToTop />
-            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     )
 }

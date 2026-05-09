@@ -7,10 +7,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star, BookOpen } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
 
 interface Artist {
     id: string
@@ -229,11 +227,6 @@ function SearchContent() {
                         </section>
                     )}
 
-                    {/* Ad entre seções */}
-                    {showArtists && artists.length > 0 && (showGroups && groups.length > 0 || showProductions && productions.length > 0) && (
-                        <AdBanner slot={AD_SLOT} variant="auto" className="my-2" />
-                    )}
-
                     {/* Grupos */}
                     {showGroups && groups.length > 0 && (
                         <section>
@@ -324,8 +317,6 @@ function SearchContent() {
                         </section>
                     )}
 
-                    {/* Ad após resultados */}
-                    <AdBanner slot={AD_SLOT} variant="auto" className="mt-4" />
                 </div>
             ) : null}
         </>

@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
-import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
@@ -15,14 +14,11 @@ import prisma from '@/lib/prisma'
 import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { HomeNavbarAd } from '@/components/ui/HomeNavbarAd'
 import { rankPosts } from '@/lib/blog/scoring'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 
 const BASE_URL = SITE_URL
-const SLOT_AUTO = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
-const SLOT_FLUID = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!
 
 export const metadata: Metadata = {
   title: 'Blog K-Pop & K-Drama',
@@ -705,7 +701,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
                   {compactPosts.length > 0 && (
                     <div>
-                      <AdBanner slot={SLOT_FLUID} variant="fluid" className="mb-6" />
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-2 shrink-0">
                           <ArrowRight size={12} className="text-muted/50" />
@@ -826,9 +821,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               )}
 
-              {/* Ad na sidebar */}
-              <AdBanner slot={SLOT_AUTO} variant="auto" />
-
               {/* Explorar por categoria */}
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3">Categorias</p>
@@ -897,7 +889,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
         <ScrollToTop />
       </PageTransition>
-      <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
     </>
   )
 }

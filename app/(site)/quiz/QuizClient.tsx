@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Trophy, RefreshCw, ChevronRight, CheckCircle2, XCircle, Sparkles, Share2, Flame, Zap, Clock, BookOpen } from 'lucide-react'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { useUmami } from '@/hooks/useUmami'
 
 interface Question {
@@ -753,12 +752,6 @@ export function QuizClient() {
                             </div>
                         )}
 
-                        {/* AdSense — resultado é o melhor momento (usuário parou, lê) */}
-                        <AdBanner
-                            slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!}
-                            variant="auto"
-                            className="mb-4"
-                        />
 
                         <div className="flex flex-col gap-3">
                             <button

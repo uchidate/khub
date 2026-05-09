@@ -7,8 +7,6 @@ import { ExternalLink, Users, Music2, Building2, Calendar, ChevronRight } from "
 import { cache } from "react"
 import type { Metadata } from "next"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { AdBanner } from "@/components/ui/AdBanner"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { HomeLojaDestaque } from "@/components/home/HomeLojaDestaque"
 import { SITE_URL } from '@/lib/constants/site'
@@ -420,9 +418,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                     </section>
                 )}
 
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mb-12" />
-
-                {/* ── Elenco — só mostra se tem artistas diretos ───────────────── */}
+{/* ── Elenco — só mostra se tem artistas diretos ───────────────── */}
                 {agency.artists.length > 0 && (
                     <section>
                         <h2 className="text-xs font-black text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -482,10 +478,6 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
 
         <HomeLojaDestaque products={featuredProducts} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pb-8">
-            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-4" />
-        </div>
-        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

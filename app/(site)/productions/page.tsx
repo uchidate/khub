@@ -7,7 +7,6 @@ import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ProductionsHeroFilter } from "@/components/features/ProductionsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
@@ -186,7 +185,6 @@ export default async function ProductionsPage() {
                 <ScrollToTop />
             </div>
         </PageTransition>
-        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

@@ -14,10 +14,8 @@ import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
-import { AdBanner } from "@/components/ui/AdBanner"
 import { Film } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import type { Metadata } from "next"
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -466,9 +464,6 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         )}
 
                         {/* Loja: produtos relacionados à produção */}
-                        {/* Ad 1 — in-article após sinopse/tags, posição de maior atenção */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" className="my-4"  devLabel="Produção · In-Article" />
-
                         {/* Cast */}
                         {production.artists.length > 0 && (
                             <div>
@@ -536,9 +531,6 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             ]}
                             title={`Produtos — ${production.titlePt}`}
                         />
-
-                        {/* Ad 2 — após elenco/galeria, antes das recomendações */}
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="my-6"  devLabel="Produção · Meio Conteúdo" />
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
@@ -707,13 +699,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             </div>
                         </div>
 
-                        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal hideLabel  devLabel="Produção · Sidebar" />
                         </div>
                     </div>
                 </div>
             </div>
             <ScrollToTop />
-            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     )
 }
