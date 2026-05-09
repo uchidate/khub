@@ -30,6 +30,15 @@ function trackClick(id?: string) {
     fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
 }
 
+function calcDiscount(price: string, originalPrice?: string): string | null {
+    if (!originalPrice) return null
+    const curr = parseFloat(price.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
+    const orig = parseFloat(originalPrice.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
+    if (!curr || !orig || orig <= curr) return null
+    const pct = Math.round((1 - curr / orig) * 100)
+    return pct >= 5 ? `-${pct}%` : null
+}
+
 export function ShopeeCard({
     id,
     name,
@@ -80,9 +89,9 @@ export function ShopeeCard({
         >
             <div className="relative aspect-square bg-muted/10">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
-                {badge && (
+                {(badge || calcDiscount(price, originalPrice)) && (
                     <span className="absolute top-2 left-2 text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">
-                        {badge}
+                        {badge || calcDiscount(price, originalPrice)}
                     </span>
                 )}
             </div>

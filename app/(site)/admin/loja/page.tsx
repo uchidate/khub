@@ -41,6 +41,7 @@ const CATEGORIES: Record<string, string> = {
     clothing:     '👕 Roupas',
     acessorios:   '🧣 Acessórios',
     photocard:    '🃏 Photocard',
+    alimenta:     '🍜 Alimentação',
     outros:       '📦 Outros',
 }
 

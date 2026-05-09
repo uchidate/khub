@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
@@ -21,6 +22,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }).catch(() => null)
 
     if (!product) return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 })
+    revalidatePath('/'); revalidatePath('/loja')
     return NextResponse.json(product)
 }
 
@@ -30,5 +32,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const { id } = await params
     await prisma.storeProduct.delete({ where: { id } }).catch(() => null)
+    revalidatePath('/'); revalidatePath('/loja')
     return NextResponse.json({ ok: true })
 }

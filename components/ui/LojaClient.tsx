@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { ShopeeCard, ShopeeSectionHeader } from '@/components/ui/ShopeeCard'
-import { Search, X, ArrowUpDown } from 'lucide-react'
+import { Search, X, SlidersHorizontal } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
     kpop_album:   'Álbuns K-Pop',
@@ -12,6 +12,7 @@ const CATEGORY_LABELS: Record<string, string> = {
     clothing:     'Roupas',
     acessorios:   'Acessórios',
     photocard:    'Photocards',
+    alimenta:     'Alimentação',
     outros:       'Outros',
 }
 
@@ -49,7 +50,8 @@ export function LojaClient({ products }: { products: Product[] }) {
     const [activeCategory, setActiveCategory] = useState('')
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState<SortOption>('default')
-    const [priceRange, setPriceRange] = useState(-1) // índice em PRICE_RANGES, -1 = todos
+    const [priceRange, setPriceRange] = useState(-1)
+    const [showFilters, setShowFilters] = useState(false)
 
     const categories = useMemo(() => {
         const seen = new Set<string>()
@@ -88,7 +90,6 @@ export function LojaClient({ products }: { products: Product[] }) {
         return list
     }, [products, activeCategory, search, sort, priceRange])
 
-    // Quando ordenação está ativa, mostra tudo em lista plana (sem agrupamento)
     const useFlat = sort !== 'default' || priceRange >= 0
 
     const grouped = useMemo(() => {
@@ -101,82 +102,91 @@ export function LojaClient({ products }: { products: Product[] }) {
     }, [filtered, useFlat])
 
     const hasResults = filtered.length > 0
-
-    const clearAll = () => { setSearch(''); setActiveCategory(''); setSort('default'); setPriceRange(-1) }
     const hasFilters = search || activeCategory || sort !== 'default' || priceRange >= 0
+    const clearAll = () => { setSearch(''); setActiveCategory(''); setSort('default'); setPriceRange(-1) }
 
     return (
-        <div className="space-y-6">
-            {/* Barra de controles */}
-            <div className="flex flex-col gap-3">
-                {/* Linha 1: busca + ordenação + preço */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative flex-1 min-w-[180px] max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                        <input
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Buscar produtos..."
-                            className="w-full text-sm bg-surface border border-border rounded-xl pl-9 pr-8 py-2 text-foreground focus:outline-none focus:border-orange-400/50 focus:ring-1 focus:ring-orange-400/20 transition-colors"
-                        />
-                        {search && (
-                            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
-                                <X className="w-3.5 h-3.5" />
-                            </button>
-                        )}
-                    </div>
+        <div className="space-y-5">
+            {/* Busca + botão filtros */}
+            <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+                    <input
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Buscar produtos..."
+                        className="w-full text-sm bg-surface border border-border rounded-xl pl-9 pr-8 py-2.5 text-foreground focus:outline-none focus:border-orange-400/50 focus:ring-1 focus:ring-orange-400/20 transition-colors"
+                    />
+                    {search && (
+                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
+                <button
+                    onClick={() => setShowFilters(v => !v)}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-colors ${showFilters || sort !== 'default' || priceRange >= 0 ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
+                >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    Filtros
+                </button>
+                {hasFilters && (
+                    <button onClick={clearAll} className="text-xs text-muted hover:text-orange-500 transition-colors flex items-center gap-1">
+                        <X className="w-3 h-3" />Limpar
+                    </button>
+                )}
+            </div>
 
-                    <div className="flex items-center gap-1.5">
-                        <ArrowUpDown className="w-3.5 h-3.5 text-muted" />
+            {/* Painel de filtros */}
+            {showFilters && (
+                <div className="flex flex-wrap gap-3 p-4 bg-surface/50 rounded-xl border border-border/40">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted font-medium">Ordenar:</span>
                         <select
                             value={sort}
                             onChange={e => setSort(e.target.value as SortOption)}
                             className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
                         >
-                            <option value="default">Ordenar por padrão</option>
+                            <option value="default">Padrão</option>
                             <option value="price_asc">Menor preço</option>
                             <option value="price_desc">Maior preço</option>
                             <option value="rating">Melhor avaliação</option>
                             <option value="featured">Destaque</option>
                         </select>
                     </div>
-
-                    <select
-                        value={priceRange}
-                        onChange={e => setPriceRange(Number(e.target.value))}
-                        className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
-                    >
-                        <option value={-1}>Todos os preços</option>
-                        {PRICE_RANGES.map((r, i) => (
-                            <option key={i} value={i}>{r.label}</option>
-                        ))}
-                    </select>
-
-                    {hasFilters && (
-                        <button onClick={clearAll} className="text-xs text-orange-500 hover:underline flex items-center gap-1">
-                            <X className="w-3 h-3" />Limpar
-                        </button>
-                    )}
-                </div>
-
-                {/* Linha 2: tabs de categoria */}
-                <div className="flex flex-wrap gap-1.5">
-                    <button
-                        onClick={() => setActiveCategory('')}
-                        className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${!activeCategory ? 'bg-orange-500 text-white' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
-                    >
-                        Todos
-                    </button>
-                    {categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setActiveCategory(c => c === cat ? '' : cat)}
-                            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${activeCategory === cat ? 'bg-orange-500 text-white' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted font-medium">Preço:</span>
+                        <select
+                            value={priceRange}
+                            onChange={e => setPriceRange(Number(e.target.value))}
+                            className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
                         >
-                            {CATEGORY_LABELS[cat] ?? cat}
-                        </button>
-                    ))}
+                            <option value={-1}>Todos</option>
+                            {PRICE_RANGES.map((r, i) => (
+                                <option key={i} value={i}>{r.label}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
+            )}
+
+            {/* Tabs de categoria — scroll horizontal no mobile */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+                <button
+                    onClick={() => setActiveCategory('')}
+                    className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors ${!activeCategory ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
+                >
+                    Todos
+                </button>
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setActiveCategory(c => c === cat ? '' : cat)}
+                        className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors ${activeCategory === cat ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
+                    >
+                        {CATEGORY_LABELS[cat] ?? cat}
+                    </button>
+                ))}
             </div>
 
             {/* Resultados */}
@@ -187,7 +197,6 @@ export function LojaClient({ products }: { products: Product[] }) {
                     <button onClick={clearAll} className="text-xs text-orange-500 hover:underline mt-1">Limpar filtros</button>
                 </div>
             ) : useFlat ? (
-                // Vista plana quando ordenação/filtro de preço está ativo
                 <div>
                     <p className="text-xs text-muted mb-4">{filtered.length} produto{filtered.length !== 1 ? 's' : ''}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -202,7 +211,6 @@ export function LojaClient({ products }: { products: Product[] }) {
                     </div>
                 </div>
             ) : (
-                // Vista agrupada por categoria (padrão)
                 Object.entries(grouped!).map(([category, items]) => (
                     <section key={category}>
                         <ShopeeSectionHeader title={CATEGORY_LABELS[category] ?? category} store={items[0]?.store} />
