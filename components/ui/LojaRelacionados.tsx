@@ -80,7 +80,6 @@ export async function LojaRelacionados({ tags, title = 'Produtos relacionados', 
                             {...p}
                             compact
                             rating={p.rating ?? undefined}
-                            originalPrice={p.originalPrice ?? undefined}
                             badge={p.badge ?? undefined}
                             soldCount={p.soldCount ?? undefined}
                         />
@@ -93,7 +92,6 @@ export async function LojaRelacionados({ tags, title = 'Produtos relacionados', 
                             key={p.id}
                             {...p}
                             rating={p.rating ?? undefined}
-                            originalPrice={p.originalPrice ?? undefined}
                             badge={p.badge ?? undefined}
                             soldCount={p.soldCount ?? undefined}
                         />

@@ -46,10 +46,11 @@ const CATEGORIES: Record<string, string> = {
 }
 
 const STORES: Record<string, { label: string; color: string }> = {
-    shopee:       { label: 'Shopee',        color: 'bg-orange-500/10 text-orange-500' },
-    amazon:       { label: 'Amazon',        color: 'bg-yellow-500/10 text-yellow-600' },
-    mercadolivre: { label: 'Mercado Livre', color: 'bg-yellow-400/10 text-yellow-500' },
-    outro:        { label: 'Outro',         color: 'bg-muted/10 text-muted' },
+    shopee:       { label: 'Shopee',          color: 'bg-orange-500/10 text-orange-500' },
+    amazon:       { label: 'Amazon',          color: 'bg-yellow-500/10 text-yellow-600' },
+    mercadolivre: { label: 'Mercado Livre',   color: 'bg-yellow-400/10 text-yellow-500' },
+    magalu:       { label: 'Magazine Luiza',  color: 'bg-blue-500/10 text-blue-500'     },
+    outro:        { label: 'Outro',           color: 'bg-muted/10 text-muted'           },
 }
 
 const EMPTY_FORM = {

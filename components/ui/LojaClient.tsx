@@ -1,29 +1,30 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ShopeeCard, ShopeeSectionHeader } from '@/components/ui/ShopeeCard'
+import { ShopeeCard, ShopeeSectionHeader, STORE_CONFIG } from '@/components/ui/ShopeeCard'
 import { Search, X, SlidersHorizontal } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
-    kpop_album:   'Álbuns K-Pop',
-    lightstick:   'Lightsticks',
-    kbeauty:      'K-Beauty',
-    kdrama:       'K-Drama',
-    clothing:     'Roupas',
-    acessorios:   'Acessórios',
-    photocard:    'Photocards',
-    alimenta:     'Alimentação',
-    outros:       'Outros',
+    kpop_album:  'Álbuns K-Pop',
+    lightstick:  'Lightsticks',
+    kbeauty:     'K-Beauty',
+    kdrama:      'K-Drama',
+    clothing:    'Roupas',
+    acessorios:  'Acessórios',
+    photocard:   'Photocards',
+    alimenta:    'Alimentação',
+    outros:      'Outros',
 }
 
-const PRICE_RANGES = [
-    { label: 'Até R$50',    min: 0,   max: 50 },
-    { label: 'R$50–150',    min: 50,  max: 150 },
-    { label: 'R$150–300',   min: 150, max: 300 },
-    { label: 'Acima R$300', min: 300, max: Infinity },
+const PLATFORM_FILTERS = [
+    { value: '',             label: 'Todas as lojas' },
+    { value: 'shopee',       label: 'Shopee' },
+    { value: 'mercadolivre', label: 'Mercado Livre' },
+    { value: 'amazon',       label: 'Amazon' },
+    { value: 'magalu',       label: 'Magalu' },
 ]
 
-type SortOption = 'default' | 'price_asc' | 'price_desc' | 'rating' | 'featured'
+type SortOption = 'default' | 'rating' | 'featured'
 
 interface Product {
     id: string
@@ -42,26 +43,31 @@ interface Product {
     tags: string[]
 }
 
-
-function parsePrice(priceStr: string): number {
-    return parseFloat(priceStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0
-}
-
 export function LojaClient({ products }: { products: Product[] }) {
     const [activeCategory, setActiveCategory] = useState('')
+    const [activePlatform, setActivePlatform] = useState('')
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState<SortOption>('default')
-    const [priceRange, setPriceRange] = useState(-1)
     const [showFilters, setShowFilters] = useState(false)
+
+    // Só mostra plataformas que têm produtos
+    const availablePlatforms = useMemo(() => {
+        const stores = new Set(products.map(p => p.store))
+        return PLATFORM_FILTERS.filter(f => f.value === '' || stores.has(f.value))
+    }, [products])
 
     const categories = useMemo(() => {
         const seen = new Set<string>()
-        return products.map(p => p.category).filter(c => !seen.has(c) && seen.add(c))
-    }, [products])
+        return products
+            .filter(p => !activePlatform || p.store === activePlatform)
+            .map(p => p.category)
+            .filter(c => !seen.has(c) && seen.add(c))
+    }, [products, activePlatform])
 
     const filtered = useMemo(() => {
         let list = [...products]
 
+        if (activePlatform) list = list.filter(p => p.store === activePlatform)
         if (activeCategory) list = list.filter(p => p.category === activeCategory)
 
         if (search.trim()) {
@@ -72,26 +78,16 @@ export function LojaClient({ products }: { products: Product[] }) {
             )
         }
 
-        if (priceRange >= 0) {
-            const { min, max } = PRICE_RANGES[priceRange]
-            list = list.filter(p => {
-                const v = parsePrice(p.price ?? '')
-                return v >= min && v <= max
-            })
-        }
-
         switch (sort) {
-            case 'price_asc':  list.sort((a, b) => parsePrice(a.price ?? '') - parsePrice(b.price ?? '')); break
-            case 'price_desc': list.sort((a, b) => parsePrice(b.price ?? '') - parsePrice(a.price ?? '')); break
-            case 'rating':     list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break
-            case 'featured':   list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
-            default:           list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)); break
+            case 'rating':   list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break
+            case 'featured': list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
+            default:         list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)); break
         }
 
         return list
-    }, [products, activeCategory, search, sort, priceRange])
+    }, [products, activePlatform, activeCategory, search, sort])
 
-    const useFlat = sort !== 'default' || priceRange >= 0
+    const useFlat = sort !== 'default'
 
     const grouped = useMemo(() => {
         if (useFlat) return null
@@ -103,8 +99,8 @@ export function LojaClient({ products }: { products: Product[] }) {
     }, [filtered, useFlat])
 
     const hasResults = filtered.length > 0
-    const hasFilters = search || activeCategory || sort !== 'default' || priceRange >= 0
-    const clearAll = () => { setSearch(''); setActiveCategory(''); setSort('default'); setPriceRange(-1) }
+    const hasFilters = search || activeCategory || activePlatform || sort !== 'default'
+    const clearAll = () => { setSearch(''); setActiveCategory(''); setActivePlatform(''); setSort('default') }
 
     return (
         <div className="space-y-5">
@@ -126,7 +122,7 @@ export function LojaClient({ products }: { products: Product[] }) {
                 </div>
                 <button
                     onClick={() => setShowFilters(v => !v)}
-                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-colors ${showFilters || sort !== 'default' || priceRange >= 0 ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-colors ${showFilters || sort !== 'default' ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
                 >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     Filtros
@@ -149,29 +145,37 @@ export function LojaClient({ products }: { products: Product[] }) {
                             className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
                         >
                             <option value="default">Padrão</option>
-                            <option value="price_asc">Menor preço</option>
-                            <option value="price_desc">Maior preço</option>
                             <option value="rating">Melhor avaliação</option>
                             <option value="featured">Destaque</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted font-medium">Preço:</span>
-                        <select
-                            value={priceRange}
-                            onChange={e => setPriceRange(Number(e.target.value))}
-                            className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
-                        >
-                            <option value={-1}>Todos</option>
-                            {PRICE_RANGES.map((r, i) => (
-                                <option key={i} value={i}>{r.label}</option>
-                            ))}
                         </select>
                     </div>
                 </div>
             )}
 
-            {/* Tabs de categoria — scroll horizontal no mobile */}
+            {/* Filtro de plataforma — pills horizontais */}
+            {availablePlatforms.length > 2 && (
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+                    {availablePlatforms.map(p => {
+                        const cfg = p.value ? STORE_CONFIG[p.value] : null
+                        const isActive = activePlatform === p.value
+                        return (
+                            <button
+                                key={p.value}
+                                onClick={() => { setActivePlatform(p.value); setActiveCategory('') }}
+                                className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors border ${
+                                    isActive
+                                        ? `${cfg?.bg ?? 'bg-orange-500'} text-white border-transparent shadow-sm`
+                                        : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'
+                                }`}
+                            >
+                                {p.label}
+                            </button>
+                        )
+                    })}
+                </div>
+            )}
+
+            {/* Tabs de categoria */}
             <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
                 <button
                     onClick={() => setActiveCategory('')}
@@ -204,7 +208,6 @@ export function LojaClient({ products }: { products: Product[] }) {
                         {filtered.map(p => (
                             <ShopeeCard key={p.id} {...p}
                                 rating={p.rating ?? undefined}
-                                originalPrice={p.originalPrice ?? undefined}
                                 badge={p.badge ?? undefined}
                                 soldCount={p.soldCount ?? undefined}
                             />
@@ -219,7 +222,6 @@ export function LojaClient({ products }: { products: Product[] }) {
                             {items.map(p => (
                                 <ShopeeCard key={p.id} {...p}
                                     rating={p.rating ?? undefined}
-                                    originalPrice={p.originalPrice ?? undefined}
                                     badge={p.badge ?? undefined}
                                     soldCount={p.soldCount ?? undefined}
                                 />
