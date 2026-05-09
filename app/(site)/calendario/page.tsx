@@ -3,8 +3,7 @@ import { Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { AdBanner } from '@/components/ui/AdBanner'
-import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
-import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
+import { CalendarioClient, type BirthdayEvent, type ProductionEvent, type StoreProductCard } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +38,7 @@ export default async function CalendarioPage() {
     const past14 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 14))
     const todayStr = today.toISOString().split('T')[0]
 
-    const [artists, upcomingProductions, recentProductions] = await Promise.all([
+    const [artists, upcomingProductions, recentProductions, storePool] = await Promise.all([
         prisma.artist.findMany({
             where: { isHidden: false, flaggedAsNonKorean: false, birthDate: { not: null } },
             select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, birthDate: true },
@@ -58,6 +57,12 @@ export default async function CalendarioPage() {
             orderBy: { releaseDate: 'desc' },
             take: 12,
         }),
+        prisma.storeProduct.findMany({
+            where: { isActive: true, category: { in: ['kpop_album', 'lightstick', 'photocard'] } },
+            orderBy: [{ featured: 'desc' }, { position: 'asc' }],
+            take: 8,
+            select: { id: true, name: true, price: true, originalPrice: true, imageUrl: true, affiliateUrl: true, store: true, badge: true, rating: true, soldCount: true },
+        }).catch(() => []),
     ])
 
     const birthdays: BirthdayEvent[] = artists.flatMap(a => {
@@ -124,19 +129,18 @@ export default async function CalendarioPage() {
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mb-6" />
 
-                <LojaRelacionados
-                    tags={[
-                        ...birthdays.slice(0, 5).map(b => b.nameRomanized.toLowerCase()),
-                        'kpop_album', 'lightstick', 'photocard',
-                    ]}
-                    title="Produtos K-Pop"
-                />
-
                 <CalendarioClient
                     birthdays={birthdays}
                     releases={releases}
                     recentReleases={recentReleases}
                     todayStr={todayStr}
+                    storeProducts={storePool.map(p => ({
+                        ...p,
+                        rating: p.rating ?? undefined,
+                        originalPrice: p.originalPrice ?? undefined,
+                        badge: p.badge ?? undefined,
+                        soldCount: p.soldCount ?? undefined,
+                    }))}
                 />
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
