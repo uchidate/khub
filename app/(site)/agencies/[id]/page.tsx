@@ -9,6 +9,7 @@ import type { Metadata } from "next"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { HomeLojaDestaque } from "@/components/home/HomeLojaDestaque"
 import { SITE_URL } from '@/lib/constants/site'
 
 // ISR ativo — revalidate abaixo substitui force-dynamic
@@ -100,6 +101,13 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const agency = await getAgency(id)
     if (!agency) notFound()
 
+    const featuredProducts = await prisma.storeProduct.findMany({
+        where: { isActive: true, featured: true },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+        take: 4,
+        select: { id: true, name: true, imageUrl: true, affiliateUrl: true, store: true, category: true, badge: true, rating: true, soldCount: true },
+    }).catch(() => [])
+
     const socials     = (agency.socials as Record<string, string>) ?? {}
     const accent      = agency.accentColor ?? '#6b7280'
     const activeGroups    = agency.musicalGroups.filter(g => !g.disbandDate)
@@ -113,6 +121,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const showSubTotals    = agency.subsidiaries.length > 0 && agency.artists.length === 0
 
     return (
+        <>
         <div className="min-h-screen bg-background pb-20">
             <JsonLd data={{
                 "@context": "https://schema.org",
@@ -138,10 +147,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                 } : {}),
             }} />
 
-            {/* Hero accent band */}
-            <div className="h-1 w-full" style={{ backgroundColor: accent }} />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
+<div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
 
                 {/* Breadcrumb + back */}
                 <Breadcrumbs items={[
@@ -454,6 +460,13 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
 
             </div>
         </div>
+
+        <HomeLojaDestaque products={featuredProducts} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pb-8">
+            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-4" />
+        </div>
+        </>
     )
 }
 
