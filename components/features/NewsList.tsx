@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { NewsListCard } from './NewsListCard'
 import { NewsFilters, type FilterValues } from './NewsFilters'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { TabBar } from '@/components/ui/TabBar'
 
@@ -194,12 +193,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                 initialFilters={getFiltersFromUrl()}
             />
 
-            {/* Ad: entre filtros e grid */}
-            <AdBanner
-                slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO ?? ''}
-                variant="auto"
-                className="my-6"
-            />
 
             {/* Loading State */}
             {isLoading && <NewsSkeleton />}

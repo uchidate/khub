@@ -450,7 +450,6 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
             {/* Grid */}
             {!isLoading && productions.length > 0 && (
                 <>
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4"  devLabel="Produções · Topo Lista" />
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
                         {productions.length > 0 && <FeaturedProductionCard prod={productions[0]} />}
                         {productions.slice(1).map((prod, index) => (
