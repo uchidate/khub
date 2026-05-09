@@ -638,6 +638,135 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                 </div>
             )
 
+        case 'blog_list': {
+            const Tag = block.ordered ? 'ol' : 'ul'
+            return (
+                <Tag className={`my-5 space-y-2 pl-1 ${block.ordered ? 'list-none counter-reset-[item]' : ''}`}>
+                    {block.items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-3 text-foreground leading-relaxed">
+                            {block.ordered
+                                ? <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ff2d78]/10 text-[#ff2d78] text-xs font-black flex items-center justify-center mt-0.5">{i + 1}</span>
+                                : <span className="flex-shrink-0 w-2 h-2 rounded-full bg-[#ff2d78]/60 mt-2" />
+                            }
+                            <span className="flex-1">{renderInline(item)}</span>
+                        </li>
+                    ))}
+                </Tag>
+            )
+        }
+
+        case 'blog_pros_cons':
+            return (
+                <div className="my-8 rounded-2xl border border-border overflow-hidden">
+                    {block.title && (
+                        <div className="px-4 py-2.5 bg-surface border-b border-border">
+                            <p className="text-xs font-black uppercase tracking-widest text-muted">{block.title}</p>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 divide-x divide-border">
+                        <div className="p-4 space-y-2.5">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-3">✓ Prós</p>
+                            {block.pros.map((pro, i) => (
+                                <div key={i} className="flex items-start gap-2">
+                                    <span className="flex-shrink-0 w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center mt-0.5">
+                                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 4l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    </span>
+                                    <span className="text-sm text-foreground leading-snug">{renderInline(pro)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 space-y-2.5">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-rose-500 mb-3">✗ Contras</p>
+                            {block.cons.map((con, i) => (
+                                <div key={i} className="flex items-start gap-2">
+                                    <span className="flex-shrink-0 w-4 h-4 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center mt-0.5">
+                                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                                    </span>
+                                    <span className="text-sm text-foreground leading-snug">{renderInline(con)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )
+
+        case 'blog_steps':
+            return (
+                <div className="my-8 space-y-3">
+                    {block.title && <p className="text-xs font-black uppercase tracking-widest text-muted mb-4">{block.title}</p>}
+                    {block.steps.map((step, i) => (
+                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-[#ff2d78]/20 transition-colors">
+                            <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-[#ff2d78]/10 text-[#ff2d78] text-sm font-black flex items-center justify-center">{i + 1}</span>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground mb-0.5">{step.title}</p>
+                                <p className="text-sm text-muted leading-relaxed">{renderInline(step.text)}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+
+        case 'blog_product_card': {
+            const discount = block.originalPrice
+                ? Math.round((1 - parseFloat(block.price.replace(/[^0-9,]/g,'').replace(',','.')) / parseFloat(block.originalPrice.replace(/[^0-9,]/g,'').replace(',','.'))) * 100)
+                : null
+            return (
+                <div className="my-8 rounded-2xl border border-orange-500/20 bg-orange-500/[.03] overflow-hidden">
+                    <div className="flex gap-4 p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-foreground leading-snug mb-2 line-clamp-2">{block.name}</p>
+                            <div className="flex items-baseline gap-2 mb-1">
+                                <span className="text-xl font-black text-orange-500">R$ {block.price}</span>
+                                {block.originalPrice && <span className="text-xs text-muted line-through">R$ {block.originalPrice}</span>}
+                                {discount && discount > 0 && <span className="text-[10px] font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-full">-{discount}%</span>}
+                            </div>
+                            {block.rating && (
+                                <p className="text-xs text-muted mb-3">{'★'.repeat(Math.round(block.rating))} {block.rating.toFixed(1)}</p>
+                            )}
+                            <a href={block.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-400 transition-colors">
+                                {block.cta ?? 'Comprar na Shopee'} →
+                            </a>
+                        </div>
+                    </div>
+                    <p className="text-center text-[10px] text-muted/60 pb-2">Comprar pelo nosso link apoia o HallyuHub sem custo extra</p>
+                </div>
+            )
+        }
+
+        case 'blog_comparison':
+            return (
+                <div className="my-8 rounded-2xl border border-border overflow-x-auto">
+                    {block.title && (
+                        <div className="px-4 py-2.5 bg-surface border-b border-border">
+                            <p className="text-xs font-black uppercase tracking-widest text-muted">{block.title}</p>
+                        </div>
+                    )}
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="bg-surface">
+                                <th className="text-left px-4 py-2.5 text-xs font-black text-muted uppercase tracking-wide border-b border-border w-1/3"></th>
+                                {block.columns.map((col, i) => (
+                                    <th key={i} className="text-center px-4 py-2.5 text-xs font-black text-[#ff2d78] uppercase tracking-wide border-b border-border">{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {block.rows.map((row, i) => (
+                                <tr key={i} className={i % 2 === 0 ? 'bg-background' : 'bg-surface'}>
+                                    <td className="px-4 py-2.5 font-semibold text-muted text-xs">{row.label}</td>
+                                    {row.values.map((val, j) => (
+                                        <td key={j} className="px-4 py-2.5 text-center text-foreground">{renderInline(val)}</td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )
+
         case 'blog_divider':
             return (
                 <div className="my-10 flex items-center gap-4">

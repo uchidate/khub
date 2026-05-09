@@ -252,6 +252,15 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.hancinema.net',
             },
+            // Shopee CDN — imagens de produtos da vitrine afiliada
+            {
+                protocol: 'https',
+                hostname: 'down-br.img.susercontent.com',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.susercontent.com',
+            },
         ],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920],
         imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384, 512],
