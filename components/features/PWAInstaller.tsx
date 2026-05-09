@@ -8,28 +8,34 @@ export function PWAInstaller() {
   const [showInstallBanner, setShowInstallBanner] = useState(false)
 
   useEffect(() => {
-    // Register service worker and force update check on every load
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((registration) => {
-            // Força verificação de nova versão a cada page load
-            registration.update()
-            // Quando novo SW estiver esperando, ativa imediatamente
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing
-              if (!newWorker) return
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' })
-                  window.location.reload()
-                }
-              })
+    if (!('serviceWorker' in navigator)) return
+
+    window.addEventListener('load', async () => {
+      // Desregistrar todos os SWs antigos antes de registrar o novo.
+      // Garante que nenhum SW stale continue interceptando chunks JS.
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(
+        registrations
+          .filter(r => r.active?.scriptURL && !r.active.scriptURL.endsWith('/sw.js'))
+          .map(r => r.unregister())
+      )
+
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          registration.update()
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing
+            if (!newWorker) return
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' })
+                window.location.reload()
+              }
             })
           })
-          .catch(() => {})
-      })
-    }
+        })
+        .catch(() => {})
+    })
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
