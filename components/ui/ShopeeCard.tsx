@@ -13,8 +13,8 @@ const STORE_LABELS: Record<string, string> = {
 interface ShopeeCardProps {
     id?: string
     name: string
-    price: string
-    originalPrice?: string
+    price?: string | null
+    originalPrice?: string | null
     rating?: number
     sold?: string
     soldCount?: string
@@ -30,31 +30,21 @@ function trackClick(id?: string) {
     fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
 }
 
-function calcDiscount(price: string, originalPrice?: string): string | null {
-    if (!originalPrice) return null
-    const curr = parseFloat(price.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
-    const orig = parseFloat(originalPrice.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
-    if (!curr || !orig || orig <= curr) return null
-    const pct = Math.round((1 - curr / orig) * 100)
-    return pct >= 5 ? `-${pct}%` : null
-}
-
 export function ShopeeCard({
     id,
     name,
-    price,
-    originalPrice,
+    price: _price,
+    originalPrice: _originalPrice,
     rating = 4.8,
     sold,
     soldCount,
     imageUrl,
     affiliateUrl,
-    badge,
+    badge: _badge,
     compact = false,
     store = 'shopee',
 }: ShopeeCardProps) {
     const vendidos = soldCount ?? sold
-    const discountBadge = badge || calcDiscount(price, originalPrice)
 
     if (compact) {
         return (
@@ -70,7 +60,6 @@ export function ShopeeCard({
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{name}</p>
-                    <p className="text-sm font-bold text-orange-500 mt-1">{price}</p>
                     {vendidos && <p className="text-[10px] text-muted">{vendidos} vendidos</p>}
                 </div>
                 <div className="flex-shrink-0 self-center">
@@ -92,11 +81,6 @@ export function ShopeeCard({
         >
             <div className="relative aspect-square bg-muted/10">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
-                {discountBadge && (
-                    <span className="absolute top-2 left-2 text-[10px] font-black bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-sm">
-                        {discountBadge}
-                    </span>
-                )}
             </div>
             <div className="p-3 flex flex-col gap-1.5 flex-1">
                 <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium flex-1">{name}</p>
@@ -105,11 +89,7 @@ export function ShopeeCard({
                     <span className="text-[11px] text-muted">{rating}</span>
                     {vendidos && <span className="text-[11px] text-muted">· {vendidos}</span>}
                 </div>
-                <div className="flex items-center justify-between gap-1 mt-0.5">
-                    <div className="min-w-0">
-                        <p className="text-sm font-black text-orange-500 leading-none">{price}</p>
-                        {originalPrice && <p className="text-[10px] text-muted line-through mt-0.5">{originalPrice}</p>}
-                    </div>
+                <div className="flex items-center justify-end gap-1 mt-0.5">
                     <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold bg-orange-500 text-white px-2 py-1 rounded-full group-hover:bg-orange-400 transition-colors">
                         <ShoppingBag className="w-3 h-3" />
                         {STORE_LABELS[store] ?? 'Comprar'}

@@ -105,7 +105,7 @@ export default function AdminLojaPage() {
     const closeForm = () => { setShowForm(false); setEditingId(null) }
 
     const save = async () => {
-        if (!form.name || !form.price || !form.imageUrl || !form.affiliateUrl) {
+        if (!form.name || !form.imageUrl || !form.affiliateUrl) {
             toast({ type: 'error', message: 'Preencha os campos obrigatórios' })
             return
         }
@@ -223,20 +223,6 @@ export default function AdminLojaPage() {
                                 <input value={form.affiliateUrl} onChange={e => setForm(f => ({ ...f, affiliateUrl: e.target.value }))}
                                     className="w-full text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground"
                                     placeholder="https://shope.ee/..." />
-                            </div>
-                            {/* Preço */}
-                            <div>
-                                <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Preço *</label>
-                                <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                                    className="w-full text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground"
-                                    placeholder="R$ 89,90" />
-                            </div>
-                            {/* Preço original */}
-                            <div>
-                                <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Preço original (tachado)</label>
-                                <input value={form.originalPrice} onChange={e => setForm(f => ({ ...f, originalPrice: e.target.value }))}
-                                    className="w-full text-sm bg-surface border border-border rounded-lg px-3 py-2 text-foreground"
-                                    placeholder="R$ 129,90" />
                             </div>
                             {/* Loja */}
                             <div>
@@ -388,10 +374,6 @@ export default function AdminLojaPage() {
                                                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STORES[p.store]?.color || 'bg-muted/10 text-muted'}`}>
                                                         {STORES[p.store]?.label || p.store}
                                                     </span>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <p className="text-xs font-bold text-orange-500">{p.price}</p>
-                                                    {p.originalPrice && <p className="text-[10px] text-muted line-through">{p.originalPrice}</p>}
                                                 </td>
                                                 <td className="px-3 py-3 hidden md:table-cell">
                                                     <span className="text-xs text-muted">{p.position}</span>

@@ -76,8 +76,7 @@ export default async function LojaPage() {
                 image: p.imageUrl,
                 offers: {
                     '@type': 'Offer',
-                    price: p.price.replace(/[^0-9,.]/g, '').replace(',', '.'),
-                    priceCurrency: 'BRL',
+                    ...(p.price ? { price: p.price.replace(/[^0-9,.]/g, '').replace(',', '.'), priceCurrency: 'BRL' } : {}),
                     availability: 'https://schema.org/InStock',
                     url: p.affiliateUrl,
                 },

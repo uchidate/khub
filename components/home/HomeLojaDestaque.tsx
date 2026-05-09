@@ -6,7 +6,7 @@ import { ShoppingBag, ArrowRight } from 'lucide-react'
 interface Product {
     id: string
     name: string
-    price: string
+    price?: string | null
     originalPrice?: string | null
     imageUrl: string
     affiliateUrl: string

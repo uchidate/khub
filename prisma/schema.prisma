@@ -1204,8 +1204,8 @@ model StoreProduct {
   id            String   @id @default(cuid())
   name          String
   description   String?
-  price         String             // "R$ 89,90"
-  originalPrice String?            // "R$ 129,90" — exibido tachado
+  price         String?
+  originalPrice String?
   imageUrl      String
   affiliateUrl  String
   store         String   @default("shopee") // "shopee" | "amazon" | "mercadolivre" | "outro"
