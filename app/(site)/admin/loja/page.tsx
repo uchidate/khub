@@ -50,6 +50,7 @@ const STORES: Record<string, { label: string; color: string }> = {
     amazon:       { label: 'Amazon',          color: 'bg-yellow-500/10 text-yellow-600' },
     mercadolivre: { label: 'Mercado Livre',   color: 'bg-yellow-400/10 text-yellow-500' },
     magalu:       { label: 'Magazine Luiza',  color: 'bg-blue-500/10 text-blue-500'     },
+    shein:        { label: 'Shein',           color: 'bg-gray-900/10 text-gray-900'     },
     outro:        { label: 'Outro',           color: 'bg-muted/10 text-muted'           },
 }
 

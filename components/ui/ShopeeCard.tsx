@@ -8,6 +8,7 @@ export const STORE_CONFIG: Record<string, { label: string; color: string; bg: st
     amazon:        { label: 'Amazon',         color: 'text-[#FF9900]',  bg: 'bg-[#FF9900]' },
     mercadolivre:  { label: 'Mercado Livre',  color: 'text-yellow-500', bg: 'bg-yellow-400' },
     magalu:        { label: 'Magazine Luiza', color: 'text-blue-500',   bg: 'bg-blue-500'   },
+    shein:         { label: 'Shein',          color: 'text-black',      bg: 'bg-black'      },
     outro:         { label: 'Ver produto',    color: 'text-muted',      bg: 'bg-muted'      },
 }
 

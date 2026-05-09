@@ -22,6 +22,7 @@ const PLATFORM_FILTERS = [
     { value: 'mercadolivre', label: 'Mercado Livre' },
     { value: 'amazon',       label: 'Amazon' },
     { value: 'magalu',       label: 'Magalu' },
+    { value: 'shein',        label: 'Shein' },
 ]
 
 type SortOption = 'default' | 'rating' | 'featured'
