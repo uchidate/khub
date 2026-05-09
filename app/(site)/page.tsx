@@ -248,7 +248,7 @@ const getHomePublicData = unstable_cache(
             topAgencies,
         }
     },
-    ['home-page-public-data-v17'],
+    ['home-page-public-data-v18'],
     { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 
