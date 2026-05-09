@@ -8,12 +8,26 @@ export function PWAInstaller() {
   const [showInstallBanner, setShowInstallBanner] = useState(false)
 
   useEffect(() => {
-    // Register service worker
+    // Register service worker and force update check on every load
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.log('Service Worker registration failed:', err)
-        })
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            // Força verificação de nova versão a cada page load
+            registration.update()
+            // Quando novo SW estiver esperando, ativa imediatamente
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing
+              if (!newWorker) return
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' })
+                  window.location.reload()
+                }
+              })
+            })
+          })
+          .catch(() => {})
       })
     }
 
