@@ -124,19 +124,19 @@ export default async function CalendarioPage() {
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mb-6" />
 
-                <CalendarioClient
-                    birthdays={birthdays}
-                    releases={releases}
-                    recentReleases={recentReleases}
-                    todayStr={todayStr}
-                />
-
                 <LojaRelacionados
                     tags={[
                         ...birthdays.slice(0, 5).map(b => b.nameRomanized.toLowerCase()),
                         'kpop_album', 'lightstick', 'photocard',
                     ]}
                     title="Produtos K-Pop"
+                />
+
+                <CalendarioClient
+                    birthdays={birthdays}
+                    releases={releases}
+                    recentReleases={recentReleases}
+                    todayStr={todayStr}
                 />
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
