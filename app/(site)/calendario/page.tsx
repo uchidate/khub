@@ -25,10 +25,10 @@ function nextBirthday(birthDate: Date, today: Date): Date | null {
     const m = birthDate.getUTCMonth()
     const d = birthDate.getUTCDate()
     const y = today.getUTCFullYear()
-    const thisYear = new Date(Date.UTC(y, m, d))
-    if (thisYear >= today) return thisYear
-    const nextYear = new Date(Date.UTC(y + 1, m, d))
     const windowEnd = new Date(Date.UTC(y, today.getUTCMonth(), today.getUTCDate() + 90))
+    const thisYear = new Date(Date.UTC(y, m, d))
+    if (thisYear >= today && thisYear <= windowEnd) return thisYear
+    const nextYear = new Date(Date.UTC(y + 1, m, d))
     return nextYear <= windowEnd ? nextYear : null
 }
 
