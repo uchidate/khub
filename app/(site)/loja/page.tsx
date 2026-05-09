@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { LojaBanner } from '@/components/ui/LojaBanner'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
-<<<<<<< HEAD
 import { LojaCupons } from '@/components/ui/LojaCupons'
 import { SITE_URL } from '@/lib/constants/site'
 
