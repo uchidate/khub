@@ -1,7 +1,6 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { AdBanner } from '@/components/ui/AdBanner'
 import type { ShowsByPlatform } from '@/components/features/StreamingTopShows'
 import type { TrendingGroup } from '@/components/home/HomeTrendingGroups'
 
@@ -49,15 +48,11 @@ const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m =
 const HomeBlogSection = dynamic(() => import('./HomeBlogSection').then(m => ({ default: m.HomeBlogSection })), { loading: () => <div className="h-48" /> })
 import { HomeTopAgencies } from './HomeTopAgencies'
 
-const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
 
 export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats, topAgencies }: Props) {
     return (
         <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 2400px' }}>
             <HomeRandomDiscovery artist={artist} group={group} production={production} />
-            <div className="hidden md:block max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} variant="auto" minimal />
-            </div>
             <HomeRecommended />
             <HomeBlogFeed
                 blogPosts={feedPosts}
@@ -65,9 +60,6 @@ export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPos
                 productions={latestProductions}
                 categoryCounts={categoryCountMap}
             />
-            <div className="max-w-7xl mx-auto px-4 py-4">
-                <AdBanner slot={AD_SLOT} variant="auto" minimal />
-            </div>
             {(hasStreaming || trendingGroups.length > 0) && (
                 <section className="border-b border-border bg-background">
                     <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">

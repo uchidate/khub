@@ -237,9 +237,6 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
             </div>}
 
             {/* Grid */}
-            {filtered.length > 0 && (
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4"  devLabel="Grupos · Topo Lista" />
-            )}
             {filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"

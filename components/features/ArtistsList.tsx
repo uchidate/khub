@@ -8,7 +8,6 @@ import { getRoleLabels } from '@/lib/utils/role-labels'
 import { nameToGradient } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
-import { AdBanner } from '@/components/ui/AdBanner'
 
 export interface Artist {
     id: string
@@ -116,7 +115,6 @@ export function ArtistsList({ artists, pagination, initialFilters }: ArtistsList
 
             {artists.length > 0 && (
                 <>
-                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" minimal className="mb-4"  devLabel="Artistas · Topo Lista" />
                     <p className="text-xs text-muted mb-5">
                         {total.toLocaleString('pt-BR')} artistas
                         {totalPages > 1 && ` · pág. ${currentPage} de ${totalPages}`}
