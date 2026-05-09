@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import { Star } from 'lucide-react'
 
 export const STORE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     shopee:        { label: 'Shopee',         color: 'text-orange-500', bg: 'bg-orange-500' },
@@ -116,12 +115,7 @@ export function ShopeeCard({
             </div>
             <div className="p-3 flex flex-col gap-1.5 flex-1">
                 <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium flex-1">{name}</p>
-                <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-[11px] text-muted">{rating}</span>
-                    {vendidos && <span className="text-[11px] text-muted">· {vendidos}</span>}
-                </div>
-                <div className="flex items-center justify-end gap-1 mt-0.5">
+                <div className="flex items-center justify-end gap-1 mt-auto">
                     <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-1 rounded-full transition-opacity group-hover:opacity-80`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
