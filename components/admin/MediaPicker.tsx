@@ -30,7 +30,9 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
     const [deleting, setDeleting] = useState<string | null>(null)
     const [selected, setSelected] = useState<string | null>(value ?? null)
     const [dragOver, setDragOver] = useState(false)
+    const [uploadError, setUploadError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const dragCounter = useRef(0)
 
     const loadFiles = useCallback(async () => {
         setLoading(true)
@@ -43,13 +45,21 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
 
     const upload = async (file: File) => {
         setUploading(true)
-        const fd = new FormData()
-        fd.append('file', file)
-        const res = await fetch('/api/admin/media/upload', { method: 'POST', body: fd })
-        if (res.ok) {
-            const { url } = await res.json()
-            await loadFiles()
-            setSelected(url)
+        setUploadError(null)
+        try {
+            const fd = new FormData()
+            fd.append('file', file)
+            const res = await fetch('/api/admin/media/upload', { method: 'POST', body: fd })
+            if (res.ok) {
+                const { url } = await res.json()
+                await loadFiles()
+                setSelected(url)
+            } else {
+                const data = await res.json().catch(() => ({}))
+                setUploadError(data.error ?? `Erro ${res.status}`)
+            }
+        } catch {
+            setUploadError('Erro de rede ao enviar imagem')
         }
         setUploading(false)
     }
@@ -84,16 +94,18 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
 
                 {/* Upload zone */}
                 <div
-                    onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
+                    onDragEnter={e => { e.preventDefault(); dragCounter.current++; setDragOver(true) }}
+                    onDragOver={e => e.preventDefault()}
+                    onDragLeave={() => { dragCounter.current--; if (dragCounter.current === 0) setDragOver(false) }}
+                    onDrop={e => { e.preventDefault(); dragCounter.current = 0; setDragOver(false); handleFiles(e.dataTransfer.files) }}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`mx-5 mt-4 border-2 border-dashed rounded-xl px-4 py-5 flex items-center justify-center gap-3 cursor-pointer transition-colors ${dragOver ? 'border-[#ff2d78] bg-[#ff2d78]/5' : 'border-border hover:border-[#ff2d78]/50 hover:bg-surface'}`}
+                    className={`mx-5 mt-4 border-2 border-dashed rounded-xl px-4 py-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${dragOver ? 'border-[#ff2d78] bg-[#ff2d78]/5' : 'border-border hover:border-[#ff2d78]/50 hover:bg-surface'}`}
                 >
                     {uploading
                         ? <><Loader2 className="w-4 h-4 animate-spin text-[#ff2d78]" /><span className="text-sm text-muted">Enviando...</span></>
                         : <><Upload className="w-4 h-4 text-muted" /><span className="text-sm text-muted">Arraste uma imagem ou <span className="text-[#ff2d78] font-semibold">clique para fazer upload</span></span></>
                     }
+                    {uploadError && <span className="text-xs text-red-500 font-medium">{uploadError}</span>}
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFiles(e.target.files)} />
                 </div>
 
