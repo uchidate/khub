@@ -6,8 +6,6 @@ import { ShoppingBag, ArrowRight } from 'lucide-react'
 interface Product {
     id: string
     name: string
-    price?: string | null
-    originalPrice?: string | null
     imageUrl: string
     affiliateUrl: string
     store: string
@@ -56,7 +54,6 @@ export function HomeLojaDestaque({ products }: { products: Product[] }) {
                             key={p.id}
                             {...p}
                             rating={p.rating ?? undefined}
-                            originalPrice={p.originalPrice ?? undefined}
                             badge={p.badge ?? undefined}
                             soldCount={p.soldCount ?? undefined}
                         />

@@ -132,7 +132,6 @@ export default async function LojaPage() {
                                     {novidades.map(p => (
                                         <ShopeeCard key={p.id} {...p}
                                             rating={p.rating ?? undefined}
-                                            originalPrice={p.originalPrice ?? undefined}
                                             badge={p.badge ?? undefined}
                                             soldCount={p.soldCount ?? undefined}
                                         />
@@ -152,7 +151,6 @@ export default async function LojaPage() {
                                     {products.filter(p => p.featured).slice(0, 4).map(p => (
                                         <ShopeeCard key={p.id} {...p}
                                             rating={p.rating ?? undefined}
-                                            originalPrice={p.originalPrice ?? undefined}
                                             badge={p.badge ?? undefined}
                                             soldCount={p.soldCount ?? undefined}
                                         />

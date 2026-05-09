@@ -1208,7 +1208,7 @@ model StoreProduct {
   originalPrice String?
   imageUrl      String
   affiliateUrl  String
-  store         String   @default("shopee") // "shopee" | "amazon" | "mercadolivre" | "outro"
+  store         String   @default("shopee") // "shopee" | "amazon" | "mercadolivre" | "magalu" | "shein" | "outro"
   category      String             // "kpop_album" | "lightstick" | "kbeauty" | "kdrama" | "clothing" | "acessorios"
   badge         String?            // "-30%" | "Top vendas" | "Novo" | null
   rating        Float?

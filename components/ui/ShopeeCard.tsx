@@ -3,21 +3,21 @@
 import Image from 'next/image'
 import { ShoppingBag, Star } from 'lucide-react'
 
-const STORE_LABELS: Record<string, string> = {
-    shopee:       'Shopee',
-    amazon:       'Amazon',
-    mercadolivre: 'Mercado Livre',
-    outro:        'Ver produto',
+export const STORE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+    shopee:        { label: 'Shopee',         color: 'text-orange-500', bg: 'bg-orange-500' },
+    amazon:        { label: 'Amazon',         color: 'text-[#FF9900]',  bg: 'bg-[#FF9900]' },
+    mercadolivre:  { label: 'Mercado Livre',  color: 'text-yellow-500', bg: 'bg-yellow-400' },
+    magalu:        { label: 'Magazine Luiza', color: 'text-blue-500',   bg: 'bg-blue-500'   },
+    shein:         { label: 'Shein',          color: 'text-black',      bg: 'bg-black'      },
+    outro:         { label: 'Ver produto',    color: 'text-muted',      bg: 'bg-muted'      },
 }
 
 interface ShopeeCardProps {
     id?: string
     name: string
-    price?: string | null
-    originalPrice?: string | null
     rating?: number
-    sold?: string
     soldCount?: string
+    sold?: string
     imageUrl: string
     affiliateUrl: string
     badge?: string
@@ -33,18 +33,16 @@ function trackClick(id?: string) {
 export function ShopeeCard({
     id,
     name,
-    price: _price,
-    originalPrice: _originalPrice,
     rating = 4.8,
     sold,
     soldCount,
     imageUrl,
     affiliateUrl,
-    badge: _badge,
     compact = false,
     store = 'shopee',
 }: ShopeeCardProps) {
     const vendidos = soldCount ?? sold
+    const cfg = STORE_CONFIG[store] ?? STORE_CONFIG.outro
 
     if (compact) {
         return (
@@ -63,14 +61,12 @@ export function ShopeeCard({
                     {vendidos && <p className="text-[10px] text-muted">{vendidos} vendidos</p>}
                 </div>
                 <div className="flex-shrink-0 self-center">
-                    <span className="text-[10px] font-semibold text-orange-500 group-hover:text-orange-400 bg-orange-500/10 px-2 py-1 rounded-full">Ver</span>
+                    <span className={`text-[10px] font-semibold ${cfg.color} bg-orange-500/10 px-2 py-1 rounded-full`}>Ver</span>
                 </div>
             </a>
         )
     }
 
-
-    // Card padrão
     return (
         <a
             href={affiliateUrl}
@@ -90,9 +86,9 @@ export function ShopeeCard({
                     {vendidos && <span className="text-[11px] text-muted">· {vendidos}</span>}
                 </div>
                 <div className="flex items-center justify-end gap-1 mt-0.5">
-                    <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold bg-orange-500 text-white px-2 py-1 rounded-full group-hover:bg-orange-400 transition-colors">
+                    <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${cfg.bg} text-white px-2 py-1 rounded-full transition-opacity group-hover:opacity-80`}>
                         <ShoppingBag className="w-3 h-3" />
-                        {STORE_LABELS[store] ?? 'Comprar'}
+                        {cfg.label}
                     </span>
                 </div>
             </div>
@@ -101,12 +97,16 @@ export function ShopeeCard({
 }
 
 export function ShopeeSectionHeader({ title, seeAllUrl, store }: { title: string; seeAllUrl?: string; store?: string }) {
-    const storeLabel = store ? (STORE_LABELS[store] ?? store) : 'Afiliado'
+    const cfg = store ? (STORE_CONFIG[store] ?? STORE_CONFIG.outro) : null
     return (
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-foreground">{title}</h2>
-                <span className="text-[10px] font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-full">{storeLabel}</span>
+                {cfg && (
+                    <span className={`text-[10px] font-semibold ${cfg.color} bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full`}>
+                        {cfg.label}
+                    </span>
+                )}
             </div>
             {seeAllUrl && (
                 <a href={seeAllUrl} className="text-xs text-muted hover:text-orange-500 transition-colors">
