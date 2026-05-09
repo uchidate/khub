@@ -17,6 +17,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { Film } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import type { Metadata } from "next"
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -712,6 +713,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
             </div>
             <ScrollToTop />
+            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     )
 }

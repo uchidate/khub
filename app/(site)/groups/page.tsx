@@ -9,6 +9,7 @@ import { GroupsList } from "@/components/features/GroupsList"
 import { GroupsHeroFilter } from "@/components/features/GroupsHeroFilter"
 import { AdBanner } from "@/components/ui/AdBanner"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { nameToGradient } from '@/lib/utils'
@@ -205,10 +206,10 @@ export default async function GroupsPage() {
                 <Suspense>
                     <GroupsList hideFilter />
                 </Suspense>
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4"  devLabel="Grupos · Fim Lista" />
                 <ScrollToTop />
             </div>
         </PageTransition>
+        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

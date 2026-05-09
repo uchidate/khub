@@ -9,6 +9,7 @@ import { ArtistsList } from "@/components/features/ArtistsList"
 import { ArtistFilters } from "@/components/features/ArtistFilters"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from '@/lib/constants/site'
@@ -268,6 +269,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 <ScrollToTop />
             </div>
         </PageTransition>
+        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

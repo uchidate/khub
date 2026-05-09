@@ -17,6 +17,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { getTranslation, getTranslations } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
@@ -824,6 +825,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 </div>
             </div>
             <ScrollToTop />
+            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     )
 }

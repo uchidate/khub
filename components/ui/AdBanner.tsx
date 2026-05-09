@@ -152,31 +152,36 @@ export function AdBanner({
     const isMultiplex = variant === 'multiplex'
 
     return (
-        <div ref={containerRef} className={className}>
-            {!hideLabel && (
-                <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
-                    {filled === null ? '' : 'Publicidade'}
-                </p>
-            )}
+        // Observer anchor — zero height, sem impacto no layout enquanto carrega
+        <div ref={containerRef}>
+            {/* ins sempre renderizado para que o AdSense possa preencher,
+                mas envolto em overflow-hidden + altura 0 até confirmed filled */}
+            <div className={filled === true ? className : 'overflow-hidden h-0 w-0 absolute pointer-events-none'}>
+                {!hideLabel && filled === true && (
+                    <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
+                        Publicidade
+                    </p>
+                )}
 
-            <ins
-                ref={insRef}
-                className="adsbygoogle"
-                style={{ display: 'block', textAlign: 'center' }}
-                data-ad-client={CLIENT}
-                data-ad-slot={slot}
-                data-ad-format={isMultiplex ? 'autorelaxed' : isFluid ? 'fluid' : 'auto'}
-                data-full-width-responsive={isFluid || isMultiplex ? undefined : 'true'}
-                {...(isFluid ? { 'data-ad-layout': 'in-article' } : {})}
-            />
+                <ins
+                    ref={insRef}
+                    className="adsbygoogle"
+                    style={{ display: 'block', textAlign: 'center' }}
+                    data-ad-client={CLIENT}
+                    data-ad-slot={slot}
+                    data-ad-format={isMultiplex ? 'autorelaxed' : isFluid ? 'fluid' : 'auto'}
+                    data-full-width-responsive={isFluid || isMultiplex ? undefined : 'true'}
+                    {...(isFluid ? { 'data-ad-layout': 'in-article' } : {})}
+                />
 
-            {!minimal && !hideLabel && filled === true && (
-                <div className="flex items-center gap-3 mt-2">
-                    <div className="flex-1 h-px bg-border/40" />
-                    <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 select-none">Continua abaixo</span>
-                    <div className="flex-1 h-px bg-border/40" />
-                </div>
-            )}
+                {!minimal && !hideLabel && filled === true && (
+                    <div className="flex items-center gap-3 mt-2">
+                        <div className="flex-1 h-px bg-border/40" />
+                        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 select-none">Continua abaixo</span>
+                        <div className="flex-1 h-px bg-border/40" />
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
