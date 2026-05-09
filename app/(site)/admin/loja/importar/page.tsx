@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useToast } from '@/lib/hooks/useToast'
 import { Search, Loader2, Package, CheckSquare, Square, Import, ExternalLink, Star, ChevronDown, BadgeCheck } from 'lucide-react'
@@ -41,6 +41,7 @@ interface MLProduct {
 
 export default function MLImportarPage() {
     const { addToast: toast } = useToast()
+    const [mounted, setMounted] = useState(false)
     const [query, setQuery] = useState('')
     const [loading, setLoading] = useState(false)
     const [loadingMore, setLoadingMore] = useState(false)
@@ -137,6 +138,21 @@ export default function MLImportarPage() {
 
     const notImportedCount = results.filter(r => !r.alreadyImported).length
 
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) {
+        return (
+            <AdminLayout title="Importar do Mercado Livre">
+                <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin opacity-40" />
+                    <p className="text-sm">Carregando importador...</p>
+                </div>
+            </AdminLayout>
+        )
+    }
+
     return (
         <AdminLayout title="Importar do Mercado Livre">
             <div className="space-y-6">
@@ -221,12 +237,10 @@ export default function MLImportarPage() {
                 )}
 
                 {/* Grid de resultados */}
-                {results.length === 0 && !loading && (
-                    <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
-                        <Package className="w-10 h-10 opacity-30" />
-                        <p className="text-sm">Busque produtos ou use um filtro rápido acima</p>
-                    </div>
-                )}
+                <div className={results.length === 0 && !loading ? 'flex flex-col items-center justify-center py-20 text-muted gap-3' : 'hidden'}>
+                    <Package className="w-10 h-10 opacity-30" />
+                    <p className="text-sm">Busque produtos ou use um filtro rápido acima</p>
+                </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {results.filter(r => !onlyRated || r.rating).map(product => {
