@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, Fragment } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -466,10 +466,10 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                 const nextRow = rows[idx + 1]
                 const nextIsHeading = !Array.isArray(nextRow) && nextRow && !('items' in nextRow) && (nextRow as BlogBlock).type === 'blog_heading'
                 return (
-                    <>
+                    <Fragment key={idx}>
                         {el}
-                        {AD_POSITIONS.has(idx + 1) && !nextIsHeading && <InArticleAd key={`ad-${idx}`} id={`ad-${idx}`} />}
-                    </>
+                        {AD_POSITIONS.has(idx + 1) && !nextIsHeading && <InArticleAd id={`ad-${idx}`} />}
+                    </Fragment>
                 )
             })}
         </div>
