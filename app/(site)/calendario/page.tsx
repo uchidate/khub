@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { AdBanner } from '@/components/ui/AdBanner'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
@@ -128,6 +129,14 @@ export default async function CalendarioPage() {
                     releases={releases}
                     recentReleases={recentReleases}
                     todayStr={todayStr}
+                />
+
+                <LojaRelacionados
+                    tags={[
+                        ...birthdays.slice(0, 5).map(b => b.nameRomanized.toLowerCase()),
+                        'kpop_album', 'lightstick', 'photocard',
+                    ]}
+                    title="Produtos K-Pop"
                 />
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />

@@ -433,6 +433,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <LojaRelacionados
           tags={post.tags}
           title="Produtos relacionados"
+          compact
         />
 
         <div className="mt-8">
