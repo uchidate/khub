@@ -17,6 +17,7 @@ import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { HomeNavbarAd } from '@/components/ui/HomeNavbarAd'
 import { rankPosts } from '@/lib/blog/scoring'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 
 const BASE_URL = SITE_URL
 const SLOT_AUTO = process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!
@@ -679,7 +680,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   )}
 
                   {block2Posts.length > 0 && (
-                    <AdBanner slot={SLOT_AUTO} variant="auto" className="my-2" />
+                    <LojaRelacionados
+                      tags={popularTags.slice(0, 5).map(t => t.tag)}
+                      title="Vitrine K-Pop"
+                    />
                   )}
 
                   {block2Posts.length > 0 && (

@@ -18,6 +18,7 @@ import { AdBanner } from '@/components/ui/AdBanner'
 import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 
 const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
@@ -428,6 +429,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
         )}
+
+        <LojaRelacionados
+          tags={post.tags}
+          title="Produtos relacionados"
+        />
 
         <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">

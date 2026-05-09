@@ -641,6 +641,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
+                        <LojaRelacionados
+                            tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
+                            title={`Produtos ${group.name}`}
+                        />
+
                         {relatedPosts.length > 0 && (
                             <section id="artigos">
                                 <SectionHeader icon={<Music className="w-5 h-5" />} title="Artigos Relacionados" count={relatedPosts.length} accent={accent} />
@@ -864,12 +869,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         )}
                     </div>
                 </div>
-            </div>
-            <div className="max-w-6xl mx-auto px-4">
-                <LojaRelacionados
-                    tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
-                    title={`Produtos ${group.name}`}
-                />
             </div>
             <ScrollToTop />
         </div>

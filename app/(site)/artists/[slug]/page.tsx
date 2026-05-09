@@ -597,6 +597,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`}
                         />
 
+                        {/* Loja: produtos relacionados */}
+                        <LojaRelacionados
+                            tags={[artist.nameRomanized.toLowerCase(), ...(activeGroup ? [activeGroup.name.toLowerCase()] : [])]}
+                            title={`Produtos ${artist.nameRomanized}`}
+                        />
+
                         {/* Ad: após bio, antes da filmografia */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" minimal className="my-4"  devLabel="Artista · Após Bio" />
 
@@ -816,12 +822,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     </div>
 
                 </div>
-            </div>
-            <div className="max-w-6xl mx-auto px-4">
-                <LojaRelacionados
-                    tags={[artist.nameRomanized.toLowerCase(), ...(activeGroup ? [activeGroup.name.toLowerCase()] : [])]}
-                    title={`Produtos ${artist.nameRomanized}`}
-                />
             </div>
             <ScrollToTop />
         </div>
