@@ -8,7 +8,9 @@ import { cache } from "react"
 import type { Metadata } from "next"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AdBanner } from "@/components/ui/AdBanner"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { HomeLojaDestaque } from "@/components/home/HomeLojaDestaque"
 import { SITE_URL } from '@/lib/constants/site'
 
 // ISR ativo — revalidate abaixo substitui force-dynamic
@@ -70,21 +72,39 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
 
     const artistNames = agency.artists.slice(0, 5).map(a => a.nameRomanized).join(', ')
     const groupNames  = agency.musicalGroups.slice(0, 3).map(g => g.name).join(', ')
-    const description = agency.description ?? [
-        `${agency.name} é uma agência de entretenimento K-pop.`,
+    const description = (agency.description ?? [
+        `${agency.name} é uma agência de entretenimento K-pop${agency.country ? ` da ${agency.country}` : ''}.`,
         artistNames && `Artistas: ${artistNames}${agency.artists.length > 5 ? ' e mais' : ''}.`,
         groupNames && `Grupos: ${groupNames}.`,
-    ].filter(Boolean).join(' ')
+    ].filter(Boolean).join(' ')).slice(0, 160)
+
+    const keywords = [
+        agency.name,
+        ...agency.musicalGroups.slice(0, 5).map(g => g.name),
+        ...agency.artists.slice(0, 5).map(a => a.nameRomanized),
+        'agência K-pop', 'entretenimento coreano', 'HallyuHub',
+    ].filter(Boolean).join(', ')
+
+    const logoUrl = agency.logoUrl ?? undefined
+    const canonicalUrl = `${BASE_URL}/agencies/${id}`
 
     return {
         title: agency.name,
         description,
-        alternates: { canonical: `${BASE_URL}/agencies/${id}` },
+        keywords,
+        alternates: { canonical: canonicalUrl, languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl } },
         openGraph: {
             title: `${agency.name} | HallyuHub`,
             description,
-            url: `${BASE_URL}/agencies/${id}`,
+            url: canonicalUrl,
             type: 'website',
+            ...(logoUrl ? { images: [{ url: logoUrl, width: 1200, height: 630, alt: agency.name }] } : {}),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${agency.name} | HallyuHub`,
+            description,
+            ...(logoUrl ? { images: [logoUrl] } : {}),
         },
     }
 }
@@ -100,6 +120,13 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const agency = await getAgency(id)
     if (!agency) notFound()
 
+    const featuredProducts = await prisma.storeProduct.findMany({
+        where: { isActive: true, featured: true },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+        take: 4,
+        select: { id: true, name: true, imageUrl: true, affiliateUrl: true, store: true, category: true, badge: true, rating: true, soldCount: true },
+    }).catch(() => [])
+
     const socials     = (agency.socials as Record<string, string>) ?? {}
     const accent      = agency.accentColor ?? '#6b7280'
     const activeGroups    = agency.musicalGroups.filter(g => !g.disbandDate)
@@ -113,6 +140,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
     const showSubTotals    = agency.subsidiaries.length > 0 && agency.artists.length === 0
 
     return (
+        <>
         <div className="min-h-screen bg-background pb-20">
             <JsonLd data={{
                 "@context": "https://schema.org",
@@ -138,10 +166,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                 } : {}),
             }} />
 
-            {/* Hero accent band */}
-            <div className="h-1 w-full" style={{ backgroundColor: accent }} />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
+<div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
 
                 {/* Breadcrumb + back */}
                 <Breadcrumbs items={[
@@ -454,6 +479,14 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
 
             </div>
         </div>
+
+        <HomeLojaDestaque products={featuredProducts} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pb-8">
+            <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-4" />
+        </div>
+        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
+        </>
     )
 }
 
