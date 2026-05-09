@@ -13,8 +13,8 @@ const STORE_LABELS: Record<string, string> = {
 interface ShopeeCardProps {
     id?: string
     name: string
-    price: string
-    originalPrice?: string
+    price?: string | null
+    originalPrice?: string | null
     rating?: number
     sold?: string
     soldCount?: string

@@ -28,7 +28,7 @@ type SortOption = 'default' | 'price_asc' | 'price_desc' | 'rating' | 'featured'
 interface Product {
     id: string
     name: string
-    price: string
+    price?: string | null
     originalPrice?: string | null
     imageUrl: string
     affiliateUrl: string
@@ -75,14 +75,14 @@ export function LojaClient({ products }: { products: Product[] }) {
         if (priceRange >= 0) {
             const { min, max } = PRICE_RANGES[priceRange]
             list = list.filter(p => {
-                const v = parsePrice(p.price)
+                const v = parsePrice(p.price ?? '')
                 return v >= min && v <= max
             })
         }
 
         switch (sort) {
-            case 'price_asc':  list.sort((a, b) => parsePrice(a.price) - parsePrice(b.price)); break
-            case 'price_desc': list.sort((a, b) => parsePrice(b.price) - parsePrice(a.price)); break
+            case 'price_asc':  list.sort((a, b) => parsePrice(a.price ?? '') - parsePrice(b.price ?? '')); break
+            case 'price_desc': list.sort((a, b) => parsePrice(b.price ?? '') - parsePrice(a.price ?? '')); break
             case 'rating':     list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break
             case 'featured':   list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
             default:           list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)); break
