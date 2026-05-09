@@ -20,7 +20,7 @@ export async function GET() {
             .filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f))
             .map(async filename => {
                 const s = await stat(path.join(UPLOAD_DIR, filename))
-                return { filename, url: `/uploads/blog/${filename}`, size: s.size, createdAt: s.birthtime }
+                return { filename, url: `/api/uploads/blog/${filename}`, size: s.size, createdAt: s.birthtime }
             })
     )
 

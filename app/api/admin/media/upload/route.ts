@@ -36,5 +36,5 @@ export async function POST(request: NextRequest) {
         .webp({ quality: 82 })
         .toFile(filepath)
 
-    return NextResponse.json({ url: `/uploads/blog/${filename}`, filename })
+    return NextResponse.json({ url: `/api/uploads/blog/${filename}`, filename })
 }
