@@ -5,6 +5,7 @@ import { LojaClient } from '@/components/ui/LojaClient'
 import { LojaBanner } from '@/components/ui/LojaBanner'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
 import { LojaCupons } from '@/components/ui/LojaCupons'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { SITE_URL } from '@/lib/constants/site'
 
 export const dynamic = 'force-dynamic'
@@ -90,21 +91,24 @@ export default async function LojaPage() {
             {jsonLd && (
                 <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             )}
-            {/* Header */}
-            <div className="bg-gradient-to-br from-orange-500/10 via-background to-background border-b border-border/40">
-                <div className="max-w-6xl mx-auto px-4 py-10">
+
+            <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+                <Breadcrumbs items={[{ label: 'Vitrine' }]} className="mb-6" />
+
+                <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <ShoppingBag className="w-7 h-7 text-orange-500" />
-                        <h1 className="text-2xl font-black text-foreground">Vitrine HallyuHub</h1>
-                        <span className="text-xs font-bold bg-orange-500 text-white px-2.5 py-1 rounded-full">Afiliado</span>
+                        <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                            <ShoppingBag className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <h1 className="text-3xl font-black text-foreground tracking-tight">Vitrine K-Pop</h1>
+                        <span className="text-xs font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2.5 py-1 rounded-full">Afiliado</span>
                     </div>
                     <p className="text-sm text-muted max-w-xl">
-                        K-Pop · K-Beauty · K-Drama — curadoria manual dos melhores produtos
+                        K-Pop · K-Beauty · K-Drama — curadoria manual dos melhores produtos. Comprar pelo nosso link apoia o HallyuHub sem custo extra.
                     </p>
                 </div>
-            </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+            <div className="space-y-10">
                 {/* Banner editorial */}
                 <LojaBanner />
                 <LojaCupons />
@@ -170,6 +174,7 @@ export default async function LojaPage() {
                         </section>
                     </>
                 )}
+            </div>
             </div>
         </div>
     )
