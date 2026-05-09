@@ -8,7 +8,6 @@ import { ChevronDown, Film, SlidersHorizontal, Star } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
-import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
 interface Production {
