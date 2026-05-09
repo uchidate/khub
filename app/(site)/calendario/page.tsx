@@ -111,19 +111,15 @@ export default async function CalendarioPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-                <Breadcrumbs items={[{ label: 'Calendário' }]} className="mb-6" />
-
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-accent" />
-                        </div>
-                        <h1 className="text-3xl font-black text-foreground tracking-tight">Calendário Hallyu</h1>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 pb-16">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                        <Calendar className="w-5 h-5 text-accent" />
                     </div>
-                    <p className="text-muted text-sm max-w-xl">
-                        Aniversários de ídolos e estreias de K-Dramas nos próximos 90 dias.
-                    </p>
+                    <div>
+                        <h1 className="text-2xl font-black text-foreground tracking-tight leading-tight">Calendário Hallyu</h1>
+                        <p className="text-xs text-muted mt-0.5">Aniversários de ídolos e estreias de K-Dramas nos próximos 90 dias</p>
+                    </div>
                 </div>
 
                 <CalendarioClient

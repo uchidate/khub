@@ -21,6 +21,12 @@ const nextConfig = {
     async headers() {
         return [
             {
+                source: '/sw.js',
+                headers: [
+                    { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+                ],
+            },
+            {
                 // Static assets have content-hash filenames — safe to cache forever
                 source: '/_next/static/:path*',
                 headers: [

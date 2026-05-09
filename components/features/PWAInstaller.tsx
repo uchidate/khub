@@ -11,9 +11,18 @@ export function PWAInstaller() {
     if (!('serviceWorker' in navigator)) return
 
     window.addEventListener('load', async () => {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+
+      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+        if (registrations.length > 0) {
+          await Promise.all(registrations.map(r => r.unregister()))
+          if (navigator.serviceWorker.controller) window.location.reload()
+        }
+        return
+      }
+
       // Desregistrar todos os SWs antigos antes de registrar o novo.
       // Garante que nenhum SW stale continue interceptando chunks JS.
-      const registrations = await navigator.serviceWorker.getRegistrations()
       await Promise.all(
         registrations
           .filter(r => r.active?.scriptURL && !r.active.scriptURL.endsWith('/sw.js'))
