@@ -300,7 +300,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               </div>
               <span className="font-medium text-foreground">{BLOG_AUTHOR_DISPLAY_NAME}</span>
             </div>
-            <span className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</span>
+            <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()} className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</time>
             <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
             <span className="flex items-center gap-1.5 ml-auto"><Eye size={13} />{post.viewCount + 1} views</span>
           </div>
