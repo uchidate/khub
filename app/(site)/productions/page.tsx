@@ -7,7 +7,7 @@ import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ProductionsHeroFilter } from "@/components/features/ProductionsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { AdBanner } from "@/components/ui/AdBanner"
+import { StickyAdBanner } from "@/components/ui/StickyAdBanner"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
@@ -39,7 +39,7 @@ export default async function ProductionsPage() {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const baseWhere = { flaggedAsNonKorean: false, isHidden: false, ...ageFilter }
 
-    const [total, heroProductions] = await Promise.all([
+    const [_total, heroProductions] = await Promise.all([
         prisma.production.count({ where: baseWhere }).catch(() => 0),
         prisma.production.findMany({
             where: { ...baseWhere, OR: [{ backdropUrl: { not: null } }, { imageUrl: { not: null } }], voteAverage: { gte: 7 }, voteCount: { not: null } },
@@ -183,10 +183,10 @@ export default async function ProductionsPage() {
                 <Suspense>
                     <ProductionsList hideFilter />
                 </Suspense>
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} variant="auto" className="mt-8 mb-4"  devLabel="Produções · Fim Lista" />
                 <ScrollToTop />
             </div>
         </PageTransition>
+        <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </>
     )
 }

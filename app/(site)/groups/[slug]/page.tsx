@@ -17,6 +17,7 @@ import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
 import { nameToGradient } from '@/lib/utils'
 import { AdBanner } from '@/components/ui/AdBanner'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
+import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
@@ -871,6 +872,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 </div>
             </div>
             <ScrollToTop />
+            <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
         </div>
     );
 }

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
+import { StickyAdBanner } from '@/components/ui/StickyAdBanner'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
@@ -896,6 +897,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
 
         <ScrollToTop />
       </PageTransition>
+      <StickyAdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!} />
     </>
   )
 }

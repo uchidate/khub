@@ -6,7 +6,7 @@ import { AdminButton } from '@/components/admin/AdminButton'
 import { useToast } from '@/lib/hooks/useToast'
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, Star, StarOff,
-    ShoppingBag, ExternalLink, Package, RefreshCw, X, Check,
+    ExternalLink, Package, RefreshCw, X, Check,
 } from 'lucide-react'
 import Image from 'next/image'
 
