@@ -101,7 +101,7 @@ const getHomePublicData = unstable_cache(
                 take: 12,
                 orderBy: { artists: { _count: 'desc' } },
                 select: {
-                    id: true, name: true, logoUrl: true, accentColor: true, type: true,
+                    id: true, slug: true, name: true, logoUrl: true, accentColor: true, type: true,
                     _count: { select: { artists: true, musicalGroups: true } },
                 },
             }).catch(() => []),

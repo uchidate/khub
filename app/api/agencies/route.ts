@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
                 orderBy,
                 select: {
                     id: true,
+                    slug: true,
                     name: true,
                     description: true,
                     accentColor: true,
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
                     foundedYear: true,
                     isVerified: true,
                     website: true,
-                    parent: { select: { id: true, name: true } },
+                    parent: { select: { id: true, slug: true, name: true } },
                     musicalGroups: {
                         select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
                         take: 4,

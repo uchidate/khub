@@ -4,6 +4,7 @@ import { nameToGradient } from '@/lib/utils'
 
 interface Agency {
     id: string
+    slug: string | null
     name: string
     logoUrl: string | null
     accentColor: string | null
@@ -27,7 +28,7 @@ export function HomeTopAgencies({ agencies }: { agencies: Agency[] }) {
                         return (
                             <Link
                                 key={agency.id}
-                                href={`/agencies/${agency.id}`}
+                                href={`/agencies/${agency.slug ?? agency.id}`}
                                 className="group flex-shrink-0 flex flex-col items-center gap-2.5 w-[80px]"
                             >
                                 {/* Logo */}

@@ -22,6 +22,8 @@ interface Agency {
   website: string | null
   accentColor: string | null
   logoUrl: string | null
+  coverImageUrl: string | null
+  slug: string | null
   parentId: string | null
   parent: { id: string; name: string } | null
   artistsCount: number
@@ -179,8 +181,10 @@ const formFields: FormField[] = [
   { key: 'accentColor', label: 'Cor de destaque (hex)', type: 'text',   placeholder: '#0f172a' },
   { key: 'foundedYear', label: 'Ano de fundação',     type: 'number',   placeholder: '1989' },
   { key: 'country',     label: 'País (ISO 2)',         type: 'text',     placeholder: 'KR' },
-  { key: 'ceoName',     label: 'CEO',                 type: 'text',     placeholder: 'Park Jin-young' },
-  { key: 'logoUrl',     label: 'URL do Logo',         type: 'text',     placeholder: 'https://...' },
+  { key: 'ceoName',        label: 'CEO',                  type: 'text',     placeholder: 'Park Jin-young' },
+  { key: 'logoUrl',        label: 'URL do Logo',          type: 'text',     placeholder: 'https://...' },
+  { key: 'coverImageUrl',  label: 'URL da Foto de Capa',  type: 'text',     placeholder: 'https://...' },
+  { key: 'slug',           label: 'Slug (URL)',            type: 'text',     placeholder: 'sm-entertainment' },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

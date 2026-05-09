@@ -20,7 +20,7 @@ interface RandomGroup { id: string; name: string; nameHangul: string | null; pro
 interface RandomProduction { id: string; titlePt: string; posterUrl: string | null; year: number | null }
 
 interface AgencyItem {
-    id: string; name: string; logoUrl: string | null
+    id: string; slug: string | null; name: string; logoUrl: string | null
     accentColor: string | null; type: string
     _count: { artists: number; musicalGroups: number }
 }

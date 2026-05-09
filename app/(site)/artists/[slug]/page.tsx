@@ -453,7 +453,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                             <Globe className="w-3.5 h-3.5" />
                                             <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Agência</span>
                                         </div>
-                                        <Link href={`/agencies/${artist.agency.id}`} className="text-xs md:text-sm font-bold text-accent hover:underline transition-colors">
+                                        <Link href={`/agencies/${artist.agency.slug ?? artist.agency.id}`} className="text-xs md:text-sm font-bold text-accent hover:underline transition-colors">
                                             {artist.agency.name}
                                         </Link>
                                     </div>
