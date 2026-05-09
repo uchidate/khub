@@ -364,8 +364,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const featPost = page > 1 ? null : (isFiltered ? posts[0] : hero)
   const heroId = featPost?.id
 
-  // IDs dos posts no editorial automático — excluídos do grid de recentes
-  const editorialSet = new Set(editorialIds)
+
 
   const activeCatConfig = activeCategory ? BLOG_CATEGORY_BY_SLUG[activeCategory] : null
 

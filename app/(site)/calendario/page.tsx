@@ -3,7 +3,7 @@ import { Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { AdBanner } from '@/components/ui/AdBanner'
-import { CalendarioClient, type BirthdayEvent, type ProductionEvent, type StoreProductCard } from './CalendarioClient'
+import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
 
