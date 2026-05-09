@@ -11,12 +11,13 @@ const STORE_LABELS: Record<string, string> = {
 }
 
 interface ShopeeCardProps {
+    id?: string
     name: string
     price: string
     originalPrice?: string
     rating?: number
-    sold?: string        // legado
-    soldCount?: string   // do banco
+    sold?: string
+    soldCount?: string
     imageUrl: string
     affiliateUrl: string
     badge?: string
@@ -24,7 +25,22 @@ interface ShopeeCardProps {
     store?: string
 }
 
+function trackClick(id?: string) {
+    if (!id) return
+    fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
+}
+
+function calcDiscount(price: string, originalPrice?: string): string | null {
+    if (!originalPrice) return null
+    const curr = parseFloat(price.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
+    const orig = parseFloat(originalPrice.replace('R$', '').replace(/\./g, '').replace(',', '.').trim())
+    if (!curr || !orig || orig <= curr) return null
+    const pct = Math.round((1 - curr / orig) * 100)
+    return pct >= 5 ? `-${pct}%` : null
+}
+
 export function ShopeeCard({
+    id,
     name,
     price,
     originalPrice,
@@ -38,6 +54,7 @@ export function ShopeeCard({
     store = 'shopee',
 }: ShopeeCardProps) {
     const vendidos = soldCount ?? sold
+    const discountBadge = badge || calcDiscount(price, originalPrice)
 
     if (compact) {
         return (
@@ -45,6 +62,7 @@ export function ShopeeCard({
                 href={affiliateUrl}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
+                onClick={() => trackClick(id)}
                 className="flex gap-3 p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-orange-400/40 transition-all group"
             >
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted/10">
@@ -62,34 +80,37 @@ export function ShopeeCard({
         )
     }
 
+
+    // Card padrão
     return (
         <a
             href={affiliateUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
+            onClick={() => trackClick(id)}
             className="flex flex-col rounded-2xl bg-surface border border-border/40 hover:border-orange-400/40 hover:shadow-lg hover:shadow-orange-500/5 transition-all group overflow-hidden"
         >
             <div className="relative aspect-square bg-muted/10">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
-                {badge && (
-                    <span className="absolute top-2 left-2 text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">
-                        {badge}
+                {discountBadge && (
+                    <span className="absolute top-2 left-2 text-[10px] font-black bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+                        {discountBadge}
                     </span>
                 )}
             </div>
-            <div className="p-3 flex flex-col gap-1.5">
-                <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium">{name}</p>
+            <div className="p-3 flex flex-col gap-1.5 flex-1">
+                <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium flex-1">{name}</p>
                 <div className="flex items-center gap-1">
                     <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                     <span className="text-[11px] text-muted">{rating}</span>
-                    {vendidos && <span className="text-[11px] text-muted">· {vendidos} vendidos</span>}
+                    {vendidos && <span className="text-[11px] text-muted">· {vendidos}</span>}
                 </div>
-                <div className="flex items-center justify-between mt-1">
-                    <div>
-                        <p className="text-base font-bold text-orange-500">{price}</p>
-                        {originalPrice && <p className="text-[11px] text-muted line-through">{originalPrice}</p>}
+                <div className="flex items-center justify-between gap-1 mt-0.5">
+                    <div className="min-w-0">
+                        <p className="text-sm font-black text-orange-500 leading-none">{price}</p>
+                        {originalPrice && <p className="text-[10px] text-muted line-through mt-0.5">{originalPrice}</p>}
                     </div>
-                    <span className="flex items-center gap-1 text-[11px] font-semibold bg-orange-500 text-white px-2.5 py-1 rounded-full group-hover:bg-orange-400 transition-colors">
+                    <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-bold bg-orange-500 text-white px-2 py-1 rounded-full group-hover:bg-orange-400 transition-colors">
                         <ShoppingBag className="w-3 h-3" />
                         {STORE_LABELS[store] ?? 'Comprar'}
                     </span>
@@ -104,7 +125,6 @@ export function ShopeeSectionHeader({ title, seeAllUrl, store }: { title: string
     return (
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-                <span className="text-lg">🛒</span>
                 <h2 className="text-base font-bold text-foreground">{title}</h2>
                 <span className="text-[10px] font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-full">{storeLabel}</span>
             </div>

@@ -20,6 +20,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 
 import { SITE_URL } from '@/lib/constants/site'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
@@ -463,6 +464,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             </div>
                         )}
 
+                        {/* Loja: produtos relacionados à produção */}
                         {/* Ad 1 — in-article após sinopse/tags, posição de maior atenção */}
                         <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID!} variant="fluid" className="my-4"  devLabel="Produção · In-Article" />
 
@@ -522,6 +524,16 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         <ShareButtons
                             title={production.titlePt}
                             url={`${BASE_URL}/productions/${production.slug ?? production.id}`}
+                        />
+
+                        {/* Loja: após elenco, usuário já conhece o drama e o elenco */}
+                        <LojaRelacionados
+                            tags={[
+                                ...tags,
+                                ...production.artists.slice(0, 3).map(a => a.artist.nameRomanized.toLowerCase()),
+                                isMovie ? 'kfilm' : 'kdrama',
+                            ]}
+                            title={`Produtos — ${production.titlePt}`}
                         />
 
                         {/* Ad 2 — após elenco/galeria, antes das recomendações */}

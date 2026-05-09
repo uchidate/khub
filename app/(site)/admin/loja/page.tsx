@@ -29,6 +29,7 @@ interface StoreProduct {
     featured: boolean
     position: number
     tags: string[]
+    clickCount: number
     createdAt: string
 }
 
@@ -40,6 +41,7 @@ const CATEGORIES: Record<string, string> = {
     clothing:     '👕 Roupas',
     acessorios:   '🧣 Acessórios',
     photocard:    '🃏 Photocard',
+    alimenta:     '🍜 Alimentação',
     outros:       '📦 Outros',
 }
 
@@ -361,6 +363,7 @@ export default function AdminLojaPage() {
                                             <th className="text-left px-3 py-2.5 font-semibold hidden sm:table-cell">Loja</th>
                                             <th className="text-left px-3 py-2.5 font-semibold">Preço</th>
                                             <th className="text-left px-3 py-2.5 font-semibold hidden md:table-cell">Pos.</th>
+                                            <th className="text-left px-3 py-2.5 font-semibold hidden md:table-cell">Cliques</th>
                                             <th className="text-right px-4 py-2.5 font-semibold">Ações</th>
                                         </tr>
                                     </thead>
@@ -389,6 +392,11 @@ export default function AdminLojaPage() {
                                                 </td>
                                                 <td className="px-3 py-3 hidden md:table-cell">
                                                     <span className="text-xs text-muted">{p.position}</span>
+                                                </td>
+                                                <td className="px-3 py-3 hidden md:table-cell">
+                                                    <span className={`text-xs font-medium ${p.clickCount > 0 ? 'text-orange-500' : 'text-muted'}`}>
+                                                        {p.clickCount > 0 ? `🔗 ${p.clickCount}` : '—'}
+                                                    </span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center justify-end gap-1">

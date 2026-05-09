@@ -23,6 +23,7 @@ import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
 
 import { SITE_URL } from '@/lib/constants/site'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -594,6 +595,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         <ShareButtons
                             title={artist.nameRomanized}
                             url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`}
+                        />
+
+                        {/* Loja: produtos relacionados */}
+                        <LojaRelacionados
+                            tags={[artist.nameRomanized.toLowerCase(), ...(activeGroup ? [activeGroup.name.toLowerCase()] : [])]}
+                            title={`Produtos ${artist.nameRomanized}`}
                         />
 
                         {/* Ad: após bio, antes da filmografia */}

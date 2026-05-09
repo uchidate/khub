@@ -22,6 +22,7 @@ import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
 
 import { SITE_URL } from '@/lib/constants/site'
+import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -639,6 +640,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                 <MemberGrid members={activeMembers} accent={accent} />
                             </section>
                         )}
+
+                        <LojaRelacionados
+                            tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
+                            title={`Produtos ${group.name}`}
+                        />
 
                         {relatedPosts.length > 0 && (
                             <section id="artigos">

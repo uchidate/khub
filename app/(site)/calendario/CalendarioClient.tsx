@@ -3,8 +3,21 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Cake, Film, ChevronRight, Search, X, Sparkles } from 'lucide-react'
+import { Cake, Film, ChevronRight, X, Sparkles, ShoppingBag } from 'lucide-react'
 import { FilterPills } from '@/components/ui/FilterPills'
+
+export interface StoreProductCard {
+    id: string
+    name: string
+    price: string
+    originalPrice?: string
+    imageUrl: string
+    affiliateUrl: string
+    store: string | null
+    badge?: string
+    rating?: number
+    soldCount?: string | null
+}
 
 export interface BirthdayEvent {
     artistId: string
@@ -34,9 +47,9 @@ interface Props {
     releases: ProductionEvent[]
     recentReleases: ProductionEvent[]
     todayStr: string // YYYY-MM-DD
+    storeProducts?: StoreProductCard[]
 }
 
-const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 const MONTH_NAMES_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const DAY_LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -102,7 +115,7 @@ function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
     )
 }
 
-export function CalendarioClient({ birthdays, releases, recentReleases, todayStr }: Props) {
+export function CalendarioClient({ birthdays, releases, recentReleases, todayStr, storeProducts = [] }: Props) {
     const [filter, setFilter] = useState('all')
     const [search, setSearch] = useState('')
 
@@ -254,17 +267,47 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                 ))}
             </div>
 
+            {/* Loja inline */}
+            {storeProducts.length > 0 && (
+                <section className="rounded-2xl border border-orange-500/15 bg-orange-500/5 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <ShoppingBag className="w-4 h-4 text-orange-500" />
+                            <span className="text-sm font-bold text-foreground">Produtos K-Pop</span>
+                            <span className="text-[10px] font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-full">Afiliado</span>
+                        </div>
+                        <Link href="/loja" className="text-xs text-muted hover:text-orange-500 transition-colors">Ver loja →</Link>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+                        {storeProducts.map(p => (
+                            <a
+                                key={p.id}
+                                href={p.affiliateUrl}
+                                target="_blank"
+                                rel="noopener noreferrer sponsored"
+                                className="flex-shrink-0 w-24 group"
+                            >
+                                <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-surface border border-border mb-1.5 group-hover:border-orange-400/40 transition-colors">
+                                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                                </div>
+                                <p className="text-[10px] font-medium text-foreground leading-tight line-clamp-2 mb-0.5">{p.name}</p>
+                                <p className="text-[11px] font-black text-orange-500">{p.price}</p>
+                            </a>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-3">
                 <FilterPills options={filterOptions} value={filter} onChange={setFilter} />
                 <div className="relative flex-1 max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
                     <input
                         type="text"
                         placeholder="Buscar artista ou drama..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full h-full pl-8 pr-8 py-2.5 bg-surface border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                        className="w-full h-full px-3 pr-8 py-2.5 bg-surface border border-border rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 transition-colors"
                     />
                     {search && (
                         <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">

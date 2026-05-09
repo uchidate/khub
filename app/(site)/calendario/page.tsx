@@ -24,10 +24,10 @@ function nextBirthday(birthDate: Date, today: Date): Date | null {
     const m = birthDate.getUTCMonth()
     const d = birthDate.getUTCDate()
     const y = today.getUTCFullYear()
-    const thisYear = new Date(Date.UTC(y, m, d))
-    if (thisYear >= today) return thisYear
-    const nextYear = new Date(Date.UTC(y + 1, m, d))
     const windowEnd = new Date(Date.UTC(y, today.getUTCMonth(), today.getUTCDate() + 90))
+    const thisYear = new Date(Date.UTC(y, m, d))
+    if (thisYear >= today && thisYear <= windowEnd) return thisYear
+    const nextYear = new Date(Date.UTC(y + 1, m, d))
     return nextYear <= windowEnd ? nextYear : null
 }
 
@@ -38,7 +38,7 @@ export default async function CalendarioPage() {
     const past14 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 14))
     const todayStr = today.toISOString().split('T')[0]
 
-    const [artists, upcomingProductions, recentProductions] = await Promise.all([
+    const [artists, upcomingProductions, recentProductions, storePool] = await Promise.all([
         prisma.artist.findMany({
             where: { isHidden: false, flaggedAsNonKorean: false, birthDate: { not: null } },
             select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, birthDate: true },
@@ -57,6 +57,12 @@ export default async function CalendarioPage() {
             orderBy: { releaseDate: 'desc' },
             take: 12,
         }),
+        prisma.storeProduct.findMany({
+            where: { isActive: true },
+            orderBy: [{ featured: 'desc' }, { position: 'asc' }],
+            take: 8,
+            select: { id: true, name: true, price: true, originalPrice: true, imageUrl: true, affiliateUrl: true, store: true, badge: true, rating: true, soldCount: true },
+        }).catch(() => []),
     ])
 
     const birthdays: BirthdayEvent[] = artists.flatMap(a => {
@@ -128,6 +134,13 @@ export default async function CalendarioPage() {
                     releases={releases}
                     recentReleases={recentReleases}
                     todayStr={todayStr}
+                    storeProducts={storePool.map(p => ({
+                        ...p,
+                        rating: p.rating ?? undefined,
+                        originalPrice: p.originalPrice ?? undefined,
+                        badge: p.badge ?? undefined,
+                        soldCount: p.soldCount ?? undefined,
+                    }))}
                 />
 
                 <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
