@@ -468,7 +468,6 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                 return (
                     <Fragment key={idx}>
                         {el}
-                        {AD_POSITIONS.has(idx + 1) && !nextIsHeading && <InArticleAd id={`ad-${idx}`} />}
                     </Fragment>
                 )
             })}
