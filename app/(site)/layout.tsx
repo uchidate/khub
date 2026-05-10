@@ -13,6 +13,7 @@ import { TickerWrapper } from "@/components/home/TickerWrapper"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
+import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -128,13 +129,7 @@ export default async function RootLayout({
                 <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
-                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    <script
-                        async
-                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-                        crossOrigin="anonymous"
-                    />
-                )}
+                <AdSenseLoader />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
