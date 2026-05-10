@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
-const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-const ADSENSE_SRC = CLIENT
-    ? `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`
-    : ''
+const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-6015098995926392'
+const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`
 const ROUTE_PUSH_DELAYS = [400, 1200, 2500]
 const EXCLUDED_PATH_PREFIXES = ['/admin', '/auth', '/write', '/api']
 
@@ -17,7 +15,6 @@ declare global {
 }
 
 function ensureAdSenseScript() {
-    if (!CLIENT) return
     const existing = document.querySelector<HTMLScriptElement>('script[data-hallyuhub-adsense="true"]')
         ?? document.querySelector<HTMLScriptElement>(`script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]`)
     if (existing) return
@@ -103,7 +100,7 @@ export function AdSenseLoader() {
         if (lastRoute.current === currentRoute) return
         lastRoute.current = currentRoute
 
-        if (!CLIENT || isExcludedPath(pathname ?? '')) {
+        if (isExcludedPath(pathname ?? '')) {
             return
         }
 

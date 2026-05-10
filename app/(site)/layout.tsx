@@ -46,6 +46,7 @@ const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap"
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-6015098995926392'
 
 export const metadata: Metadata = {
     metadataBase: new URL(BASE_URL),
@@ -129,14 +130,12 @@ export default async function RootLayout({
                 <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
-                {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    <script
-                        key="adsense-auto-ads"
-                        async
-                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
-                        crossOrigin="anonymous"
-                    />
-                )}
+                <script
+                    key="adsense-auto-ads"
+                    async
+                    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+                    crossOrigin="anonymous"
+                />
             </head>
             <body className="font-sora text-foreground bg-background antialiased selection:bg-[#ff2d78] selection:text-white">
                 {/* GA4 — tag injetada diretamente para detecção pelo Google */}
