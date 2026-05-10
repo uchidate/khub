@@ -51,7 +51,6 @@ export default function MLImportarPage() {
     const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({})
     const [total, setTotal] = useState(0)
     const [offset, setOffset] = useState(0)
-    const [onlyRated, setOnlyRated] = useState(false)
 
     const fetchResults = useCallback(async (q: string, off: number, append = false) => {
         if (!q.trim()) return
@@ -180,17 +179,6 @@ export default function MLImportarPage() {
                     </button>
                 </div>
 
-                {/* Filtro avaliados */}
-                <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
-                    <input
-                        type="checkbox"
-                        checked={onlyRated}
-                        onChange={e => setOnlyRated(e.target.checked)}
-                        className="w-4 h-4 accent-accent"
-                    />
-                    <span className="text-muted">Mostrar só produtos com avaliação <span className="text-yellow-400">★</span> (maior chance de comissão)</span>
-                </label>
-
                 {/* Quick filters */}
                 <div className="flex flex-wrap gap-2">
                     {QUICK_FILTERS.map(f => (
@@ -243,7 +231,7 @@ export default function MLImportarPage() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {results.filter(r => !onlyRated || r.rating).map(product => {
+                    {results.map(product => {
                         const isSelected = selected.has(product.id)
                         const cat = categoryOverrides[product.id] || product.category
                         return (
