@@ -190,7 +190,7 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <div className="min-h-screen flex flex-col">
+                    <div className="site-shell min-h-screen flex flex-col">
                         <TickerWrapper posts={tickerPosts} />
                         <NavBar />
                         <ErrorBoundary>

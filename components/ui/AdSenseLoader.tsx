@@ -7,6 +7,8 @@ const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-601509899592639
 const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`
 const ROUTE_PUSH_DELAYS = [400, 1200, 2500]
 const EXCLUDED_PATH_PREFIXES = ['/admin', '/auth', '/write', '/api']
+const MOBILE_BREAKPOINT = 640
+const MAX_TOP_ANCHOR_HEIGHT = 120
 
 declare global {
     interface Window {
@@ -37,6 +39,36 @@ function pushAutoAdsRefresh() {
 
 function isExcludedPath(pathname: string) {
     return EXCLUDED_PATH_PREFIXES.some(prefix => pathname.startsWith(prefix))
+}
+
+function getTopAnchorOffset() {
+    if (window.innerWidth >= MOBILE_BREAKPOINT) return 0
+
+    const viewportWidth = window.innerWidth
+    const elements = Array.from(document.body.querySelectorAll<HTMLElement>('body *'))
+
+    for (const element of elements) {
+        const styles = window.getComputedStyle(element)
+        if (styles.position !== 'fixed') continue
+        if (styles.display === 'none' || styles.visibility === 'hidden' || styles.opacity === '0') continue
+        const hasGoogleAdFrame = element.matches('iframe[src*="googlesyndication"], iframe[id*="google_ads_iframe"], iframe[id^="aswift_"]')
+            || Boolean(element.querySelector('iframe[src*="googlesyndication"], iframe[id*="google_ads_iframe"], iframe[id^="aswift_"]'))
+        if (!hasGoogleAdFrame) continue
+
+        const rect = element.getBoundingClientRect()
+        const isTopAnchored = rect.top <= 4 && rect.bottom > 0
+        const isWideEnough = rect.width >= viewportWidth * 0.7
+        if (!isTopAnchored || !isWideEnough) continue
+
+        return Math.min(Math.ceil(rect.bottom), MAX_TOP_ANCHOR_HEIGHT)
+    }
+
+    return 0
+}
+
+function setTopAnchorOffset() {
+    const offset = getTopAnchorOffset()
+    document.documentElement.style.setProperty('--adsense-anchor-top-offset', `${offset}px`)
 }
 
 export function AdSenseLoader() {
@@ -92,6 +124,31 @@ export function AdSenseLoader() {
 
         document.addEventListener('click', handleClick, { capture: true })
         return () => document.removeEventListener('click', handleClick, { capture: true })
+    }, [])
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+
+        let frame = 0
+        const scheduleUpdate = () => {
+            window.clearTimeout(frame)
+            frame = window.setTimeout(setTopAnchorOffset, 80)
+        }
+
+        const observer = new MutationObserver(scheduleUpdate)
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] })
+
+        window.addEventListener('resize', scheduleUpdate)
+        window.addEventListener('orientationchange', scheduleUpdate)
+        scheduleUpdate()
+
+        return () => {
+            window.clearTimeout(frame)
+            observer.disconnect()
+            window.removeEventListener('resize', scheduleUpdate)
+            window.removeEventListener('orientationchange', scheduleUpdate)
+            document.documentElement.style.removeProperty('--adsense-anchor-top-offset')
+        }
     }, [])
 
     useEffect(() => {
