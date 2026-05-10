@@ -129,7 +129,6 @@ export default async function RootLayout({
                 <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                 <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
                 {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && (
-                    // eslint-disable-next-line @next/next/no-sync-scripts
                     <script
                         async
                         src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT}`}
