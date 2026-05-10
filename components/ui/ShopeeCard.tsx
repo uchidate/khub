@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { ExternalLink } from 'lucide-react'
 
 export const STORE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     shopee:        { label: 'Shopee',         color: 'text-orange-500', bg: 'bg-orange-500' },
@@ -108,17 +109,27 @@ export function ShopeeCard({
             target="_blank"
             rel="noopener noreferrer sponsored"
             onClick={() => trackClick(id)}
+            title={`Ver no ${cfg.label} (link externo)`}
             className="flex flex-col rounded-2xl bg-surface border border-border/40 hover:border-orange-400/40 hover:shadow-lg hover:shadow-orange-500/5 transition-all group overflow-hidden"
         >
             <div className="relative aspect-square bg-muted/10">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                {/* Indicador de link externo */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-1">
+                    <ExternalLink className="w-3 h-3 text-white" />
+                    <span className="text-[9px] text-white font-semibold">{cfg.label}</span>
+                </div>
             </div>
             <div className="p-3 flex flex-col gap-1.5 flex-1">
                 <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium flex-1">{name}</p>
-                <div className="flex items-center justify-end gap-1 mt-auto">
+                <div className="flex items-center justify-between gap-1 mt-auto">
                     <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-1 rounded-full transition-opacity group-hover:opacity-80`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
+                    </span>
+                    <span className="flex items-center gap-0.5 text-[9px] text-muted group-hover:text-orange-400 transition-colors">
+                        <ExternalLink className="w-3 h-3" />
+                        abre em nova aba
                     </span>
                 </div>
             </div>
