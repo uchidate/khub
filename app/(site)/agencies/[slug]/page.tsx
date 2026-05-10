@@ -19,15 +19,15 @@ const BASE_URL = SITE_URL
 export async function generateStaticParams() {
     if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     const agencies = await prisma.agency.findMany({
-        select: { id: true },
+        select: { slug: true, id: true },
         orderBy: { name: 'asc' },
     })
-    return agencies.map(a => ({ id: a.id }))
+    return agencies.map(a => ({ slug: a.slug ?? a.id }))
 }
 
-const getAgency = cache(async (id: string) =>
-    prisma.agency.findUnique({
-        where: { id },
+const getAgency = cache(async (slug: string) =>
+    prisma.agency.findFirst({
+        where: { OR: [{ slug }, { id: slug }] },
         include: {
             artists: {
                 where: { isHidden: false, flaggedAsNonKorean: false },
@@ -46,10 +46,10 @@ const getAgency = cache(async (id: string) =>
                 },
                 orderBy: { trendingScore: 'desc' },
             },
-            parent: { select: { id: true, name: true, accentColor: true } },
+            parent: { select: { id: true, slug: true, name: true, accentColor: true } },
             subsidiaries: {
                 select: {
-                    id: true, name: true, accentColor: true, type: true,
+                    id: true, slug: true, name: true, accentColor: true, type: true,
                     _count: { select: { artists: true, musicalGroups: true } },
                     musicalGroups: {
                         select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
@@ -63,9 +63,9 @@ const getAgency = cache(async (id: string) =>
     }).catch(() => null)
 )
 
-export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
-    const { id } = await props.params
-    const agency = await getAgency(id)
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await props.params
+    const agency = await getAgency(slug)
     if (!agency) return {}
 
     const artistNames = agency.artists.slice(0, 5).map(a => a.nameRomanized).join(', ')
@@ -83,8 +83,8 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
         'agência K-pop', 'entretenimento coreano', 'HallyuHub',
     ].filter(Boolean).join(', ')
 
-    const logoUrl = agency.logoUrl ?? undefined
-    const canonicalUrl = `${BASE_URL}/agencies/${id}`
+    const logoUrl = agency.coverImageUrl ?? agency.logoUrl ?? undefined
+    const canonicalUrl = `${BASE_URL}/agencies/${agency.slug ?? agency.id}`
 
     return {
         title: agency.name,
@@ -113,9 +113,9 @@ const TYPE_LABEL: Record<string, string> = {
     SUBSIDIARY: 'Sub-label',
 }
 
-export default async function AgencyDetailPage(props: { params: Promise<{ id: string }> }) {
-    const { id } = await props.params
-    const agency = await getAgency(id)
+export default async function AgencyDetailPage(props: { params: Promise<{ slug: string }> }) {
+    const { slug } = await props.params
+    const agency = await getAgency(slug)
     if (!agency) notFound()
 
     const featuredProducts = await prisma.storeProduct.findMany({
@@ -144,7 +144,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "name": agency.name,
-                "url": agency.website ?? `${BASE_URL}/agencies/${agency.id}`,
+                "url": agency.website ?? `${BASE_URL}/agencies/${agency.slug ?? agency.id}`,
                 "description": agency.description ?? undefined,
                 "foundingDate": agency.foundedYear ? String(agency.foundedYear) : undefined,
                 "sameAs": agency.website ? [agency.website] : undefined,
@@ -164,7 +164,14 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                 } : {}),
             }} />
 
-<div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
+{agency.coverImageUrl && (
+                <div className="relative w-full h-48 sm:h-64 overflow-hidden">
+                    <Image src={agency.coverImageUrl} alt={`${agency.name} cover`} fill className="object-cover object-center" sizes="100vw" priority />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90" />
+                </div>
+            )}
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8">
 
                 {/* Breadcrumb + back */}
                 <Breadcrumbs items={[
@@ -242,7 +249,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                         {/* Parent company banner */}
                         {agency.parent && (
                             <Link
-                                href={`/agencies/${agency.parent.id}`}
+                                href={`/agencies/${agency.parent.slug ?? agency.parent.id}`}
                                 className="mt-5 inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border bg-surface hover:border-foreground/20 transition-all group w-fit"
                             >
                                 <span
@@ -310,7 +317,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ id: st
                                 return (
                                     <Link
                                         key={sub.id}
-                                        href={`/agencies/${sub.id}`}
+                                        href={`/agencies/${sub.slug ?? sub.id}`}
                                         className="flex flex-col rounded-xl border border-border bg-surface hover:border-foreground/20 hover:shadow-md transition-all group overflow-hidden"
                                         style={{ borderLeftColor: subAccent, borderLeftWidth: 3 }}
                                     >

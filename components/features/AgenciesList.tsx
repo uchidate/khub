@@ -20,6 +20,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 interface Agency {
     id: string
+    slug: string | null
     name: string
     description: string | null
     accentColor: string | null
@@ -27,7 +28,7 @@ interface Agency {
     foundedYear: number | null
     isVerified: boolean
     website: string | null
-    parent: { id: string; name: string } | null
+    parent: { id: string; slug: string | null; name: string } | null
     musicalGroups: { id: string; name: string; profileImageUrl: string | null; disbandDate: string | null }[]
     artists: { id: string; nameRomanized: string; primaryImageUrl: string | null }[]
     subsidiaries: {
@@ -89,7 +90,7 @@ function AgencyCard({ agency }: { agency: Agency }) {
 
     return (
         <Link
-            href={`/agencies/${agency.id}`}
+            href={`/agencies/${agency.slug ?? agency.id}`}
             className="group flex flex-col rounded-2xl border border-border bg-surface overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-[var(--ac)]/50 hover:-translate-y-0.5"
             style={{ '--ac': accent } as React.CSSProperties}
         >

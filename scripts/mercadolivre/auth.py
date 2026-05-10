@@ -54,14 +54,20 @@ def get_token() -> dict:
 
     # Fluxo completo
     creds = load_credentials()
+    # read + offline_access: necessário para buscar items (/sites/MLB/search) e renovar token
+    scopes = 'read offline_access'
     auth_url = (
         'https://auth.mercadolivre.com.br/authorization'
         f'?response_type=code'
         f'&client_id={creds["app_id"]}'
         f'&redirect_uri={creds["redirect_uri"]}'
+        f'&scope={requests.utils.quote(scopes)}'
     )
     print(f'\n🌐 Abrindo browser para autorização...')
+    print(f'   Escopos solicitados: {scopes}')
     print(f'   URL: {auth_url}\n')
+    print('⚠️  IMPORTANTE: No painel do app em https://developers.mercadolivre.com.br')
+    print('   certifique-se que as permissões "Itens" e "Pesquisa" estão habilitadas.\n')
     webbrowser.open(auth_url)
 
     print('Após autorizar no browser, o token aparecerá em:')

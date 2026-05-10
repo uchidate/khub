@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import fs from 'fs'
 import path from 'path'
+import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +18,9 @@ const KPOP_KEYWORDS = [
 ]
 
 function getToken(): { access_token: string; user_id: number } | null {
-    // Produção: ler de env vars
     if (process.env.ML_ACCESS_TOKEN && process.env.ML_USER_ID) {
         return { access_token: process.env.ML_ACCESS_TOKEN, user_id: Number(process.env.ML_USER_ID) }
     }
-    // Dev: ler do arquivo local
     try {
         return JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf-8'))
     } catch {
@@ -40,23 +39,45 @@ function detectCategory(title: string): string {
     return 'outros'
 }
 
+async function getOgImage(pid: string): Promise<string> {
+    try {
+        const pageRes = await fetch(`https://www.mercadolivre.com.br/p/${pid}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; bot)' },
+            signal: AbortSignal.timeout(4000),
+        })
+        const html = await pageRes.text()
+        const match = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/)
+                   ?? html.match(/<meta[^>]+content="([^"]+)"[^>]+property="og:image"/)
+        return match?.[1] ?? ''
+    } catch {
+        return ''
+    }
+}
+
 export async function GET(request: NextRequest) {
     const { error } = await requireAdmin()
     if (error) return error
 
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q')?.trim()
-    const limit = Math.min(parseInt(searchParams.get('limit') || '30'), 50)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 50)
+    const offset = parseInt(searchParams.get('offset') || '0')
 
     if (!q) return NextResponse.json({ error: 'Parâmetro q obrigatório' }, { status: 400 })
 
     const token = getToken()
     if (!token) return NextResponse.json({ error: 'Token ML não encontrado. Execute scripts/mercadolivre/auth.py' }, { status: 503 })
 
-    const res = await fetch(
-        `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}`,
-        { headers: { Authorization: `Bearer ${token.access_token}` } }
-    )
+    const [res, existingProducts] = await Promise.all([
+        fetch(
+            `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}&status=active`,
+            { headers: { Authorization: `Bearer ${token.access_token}` } }
+        ),
+        prisma.storeProduct.findMany({
+            where: { store: 'mercadolivre' },
+            select: { affiliateUrl: true },
+        }),
+    ])
 
     if (!res.ok) {
         return NextResponse.json({ error: `ML API erro ${res.status}` }, { status: 502 })
@@ -65,25 +86,50 @@ export async function GET(request: NextRequest) {
     const data = await res.json()
     const userId = String(token.user_id)
 
-    const results = (data.results as Record<string, unknown>[])
+    // Build set of already-imported ML product IDs (extracted from affiliateUrl)
+    const importedIds = new Set(
+        existingProducts
+            .map(p => p.affiliateUrl.match(/\/p\/(MLB[^?]+)/)?.[1])
+            .filter(Boolean)
+    )
+
+    const filtered = (data.results as Record<string, unknown>[])
         .filter(r => {
             const title = (r.name as string || '').toLowerCase()
             return KPOP_KEYWORDS.some(k => title.includes(k))
         })
-        .map(r => {
+
+    const results = await Promise.all(
+        filtered.map(async r => {
             const pid = (r.catalog_product_id as string) || (r.id as string)
             const title = r.name as string
-            let img = (r.thumbnail as string) || ''
-            img = img.replace(/-[A-Z]\.jpg/, '-O.jpg').replace('http://', 'https://')
+            const pictures = r.pictures as { url?: string }[] | undefined
+            const apiImg = pictures?.[0]?.url ?? ''
+            const imageUrl = apiImg || await getOgImage(pid)
+            const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
+            const price = buyBox?.price
+                ? `R$ ${Number(buyBox.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                : null
+            const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
+            const reviewCount = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
             return {
                 id:           pid,
                 name:         title,
-                imageUrl:     img,
+                imageUrl,
                 affiliateUrl: `https://www.mercadolivre.com.br/p/${pid}?affId=${userId}`,
                 category:     detectCategory(title),
                 store:        'mercadolivre',
+                price,
+                rating:       rating ? Math.round(rating * 10) / 10 : null,
+                reviewCount:  reviewCount ?? null,
+                alreadyImported: importedIds.has(pid),
             }
         })
+    )
 
-    return NextResponse.json({ results, total: data.paging?.total ?? 0 })
+    return NextResponse.json({
+        results: results.filter(r => r.imageUrl),
+        total: data.paging?.total ?? 0,
+        offset,
+    })
 }

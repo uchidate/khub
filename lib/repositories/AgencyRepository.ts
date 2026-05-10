@@ -33,6 +33,8 @@ export const AgencySchema = z.object({
     website: z.string().url('URL inválida').optional().nullable(),
     description: z.string().optional().nullable(),
     logoUrl: z.string().url('URL inválida').optional().nullable(),
+    coverImageUrl: z.string().url('URL inválida').optional().nullable(),
+    slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens').optional().nullable(),
     accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor deve ser hex (#rrggbb)').optional().nullable(),
     type: z.string().default('INDIE'),
     foundedYear: z.number().int().min(1900).max(2100).optional().nullable(),
@@ -48,6 +50,7 @@ export type AgencyInput = z.infer<typeof AgencySchema>
 // Tipo retornado com includes padrão
 const agencySelect = {
     id: true,
+    slug: true,
     name: true,
     description: true,
     accentColor: true,
@@ -56,6 +59,7 @@ const agencySelect = {
     isVerified: true,
     website: true,
     logoUrl: true,
+    coverImageUrl: true,
     ceoName: true,
     country: true,
     parentId: true,

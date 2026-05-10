@@ -21,6 +21,12 @@ const nextConfig = {
     async headers() {
         return [
             {
+                source: '/sw.js',
+                headers: [
+                    { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+                ],
+            },
+            {
                 // Static assets have content-hash filenames — safe to cache forever
                 source: '/_next/static/:path*',
                 headers: [
@@ -260,6 +266,15 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: '*.susercontent.com',
+            },
+            // Mercado Livre — thumbnails de produtos
+            {
+                protocol: 'https',
+                hostname: 'http2.mlstatic.com',
+            },
+            {
+                protocol: 'https',
+                hostname: '*.mlstatic.com',
             },
         ],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920],

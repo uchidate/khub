@@ -517,7 +517,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                             <Building2 className="w-3.5 h-3.5" />
                                             <span className="text-xs font-black uppercase tracking-widest">Agência</span>
                                         </div>
-                                        <Link href={`/agencies/${group.agency.id}`} className="text-sm font-bold transition-colors hover:opacity-80"
+                                        <Link href={`/agencies/${group.agency.slug ?? group.agency.id}`} className="text-sm font-bold transition-colors hover:opacity-80"
                                             style={{ color: accent }}>
                                             {group.agency.name}
                                         </Link>

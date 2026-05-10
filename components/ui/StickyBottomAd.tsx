@@ -40,8 +40,6 @@ export function StickyBottomAd() {
     const h = isMobile ? 50 : 90
     const bottom = isMobile ? BOTTOM_NAV_H : 0
 
-    if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return null
-
     if (IS_DEV) {
         return (
             <div

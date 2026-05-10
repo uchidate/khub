@@ -13,13 +13,13 @@ import { TickerWrapper } from "@/components/home/TickerWrapper"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
+import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
-import { AdSenseLoader } from "@/components/features/AdSenseLoader"
 
 const getTickerPosts = unstable_cache(
     async () => {
@@ -143,7 +143,6 @@ export default async function RootLayout({
                     gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted' });
                     gtag('config', 'G-KHWW1EGSK3');
                 `}</Script>
-                {/* AdSense carregado somente após consentimento do usuário (LGPD) */}
                 <AdSenseLoader />
                 {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
                     <UmamiScript websiteId={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID} />
