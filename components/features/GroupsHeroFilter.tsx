@@ -40,30 +40,40 @@ export function GroupsHeroFilter() {
     const hasActive = !!(search || sortBy !== 'popular')
 
     return (
-        <div className="bg-background py-3 px-3 sm:px-4 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-            <SearchInput value={search} onChange={setSearch} placeholder="Buscar grupo ou agência" />
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1">
-                    {SORT_OPTIONS.map(opt => (
-                        <button
-                            key={opt.value}
-                            onClick={() => setSortBy(opt.value)}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
-                                sortBy === opt.value
-                                    ? 'bg-foreground text-background'
-                                    : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
-                            }`}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
-                </div>
-                {hasActive && (
-                    <button onClick={clear} className="p-1.5 text-muted hover:text-foreground transition-colors" title="Limpar filtros">
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                )}
+        <div className="flex items-center gap-2 flex-wrap bg-black/50 backdrop-blur-md border border-white/15 rounded-2xl px-3 py-2.5 shadow-lg">
+            <div className="relative flex-1 min-w-[180px] max-w-xs">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Buscar grupo ou agência..."
+                    className="w-full px-4 pr-9 py-2 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/40 transition-all backdrop-blur-sm"
+                />
+                {search
+                    ? <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                    : <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+                }
             </div>
+            <div className="flex items-center gap-1">
+                {SORT_OPTIONS.map(opt => (
+                    <button
+                        key={opt.value}
+                        onClick={() => setSortBy(opt.value)}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                            sortBy === opt.value
+                                ? 'bg-white text-black'
+                                : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
+                        }`}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+            {hasActive && (
+                <button onClick={clear} className="p-1.5 text-white/50 hover:text-white transition-colors" title="Limpar filtros">
+                    <X className="w-3.5 h-3.5" />
+                </button>
+            )}
         </div>
     )
 }

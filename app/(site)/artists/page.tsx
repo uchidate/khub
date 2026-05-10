@@ -167,7 +167,13 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
                     {/* Filtro — sobreposto no topo do hero */}
                     <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
-                        <Suspense>
+                        <Suspense fallback={
+                            <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md border border-white/15 rounded-2xl px-3 py-2.5">
+                                <div className="flex-1 h-9 rounded-xl bg-white/10" />
+                                <div className="h-8 w-16 rounded-full bg-white/10" />
+                                <div className="h-8 w-10 rounded-full bg-white/10" />
+                            </div>
+                        }>
                             <ArtistFilters initialFilters={{ search, sortBy }} hero />
                         </Suspense>
                     </div>
