@@ -85,11 +85,11 @@ export function AdSenseLoader() {
 
         window.history.pushState = function pushState(...args) {
             originalPushState.apply(this, args)
-            updateRouteKey()
+            setTimeout(updateRouteKey, 0)
         }
         window.history.replaceState = function replaceState(...args) {
             originalReplaceState.apply(this, args)
-            updateRouteKey()
+            setTimeout(updateRouteKey, 0)
         }
         window.addEventListener('popstate', updateRouteKey)
         updateRouteKey()
