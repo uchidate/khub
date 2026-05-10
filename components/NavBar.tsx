@@ -49,7 +49,7 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
     return (
         <>
             <nav
-                className={`w-full z-[100] sticky top-[var(--adsense-anchor-top-offset,0px)] overflow-x-clip transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
+                className={`w-full z-[100] sticky top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
                 style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
