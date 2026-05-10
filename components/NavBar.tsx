@@ -45,11 +45,14 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
     const navBg = isScrolled
         ? `backdrop-blur-xl ${navBorder} shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
         : `bg-background ${navBorder}`
+    const spacerClass = tickerPosts.length > 0
+        ? 'h-[80px] sm:h-[88px] lg:h-[92px]'
+        : 'h-[52px] sm:h-[60px] lg:h-[64px]'
 
     return (
         <>
             <nav
-                className={`w-full z-[100] sticky top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
+                className={`fixed left-0 right-0 z-[300] top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
                 style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,6 +177,7 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                     )
                 })()}
             </nav>
+            <div aria-hidden="true" className={spacerClass} />
 
         </>
     )
