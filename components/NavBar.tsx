@@ -55,8 +55,8 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                 className={`fixed left-0 right-0 z-[300] top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
                 style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
             >
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between gap-3 h-[52px] sm:h-[60px] lg:h-[64px]">
+                <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between gap-2 sm:gap-3 h-[52px] sm:h-[60px] lg:h-[64px] px-2 sm:px-0">
 
                         {/* Left: hamburger (mobile) + logo */}
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -147,7 +147,7 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                     const items = [...tickerPosts, ...tickerPosts]
                     return (
                         <div className="w-full h-[28px] flex items-center overflow-hidden">
-                            <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full">
+                            <div className="max-w-7xl w-full mx-auto px-0 sm:px-6 lg:px-8 h-full">
                                 <div
                                     className="flex items-center h-full overflow-hidden border-y border-border/40"
                                     style={{ backgroundColor: 'var(--color-ticker-bg)' }}
