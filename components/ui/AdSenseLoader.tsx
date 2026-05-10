@@ -8,7 +8,8 @@ const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle
 const ROUTE_PUSH_DELAYS = [400, 1200, 2500]
 const EXCLUDED_PATH_PREFIXES = ['/admin', '/auth', '/write', '/api']
 const MOBILE_BREAKPOINT = 640
-const MAX_TOP_ANCHOR_HEIGHT = 120
+const TOP_ANCHOR_OFFSET_MULTIPLIER = 1.7
+const MAX_TOP_ANCHOR_OFFSET = 205
 
 declare global {
     interface Window {
@@ -60,7 +61,7 @@ function getTopAnchorOffset() {
         const isWideEnough = rect.width >= viewportWidth * 0.7
         if (!isTopAnchored || !isWideEnough) continue
 
-        return Math.min(Math.ceil(rect.bottom), MAX_TOP_ANCHOR_HEIGHT)
+        return Math.min(Math.ceil(rect.bottom * TOP_ANCHOR_OFFSET_MULTIPLIER), MAX_TOP_ANCHOR_OFFSET)
     }
 
     return 0
