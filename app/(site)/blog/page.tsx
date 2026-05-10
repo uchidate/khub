@@ -403,7 +403,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <PageTransition className="pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
-        {page === 1 && featPost && <div className="relative w-full min-h-[400px] md:min-h-[520px] overflow-hidden">
+        {page === 1 && featPost && <div className="relative w-full h-[400px] md:h-[520px] overflow-hidden">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -419,18 +419,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
 
           {/* Conteúdo */}
-          <div className="relative z-10 h-full flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-10">
-            {/* Topo */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Blog HallyuHub</span>
-              </div>
-            </div>
-
+          <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
             {/* Artigo em destaque */}
             {featPost ? (
-              <Link href={`/blog/${featPost.slug}`} className="group block mt-auto">
+              <Link href={`/blog/${featPost.slug}`} className="group block">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   {featPost.category && (() => {
                     const cfg = BLOG_CATEGORY_BY_SLUG[featPost.category.slug]

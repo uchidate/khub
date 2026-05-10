@@ -33,6 +33,7 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
     const [active, setActive] = useState(0)
     const [paused, setPaused] = useState(false)
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const touchStartX = useRef<number | null>(null)
 
     const goTo = useCallback((idx: number) => {
         setActive(idx)
@@ -60,6 +61,13 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
             className="relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
+            onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+            onTouchEnd={(e) => {
+                if (touchStartX.current === null) return
+                const diff = touchStartX.current - e.changedTouches[0].clientX
+                if (Math.abs(diff) > 40) diff > 0 ? next() : prev()
+                touchStartX.current = null
+            }}
         >
             {/* All slides rendered simultaneously — opacity controls visibility */}
             {posts.map((story, i) => {
