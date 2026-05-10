@@ -1,6 +1,5 @@
 'use client'
 
-import Script from 'next/script'
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -11,16 +10,13 @@ export function AdSenseLoader() {
     const mounted = useRef(false)
 
     useEffect(() => {
-        if (!CLIENT || pathname?.startsWith('/admin')) return
+        if (!CLIENT || pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return
 
-        // Ignora a primeira renderização — Script já carrega e inicia o Auto Ads
         if (!mounted.current) {
             mounted.current = true
             return
         }
 
-        // Nas navegações SPA seguintes: empurra novo push para notificar Auto Ads
-        // Delay de 300ms para o novo conteúdo da página estar no DOM
         const timer = setTimeout(() => {
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,15 +27,5 @@ export function AdSenseLoader() {
         return () => clearTimeout(timer)
     }, [pathname])
 
-    if (!CLIENT || pathname?.startsWith('/admin')) return null
-
-    return (
-        <Script
-            id="adsense-script"
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-        />
-    )
+    return null
 }
