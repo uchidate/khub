@@ -1,11 +1,10 @@
 import Link from 'next/link'
-import { ShopeeCard } from '@/components/ui/ShopeeCard'
-import { ShoppingBag } from 'lucide-react'
+import { ShoppingBag, ArrowRight } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { HomeVitrineTicker } from '@/components/home/HomeVitrineTicker'
 
 const FALLBACK_CATEGORIES = ['kpop_album', 'lightstick', 'photocard', 'acessorios', 'kbeauty', 'alimenta', 'clothing', 'kdrama', 'outros']
 
-// Rotaciona a cada hora — compatível com ISR
 function rotatedSlice<T>(items: T[], count: number): T[] {
     if (items.length <= count) return items
     const hour = Math.floor(Date.now() / (1000 * 60 * 60))
@@ -21,83 +20,61 @@ interface Props {
     compact?: boolean
 }
 
-export async function LojaRelacionados({ tags, title = 'Produtos relacionados', excludeId, compact = false }: Props) {
+export async function LojaRelacionados({ tags, excludeId }: Props) {
     if (!tags.length) return null
 
-    const show = compact ? 3 : 4
     const base = {
         isActive: true,
         ...(excludeId ? { id: { not: excludeId } } : {}),
     }
 
-    // Busca mais do que o necessário para poder rotacionar
     let pool = await prisma.storeProduct.findMany({
         where: { ...base, tags: { hasSome: tags.map(t => t.toLowerCase()) } },
         orderBy: [{ featured: 'desc' }, { position: 'asc' }],
-        take: 12,
-        select: {
-            id: true, name: true, price: true, originalPrice: true,
-            imageUrl: true, affiliateUrl: true, store: true, category: true,
-            badge: true, rating: true, soldCount: true,
-        },
+        take: 20,
+        select: { id: true, name: true, imageUrl: true, affiliateUrl: true, store: true, badge: true },
     }).catch(() => [])
 
-    // Fallback: todas as categorias
     if (!pool.length) {
         pool = await prisma.storeProduct.findMany({
             where: { ...base, category: { in: FALLBACK_CATEGORIES } },
             orderBy: [{ featured: 'desc' }, { position: 'asc' }],
-            take: 12,
-            select: {
-                id: true, name: true, price: true, originalPrice: true,
-                imageUrl: true, affiliateUrl: true, store: true, category: true,
-                badge: true, rating: true, soldCount: true,
-            },
+            take: 20,
+            select: { id: true, name: true, imageUrl: true, affiliateUrl: true, store: true, badge: true },
         }).catch(() => [])
     }
 
     if (!pool.length) return null
 
-    const products = rotatedSlice(pool, show)
+    const products = rotatedSlice(pool, 20)
 
     return (
-        <section className="mt-10">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-orange-500" />
-                    <h2 className="text-sm font-bold text-foreground">{title}</h2>
-                    <span className="text-[10px] font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-full">Afiliado</span>
+        <section className="mt-6">
+            <div className="flex items-stretch rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                {/* Label esquerda — vertical */}
+                <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 bg-orange-500 self-stretch">
+                    <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                        Shopping
+                    </span>
                 </div>
-                <Link href="/loja" className="text-xs text-muted hover:text-orange-500 transition-colors">
-                    Ver loja →
+
+                {/* Ticker */}
+                <div className="flex-1 min-w-0 py-3 px-2">
+                    <HomeVitrineTicker products={products} />
+                </div>
+
+                {/* CTA direita — vertical */}
+                <Link
+                    href="/loja"
+                    className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+                >
+                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 group-hover:text-orange-500 transition-colors" style={{ writingMode: 'vertical-rl' }}>
+                        Ver tudo
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
                 </Link>
             </div>
-            {compact ? (
-                <div className="flex flex-col gap-2">
-                    {products.map(p => (
-                        <ShopeeCard
-                            key={p.id}
-                            {...p}
-                            compact
-                            rating={p.rating ?? undefined}
-                            badge={p.badge ?? undefined}
-                            soldCount={p.soldCount ?? undefined}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {products.map(p => (
-                        <ShopeeCard
-                            key={p.id}
-                            {...p}
-                            rating={p.rating ?? undefined}
-                            badge={p.badge ?? undefined}
-                            soldCount={p.soldCount ?? undefined}
-                        />
-                    ))}
-                </div>
-            )}
         </section>
     )
 }
