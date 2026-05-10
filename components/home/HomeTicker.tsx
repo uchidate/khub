@@ -16,32 +16,34 @@ export function HomeTicker({ posts }: HomeTickerProps) {
     const items = [...posts, ...posts]
 
     return (
-        <div
-            className="w-full overflow-hidden h-[30px] flex items-center"
-            style={{ backgroundColor: 'var(--color-ticker-bg)' }}
-        >
-            {/* Label */}
-            <div className="flex-shrink-0 flex items-center self-stretch px-3.5 bg-accent">
-                <span className="text-white text-[8.5px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">
-                    Blog
-                </span>
-            </div>
+        <div className="w-full h-[30px] flex items-center">
+            <div
+                className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-full overflow-hidden"
+                style={{ backgroundColor: 'var(--color-ticker-bg)' }}
+            >
+                {/* Label — margem negativa para encostar na borda do container */}
+                <div className="flex-shrink-0 flex items-center self-stretch px-3.5 bg-accent -ml-4 sm:-ml-6 lg:-ml-8">
+                    <span className="text-white text-[8.5px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">
+                        Blog
+                    </span>
+                </div>
 
-            {/* Scrolling track */}
-            <div className="overflow-hidden flex-1">
-                <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>
-                    {items.map((item, idx) => (
-                        <Link
-                            key={`ticker-${item.slug}-${idx}`}
-                            href={`/blog/${item.slug}`}
-                            className="ticker-link inline-flex items-center gap-2 px-6 text-[10.5px] whitespace-nowrap flex-shrink-0 h-[30px] transition-colors"
-                        >
-                            {item.category && (
-                                <b className="text-accent font-semibold not-italic">{item.category.name}</b>
-                            )}
-                            {item.title}
-                        </Link>
-                    ))}
+                {/* Scrolling track */}
+                <div className="overflow-hidden flex-1">
+                    <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>
+                        {items.map((item, idx) => (
+                            <Link
+                                key={`ticker-${item.slug}-${idx}`}
+                                href={`/blog/${item.slug}`}
+                                className="ticker-link inline-flex items-center gap-2 px-6 text-[10.5px] whitespace-nowrap flex-shrink-0 h-[30px] transition-colors"
+                            >
+                                {item.category && (
+                                    <b className="text-accent font-semibold not-italic">{item.category.name}</b>
+                                )}
+                                {item.title}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

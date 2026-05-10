@@ -12,7 +12,13 @@ import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 import { BrandMark } from "@/components/ui/BrandMark"
 
-const NavBar = () => {
+interface TickerPost {
+    slug: string
+    title: string
+    category: { name: string } | null
+}
+
+const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
@@ -35,14 +41,15 @@ const NavBar = () => {
         { label: "Loja", href: "/loja" },
     ]
 
+    const navBorder = tickerPosts.length > 0 ? '' : 'border-b border-border'
     const navBg = isScrolled
-        ? 'backdrop-blur-xl border-b border-border shadow-[0_4px_24px_rgba(0,0,0,0.08)]'
-        : 'bg-background border-b border-border'
+        ? `backdrop-blur-xl ${navBorder} shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
+        : `bg-background ${navBorder}`
 
     return (
         <>
             <nav
-                className={`w-full z-[100] sticky top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
+                className={`w-full z-[100] sticky top-[var(--adsense-anchor-top-offset,0px)] overflow-x-clip transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
                 style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -131,6 +138,41 @@ const NavBar = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Ticker strip */}
+                {tickerPosts.length > 0 && (() => {
+                    const items = [...tickerPosts, ...tickerPosts]
+                    return (
+                        <div className="w-full h-[28px] flex items-center overflow-hidden">
+                            <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full">
+                                <div
+                                    className="flex items-center h-full overflow-hidden border-y border-border/40"
+                                    style={{ backgroundColor: 'var(--color-ticker-bg)' }}
+                                >
+                                    <div className="flex-shrink-0 flex items-center self-stretch px-3 bg-accent">
+                                        <span className="text-white text-[11px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">Blog</span>
+                                    </div>
+                                    <div className="overflow-hidden flex-1 min-w-0">
+                                        <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>
+                                            {items.map((item, idx) => (
+                                                <Link
+                                                    key={`ticker-${item.slug}-${idx}`}
+                                                    href={`/blog/${item.slug}`}
+                                                    className="ticker-link inline-flex items-center gap-2 px-5 text-[13.5px] whitespace-nowrap flex-shrink-0 h-[28px] transition-colors"
+                                                >
+                                                    {item.category && (
+                                                        <b className="text-accent font-semibold not-italic">{item.category.name}</b>
+                                                    )}
+                                                    {item.title}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })()}
             </nav>
 
         </>

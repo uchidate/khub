@@ -9,7 +9,6 @@ import { SessionProvider } from "@/components/features/SessionProvider"
 import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
-import { TickerWrapper } from "@/components/home/TickerWrapper"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
@@ -191,8 +190,7 @@ export default async function RootLayout({
                     <AnalyticsProvider>
                     <WebVitalsReporter />
                     <div className="site-shell min-h-screen flex flex-col">
-                        <TickerWrapper posts={tickerPosts} />
-                        <NavBar />
+                        <NavBar tickerPosts={tickerPosts} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
