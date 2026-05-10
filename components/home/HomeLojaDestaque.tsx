@@ -19,7 +19,7 @@ export function HomeLojaDestaque({ products }: { products: Product[] }) {
     if (products.length === 0) return null
 
     return (
-        <section className="max-w-7xl mx-auto px-4 py-6">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Container com fundo e borda */}
             <div className="rounded-2xl bg-gradient-to-br from-orange-500/5 via-surface to-surface border border-orange-500/10 p-5">
                 {/* Header */}
