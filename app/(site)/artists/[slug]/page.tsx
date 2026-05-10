@@ -306,26 +306,30 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
             {/* ── HERO ── */}
             <div className="relative h-[65vh] md:h-[75vh] overflow-hidden">
-                {/* Blurred background */}
-                {artist.primaryImageUrl && (
-                    <div className="absolute inset-0 scale-110">
-                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover blur-sm brightness-30" />
+                <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+                    <div className="relative h-full overflow-hidden">
+                        {/* Blurred background */}
+                        {artist.primaryImageUrl && (
+                            <div className="absolute inset-0 scale-110">
+                                <Image src={artist.primaryImageUrl} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover blur-sm brightness-30" />
+                            </div>
+                        )}
+                        {/* Main image — blurred backdrop (not crisp, portrait card handles crisp) */}
+                        <div className="absolute inset-0">
+                            {artist.primaryImageUrl ? (
+                                <Image src={artist.primaryImageUrl} alt="" fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover object-[50%_15%]" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-accent/10 via-surface to-border" />
+                            )}
+                        </div>
+                        {/* Gradients */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black from-0% via-black/60 via-[35%] to-transparent to-[65%]" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
                     </div>
-                )}
-                {/* Main image — blurred backdrop (not crisp, portrait card handles crisp) */}
-                <div className="absolute inset-0">
-                    {artist.primaryImageUrl ? (
-                        <Image src={artist.primaryImageUrl} alt="" fill priority sizes="100vw" className="object-cover object-[50%_15%]" />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-accent/10 via-surface to-border" />
-                    )}
                 </div>
-                {/* Gradients */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black from-0% via-black/60 via-[35%] to-transparent to-[65%]" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
                 {/* Breadcrumbs + Favorite */}
-                <div className="absolute top-4 md:top-5 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 z-10"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="absolute top-4 md:top-5 left-0 right-0 max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 z-10"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} onDark className="" />
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <AdminQuickEdit href={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
@@ -337,7 +341,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 </div></div>
 
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
+                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 pb-10 md:pb-14">
                     <div className="flex items-end gap-8">
                     <div className="flex flex-col gap-2 flex-1 min-w-0">
                         {/* Roles + group + birthday countdown */}
@@ -418,7 +422,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
             {/* ── CONTEÚDO ── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 lg:py-12">
-                <div className="grid lg:grid-cols-[280px_1fr] gap-8 lg:gap-12">
+                <div className="grid min-w-0 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12">
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-4 lg:space-y-6 lg:sticky lg:top-24 lg:self-start">
@@ -506,7 +510,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     </div>
 
                     {/* ── MAIN ── */}
-                    <div className="space-y-10 lg:space-y-16">
+                    <div className="min-w-0 space-y-10 lg:space-y-16">
 
                         {/* Perfil Biográfico */}
                         {profileSections.length >= 1 && (() => {

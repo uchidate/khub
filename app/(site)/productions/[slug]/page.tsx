@@ -287,28 +287,30 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-[#080808] flex flex-col overflow-hidden">
+            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-background flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
-                <div className="absolute inset-0">
-                    {/* Mobile: poster (imageUrl) */}
-                    {heroImageMobile && (
-                        <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="100vw" className="object-cover md:hidden" />
-                    )}
-                    {/* Desktop: backdrop (backdropUrl) */}
-                    {heroImageDesktop ? (
-                        <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="100vw" className="object-cover hidden md:block" />
-                    ) : !heroImageMobile && (
-                        <>
-                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d78]/5 rounded-full blur-3xl" />
-                            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#ff2d78]/5 rounded-full blur-3xl" />
-                        </>
-                    )}
-                    <div className="absolute inset-0 hero-gradient" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+                    <div className="relative h-full overflow-hidden">
+                        {/* Mobile: poster (imageUrl) */}
+                        {heroImageMobile && (
+                            <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover md:hidden" />
+                        )}
+                        {/* Desktop: backdrop (backdropUrl) */}
+                        {heroImageDesktop ? (
+                            <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover hidden md:block" />
+                        ) : !heroImageMobile && (
+                            <>
+                                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d78]/5 rounded-full blur-3xl" />
+                                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#ff2d78]/5 rounded-full blur-3xl" />
+                            </>
+                        )}
+                        <div className="absolute inset-0 hero-gradient" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                    </div>
                 </div>
 
                 {/* Breadcrumbs + actions */}
-                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs
                         items={[
                             { label: 'Produções', href: '/productions' },
@@ -331,7 +333,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
 
                 {/* Hero content */}
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-16 mt-auto">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 pb-10 md:pb-16 mt-auto">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
