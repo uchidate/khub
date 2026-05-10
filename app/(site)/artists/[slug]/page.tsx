@@ -306,7 +306,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
             {/* ── HERO ── */}
             <div className="relative h-[65vh] md:h-[75vh] overflow-hidden">
-                <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+                <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
                     <div className="relative h-full overflow-hidden">
                         {/* Blurred background */}
                         {artist.primaryImageUrl && (
@@ -329,7 +329,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 </div>
 
                 {/* Breadcrumbs + Favorite */}
-                <div className="absolute top-4 md:top-5 left-0 right-0 max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 z-10"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="absolute top-4 md:top-5 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-12 lg:px-20 z-10"><div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} onDark className="" />
                     <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                         <AdminQuickEdit href={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
@@ -341,7 +341,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 </div></div>
 
                 {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 pb-10 md:pb-14">
+                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-12 lg:px-20 pb-10 md:pb-14">
                     <div className="flex items-end gap-8">
                     <div className="flex flex-col gap-2 flex-1 min-w-0">
                         {/* Roles + group + birthday countdown */}
