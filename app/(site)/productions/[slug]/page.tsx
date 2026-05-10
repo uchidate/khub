@@ -310,7 +310,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
 
                 {/* Breadcrumbs + actions */}
-                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
                     <Breadcrumbs
                         items={[
                             { label: 'Produções', href: '/productions' },
@@ -333,7 +333,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
 
                 {/* Hero content */}
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-10 sm:px-12 lg:px-20 pb-10 md:pb-16 mt-auto">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 md:pb-16 mt-auto">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
@@ -380,7 +380,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             {production.tagline && <p className="text-base text-white/60 italic mt-1 mb-8">&ldquo;{production.tagline}&rdquo;</p>}
                             {!production.tagline && <div className="mb-6" />}
 
-                            <div className="mt-6 flex items-center gap-2">
+                            <div className="mt-6 flex flex-wrap items-center gap-2">
                                 {production.trailerUrl && (
                                     <TrailerModal trailerUrl={production.trailerUrl} title={production.titlePt} />
                                 )}
@@ -409,13 +409,13 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
 
             {/* Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 pb-16 md:py-16">
-                <div className="grid md:grid-cols-3 gap-16">
+                <div className="grid min-w-0 md:grid-cols-3 gap-16">
                     {/* Main column */}
-                    <div className="md:col-span-2 space-y-10">
+                    <div className="min-w-0 md:col-span-2 space-y-10">
                         {synopsis && (
                             <div>
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sinopse</h3>
-                                <p className="text-muted leading-relaxed font-medium text-lg">{synopsis}</p>
+                                <p className="text-muted leading-relaxed font-medium text-lg break-words">{synopsis}</p>
                             </div>
                         )}
 
@@ -589,7 +589,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     </div>
 
                     {/* Sidebar */}
-                    <div>
+                    <div className="min-w-0">
                         <div className="sticky top-24 flex flex-col gap-4">
                         <div className="bg-background rounded-2xl border border-border p-6">
                             {production.voteAverage && production.voteAverage > 0 && (
