@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { ShoppingBag, Sparkles } from 'lucide-react'
+import { ShoppingBag, Sparkles, ExternalLink } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
@@ -79,6 +79,12 @@ export default async function LojaPage() {
                         <h1 className="text-2xl font-black text-foreground tracking-tight leading-tight">Vitrine K-Pop</h1>
                         <p className="text-xs text-muted mt-0.5">Comprar pelo link apoia o HallyuHub sem custo extra</p>
                     </div>
+                </div>
+
+                {/* Aviso de links externos */}
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/8 border border-orange-500/20 text-xs text-orange-400 mb-4">
+                    <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                    <span>Os produtos abrem em sites parceiros (Mercado Livre, Shopee, etc.). Comprar pelo nosso link apoia o HallyuHub sem custo extra para você.</span>
                 </div>
 
             <div className="space-y-6">
