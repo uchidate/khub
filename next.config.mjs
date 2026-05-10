@@ -26,13 +26,13 @@ const nextConfig = {
                     { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
                 ],
             },
-            {
-                // Static assets have content-hash filenames — safe to cache forever
+            ...(process.env.NODE_ENV === 'production' ? [{
+                // Static assets have content-hash filenames — safe to cache forever in production.
                 source: '/_next/static/:path*',
                 headers: [
                     { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
                 ],
-            },
+            }] : []),
             {
                 source: '/:path*',
                 headers: [

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-6015098995926392'
+const ADSENSE_ENABLED = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ADSENSE_DEV === 'true'
 const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`
 const ROUTE_PUSH_DELAYS = [400, 1200, 2500]
 const EXCLUDED_PATH_PREFIXES = ['/admin', '/auth', '/write', '/api']
@@ -101,6 +102,7 @@ export function AdSenseLoader() {
     }, [])
 
     useEffect(() => {
+        if (!ADSENSE_ENABLED) return
         const handleClick = (event: MouseEvent) => {
             if (event.defaultPrevented || event.button !== 0) return
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
@@ -128,6 +130,7 @@ export function AdSenseLoader() {
     }, [])
 
     useEffect(() => {
+        if (!ADSENSE_ENABLED) return
         if (typeof window === 'undefined') return
 
         let frame = 0
@@ -153,6 +156,7 @@ export function AdSenseLoader() {
     }, [])
 
     useEffect(() => {
+        if (!ADSENSE_ENABLED) return
         const currentRoute = routeKey || pathname || ''
         if (!currentRoute) return
         if (lastRoute.current === currentRoute) return
