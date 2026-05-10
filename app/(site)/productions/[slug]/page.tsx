@@ -475,24 +475,74 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                         (a, b) => (a.castOrder ?? 999) - (b.castOrder ?? 999)
                                     )
                                     return (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                            {ordered.map(({ artist, role }) => (
-                                                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group">
-                                                    <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
-                                                        {artist.primaryImageUrl ? (
-                                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
-                                                        ) : (
-                                                            <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
-                                                        )}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                                        <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                            <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
-                                                            {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}
+                                        <>
+                                            <div className="sm:hidden space-y-3">
+                                                {ordered.map(({ artist, role, castOrder }) => (
+                                                        <Link
+                                                            key={artist.id}
+                                                            href={`/artists/${artist.slug ?? artist.id}`}
+                                                            className="group flex w-full gap-3 rounded-xl border border-border bg-background p-2.5 transition-colors hover:border-[#ff2d78]/30"
+                                                        >
+                                                            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface">
+                                                                {artist.primaryImageUrl ? (
+                                                                    <Image
+                                                                        src={artist.primaryImageUrl}
+                                                                        alt={artist.nameRomanized}
+                                                                        fill
+                                                                        sizes="80px"
+                                                                        className="object-cover object-top brightness-[0.82] transition-transform duration-500 group-hover:scale-105 group-hover:brightness-95"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-full items-center justify-center px-2 text-center text-xs font-black text-muted">
+                                                                        {artist.nameRomanized}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1 py-1">
+                                                                <div className="flex items-start justify-between gap-2">
+                                                                    <div className="min-w-0">
+                                                                        <p className="truncate text-base font-black text-foreground transition-colors group-hover:text-[#ff2d78]">
+                                                                            {artist.nameRomanized}
+                                                                        </p>
+                                                                        {artist.nameHangul && (
+                                                                            <p className="mt-0.5 truncate text-sm font-bold text-[#ff2d78]">{artist.nameHangul}</p>
+                                                                        )}
+                                                                    </div>
+                                                                    {castOrder != null && castOrder < 20 && (
+                                                                        <span className="flex-shrink-0 rounded-full bg-surface px-2 py-0.5 text-[10px] font-black text-muted">
+                                                                            #{castOrder + 1}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {role && (
+                                                                    <div className="mt-2">
+                                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted">Personagem</p>
+                                                                        <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-foreground">{role}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </Link>
+                                                ))}
+                                            </div>
+                                            <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                {ordered.map(({ artist, role }) => (
+                                                    <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group">
+                                                        <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
+                                                            {artist.primaryImageUrl ? (
+                                                                <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
+                                                            ) : (
+                                                                <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                                                                <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
+                                                                {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </Link>
-                                            ))}
-                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </>
                                     )
                                 })()}
                             </div>
