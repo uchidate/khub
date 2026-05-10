@@ -403,7 +403,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <PageTransition className="pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
-        {page === 1 && featPost && <div className="relative w-full h-[400px] md:h-[520px] overflow-hidden">
+        {page === 1 && featPost && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative w-full h-[400px] md:h-[520px] overflow-hidden rounded-xl">
           {featPost?.coverImageUrl ? (
             <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
               className="object-cover" />
@@ -419,7 +420,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
 
           {/* Conteúdo */}
-          <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12">
+          <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12 overflow-hidden">
             {/* Artigo em destaque */}
             {featPost ? (
               <Link href={`/blog/${featPost.slug}`} className="group block">
@@ -482,6 +483,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               <ChevronDown size={16} />
             </div>
           )}
+        </div>
         </div>}
 
         {/* ── Conteúdo principal ────────────────────────────────── */}

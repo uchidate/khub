@@ -146,18 +146,10 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         )}
         <PageTransition className="pb-16">
 
-            {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
-            <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
-                    <Suspense>
-                        <ArtistFilters initialFilters={{ search, sortBy }} />
-                    </Suspense>
-                </div>
-            </div>
-
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight && !isFiltered ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[460px] overflow-hidden bg-black">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="relative w-full min-h-[360px] md:min-h-[460px] overflow-hidden bg-black rounded-xl">
                     {/* Mosaico */}
                     <div className="absolute inset-0 flex">
                         {heroArtists.map((a, i) => (
@@ -173,7 +165,14 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
 
-                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[460px]">
+                    {/* Filtro — sobreposto no topo do hero */}
+                    <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
+                        <Suspense>
+                            <ArtistFilters initialFilters={{ search, sortBy }} hero />
+                        </Suspense>
+                    </div>
+
+                    <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[460px] overflow-hidden">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
                             {/* Artista em destaque: portrait + texto juntos */}
@@ -244,6 +243,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                             )}
                         </div>
                     </div>
+                </div>
                 </div>
             ) : (
                 /* Header simples quando filtrado ou sem hero */

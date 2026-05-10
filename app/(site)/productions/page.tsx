@@ -87,31 +87,30 @@ export default async function ProductionsPage() {
         )}
         <PageTransition className="pb-16">
 
-            {/* ── Filtro sticky — h-0 para não empurrar o hero ── */}
-            <div className="h-0 overflow-visible sticky top-[52px] sm:top-[60px] lg:top-[64px] z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-3">
-                    <Suspense>
-                        <ProductionsHeroFilter />
-                    </Suspense>
-                </div>
-            </div>
-
             {/* ── Hero ────────────────────────────────────────────── */}
             {spotlight ? (
-                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black rounded-xl">
                     <Image
                         src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
                         alt={spotlight.titlePt}
-                        fill priority sizes="100vw"
+                        fill priority sizes="(max-width: 1280px) 100vw, 1280px"
                         className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
-                    <div className="relative z-10 h-full flex flex-col justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px]">
+                    {/* Filtro — sobreposto no topo do hero */}
+                    <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
+                        <Suspense>
+                            <ProductionsHeroFilter hero />
+                        </Suspense>
+                    </div>
+
+                    <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px] overflow-hidden">
                         {/* Bottom: destaque + side picks */}
-                        <div className="flex items-end gap-6 mt-auto">
-                            <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group flex-1 min-w-0">
+                        <div className="flex items-end gap-6 mt-auto min-w-0">
+                            <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group block w-full max-w-[min(100%,760px)] min-w-0">
                                 <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <TrendingUp size={10} /> Em destaque
                                 </p>
@@ -121,7 +120,7 @@ export default async function ProductionsPage() {
                                 {spotlight.titleKr && (
                                     <p className="text-white/50 text-sm mb-3">{spotlight.titleKr}</p>
                                 )}
-                                <div className="flex items-center gap-3 flex-wrap">
+                                <div className="flex items-center gap-3 flex-wrap min-w-0">
                                     {spotlight.type && <span className="text-white/60 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
                                     {spotlight.year && (
                                         <>
@@ -137,14 +136,14 @@ export default async function ProductionsPage() {
                                             </span>
                                         </>
                                     )}
-                                    <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                                    <span className="sm:ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
                                         Ver produção <ArrowRight size={13} />
                                     </span>
                                 </div>
                             </Link>
 
                             {sidePicks.length > 0 && (
-                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0">
+                                <div className="hidden lg:flex flex-col gap-2 w-[200px] shrink-0">
                                     <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
                                     {sidePicks.slice(0, 4).map(p => (
                                         <Link key={p.id} href={`/productions/${p.slug ?? p.id}`}
@@ -166,6 +165,7 @@ export default async function ProductionsPage() {
                             )}
                         </div>
                     </div>
+                </div>
                 </div>
             ) : (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
