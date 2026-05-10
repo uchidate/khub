@@ -288,9 +288,9 @@ export default async function Home() {
     const publicData = await getHomePublicData()
 
     const featuredProducts = await prisma.storeProduct.findMany({
-        where: { isActive: true, featured: true },
-        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-        take: 4,
+        where: { isActive: true },
+        orderBy: [{ featured: 'desc' }, { position: 'asc' }, { createdAt: 'desc' }],
+        take: 20,
         select: {
             id: true, name: true, price: true, originalPrice: true,
             imageUrl: true, affiliateUrl: true, store: true, category: true,

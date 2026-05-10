@@ -38,7 +38,7 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
         { label: "Grupos", href: "/groups" },
         { label: "Produções", href: "/productions" },
         { label: "Calendário", href: "/calendario" },
-        { label: "Loja", href: "/loja" },
+        { label: "Shopping", href: "/loja" },
     ]
 
     const navBorder = tickerPosts.length > 0 ? '' : 'border-b border-border'
