@@ -400,7 +400,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         url: `${BASE_URL}/blog`,
         inLanguage: 'pt-BR',
       }} />
-      <PageTransition className="pb-16">
+      <PageTransition className="overflow-x-hidden pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
         {page === 1 && featPost && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -589,10 +589,10 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           )}
 
           {/* ── Layout: posts + sidebar ────────────────────────── */}
-          <div className="grid lg:grid-cols-[1fr_300px] gap-10 xl:gap-14">
+          <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_300px] gap-10 xl:gap-14">
 
             {/* ── Coluna principal ─────────────────────────────── */}
-            <div>
+            <div className="min-w-0">
               {page > 1 && !isFiltered ? (
                 /* Página 2+: arquivo compacto em ordem */
                 <div className="space-y-6">
@@ -668,7 +668,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                   {block2Posts.length > 0 && (
                     <LojaRelacionados
                       tags={popularTags.slice(0, 5).map(t => t.tag)}
-                      title="Vitrine K-Pop"
+                      compact
                     />
                   )}
 
