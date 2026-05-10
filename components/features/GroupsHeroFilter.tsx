@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Search, X } from 'lucide-react'
-import { SearchInput } from '@/components/ui/SearchInput'
 
 const SORT_OPTIONS = [
     { value: 'popular', label: 'Em alta' },
@@ -40,8 +39,20 @@ export function GroupsHeroFilter() {
     const hasActive = !!(search || sortBy !== 'popular')
 
     return (
-        <div className="bg-background py-3 px-3 sm:px-4 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-            <SearchInput value={search} onChange={setSearch} placeholder="Buscar grupo ou agência" />
+        <div className="bg-white dark:bg-gray-900 py-3 px-3 sm:px-4 space-y-3 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Buscar grupo ou agência"
+                    className="w-full px-4 pr-10 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-pink-400 transition-all"
+                />
+                {search
+                    ? <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"><X className="w-4 h-4" /></button>
+                    : <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
+                }
+            </div>
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1">
                     {SORT_OPTIONS.map(opt => (
