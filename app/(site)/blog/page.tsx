@@ -16,6 +16,7 @@ import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
 import { rankPosts } from '@/lib/blog/scoring'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { BlogHeroCarousel } from '@/components/blog/BlogHeroCarousel'
 
 const BASE_URL = SITE_URL
 
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 }
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
-const EMPTY_POSTS = { hero: null, editorialIds: [] as string[], posts: [], mostRead: [], categories: [], popularTags: [], total: 0, totalCategories: 0 }
+const EMPTY_POSTS = { hero: null, heroSlides: [] as PostItem[], editorialIds: [] as string[], posts: [], mostRead: [], categories: [], popularTags: [], total: 0, totalCategories: 0 }
 const PAGE_SIZE = 20
 
 const POST_SELECT = {
@@ -113,11 +114,12 @@ async function getPosts(category?: string, tag?: string, page = 1) {
     // Hero e cards editoriais vêm do ranking automático (página 1 sem filtro)
     // Em filtro/página 2+ cai de volta para o primeiro post da listagem
     const hero = editorialRanked[0] ?? null
+    const heroSlides = editorialRanked.slice(0, 4)
     const editorialIds = editorialRanked.slice(0, 4).map(p => p.id)
 
     // Injeta posts editoriais no topo da listagem se não aparecerem já na página atual
     // (garante que hero/magazine não fiquem duplicados no grid abaixo)
-    return { hero, editorialIds, posts, mostRead, categories, popularTags, total, totalCategories }
+    return { hero, heroSlides, editorialIds, posts, mostRead, categories, popularTags, total, totalCategories }
   } catch { return EMPTY_POSTS }
 }
 
@@ -337,7 +339,7 @@ function CompactPostCard({ post, rank }: { post: PostItem; rank?: number }) {
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string }> }) {
   const { category: activeCategory, tag: activeTag, page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
-  const { hero, editorialIds, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
+  const { hero, heroSlides, editorialIds, posts, mostRead, categories, popularTags, total } = await getPosts(activeCategory, activeTag, page)
   const isFiltered = !!activeCategory || !!activeTag
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -403,88 +405,47 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <PageTransition className="overflow-x-hidden pb-16">
 
         {/* ── Hero — só na página 1 ─────────────────────────────── */}
-        {page === 1 && featPost && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative w-full h-[400px] md:h-[520px] overflow-hidden rounded-xl">
-          {featPost?.coverImageUrl ? (
-            <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw"
-              className="object-cover" />
-          ) : (
-            <div className="w-full h-full absolute inset-0"
-              style={{ background: activeCatConfig
-                ? `linear-gradient(135deg, ${activeCatConfig.bg}, ${activeCatConfig.color}55)`
-                : 'linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%)' }} />
-          )}
-
-          {/* Gradientes */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
-
-          {/* Conteúdo */}
-          <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-12 overflow-hidden">
-            {/* Artigo em destaque */}
-            {featPost ? (
-              <Link href={`/blog/${featPost.slug}`} className="group block">
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  {featPost.category && (() => {
-                    const cfg = BLOG_CATEGORY_BY_SLUG[featPost.category.slug]
-                    return cfg ? (
-                      <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
-                        style={{ backgroundColor: cfg.color, color: '#fff' }}>
-                        {featPost.category.name}
-                      </span>
-                    ) : null
-                  })()}
-                  {isRecent(featPost.publishedAt) && (
-                    <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">Novo</span>
-                  )}
-                  {featPost.featured && !isFiltered && (
-                    <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[11px] font-bold uppercase tracking-wider">Destaque</span>
-                  )}
-                  {isFiltered && (
-                    <span className="text-white/45 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
-                  )}
-                </div>
-
-                <h1 className="text-2xl sm:text-3xl md:text-[2.6rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
-                  {featPost.title}
-                </h1>
-
-                {featPost.excerpt && (
-                  <p className="text-white/60 text-sm md:text-[15px] line-clamp-2 leading-relaxed hidden sm:block mb-5 max-w-2xl">
-                    {featPost.excerpt}
-                  </p>
+        {page === 1 && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {!isFiltered && heroSlides.length > 0 ? (
+              <BlogHeroCarousel
+                slides={heroSlides}
+                authorName={BLOG_AUTHOR_DISPLAY_NAME}
+                authorInitial={BLOG_AUTHOR_AVATAR_INITIAL}
+              />
+            ) : featPost ? (
+              <div className="relative w-full h-[400px] md:h-[520px] overflow-hidden rounded-xl">
+                {featPost.coverImageUrl ? (
+                  <Image src={featPost.coverImageUrl} alt={featPost.title} fill priority sizes="100vw" className="object-cover" />
+                ) : (
+                  <div className="w-full h-full absolute inset-0"
+                    style={{ background: activeCatConfig
+                      ? `linear-gradient(135deg, ${activeCatConfig.bg}, ${activeCatConfig.color}55)`
+                      : 'linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%)' }} />
                 )}
-
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2 text-white/45 text-xs">
-                    <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold text-white/80">
-                      {BLOG_AUTHOR_AVATAR_INITIAL}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/10" />
+                <div className="relative z-10 h-full flex flex-col justify-end px-6 lg:px-12 py-8 md:py-12">
+                  <Link href={`/blog/${featPost.slug}`} className="group block">
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      {isFiltered && (
+                        <span className="text-white/45 text-xs">{posts.length} {posts.length === 1 ? 'artigo' : 'artigos'}</span>
+                      )}
                     </div>
-                    <span>{BLOG_AUTHOR_DISPLAY_NAME}</span>
-                    <span>·</span>
-                    <PostMeta post={featPost} size="xs" light />
-                  </div>
-                  <span className="ml-auto sm:ml-4 flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
-                    Ler artigo <ArrowRight size={14} />
-                  </span>
+                    <h1 className="text-2xl sm:text-3xl md:text-[2.6rem] font-black text-white leading-tight line-clamp-2 group-hover:text-accent transition-colors mb-3 max-w-3xl">
+                      {featPost.title}
+                    </h1>
+                    {featPost.excerpt && (
+                      <p className="text-white/60 text-sm line-clamp-2 hidden sm:block mb-5 max-w-2xl">{featPost.excerpt}</p>
+                    )}
+                    <span className="flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
+                      Ler artigo <ArrowRight size={14} />
+                    </span>
+                  </Link>
                 </div>
-              </Link>
-            ) : (
-              <div className="mt-auto">
-                <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Blog K-Pop & K-Drama</h1>
-                <p className="text-white/55 text-base">Artigos sobre cultura coreana em português</p>
               </div>
-            )}
+            ) : null}
           </div>
-
-          {/* Scroll hint */}
-          {!isFiltered && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/25 animate-bounce pointer-events-none">
-              <ChevronDown size={16} />
-            </div>
-          )}
-        </div>
-        </div>}
+        )}
 
         {/* ── Conteúdo principal ────────────────────────────────── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
