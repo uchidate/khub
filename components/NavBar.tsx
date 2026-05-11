@@ -71,8 +71,8 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                             </Link>
                         </div>
 
-                        {/* Center: desktop/tablet nav links */}
-                        <div className="hidden md:flex items-center justify-center gap-1 flex-1 min-w-0 px-2">
+                        {/* Center: desktop nav links */}
+                        <div className="hidden lg:flex items-center justify-center gap-1 flex-1 min-w-0 px-2">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.href}
@@ -89,9 +89,9 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                         </div>
 
                         {/* Right: search + theme toggle + auth */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                             {/* Search bar (tablet+) */}
-                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[130px] lg:min-w-[200px]"
+                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[110px] md:min-w-[150px] lg:min-w-[200px]"
                                 onClick={() => openSearch()}
                             >
                                 <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">
@@ -118,13 +118,13 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                                 <>
                                     <Link
                                         href="/auth/login"
-                                        className="hidden sm:block text-[11.5px] font-semibold text-muted hover:text-foreground transition-colors whitespace-nowrap"
+                                        className="hidden md:block text-[11.5px] font-semibold text-muted hover:text-foreground transition-colors whitespace-nowrap"
                                     >
                                         Entrar
                                     </Link>
                                     <Link
                                         href="/auth/register"
-                                        className="hidden sm:block bg-accent text-white text-[11.5px] font-semibold rounded-full px-4 py-[7px] hover:brightness-110 transition-all whitespace-nowrap"
+                                        className="hidden sm:block bg-accent text-white text-[11.5px] font-semibold rounded-full px-3 py-[6px] hover:brightness-110 transition-all whitespace-nowrap"
                                     >
                                         Criar conta
                                     </Link>
