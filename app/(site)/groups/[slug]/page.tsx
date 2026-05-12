@@ -244,7 +244,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     }))
 
     return (
-        <div className="min-h-screen bg-background" style={themeVars}>
+        <div className="min-h-screen overflow-x-hidden bg-background" style={themeVars}>
             <ViewTracker groupId={group.id} />
             {/* Estilos dinâmicos baseados na cor do grupo */}
             <style dangerouslySetInnerHTML={{ __html: `
@@ -470,7 +470,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         </div>
                     </div>
                 </div>
-                <div className="grid lg:grid-cols-3 gap-12">
+                <div className="grid gap-8 lg:grid-cols-3 lg:gap-12">
 
                     {/* ── SIDEBAR ── */}
                     <div className="space-y-8 lg:col-span-1">
@@ -630,7 +630,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     </div>
 
                     {/* ── MAIN ── */}
-                    <div className="lg:col-span-2 space-y-14">
+                    <div className="min-w-0 space-y-10 lg:col-span-2 lg:space-y-14">
 
                         {/* Membros atuais */}
                         {activeMembers.length > 0 && (
@@ -643,6 +643,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         <LojaRelacionados
                             tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
                             title={`Produtos ${group.name}`}
+                            compact
                         />
 
                         {relatedPosts.length > 0 && (

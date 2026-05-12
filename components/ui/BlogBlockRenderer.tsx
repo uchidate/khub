@@ -28,7 +28,11 @@ function InArticleAd({ id }: { id: string }) {
                 if (entries[0].isIntersecting && !pushed.current) {
                     pushed.current = true
                     observer.disconnect()
-                    try { ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({}) } catch {}
+                    try {
+                        ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({})
+                    } catch {
+                        pushed.current = false
+                    }
                 }
             },
             { rootMargin: '300px' }
@@ -463,11 +467,10 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                             </div>
                         )
                         : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
-                const nextRow = rows[idx + 1]
-                const nextIsHeading = !Array.isArray(nextRow) && nextRow && !('items' in nextRow) && (nextRow as BlogBlock).type === 'blog_heading'
                 return (
                     <Fragment key={idx}>
                         {el}
+                        {AD_POSITIONS.has(idx + 1) && <InArticleAd id={`blog-ad-${idx + 1}`} />}
                     </Fragment>
                 )
             })}

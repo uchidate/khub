@@ -20,7 +20,7 @@ interface Props {
     compact?: boolean
 }
 
-export async function LojaRelacionados({ tags, excludeId, compact = false }: Props) {
+export async function LojaRelacionados({ tags, title = 'Achados relacionados', excludeId, compact = false }: Props) {
     if (!tags.length) return null
 
     const base = {
@@ -50,7 +50,7 @@ export async function LojaRelacionados({ tags, excludeId, compact = false }: Pro
 
     if (compact) {
         return (
-            <section className="my-2 w-full">
+            <section className="w-full overflow-hidden">
                 <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.03] px-2 py-2.5 sm:px-3 sm:py-3">
                     <div className="mb-2 flex items-center justify-between gap-2 px-1">
                         <div className="flex min-w-0 items-center gap-2">
@@ -59,7 +59,7 @@ export async function LojaRelacionados({ tags, excludeId, compact = false }: Pro
                             </span>
                             <div className="min-w-0">
                                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">Shopping</p>
-                                <p className="truncate text-xs font-semibold text-muted">Achados relacionados</p>
+                                <p className="truncate text-xs font-semibold text-muted">{title}</p>
                             </div>
                         </div>
                         <Link href="/loja" className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-400">
@@ -74,7 +74,6 @@ export async function LojaRelacionados({ tags, excludeId, compact = false }: Pro
                                     <a key={`${p.id}-${idx}`} href={p.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored"
                                         className="flex-shrink-0 flex flex-col gap-1 group w-[72px]">
                                         <div className="relative w-[72px] h-[72px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-orange-400/60 transition-all">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                                             <div className="absolute bottom-0 inset-x-0 h-[14px] flex items-center justify-center bg-orange-500">
                                                 <span className="text-[7px] font-bold text-white tracking-wide">{STORE_LABELS[p.store] ?? p.store}</span>
@@ -95,7 +94,7 @@ export async function LojaRelacionados({ tags, excludeId, compact = false }: Pro
     }
 
     return (
-        <section className="mt-6">
+        <section className="mt-6 overflow-hidden">
             <div className="flex items-stretch rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                 {/* Label esquerda — vertical */}
                 <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 bg-orange-500 self-stretch">
