@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 
 const IS_DEV = process.env.NODE_ENV === 'development'
 
-export function useAdFilled(slot: string | undefined, timeoutMs = 4000) {
+export function useAdFilled(slot: string | undefined, timeoutMs = 12000) {
     const insRef = useRef<HTMLModElement>(null)
     const [filled, setFilled] = useState<boolean | null>(null)
 

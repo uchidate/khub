@@ -69,8 +69,7 @@ export function AdBanner({
             if (pushed.current) return
             pushed.current = true
             try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+                ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({})
             } catch { /* AdSense ainda não carregou */ }
         }
 
@@ -110,11 +109,11 @@ export function AdBanner({
         const mo = new MutationObserver(check)
         mo.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] })
 
-        // Timeout de 4s — se ainda não preencheu, esconder
+        // Timeout folgado: em produção o leilão pode demorar, principalmente após navegação.
         const timeout = setTimeout(() => {
             const status = ins.getAttribute('data-ad-status')
             if (!status) setFilled(false)
-        }, 4000)
+        }, 12000)
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
     }, [slot])
@@ -150,13 +149,14 @@ export function AdBanner({
 
     const isFluid = variant === 'fluid'
     const isMultiplex = variant === 'multiplex'
+    const loadingHeightClass =
+        variant === 'auto'
+            ? 'min-h-[50px] sm:min-h-[90px]'
+            : 'min-h-[250px]'
 
     return (
-        // Observer anchor — zero height, sem impacto no layout enquanto carrega
         <div ref={containerRef}>
-            {/* ins sempre renderizado para que o AdSense possa preencher,
-                mas envolto em overflow-hidden + altura 0 até confirmed filled */}
-            <div className={filled === true ? className : 'overflow-hidden h-0 w-0 absolute pointer-events-none'}>
+            <div className={filled === true ? className : `overflow-hidden w-full ${loadingHeightClass} ${className}`}>
                 {!hideLabel && filled === true && (
                     <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
                         Publicidade
