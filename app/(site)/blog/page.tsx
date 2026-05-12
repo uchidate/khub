@@ -7,14 +7,14 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { PageTransition } from '@/components/features/PageTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles, ChevronDown } from 'lucide-react'
+import { Clock, Eye, TrendingUp, Tag, ArrowRight, BookOpen, ChevronRight, Sparkles } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
 import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_CATEGORIES, BLOG_CATEGORY_BY_SLUG } from '@/lib/config/categories'
-import { rankPosts } from '@/lib/blog/scoring'
+import { rankPosts, selectDiversePosts } from '@/lib/blog/scoring'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { BlogHeroCarousel } from '@/components/blog/BlogHeroCarousel'
 
@@ -70,10 +70,23 @@ async function getPosts(category?: string, tag?: string, page = 1) {
             take: 10,
             select: POST_SELECT,
           }),
-        ]).then(([recent, trending]) => {
+          Promise.all(
+            BLOG_CATEGORIES.map((cat) =>
+              prisma.blogPost.findMany({
+                where: {
+                  ...PUBLIC_WHERE,
+                  category: { slug: cat.slug },
+                },
+                orderBy: { publishedAt: 'desc' },
+                take: 8,
+                select: POST_SELECT,
+              }).catch(() => [])
+            )
+          ).then(postsByCategory => postsByCategory.flat()),
+        ]).then(([recent, trending, categoryLatest]) => {
           // Mescla e deduplica
           const seen = new Set<string>()
-          const merged = [...recent, ...trending].filter(p => !seen.has(p.id) && seen.add(p.id))
+          const merged = [...recent, ...trending, ...categoryLatest].filter(p => !seen.has(p.id) && seen.add(p.id))
           return rankPosts(merged)
         })
       : Promise.resolve([] as PostItem[])
@@ -107,15 +120,15 @@ async function getPosts(category?: string, tag?: string, page = 1) {
         WHERE status = 'PUBLISHED' AND "isPrivate" = false
         GROUP BY tag ORDER BY count DESC LIMIT 16
       `,
-      prisma.blogPost.count({ where: PUBLIC_WHERE }),
+      prisma.blogPost.count({ where }),
       prisma.blogCategory.count(),
     ])
 
     // Hero e cards editoriais vêm do ranking automático (página 1 sem filtro)
     // Em filtro/página 2+ cai de volta para o primeiro post da listagem
-    const hero = editorialRanked[0] ?? null
-    const heroSlides = editorialRanked.slice(0, 4)
-    const editorialIds = editorialRanked.slice(0, 4).map(p => p.id)
+    const heroSlides = selectDiversePosts(editorialRanked, 4, 1)
+    const hero = heroSlides[0] ?? null
+    const editorialIds = heroSlides.map(p => p.id)
 
     // Injeta posts editoriais no topo da listagem se não aparecerem já na página atual
     // (garante que hero/magazine não fiquem duplicados no grid abaixo)
