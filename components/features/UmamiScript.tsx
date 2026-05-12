@@ -8,7 +8,7 @@ export function UmamiScript({ websiteId }: { websiteId: string }) {
       data-host-url="/um"
       data-domains="hallyuhub.com.br,www.hallyuhub.com.br"
       data-exclude-route="/admin,/admin/*"
-      strategy="lazyOnload"
+      strategy="afterInteractive"
     />
   )
 }
