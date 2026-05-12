@@ -1,7 +1,8 @@
 import prisma from "@/lib/prisma"
 import type { Metadata } from "next"
 import { unstable_cache } from "next/cache"
-import { rankPosts } from "@/lib/blog/scoring"
+import { rankPosts, selectDiversePosts } from "@/lib/blog/scoring"
+import { HOME_FEED_CATEGORIES } from "@/lib/config/categories"
 export const HOME_CACHE_TAG = 'home-public-data'
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { HomeFrontPage } from "@/components/home/HomeFrontPage"
@@ -128,6 +129,7 @@ const getHomePublicData = unstable_cache(
                 prisma.blogPost.findMany({
                     where: {
                         status: 'PUBLISHED',
+                        isPrivate: false,
                         ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
                     },
                     take: 30,
@@ -137,6 +139,7 @@ const getHomePublicData = unstable_cache(
                 prisma.blogPost.findMany({
                     where: {
                         status: 'PUBLISHED',
+                        isPrivate: false,
                         publishedAt: { gte: new Date(Date.now() - 60 * 86_400_000) },
                         ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
                     },
@@ -144,9 +147,24 @@ const getHomePublicData = unstable_cache(
                     orderBy: { viewCount: 'desc' },
                     select: POST_SELECT,
                 }).catch(() => []),
-            ]).then(([recent, trending]) => {
+                Promise.all(
+                    HOME_FEED_CATEGORIES.map((slug) =>
+                        prisma.blogPost.findMany({
+                            where: {
+                                status: 'PUBLISHED',
+                                isPrivate: false,
+                                category: { slug },
+                                ...(slottedIds.size > 0 ? { id: { notIn: Array.from(slottedIds) } } : {}),
+                            },
+                            take: 8,
+                            orderBy: { publishedAt: 'desc' },
+                            select: POST_SELECT,
+                        }).catch(() => [])
+                    )
+                ).then(postsByCategory => postsByCategory.flat()),
+            ]).then(([recent, trending, categoryLatest]) => {
                 const seen = new Set<string>()
-                const merged = [...recent, ...trending].filter(p => !seen.has(p.id) && seen.add(p.id))
+                const merged = [...recent, ...trending, ...categoryLatest].filter(p => !seen.has(p.id) && seen.add(p.id))
                 return rankPosts(merged)
             }),
         ])
@@ -156,9 +174,7 @@ const getHomePublicData = unstable_cache(
         // Carousel — calculado primeiro para excluir dos demais slots
         const carouselPosts = settings?.homeCarouselPostIds?.length
             ? settings.homeCarouselPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 5)
-            : [...fallbackPostsRaw]
-                .sort((a, b) => new Date(b.publishedAt ?? 0).getTime() - new Date(a.publishedAt ?? 0).getTime())
-                .slice(0, 5)
+            : selectDiversePosts(fallbackPostsRaw, 5, 2)
         const carouselIds = new Set(carouselPosts.map(p => p.id))
 
         // Fallback excluindo posts já no carousel
@@ -171,7 +187,7 @@ const getHomePublicData = unstable_cache(
         const featuredId = featuredPost?.id
         const secondaryPosts = settings?.homeSecondaryPostIds?.length
             ? settings.homeSecondaryPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 4)
-            : fallback.filter(p => p.id !== featuredId).slice(0, 4)
+            : selectDiversePosts(fallback.filter(p => p.id !== featuredId), 4, 2)
 
         const sidebarPosts = settings?.homeSidebarPostIds?.length
             ? settings.homeSidebarPostIds.map(id => slottedById[id]).filter(Boolean).slice(0, 8)
@@ -248,7 +264,7 @@ const getHomePublicData = unstable_cache(
             topAgencies,
         }
     },
-    ['home-page-public-data-v18'],
+    ['home-page-public-data-v19'],
     { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 

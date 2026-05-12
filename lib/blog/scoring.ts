@@ -45,6 +45,44 @@ export function rankPosts<T extends ScoringInput>(posts: T[], now = Date.now()):
   return [...posts].sort((a, b) => scorePost(b, now) - scorePost(a, now))
 }
 
+export type CategorizedScoringInput = ScoringInput & {
+  category?: { slug: string | null } | null
+}
+
+export function selectDiversePosts<T extends CategorizedScoringInput>(
+  posts: T[],
+  count: number,
+  maxPerCategory = 2
+): T[] {
+  const selected: T[] = []
+  const selectedIds = new Set<string>()
+  const categoryCounts = new Map<string, number>()
+
+  const getId = (post: T) => ('id' in post && typeof post.id === 'string') ? post.id : `${post.publishedAt?.toISOString() ?? ''}:${selected.length}`
+
+  for (const post of posts) {
+    if (selected.length >= count) break
+    const id = getId(post)
+    if (selectedIds.has(id)) continue
+    const category = post.category?.slug ?? '__uncategorized'
+    if ((categoryCounts.get(category) ?? 0) >= maxPerCategory) continue
+
+    selected.push(post)
+    selectedIds.add(id)
+    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
+  }
+
+  for (const post of posts) {
+    if (selected.length >= count) break
+    const id = getId(post)
+    if (selectedIds.has(id)) continue
+    selected.push(post)
+    selectedIds.add(id)
+  }
+
+  return selected
+}
+
 /** Pontuação formatada para debug/admin */
 export function describeScore(post: ScoringInput): string {
   const now = Date.now()
