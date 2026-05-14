@@ -1,11 +1,23 @@
 /**
  * Base agent runner com loop manual
- * Reutilizável para diferentes contextos
+ * Suporta Anthropic (produção) e Ollama (dev local) via AGENT_PROVIDER env var
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { AgentContext, AgentResponse } from "./types";
 
-const client = new Anthropic();
+const PROVIDER = process.env.AGENT_PROVIDER ?? "anthropic"; // 'anthropic' | 'ollama'
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "qwen2.5:7b";
+
+function makeClient() {
+  if (PROVIDER === "ollama") {
+    return new Anthropic({
+      baseURL: OLLAMA_BASE_URL,
+      apiKey: "ollama",
+    });
+  }
+  return new Anthropic();
+}
 
 export interface AgentConfig {
   model?: "claude-opus-4-7" | "claude-sonnet-4-6";
@@ -22,16 +34,19 @@ export async function runAgent(
   context?: AgentContext
 ): Promise<AgentResponse> {
   const {
-    model = "claude-opus-4-7",
+    model: anthropicModel = "claude-opus-4-7",
     maxIterations = 10,
-    maxTokens = 16000,
+    maxTokens = 8000,
     systemPrompt,
     tools,
   } = config;
 
+  const client = makeClient();
+  const model = PROVIDER === "ollama" ? OLLAMA_MODEL : anthropicModel;
+
   const iterations = { count: 0 };
-  const toolCalls: Array<{ name: string; input: unknown; result: any }> =
-    [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toolCalls: Array<{ name: string; input: unknown; result: any }> = [];
 
   let messages: Anthropic.MessageParam[] = [
     { role: "user", content: userQuery },
@@ -45,11 +60,10 @@ export async function runAgent(
         model,
         max_tokens: maxTokens,
         system: systemPrompt,
-        tools: tools,
-        messages: messages,
+        tools,
+        messages,
       });
 
-      // Claude terminou normalmente
       if (response.stop_reason === "end_turn") {
         const textBlock = response.content.find(
           (b): b is Anthropic.TextBlock => b.type === "text"
@@ -67,44 +81,36 @@ export async function runAgent(
         };
       }
 
-      // Verificar se há tool_use
       const toolUseBlocks = response.content.filter(
         (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
       );
 
       if (toolUseBlocks.length === 0) {
-        // Sem tool_use e sem end_turn = erro inesperado
         const textBlock = response.content.find(
           (b): b is Anthropic.TextBlock => b.type === "text"
         );
         return {
           message: textBlock?.text || "Agente interrompido inesperadamente",
           toolCalls,
-          metadata: {
-            iterations: iterations.count,
-          },
+          metadata: { iterations: iterations.count },
         };
       }
 
-      // Adicionar resposta do assistente
       messages.push({ role: "assistant", content: response.content });
 
-      // Executar ferramentas
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolUse of toolUseBlocks) {
         try {
-          const tool = tools.find((t: any) => t.name === toolUse.name)
-          if (!tool) throw new Error(`Tool não encontrada: ${toolUse.name}`)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const tool = tools.find((t: any) => t.name === toolUse.name);
+          if (!tool) throw new Error(`Tool não encontrada: ${toolUse.name}`);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const result = await (tool as any).run(toolUse.input);
-          toolCalls.push({
-            name: toolUse.name,
-            input: toolUse.input,
-            result,
-          });
+          toolCalls.push({ name: toolUse.name, input: toolUse.input, result });
           toolResults.push({
             type: "tool_result",
             tool_use_id: toolUse.id,
-            content: JSON.stringify(result),
+            content: typeof result === "string" ? result : JSON.stringify(result),
           });
         } catch (toolError) {
           toolResults.push({
@@ -116,15 +122,12 @@ export async function runAgent(
         }
       }
 
-      // Adicionar resultados
       messages.push({ role: "user", content: toolResults });
     } catch (error) {
       return {
         message: `Erro do agente: ${error instanceof Error ? error.message : "Desconhecido"}`,
         toolCalls,
-        metadata: {
-          iterations: iterations.count,
-        },
+        metadata: { iterations: iterations.count },
       };
     }
   }
@@ -132,8 +135,6 @@ export async function runAgent(
   return {
     message: `Agente atingiu limite máximo de iterações (${maxIterations})`,
     toolCalls,
-    metadata: {
-      iterations: iterations.count,
-    },
+    metadata: { iterations: iterations.count },
   };
 }
