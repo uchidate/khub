@@ -209,11 +209,15 @@ export default function BlogAgentPage() {
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const [provider, setProvider] = useState<string | null>(null)
+    const [model, setModel] = useState<string | null>(null)
     const bottomRef = useRef<HTMLDivElement>(null)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     useEffect(() => {
-        fetch('/api/agents/blog').then(r => r.json()).then(d => setProvider(d.provider ?? 'anthropic')).catch(() => {})
+        fetch('/api/agents/blog').then(r => r.json()).then(d => {
+            setProvider(d.provider ?? 'anthropic')
+            setModel(d.model ?? null)
+        }).catch(() => {})
     }, [])
 
     useEffect(() => {
@@ -263,7 +267,7 @@ export default function BlogAgentPage() {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) }
     }
 
-    const providerLabel = provider === 'ollama' ? 'Ollama · qwen2.5:7b' : 'Claude · Anthropic'
+    const providerLabel = provider === 'ollama' ? `Ollama · ${model ?? 'local'}` : 'Claude · Anthropic'
     const ProviderIcon = provider === 'ollama' ? Cpu : Zap
 
     return (

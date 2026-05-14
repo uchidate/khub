@@ -56,6 +56,9 @@ export async function GET() {
     status: "active",
     version: "1.0.0",
     provider: process.env.AGENT_PROVIDER ?? "anthropic",
+    model: process.env.AGENT_PROVIDER === "ollama"
+      ? (process.env.OLLAMA_MODEL ?? "qwen2.5:3b")
+      : (process.env.ANTHROPIC_MODEL ?? "claude-opus-4-7"),
     capabilities: [
       "search_artists",
       "search_groups",
