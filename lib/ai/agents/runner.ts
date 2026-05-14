@@ -12,7 +12,8 @@ export interface AgentConfig {
   maxIterations?: number;
   maxTokens?: number;
   systemPrompt: string;
-  tools: any[]; // betaZodTool[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tools: any[];
 }
 
 export async function runAgent(

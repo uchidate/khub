@@ -1,19 +1,24 @@
 /**
  * Data search agent tools (artists, groups, productions)
  */
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { z } from "zod";
+import type { Tool } from "@anthropic-ai/sdk/resources";
 import prisma from "@/lib/prisma";
 
-export const searchArtistsTool = betaZodTool({
+type ToolWithRun = Tool & { run: (input: Record<string, unknown>) => Promise<string> }
+
+export const searchArtistsTool: ToolWithRun = {
   name: "search_artists",
   description: "Buscar artistas por nome ou informação relacionada",
-  inputSchema: z.object({
-    query: z.string().describe("Nome ou palavra-chave (min 2 caracteres)"),
-    limit: z.number().max(10).default(5),
-  }),
-  run: async ({ query, limit }) => {
-    if (query.length < 2) {
+  input_schema: {
+    type: "object",
+    properties: {
+      query: { type: "string", description: "Nome ou palavra-chave (min 2 caracteres)" },
+      limit: { type: "number", description: "Máx resultados (max 10)", default: 5 },
+    },
+    required: ["query"],
+  },
+  run: async ({ query, limit = 5 }) => {
+    if ((query as string).length < 2) {
       return JSON.stringify({ error: "Query muito curta (mín 2 caracteres)" });
     }
     try {
@@ -21,30 +26,20 @@ export const searchArtistsTool = betaZodTool({
         where: {
           isHidden: false,
           OR: [
-            { nameRomanized: { contains: query, mode: "insensitive" } },
-            { nameHangul: { contains: query, mode: "insensitive" } },
+            { nameRomanized: { contains: query as string, mode: "insensitive" } },
+            { nameHangul: { contains: query as string, mode: "insensitive" } },
           ],
         },
         select: {
-          id: true,
-          nameRomanized: true,
-          nameHangul: true,
-          roles: true,
-          primaryImageUrl: true,
-          memberships: {
-            select: { group: { select: { name: true } } },
-            take: 2,
-          },
+          id: true, nameRomanized: true, nameHangul: true, roles: true, primaryImageUrl: true,
+          memberships: { select: { group: { select: { name: true } } }, take: 2 },
         },
-        take: limit,
+        take: Math.min(Number(limit), 10),
       });
       return JSON.stringify({
         artists: artists.map((a) => ({
-          id: a.id,
-          nameRomanized: a.nameRomanized,
-          nameHangul: a.nameHangul,
-          roles: a.roles,
-          primaryImageUrl: a.primaryImageUrl,
+          id: a.id, nameRomanized: a.nameRomanized, nameHangul: a.nameHangul,
+          roles: a.roles, primaryImageUrl: a.primaryImageUrl,
           groups: a.memberships.map((m) => m.group.name),
         })),
         count: artists.length,
@@ -53,44 +48,39 @@ export const searchArtistsTool = betaZodTool({
       return JSON.stringify({ error: `Erro ao buscar artistas: ${error}` });
     }
   },
-});
+};
 
-export const searchGroupsTool = betaZodTool({
+export const searchGroupsTool: ToolWithRun = {
   name: "search_groups",
   description: "Buscar grupos de K-Pop/K-Drama",
-  inputSchema: z.object({
-    query: z.string().describe("Nome do grupo"),
-    limit: z.number().max(10).default(5),
-  }),
-  run: async ({ query, limit }) => {
+  input_schema: {
+    type: "object",
+    properties: {
+      query: { type: "string", description: "Nome do grupo" },
+      limit: { type: "number", description: "Máx resultados (max 10)", default: 5 },
+    },
+    required: ["query"],
+  },
+  run: async ({ query, limit = 5 }) => {
     try {
       const groups = await prisma.musicalGroup.findMany({
         where: {
           isHidden: false,
           OR: [
-            { name: { contains: query, mode: "insensitive" } },
-            { nameHangul: { contains: query, mode: "insensitive" } },
+            { name: { contains: query as string, mode: "insensitive" } },
+            { nameHangul: { contains: query as string, mode: "insensitive" } },
           ],
         },
         select: {
-          id: true,
-          name: true,
-          slug: true,
-          debutDate: true,
+          id: true, name: true, slug: true, debutDate: true,
           agency: { select: { name: true } },
-          members: {
-            select: { artist: { select: { nameRomanized: true } } },
-            take: 5,
-          },
+          members: { select: { artist: { select: { nameRomanized: true } } }, take: 5 },
         },
-        take: limit,
+        take: Math.min(Number(limit), 10),
       });
       return JSON.stringify({
         groups: groups.map((g) => ({
-          id: g.id,
-          name: g.name,
-          slug: g.slug,
-          debutDate: g.debutDate,
+          id: g.id, name: g.name, slug: g.slug, debutDate: g.debutDate,
           agency: g.agency?.name ?? null,
           memberCount: g.members.length,
           members: g.members.map((m) => m.artist.nameRomanized),
@@ -101,50 +91,45 @@ export const searchGroupsTool = betaZodTool({
       return JSON.stringify({ error: `Erro ao buscar grupos: ${error}` });
     }
   },
-});
+};
 
-export const searchProductionsTool = betaZodTool({
+export const searchProductionsTool: ToolWithRun = {
   name: "search_productions",
-  description: "Buscar produções (álbuns, dramas, filmes)",
-  inputSchema: z.object({
-    query: z.string().describe("Título ou palavra-chave"),
-    type: z
-      .enum(["ALBUM", "DRAMA", "MOVIE", "MIXTAPE"])
-      .optional()
-      .describe("Filtrar por tipo"),
-    limit: z.number().max(10).default(5),
-  }),
-  run: async ({ query, type, limit }) => {
+  description: "Buscar produções (dramas, filmes, álbuns)",
+  input_schema: {
+    type: "object",
+    properties: {
+      query: { type: "string", description: "Título ou palavra-chave" },
+      type: {
+        type: "string",
+        enum: ["ALBUM", "DRAMA", "MOVIE", "MIXTAPE"],
+        description: "Filtrar por tipo",
+      },
+      limit: { type: "number", description: "Máx resultados (max 10)", default: 5 },
+    },
+    required: ["query"],
+  },
+  run: async ({ query, type, limit = 5 }) => {
     try {
       const productions = await prisma.production.findMany({
         where: {
           isHidden: false,
-          type: type ? { equals: type } : undefined,
+          ...(type ? { type: { equals: type as string } } : {}),
           OR: [
-            { titlePt: { contains: query, mode: "insensitive" } },
-            { titleKr: { contains: query, mode: "insensitive" } },
+            { titlePt: { contains: query as string, mode: "insensitive" } },
+            { titleKr: { contains: query as string, mode: "insensitive" } },
           ],
         },
         select: {
-          id: true,
-          titlePt: true,
-          type: true,
-          releaseDate: true,
-          imageUrl: true,
-          artists: {
-            select: { artist: { select: { nameRomanized: true } } },
-            take: 3,
-          },
+          id: true, titlePt: true, type: true, releaseDate: true, imageUrl: true,
+          artists: { select: { artist: { select: { nameRomanized: true } } }, take: 3 },
         },
-        take: limit,
+        take: Math.min(Number(limit), 10),
       });
       return JSON.stringify({
         productions: productions.map((p) => ({
-          id: p.id,
-          titlePt: p.titlePt,
-          type: p.type,
-          releaseDate: p.releaseDate,
-          imageUrl: p.imageUrl,
+          id: p.id, titlePt: p.titlePt, type: p.type,
+          releaseDate: p.releaseDate, imageUrl: p.imageUrl,
           artists: p.artists.map((a) => a.artist.nameRomanized),
         })),
         count: productions.length,
@@ -153,32 +138,30 @@ export const searchProductionsTool = betaZodTool({
       return JSON.stringify({ error: `Erro ao buscar produções: ${error}` });
     }
   },
-});
+};
 
-export const getGroupDetailsTool = betaZodTool({
+export const getGroupDetailsTool: ToolWithRun = {
   name: "get_group_details",
   description: "Obter detalhes completos de um grupo",
-  inputSchema: z.object({
-    groupId: z.string().describe("ID do grupo"),
-  }),
+  input_schema: {
+    type: "object",
+    properties: {
+      groupId: { type: "string", description: "ID do grupo" },
+    },
+    required: ["groupId"],
+  },
   run: async ({ groupId }) => {
     try {
       const group = await prisma.musicalGroup.findUnique({
-        where: { id: groupId },
+        where: { id: groupId as string },
         select: {
-          id: true,
-          name: true,
-          nameHangul: true,
-          slug: true,
-          bio: true,
-          debutDate: true,
-          disbandDate: true,
+          id: true, name: true, nameHangul: true, slug: true,
+          bio: true, debutDate: true, disbandDate: true,
           agency: { select: { name: true } },
           members: {
             select: {
               artist: { select: { nameRomanized: true, roles: true } },
-              role: true,
-              joinDate: true,
+              role: true, joinDate: true,
             },
             orderBy: { position: "asc" },
           },
@@ -189,4 +172,4 @@ export const getGroupDetailsTool = betaZodTool({
       return JSON.stringify({ error: `Erro ao buscar grupo: ${error}` });
     }
   },
-});
+};
