@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
-    Plus, Trash2, GripVertical, ChevronUp, ChevronDown,
+    Plus, Trash2, ChevronUp, ChevronDown,
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
     User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
     ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
@@ -447,7 +447,6 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="URL da imagem..." className={inputCls} />
                     {block.url && (
                         <div className="relative h-36 rounded-lg border border-border overflow-hidden bg-surface">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={block.url} alt="preview" className="w-full h-full object-cover"
                                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                         </div>
@@ -476,7 +475,6 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         <div key={i} className="flex gap-2 items-start">
                             {url && (
                                 <div className="w-16 h-12 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={url} alt="" className="w-full h-full object-cover"
                                         onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                                 </div>
@@ -1070,7 +1068,7 @@ function blockPreview(block: BlogBlock): string {
     switch (block.type) {
         case 'blog_heading':         return block.text || '(sem texto)'
         case 'blog_paragraph':       return block.text ? block.text.slice(0, 80) + (block.text.length > 80 ? '…' : '') : '(vazio)'
-        case 'blog_quote':           return `"${block.text.slice(0, 60)}"` || '(vazio)'
+        case 'blog_quote':           return block.text ? `"${block.text.slice(0, 60)}"` : '(vazio)'
         case 'blog_image':           return block.caption || block.url.split('/').pop() || block.url.slice(0, 50) || '(sem URL)'
         case 'blog_gallery':         return `${block.urls.length} imagem(ns)`
         case 'blog_video':           return block.url || '(sem URL)'
@@ -1097,7 +1095,7 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_tabs':            return `${block.tabs.length} aba(s)`
         case 'blog_ranking':         return block.title || `${block.items.length} item(ns)`
         case 'blog_trivia':          return block.question.slice(0, 60) || '(sem pergunta)'
-        case 'blog_comeback_card':   return `${block.artist} — ${block.title}` || '(sem dados)'
+        case 'blog_comeback_card':   return block.artist ? `${block.artist} — ${block.title}` : '(sem dados)'
         case 'blog_member_grid':     return `${block.members.length} membro(s)`
         case 'blog_setlist':         return block.event || `${block.tracks.length} faixa(s)`
         case 'blog_alert':           return block.title || block.text.slice(0, 60) || '(vazio)'
