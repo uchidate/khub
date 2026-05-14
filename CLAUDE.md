@@ -62,21 +62,35 @@ gh pr create --title "..." --body "..."
 
 ## Blog — formato de blocos
 
-`BlogPost` armazena conteúdo como `BlogBlock[]` no campo `content` (JSON). Tipos:
+`BlogPost` armazena conteúdo como `BlogBlock[]` no campo `blocks` (JSON). Tipos:
 
-| type | campos obrigatórios |
-|------|-------------------|
-| `blog_paragraph` | `text: string` |
-| `blog_heading` | `text: string` |
-| `blog_image` | `url: string, alt: string, caption?: string` |
-| `blog_quote` | `text: string, author?: string` |
-| `blog_curiosity` | `text: string` ← **NÃO usar `items: array`** |
-| `blog_list` | `items: string[]` |
-| `blog_rating` | `score: number (0-10), label?: string` |
-| `production_card` | `productionId: string` |
-| `artist_card` | `artistId: string` |
-| `stats_row` | `stats: {label, value}[]` |
-| `embed` | `url: string, type: 'youtube'\|'spotify'` |
+| type | campos obrigatórios | campos opcionais |
+|------|-------------------|-----------------|
+| `blog_paragraph` | `text: string` | — |
+| `blog_heading` | `text: string` | `level?: 2\|3` |
+| `blog_image` | `url: string, alt: string` | `caption?: string` |
+| `blog_gallery` | `images: {url,alt}[]` | — |
+| `blog_quote` | `text: string` | `author?: string` |
+| `blog_curiosity` | `text: string` ← **NÃO usar array** | — |
+| `blog_list` | `items: string[]` | — |
+| `blog_rating` | `score: number (0-10)` | `label?: string` |
+| `blog_video` | `url: string` (YouTube/Shorts) | `caption?: string` |
+| `blog_spotify` | `url: string` (open.spotify.com) | `compact?: boolean` |
+| `blog_twitter` | `url: string` | — |
+| `blog_instagram` | `url: string` | — |
+| `blog_tiktok` | `url: string` | — |
+| `blog_artist_card` | `artistId: string` | — |
+| `blog_production_card` | `productionId: string` | — |
+| `blog_group_card` | `groupId: string` | — |
+| `blog_stats_row` | `stats: {label,value}[]` | — |
+| `blog_callout` | `text: string` | `icon?: string` |
+| `blog_highlight` | `text: string` | — |
+| `blog_pros_cons` | `pros: string[], cons: string[]` | — |
+| `blog_steps` | `steps: {title,text}[]` | — |
+| `blog_product_card` | `name: string` | — |
+| `blog_comparison` | `items: object[]` | — |
+| `blog_timeline` | `events: {date,text}[]` | — |
+| `blog_divider` | — | — |
 
 **Inserção no banco:** escrever SQL em arquivo local → `scp` para servidor → `cat arquivo.sql | docker exec -i <container> psql -U hallyuhub hallyuhub_production`
 

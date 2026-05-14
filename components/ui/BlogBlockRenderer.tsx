@@ -400,6 +400,366 @@ interface BlogBlockRendererProps {
     resolvedEntities?: ResolvedEntities
 }
 
+// ── Interactive blocks ────────────────────────────────────────────────────────
+
+function AccordionBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_accordion' }> }) {
+    const [open, setOpen] = useState<number | null>(null)
+    return (
+        <div className="my-8">
+            {block.title && <h3 className="text-[15px] font-bold text-foreground mb-3">{block.title}</h3>}
+            <div className="flex flex-col gap-2">
+                {block.items.map((item, i) => (
+                    <div key={i} className={`border rounded-xl overflow-hidden transition-colors ${open === i ? 'border-accent/40 bg-accent/5' : 'border-border bg-surface/30'}`}>
+                        <button
+                            onClick={() => setOpen(open === i ? null : i)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 text-left gap-3"
+                        >
+                            <span className="font-semibold text-foreground text-[14px]">{item.question}</span>
+                            <span className={`shrink-0 text-[18px] transition-transform duration-200 ${open === i ? 'rotate-45' : ''}`}>+</span>
+                        </button>
+                        {open === i && (
+                            <div className="px-5 pb-4 text-[13px] text-muted leading-relaxed border-t border-border/50">
+                                <div className="pt-3">{item.answer}</div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function TabsBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_tabs' }> }) {
+    const [active, setActive] = useState(0)
+    return (
+        <div className="my-8">
+            <div className="flex gap-1 border-b border-border mb-4 overflow-x-auto">
+                {block.tabs.map((tab, i) => (
+                    <button
+                        key={i}
+                        onClick={() => setActive(i)}
+                        className={`px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors ${
+                            active === i
+                                ? 'border-accent text-accent'
+                                : 'border-transparent text-muted hover:text-foreground'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+            <div className="text-[13px] text-muted leading-relaxed">
+                {block.tabs[active]?.content}
+            </div>
+        </div>
+    )
+}
+
+function TriviaBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_trivia' }> }) {
+    const [revealed, setRevealed] = useState(false)
+    return (
+        <div className="my-8 border border-purple-400/30 rounded-2xl bg-purple-500/5 overflow-hidden">
+            <div className="px-5 py-4">
+                <p className="text-[11px] font-bold text-purple-500 uppercase tracking-wider mb-2">🧠 Trivia</p>
+                <p className="text-[15px] font-semibold text-foreground leading-snug">{block.question}</p>
+                {block.hint && !revealed && (
+                    <p className="text-[12px] text-muted/70 italic mt-2">💬 {block.hint}</p>
+                )}
+            </div>
+            <div className="border-t border-purple-400/20 px-5 py-3">
+                {revealed ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
+                        <p className="text-[13px] font-semibold text-purple-400 mb-1">Resposta:</p>
+                        <p className="text-[13px] text-foreground leading-relaxed">{block.answer}</p>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setRevealed(true)}
+                        className="text-[12px] font-bold text-purple-500 hover:text-purple-400 transition-colors flex items-center gap-2"
+                    >
+                        <span>👁</span> Revelar resposta
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ── New interactive block components ─────────────────────────────────────────
+
+const PLATFORM_ICONS: Record<string, string> = {
+    twitter: '𝕏', reddit: '🔴', instagram: '📸', tiktok: '🎵', forum: '💬',
+}
+
+function VsBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_vs' }> }) {
+    const storageKey = `vs_${block.optionA.label}_${block.optionB.label}`
+    const [voted, setVoted] = useState<'a' | 'b' | null>(null)
+    const [counts, setCounts] = useState({ a: 47, b: 53 })
+    useEffect(() => {
+        const saved = localStorage.getItem(storageKey)
+        if (saved) setVoted(saved as 'a' | 'b')
+    }, [storageKey])
+    const vote = (side: 'a' | 'b') => {
+        if (voted) return
+        setVoted(side); localStorage.setItem(storageKey, side)
+        setCounts(c => ({ ...c, [side]: c[side] + 1 }))
+    }
+    const total = counts.a + counts.b
+    const pctA = Math.round((counts.a / total) * 100)
+    const pctB = 100 - pctA
+    return (
+        <div className="my-8 rounded-2xl border border-border overflow-hidden">
+            {block.question && (
+                <div className="px-5 py-3 bg-surface/60 border-b border-border text-center">
+                    <p className="text-[13px] font-bold text-foreground">{block.question}</p>
+                </div>
+            )}
+            <div className="grid grid-cols-2">
+                {(['a', 'b'] as const).map(side => {
+                    const opt = side === 'a' ? block.optionA : block.optionB
+                    const pct = side === 'a' ? pctA : pctB
+                    const isWinner = voted && pct > (side === 'a' ? pctB : pctA)
+                    return (
+                        <button key={side} onClick={() => vote(side)} disabled={!!voted}
+                            className={`flex flex-col items-center gap-3 p-5 transition-colors ${!voted ? 'hover:bg-accent/5 cursor-pointer' : 'cursor-default'} ${voted && isWinner ? 'bg-accent/8' : ''} ${side === 'a' ? 'border-r border-border' : ''}`}>
+                            {opt.imageUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={opt.imageUrl} alt={opt.label} className="w-20 h-20 rounded-full object-cover object-top border-2 border-border" />
+                            )}
+                            <div className="text-center">
+                                <p className="font-black text-[15px] text-foreground">{opt.label}</p>
+                                {opt.description && <p className="text-[11px] text-muted mt-0.5">{opt.description}</p>}
+                            </div>
+                            {voted ? (
+                                <div className="w-full">
+                                    <div className="h-1.5 rounded-full bg-border overflow-hidden mb-1">
+                                        <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <p className={`text-[13px] font-black ${isWinner ? 'text-accent' : 'text-muted'}`}>{pct}%</p>
+                                </div>
+                            ) : <span className="text-[11px] font-bold text-accent border border-accent/30 rounded-full px-3 py-1">Votar</span>}
+                        </button>
+                    )
+                })}
+            </div>
+            {!voted && <p className="text-center text-[10px] text-muted py-2 border-t border-border">Clique para votar</p>}
+        </div>
+    )
+}
+
+function PollBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_poll' }> }) {
+    const storageKey = `poll_${block.question}`
+    const [voted, setVoted] = useState<number | null>(null)
+    const [votes, setVotes] = useState<number[]>(() => block.options.map(() => Math.floor(Math.random() * 40) + 10))
+    useEffect(() => {
+        const saved = localStorage.getItem(storageKey)
+        if (saved !== null) setVoted(Number(saved))
+    }, [storageKey])
+    const vote = (i: number) => {
+        if (voted !== null) return
+        setVoted(i); localStorage.setItem(storageKey, String(i))
+        setVotes(v => v.map((n, idx) => idx === i ? n + 1 : n))
+    }
+    const total = votes.reduce((a, b) => a + b, 0)
+    return (
+        <div className="my-8 border border-border rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border bg-surface/40">
+                <p className="text-[11px] font-bold text-accent uppercase tracking-wider mb-1">📊 Enquete</p>
+                <p className="text-[15px] font-bold text-foreground">{block.question}</p>
+            </div>
+            <div className="divide-y divide-border">
+                {block.options.map((opt, i) => {
+                    const pct = Math.round((votes[i] / total) * 100)
+                    const isTop = voted !== null && votes[i] === Math.max(...votes)
+                    return (
+                        <button key={i} onClick={() => vote(i)} disabled={voted !== null}
+                            className="w-full px-5 py-3.5 text-left relative overflow-hidden hover:bg-surface/40 transition-colors disabled:cursor-default">
+                            {voted !== null && (
+                                <div className="absolute inset-y-0 left-0 bg-accent/8 transition-all duration-500 rounded-r" style={{ width: `${pct}%` }} />
+                            )}
+                            <div className="relative flex items-center justify-between">
+                                <span className={`text-[13px] font-semibold ${voted === i ? 'text-accent' : 'text-foreground'}`}>{opt}</span>
+                                {voted !== null && <span className={`text-[12px] font-bold ${isTop ? 'text-accent' : 'text-muted'}`}>{pct}%</span>}
+                            </div>
+                        </button>
+                    )
+                })}
+            </div>
+            {voted !== null && <p className="text-[10px] text-muted text-center py-2 border-t border-border">{total} votos totais</p>}
+        </div>
+    )
+}
+
+function BeforeAfterBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_before_after' }> }) {
+    const [position, setPosition] = useState(50)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const dragging = useRef(false)
+    const update = (clientX: number) => {
+        if (!containerRef.current) return
+        const rect = containerRef.current.getBoundingClientRect()
+        setPosition(Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100)))
+    }
+    return (
+        <div className="my-8 space-y-2">
+            {block.caption && <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{block.caption}</p>}
+            <div ref={containerRef} className="relative rounded-2xl overflow-hidden border border-border select-none cursor-ew-resize" style={{ aspectRatio: '16/9' }}
+                onMouseDown={() => { dragging.current = true }}
+                onMouseMove={e => { if (dragging.current) update(e.clientX) }}
+                onMouseUp={() => { dragging.current = false }}
+                onMouseLeave={() => { dragging.current = false }}
+                onTouchMove={e => update(e.touches[0].clientX)}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={block.after.url} alt={block.after.label || 'Depois'} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={block.before.url} alt={block.before.label || 'Antes'} className="absolute inset-0 object-cover" style={{ width: `${10000 / position}%`, height: '100%', maxWidth: 'none' }} />
+                </div>
+                <div className="absolute inset-y-0 flex items-center pointer-events-none" style={{ left: `${position}%`, transform: 'translateX(-50%)' }}>
+                    <div className="w-0.5 h-full bg-white/80" />
+                    <div className="absolute w-8 h-8 rounded-full bg-white shadow-xl flex items-center justify-center text-[11px] font-bold text-gray-700">⇔</div>
+                </div>
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white/90 bg-black/50 px-2 py-0.5 rounded-full">{block.before.label || 'Antes'}</span>
+                <span className="absolute bottom-2 right-2 text-[10px] font-bold text-white/90 bg-black/50 px-2 py-0.5 rounded-full">{block.after.label || 'Depois'}</span>
+            </div>
+        </div>
+    )
+}
+
+function QuizBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_quiz' }> }) {
+    const [current, setCurrent] = useState(0)
+    const [answers, setAnswers] = useState<(number | null)[]>(Array(block.questions.length).fill(null))
+    const [finished, setFinished] = useState(false)
+    const answer = (i: number) => {
+        if (answers[current] !== null) return
+        const next = [...answers]; next[current] = i; setAnswers(next)
+        setTimeout(() => {
+            if (current + 1 < block.questions.length) setCurrent(c => c + 1)
+            else setFinished(true)
+        }, 800)
+    }
+    const score = answers.filter((a, i) => a === block.questions[i]?.correct).length
+    const q = block.questions[current]
+    return (
+        <div className="my-8 border border-border rounded-2xl overflow-hidden">
+            <div className="px-5 py-3 bg-surface/60 border-b border-border flex items-center justify-between">
+                <p className="text-[13px] font-bold text-foreground">🎯 {block.title ?? 'Quiz'}</p>
+                {!finished && <span className="text-[11px] text-muted">{current + 1}/{block.questions.length}</span>}
+            </div>
+            {finished ? (
+                <div className="p-8 text-center">
+                    <p className="text-4xl font-black text-foreground mb-2">{score}/{block.questions.length}</p>
+                    <p className="text-[14px] text-muted mb-4">
+                        {score === block.questions.length ? '🏆 Perfeito!' : score >= block.questions.length * 0.6 ? '🎉 Muito bem!' : '😅 Tente novamente!'}
+                    </p>
+                    <button onClick={() => { setCurrent(0); setAnswers(Array(block.questions.length).fill(null)); setFinished(false) }}
+                        className="px-4 py-2 rounded-lg bg-accent text-white text-[12px] font-bold hover:opacity-90 transition-opacity">
+                        Tentar novamente
+                    </button>
+                </div>
+            ) : (
+                <div className="p-5">
+                    <div className="flex gap-1 mb-4">
+                        {block.questions.map((_, i) => (
+                            <div key={i} className={`flex-1 h-1 rounded-full ${i < current ? 'bg-accent' : i === current ? 'bg-accent/40' : 'bg-border'}`} />
+                        ))}
+                    </div>
+                    <p className="text-[15px] font-bold text-foreground mb-4">{q.question}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {q.options.map((opt, i) => {
+                            const answered = answers[current] !== null
+                            const isCorrect = i === q.correct
+                            const isChosen = answers[current] === i
+                            return (
+                                <button key={i} onClick={() => answer(i)}
+                                    className={`px-4 py-3 rounded-xl text-[13px] font-semibold border text-left transition-colors ${
+                                        !answered ? 'border-border hover:border-accent hover:bg-accent/5'
+                                        : isCorrect ? 'border-green-400 bg-green-500/10 text-green-600'
+                                        : isChosen ? 'border-red-400 bg-red-500/10 text-red-600'
+                                        : 'border-border text-muted'
+                                    }`}>
+                                    {opt}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function CountdownBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_countdown' }> }) {
+    const calc = () => {
+        const diff = Math.max(0, new Date(block.targetDate).getTime() - Date.now())
+        return {
+            d: Math.floor(diff / 86400000),
+            h: Math.floor((diff % 86400000) / 3600000),
+            m: Math.floor((diff % 3600000) / 60000),
+            s: Math.floor((diff % 60000) / 1000),
+            done: diff === 0,
+        }
+    }
+    const [time, setTime] = useState(calc)
+    useEffect(() => {
+        const t = setInterval(() => setTime(calc()), 1000)
+        return () => clearInterval(t)
+    })
+    return (
+        <div className="my-8 rounded-2xl overflow-hidden border border-pink-400/30 bg-gradient-to-br from-pink-950/20 to-violet-950/20">
+            <div className="px-5 py-4 text-center">
+                <p className="text-[11px] font-bold text-accent uppercase tracking-widest mb-1">⏳ {time.done ? 'Já chegou!' : 'Próximo Comeback'}</p>
+                <p className="text-[18px] font-black text-foreground mb-1">{block.artist} — {block.title}</p>
+                {block.description && <p className="text-[12px] text-muted mb-4">{block.description}</p>}
+                {!time.done ? (
+                    <div className="flex justify-center gap-3">
+                        {[{ v: time.d, label: 'dias' }, { v: time.h, label: 'horas' }, { v: time.m, label: 'min' }, { v: time.s, label: 'seg' }].map(({ v, label }) => (
+                            <div key={label} className="flex flex-col items-center bg-background/60 border border-border rounded-xl px-4 py-3 min-w-[60px]">
+                                <span className="text-[28px] font-black text-foreground tabular-nums">{String(v).padStart(2, '0')}</span>
+                                <span className="text-[10px] text-muted font-semibold">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-[16px] font-bold text-accent">🎉 Já disponível!</p>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function FlashcardBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_flashcard' }> }) {
+    const [idx, setIdx] = useState(0)
+    const [flipped, setFlipped] = useState(false)
+    const card = block.cards[idx]
+    return (
+        <div className="my-8 space-y-3">
+            <div className="flex items-center justify-between">
+                <p className="text-[13px] font-bold text-foreground">🇰🇷 {block.title ?? 'Aprenda Coreano'}</p>
+                <span className="text-[11px] text-muted">{idx + 1}/{block.cards.length}</span>
+            </div>
+            <div className="cursor-pointer" onClick={() => setFlipped(f => !f)} style={{ perspective: '1000px' }}>
+                <div className="relative transition-transform duration-500 rounded-2xl" style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none', minHeight: '160px' }}>
+                    <div className="absolute inset-0 border border-border rounded-2xl bg-surface flex flex-col items-center justify-center p-6 text-center" style={{ backfaceVisibility: 'hidden' }}>
+                        <p className="text-4xl font-black text-foreground mb-2">{card.front}</p>
+                        {card.romanized && <p className="text-[12px] text-muted">({card.romanized})</p>}
+                        <p className="text-[10px] text-muted/60 mt-3">Clique para ver a tradução</p>
+                    </div>
+                    <div className="absolute inset-0 border border-accent/30 bg-accent/5 rounded-2xl flex flex-col items-center justify-center p-6 text-center" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        <p className="text-[18px] font-black text-foreground mb-1">{card.back}</p>
+                        {card.example && <p className="text-[12px] text-muted italic mt-2 leading-relaxed">{card.example}</p>}
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-center gap-2">
+                <button onClick={() => { setIdx(i => Math.max(0, i - 1)); setFlipped(false) }} disabled={idx === 0}
+                    className="px-3 py-1.5 rounded-lg border border-border text-[11px] font-semibold text-muted hover:text-foreground disabled:opacity-30">← Anterior</button>
+                <button onClick={() => { setIdx(i => Math.min(block.cards.length - 1, i + 1)); setFlipped(false) }} disabled={idx === block.cards.length - 1}
+                    className="px-3 py-1.5 rounded-lg border border-border text-[11px] font-semibold text-muted hover:text-foreground disabled:opacity-30">Próximo →</button>
+            </div>
+        </div>
+    )
+}
+
 function isCompactCard(block: BlogBlock): boolean {
     return (
         (block.type === 'blog_artist_card' && !!block.compact) ||
@@ -767,6 +1127,397 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                     <div className="flex-1 h-px bg-border" />
                     <span className="text-[#ff2d78]/40 text-sm">✦</span>
                     <div className="flex-1 h-px bg-border" />
+                </div>
+            )
+
+        case 'blog_accordion':
+            return <AccordionBlock block={block} />
+
+        case 'blog_tabs':
+            return <TabsBlock block={block} />
+
+        case 'blog_ranking':
+            return (
+                <div className="my-8">
+                    {block.title && <h3 className="text-[15px] font-bold text-foreground mb-4">{block.title}</h3>}
+                    <div className="flex flex-col gap-3">
+                        {block.items.map((item, i) => (
+                            <div key={i} className="flex items-center gap-4 p-3 rounded-xl border border-border bg-surface/40 hover:bg-surface transition-colors">
+                                <span className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-full font-black text-[15px] ${
+                                    item.position === 1 ? 'bg-yellow-400 text-yellow-900' :
+                                    item.position === 2 ? 'bg-slate-300 text-slate-700' :
+                                    item.position === 3 ? 'bg-amber-600 text-white' :
+                                    'bg-surface border border-border text-muted'
+                                }`}>{item.position}</span>
+                                {item.imageUrl && (
+                                    <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-border">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-foreground text-[14px]">{item.name}</p>
+                                        {item.badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">{item.badge}</span>}
+                                    </div>
+                                    {item.description && <p className="text-[12px] text-muted mt-0.5 line-clamp-2">{item.description}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_trivia':
+            return <TriviaBlock block={block} />
+
+        case 'blog_comeback_card':
+            return (
+                <div className="my-8 rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-surface to-background">
+                    {block.imageUrl && (
+                        <div className="h-48 relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={block.imageUrl} alt={block.title} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                            {block.type_label && (
+                                <span className="absolute top-3 left-3 text-[11px] font-bold px-2.5 py-1 rounded-full bg-accent text-white uppercase tracking-wider">
+                                    {block.type_label}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    <div className="p-5">
+                        <p className="text-[11px] font-semibold text-accent uppercase tracking-widest mb-1">{block.artist}</p>
+                        <h3 className="text-[20px] font-black text-foreground leading-tight mb-2">{block.title}</h3>
+                        <p className="text-[13px] text-muted mb-3">📅 {block.date}</p>
+                        {block.description && <p className="text-[13px] text-muted leading-relaxed">{block.description}</p>}
+                    </div>
+                </div>
+            )
+
+        case 'blog_member_grid':
+            return (
+                <div className="my-8">
+                    {block.title && <h3 className="text-[15px] font-bold text-foreground mb-4">{block.title}</h3>}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {block.members.map((m, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface/40 text-center">
+                                {m.imageUrl ? (
+                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={m.imageUrl} alt={m.name} className="w-full h-full object-cover object-top" />
+                                    </div>
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-surface border-2 border-border flex items-center justify-center text-2xl">
+                                        🎤
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="font-bold text-foreground text-[13px]">{m.name}</p>
+                                    {m.role && <p className="text-[11px] text-accent font-medium">{m.role}</p>}
+                                    {m.note && <p className="text-[10px] text-muted mt-0.5">{m.note}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_setlist':
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    {(block.event || block.date || block.venue) && (
+                        <div className="bg-surface/60 px-5 py-3 border-b border-border">
+                            {block.event && <p className="font-bold text-foreground text-[14px]">🎤 {block.event}</p>}
+                            <div className="flex gap-4 mt-1">
+                                {block.date && <span className="text-[11px] text-muted">📅 {block.date}</span>}
+                                {block.venue && <span className="text-[11px] text-muted">📍 {block.venue}</span>}
+                            </div>
+                        </div>
+                    )}
+                    <div className="divide-y divide-border">
+                        {block.tracks.map((t, i) => (
+                            <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-surface/40 transition-colors">
+                                <span className="text-[12px] font-bold text-muted/50 w-6 text-right shrink-0">{t.number}</span>
+                                <p className="flex-1 text-[13px] font-medium text-foreground">{t.title}</p>
+                                {t.note && <span className="text-[11px] text-muted italic">{t.note}</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_alert': {
+            const alertStyles = {
+                info:    { border: 'border-blue-400/40',    bg: 'bg-blue-500/5',    icon: 'ℹ️',  title: 'Informação' },
+                tip:     { border: 'border-green-400/40',   bg: 'bg-green-500/5',   icon: '💡',  title: 'Dica' },
+                warning: { border: 'border-amber-400/40',   bg: 'bg-amber-500/5',   icon: '⚠️',  title: 'Atenção' },
+                spoiler: { border: 'border-purple-400/40',  bg: 'bg-purple-500/5',  icon: '🚨',  title: 'Spoiler' },
+            }
+            const s = alertStyles[block.variant] ?? alertStyles.info
+            return (
+                <div className={`my-6 border rounded-xl px-5 py-4 ${s.border} ${s.bg}`}>
+                    <p className="font-bold text-foreground text-[13px] mb-1 flex items-center gap-2">
+                        <span>{s.icon}</span>
+                        {block.title ?? s.title}
+                    </p>
+                    <p className="text-[13px] text-muted leading-relaxed">{block.text}</p>
+                </div>
+            )
+        }
+
+        case 'blog_vs': return <VsBlock block={block} />
+        case 'blog_poll': return <PollBlock block={block} />
+        case 'blog_before_after': return <BeforeAfterBlock block={block} />
+        case 'blog_quiz': return <QuizBlock block={block} />
+        case 'blog_countdown': return <CountdownBlock block={block} />
+        case 'blog_flashcard': return <FlashcardBlock block={block} />
+
+        case 'blog_lyrics':
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    <div className="px-5 py-3 bg-surface/60 border-b border-border flex items-center justify-between">
+                        <p className="text-[13px] font-bold text-foreground">🎵 {block.title ?? 'Trecho da Letra'}</p>
+                        {block.source && <span className="text-[10px] text-muted">Fonte: {block.source}</span>}
+                    </div>
+                    <div className="divide-y divide-border">
+                        {block.lines.map((line, i) => (
+                            <div key={i} className="grid grid-cols-3 gap-0 divide-x divide-border">
+                                <div className="px-4 py-3 text-[13px] font-semibold text-foreground">{line.original}</div>
+                                <div className="px-4 py-3 text-[12px] text-muted italic">{line.romanized ?? ''}</div>
+                                <div className="px-4 py-3 text-[12px] text-accent">{line.translation}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="px-5 py-2 border-t border-border">
+                        <span className="text-[10px] text-muted">Coreano • Romanização • Português</span>
+                    </div>
+                </div>
+            )
+
+        case 'blog_era_card':
+            return (
+                <div className="my-8 rounded-2xl border border-border overflow-hidden bg-gradient-to-br from-surface to-background">
+                    <div className="h-32 relative flex items-end p-4"
+                        style={block.imageUrl
+                            ? { backgroundImage: `url(${block.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                            : { background: block.colors?.length ? `linear-gradient(135deg, ${block.colors.join(', ')})` : 'linear-gradient(135deg, #6D28D9, #EC4899)' }}>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div className="relative">
+                            <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Era</p>
+                            <h3 className="text-[24px] font-black text-white leading-none">{block.era}</h3>
+                        </div>
+                        {block.colors && block.colors.length > 0 && (
+                            <div className="absolute top-3 right-3 flex gap-1.5">
+                                {block.colors.map((c, i) => (
+                                    <div key={i} className="w-5 h-5 rounded-full border-2 border-white/30" style={{ background: c }} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="p-4 space-y-2">
+                        <div className="flex items-center gap-3 text-[12px] text-muted">
+                            <span>📅 {block.period}</span>
+                            {block.concept && <><span className="text-border">•</span><span>🎨 {block.concept}</span></>}
+                        </div>
+                        {block.highlights && block.highlights.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                {block.highlights.map((h, i) => (
+                                    <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent">{h}</span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+
+        case 'blog_chart_history': {
+            const maxPos = Math.max(...block.entries.map(e => e.position))
+            const scale = maxPos + 5
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    <div className="px-5 py-3 bg-surface/60 border-b border-border flex items-center justify-between">
+                        <p className="text-[13px] font-bold text-foreground">📈 {block.title ?? 'Histórico de Charts'}</p>
+                        <span className="text-[11px] text-accent font-bold">{block.chart}</span>
+                    </div>
+                    <div className="px-5 py-4">
+                        <div className="flex items-end gap-2 h-32">
+                            {block.entries.map((e, i) => {
+                                const height = ((scale - e.position) / scale) * 100
+                                return (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                                        <span className="text-[10px] font-bold text-foreground opacity-0 group-hover:opacity-100 transition-opacity">#{e.position}</span>
+                                        <div className="w-full rounded-t-md bg-accent/80 transition-all" style={{ height: `${Math.max(4, height)}%` }} title={`#${e.position}${e.label ? ` — ${e.label}` : ''}`} />
+                                        <span className="text-[9px] text-muted">{e.date}</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        <p className="text-[10px] text-muted mt-2 text-center">Pico: #{Math.min(...block.entries.map(e => e.position))}</p>
+                    </div>
+                </div>
+            )
+        }
+
+        case 'blog_fandom':
+            return (
+                <div className="my-8 space-y-3">
+                    {block.title && <p className="text-[13px] font-bold text-foreground">{block.title}</p>}
+                    {block.quotes.map((q, i) => (
+                        <div key={i} className="border border-border rounded-xl p-4 bg-surface/30">
+                            <p className="text-[13px] text-foreground leading-relaxed mb-2">"{q.text}"</p>
+                            {(q.author || q.platform) && (
+                                <div className="flex items-center gap-2 text-[11px] text-muted">
+                                    {q.platform && <span>{PLATFORM_ICONS[q.platform] ?? '💬'}</span>}
+                                    {q.author && <span className="font-medium">{q.author}</span>}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )
+
+        case 'blog_lightstick':
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    <div className="p-5 flex items-center gap-5" style={{ background: 'linear-gradient(135deg, #1a0030, #2d0050)' }}>
+                        {block.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={block.imageUrl} alt={block.name} className="w-16 h-16 object-contain" />
+                        ) : (
+                            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-3xl border border-white/20">🪄</div>
+                        )}
+                        <div>
+                            <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-0.5">{block.group}</p>
+                            <p className="text-[20px] font-black text-white">{block.name}</p>
+                            {block.generation && <p className="text-[12px] text-white/50">{block.generation}</p>}
+                        </div>
+                        {block.colors.length > 0 && (
+                            <div className="ml-auto flex gap-2">
+                                {block.colors.map((c, i) => (
+                                    <div key={i} className="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg" style={{ background: c }} title={c} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {block.funFact && (
+                        <div className="px-5 py-4 bg-surface/30">
+                            <p className="text-[13px] text-muted leading-relaxed">💡 <strong className="text-foreground">Curiosidade:</strong> {block.funFact}</p>
+                        </div>
+                    )}
+                </div>
+            )
+
+        case 'blog_positions': {
+            const lineColors: Record<string, string> = { vocal: 'bg-blue-400', dance: 'bg-pink-400', rap: 'bg-yellow-400', visual: 'bg-purple-400', all: 'bg-accent' }
+            return (
+                <div className="my-8 space-y-3">
+                    {block.title && <p className="text-[13px] font-bold text-foreground">{block.title}</p>}
+                    <div className="grid grid-cols-2 gap-3">
+                        {block.members.map((m, i) => (
+                            <div key={i} className="border border-border rounded-xl p-3 bg-surface/30 flex gap-3">
+                                {m.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={m.imageUrl} alt={m.name} className="w-10 h-10 rounded-full object-cover object-top border border-border shrink-0" />
+                                ) : (
+                                    <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${m.line ? lineColors[m.line] : 'bg-surface border border-border'}`}>
+                                        {m.name[0]}
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="font-bold text-foreground text-[13px]">{m.name}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {m.positions.map(pos => (
+                                            <span key={pos} className="text-[10px] px-1.5 py-0.5 rounded bg-background border border-border text-muted">{pos}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex gap-3 flex-wrap text-[10px]">
+                        {[['bg-blue-400', 'Vocal'], ['bg-yellow-400', 'Rap'], ['bg-pink-400', 'Dance'], ['bg-purple-400', 'Visual']].map(([color, label]) => (
+                            <span key={label} className="flex items-center gap-1.5 text-muted">
+                                <span className={`w-2 h-2 rounded-full ${color}`} />{label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )
+        }
+
+        case 'blog_discography_grid':
+            return (
+                <div className="my-8 space-y-3">
+                    <p className="text-[13px] font-bold text-foreground">💿 {block.artist} — Discografia</p>
+                    <div className="grid grid-cols-4 gap-2">
+                        {block.albums.map((a, i) => (
+                            <div key={i} className="flex flex-col gap-1">
+                                {a.imageUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={a.imageUrl} alt={a.title} className="aspect-square rounded-xl object-cover border border-border" />
+                                ) : (
+                                    <div className="aspect-square rounded-xl flex items-center justify-center text-2xl border border-white/5"
+                                        style={{ background: a.color ?? 'linear-gradient(135deg, #1a1a2e, #16213e)' }}>
+                                        {a.emoji ?? '💿'}
+                                    </div>
+                                )}
+                                <p className="text-[11px] font-bold text-foreground leading-tight">{a.title}</p>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-muted">{a.year}</span>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface border border-border text-muted/70">{a.type}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_achievement':
+            return (
+                <div className="my-8 space-y-3">
+                    {block.title && <p className="text-[13px] font-bold text-foreground">{block.title}</p>}
+                    <div className="grid grid-cols-2 gap-3">
+                        {block.items.map((b, i) => (
+                            <div key={i} className="border rounded-xl p-4" style={b.color ? { borderColor: b.color + '40', background: b.color + '08' } : { borderColor: 'var(--border)' }}>
+                                <p className="text-2xl mb-2">{b.icon}</p>
+                                <p className="text-[13px] font-bold text-foreground mb-1">{b.title}</p>
+                                <p className="text-[11px] text-muted leading-snug">{b.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_mv_breakdown':
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    <div className="px-5 py-3 bg-surface/60 border-b border-border">
+                        <p className="text-[13px] font-bold text-foreground">🎬 {block.title ?? 'Análise do MV'}</p>
+                    </div>
+                    <div className="divide-y divide-border">
+                        {block.scenes.map((s, i) => {
+                            const [min, sec] = s.time.split(':').map(Number)
+                            const totalSec = (min || 0) * 60 + (sec || 0)
+                            return (
+                                <div key={i} className="flex gap-4 px-5 py-4 hover:bg-surface/30 transition-colors">
+                                    <a href={`https://www.youtube.com/watch?v=${block.videoId}&t=${totalSec}s`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="shrink-0 font-mono text-[12px] font-bold text-accent border border-accent/30 rounded-lg px-2.5 py-1 hover:bg-accent/10 transition-colors self-start mt-0.5">
+                                        {s.time}
+                                    </a>
+                                    <div>
+                                        <p className="text-[13px] font-bold text-foreground mb-1">{s.label}</p>
+                                        <p className="text-[12px] text-muted leading-relaxed">{s.description}</p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <div className="px-5 py-3 border-t border-border">
+                        <a href={`https://www.youtube.com/watch?v=${block.videoId}`} target="_blank" rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-accent hover:underline">▶ Assistir ao MV completo</a>
+                    </div>
                 </div>
             )
 
