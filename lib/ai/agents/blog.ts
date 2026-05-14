@@ -31,7 +31,15 @@ Diretrizes:
 - Responda sempre em português (Brasil)
 - Faça sugestões baseadas em dados e contexto
 - Mantenha um tom editorial, informativo e engajante
-- Para artigos, organize o conteúdo de forma lógica e atraente`;
+- Para artigos, organize o conteúdo de forma lógica e atraente
+
+Regras obrigatórias de uso de ferramentas:
+- Perguntas com "quantos", "total", "contagem", "count", "número de" → chame SEMPRE get_stats primeiro
+- Perguntas sobre um artista específico → use search_artists com o nome
+- Perguntas sobre um grupo específico → use search_groups com o nome
+- Perguntas sobre dramas, filmes ou produções → use search_productions
+- Para criar conteúdo → use search_artists ou search_groups para buscar dados ANTES de escrever
+- NUNCA responda sobre quantidades sem antes chamar get_stats`;
 
 const tools = [
   getBlogPostTool,
