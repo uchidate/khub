@@ -67,6 +67,7 @@ export async function GET() {
       "list_blog_posts",
       "create_draft_blog",
       "update_blog_draft",
+      "get_stats",
     ],
     usage: "POST /api/agents/blog with { query: string }",
   });

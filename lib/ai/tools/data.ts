@@ -140,6 +140,25 @@ export const searchProductionsTool: ToolWithRun = {
   },
 };
 
+export const getStatsTool: ToolWithRun = {
+  name: "get_stats",
+  description: "Retorna contagens totais do banco: artistas, grupos, produções, artigos publicados",
+  input_schema: { type: "object", properties: {}, required: [] },
+  run: async () => {
+    try {
+      const [artists, groups, productions, posts] = await Promise.all([
+        prisma.artist.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+        prisma.musicalGroup.count({ where: { isHidden: false } }),
+        prisma.production.count({ where: { isHidden: false, flaggedAsNonKorean: false } }),
+        prisma.blogPost.count({ where: { status: "PUBLISHED", isPrivate: false } }),
+      ])
+      return JSON.stringify({ artists, groups, productions, publishedPosts: posts })
+    } catch (error) {
+      return JSON.stringify({ error: `Erro ao buscar stats: ${error}` })
+    }
+  },
+}
+
 export const getGroupDetailsTool: ToolWithRun = {
   name: "get_group_details",
   description: "Obter detalhes completos de um grupo",

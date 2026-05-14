@@ -14,6 +14,7 @@ import {
   searchGroupsTool,
   searchProductionsTool,
   getGroupDetailsTool,
+  getStatsTool,
 } from "@/lib/ai/tools/data";
 
 const systemPrompt = `Você é um assistente especialista em cultura coreana (K-Pop, K-Drama, K-Beauty).
@@ -41,6 +42,7 @@ const tools = [
   searchGroupsTool,
   searchProductionsTool,
   getGroupDetailsTool,
+  getStatsTool,
 ];
 
 export async function runBlogAgent(query: string) {

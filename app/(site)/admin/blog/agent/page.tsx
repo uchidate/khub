@@ -32,6 +32,7 @@ const TOOL_META: Record<string, { label: string; icon: React.ReactNode; color: s
     list_blog_posts:   { label: 'Listar artigos',     icon: <FileText className="w-3 h-3" />, color: 'text-teal-500' },
     create_draft_blog: { label: 'Criar rascunho',     icon: <PenLine className="w-3 h-3" />,  color: 'text-orange-500' },
     update_blog_draft: { label: 'Atualizar rascunho', icon: <PenLine className="w-3 h-3" />,  color: 'text-amber-500' },
+    get_stats:         { label: 'Estatísticas do banco', icon: <Sparkles className="w-3 h-3" />, color: 'text-cyan-500' },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
