@@ -92,11 +92,12 @@ export async function runAgent(
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolUse of toolUseBlocks) {
         try {
-          // Execute the tool using its run method
-          const result = await (toolUse as any).run((toolUse as any).input);
+          const tool = tools.find((t: any) => t.name === toolUse.name)
+          if (!tool) throw new Error(`Tool não encontrada: ${toolUse.name}`)
+          const result = await (tool as any).run(toolUse.input);
           toolCalls.push({
-            name: (toolUse as any).name,
-            input: (toolUse as any).input,
+            name: toolUse.name,
+            input: toolUse.input,
             result,
           });
           toolResults.push({

@@ -21,12 +21,13 @@ export const getBlogPostTool = betaZodTool({
           slug: true,
           excerpt: true,
           publishedAt: true,
+          status: true,
           category: { select: { name: true } },
         },
       });
-      return post || { error: "Artigo não encontrado" };
+      return JSON.stringify(post || { error: "Artigo não encontrado" });
     } catch (error) {
-      return { error: `Erro ao buscar artigo: ${error}` };
+      return JSON.stringify({ error: `Erro ao buscar artigo: ${error}` });
     }
   },
 });
@@ -36,15 +37,15 @@ export const listBlogPostsTool = betaZodTool({
   description: "Listar artigos publicados do blog (com filtro opcional de categoria)",
   inputSchema: z.object({
     category: z.string().optional().describe("Slug da categoria"),
-    limit: z.number().default(5).describe("Máx artigos a retornar (max 20)"),
+    limit: z.number().max(20).default(5).describe("Máx artigos a retornar (max 20)"),
     skip: z.number().default(0).describe("Offset para paginação"),
   }),
   run: async ({ category, limit, skip }) => {
     try {
       const posts = await prisma.blogPost.findMany({
         where: {
-          published: true,
-          isHidden: false,
+          status: "PUBLISHED",
+          isPrivate: false,
           category: category ? { slug: category } : undefined,
         },
         select: {
@@ -59,9 +60,9 @@ export const listBlogPostsTool = betaZodTool({
         take: Math.min(limit, 20),
         skip,
       });
-      return { posts, total: posts.length };
+      return JSON.stringify({ posts, total: posts.length });
     } catch (error) {
-      return { error: `Erro ao listar artigos: ${error}` };
+      return JSON.stringify({ error: `Erro ao listar artigos: ${error}` });
     }
   },
 });
@@ -72,27 +73,27 @@ export const createDraftBlogTool = betaZodTool({
   inputSchema: z.object({
     title: z.string().describe("Título do artigo"),
     excerpt: z.string().describe("Resumo/descrição curta"),
-    slug: z
-      .string()
-      .describe("URL slug (ex: 'bts-new-album-2024')"),
+    slug: z.string().describe("URL slug (ex: 'bts-new-album-2024')"),
     categoryId: z.string().optional().describe("ID da categoria"),
+    authorId: z.string().describe("ID do usuário autor"),
   }),
-  run: async ({ title, excerpt, slug, categoryId }) => {
+  run: async ({ title, excerpt, slug, categoryId, authorId }) => {
     try {
       const post = await prisma.blogPost.create({
         data: {
           title,
           excerpt,
           slug,
-          content: [], // BlogBlock[] vazio — será preenchido depois
-          published: false,
+          contentMd: "",
+          status: "DRAFT",
+          authorId,
           categoryId: categoryId || undefined,
         },
-        select: { id: true, slug: true, title: true, published: true },
+        select: { id: true, slug: true, title: true, status: true },
       });
-      return { ...post, status: "draft" };
+      return JSON.stringify(post);
     } catch (error) {
-      return { error: `Erro ao criar rascunho: ${error}` };
+      return JSON.stringify({ error: `Erro ao criar rascunho: ${error}` });
     }
   },
 });
@@ -104,22 +105,22 @@ export const updateBlogDraftTool = betaZodTool({
     postId: z.string().describe("ID do post"),
     title: z.string().optional(),
     excerpt: z.string().optional(),
-    content: z.array(z.record(z.unknown())).optional().describe("BlogBlock[] JSON"),
+    contentMd: z.string().optional().describe("Conteúdo markdown do artigo"),
   }),
-  run: async ({ postId, title, excerpt, content }) => {
+  run: async ({ postId, title, excerpt, contentMd }) => {
     try {
       const updated = await prisma.blogPost.update({
         where: { id: postId },
         data: {
           ...(title && { title }),
           ...(excerpt && { excerpt }),
-          ...(content && { content: content as any }),
+          ...(contentMd !== undefined && { contentMd }),
         },
-        select: { id: true, slug: true, title: true, published: true },
+        select: { id: true, slug: true, title: true, status: true },
       });
-      return updated;
+      return JSON.stringify(updated);
     } catch (error) {
-      return { error: `Erro ao atualizar rascunho: ${error}` };
+      return JSON.stringify({ error: `Erro ao atualizar rascunho: ${error}` });
     }
   },
 });

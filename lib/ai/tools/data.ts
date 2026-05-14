@@ -10,43 +10,47 @@ export const searchArtistsTool = betaZodTool({
   description: "Buscar artistas por nome ou informação relacionada",
   inputSchema: z.object({
     query: z.string().describe("Nome ou palavra-chave (min 2 caracteres)"),
-    limit: z.number().default(5).max(10),
+    limit: z.number().max(10).default(5),
   }),
   run: async ({ query, limit }) => {
     if (query.length < 2) {
-      return { error: "Query muito curta (mín 2 caracteres)" };
+      return JSON.stringify({ error: "Query muito curta (mín 2 caracteres)" });
     }
     try {
       const artists = await prisma.artist.findMany({
         where: {
           isHidden: false,
           OR: [
-            { name: { contains: query, mode: "insensitive" } },
+            { nameRomanized: { contains: query, mode: "insensitive" } },
             { nameHangul: { contains: query, mode: "insensitive" } },
           ],
         },
         select: {
           id: true,
-          name: true,
+          nameRomanized: true,
           nameHangul: true,
-          role: true,
-          profileImageUrl: true,
-          groups: {
+          roles: true,
+          primaryImageUrl: true,
+          memberships: {
             select: { group: { select: { name: true } } },
             take: 2,
           },
         },
         take: limit,
       });
-      return {
+      return JSON.stringify({
         artists: artists.map((a) => ({
-          ...a,
-          groups: a.groups.map((g) => g.group.name),
+          id: a.id,
+          nameRomanized: a.nameRomanized,
+          nameHangul: a.nameHangul,
+          roles: a.roles,
+          primaryImageUrl: a.primaryImageUrl,
+          groups: a.memberships.map((m) => m.group.name),
         })),
         count: artists.length,
-      };
+      });
     } catch (error) {
-      return { error: `Erro ao buscar artistas: ${error}` };
+      return JSON.stringify({ error: `Erro ao buscar artistas: ${error}` });
     }
   },
 });
@@ -56,7 +60,7 @@ export const searchGroupsTool = betaZodTool({
   description: "Buscar grupos de K-Pop/K-Drama",
   inputSchema: z.object({
     query: z.string().describe("Nome do grupo"),
-    limit: z.number().default(5).max(10),
+    limit: z.number().max(10).default(5),
   }),
   run: async ({ query, limit }) => {
     try {
@@ -75,22 +79,26 @@ export const searchGroupsTool = betaZodTool({
           debutDate: true,
           agency: { select: { name: true } },
           members: {
-            select: { artist: { select: { name: true } } },
+            select: { artist: { select: { nameRomanized: true } } },
             take: 5,
           },
         },
         take: limit,
       });
-      return {
+      return JSON.stringify({
         groups: groups.map((g) => ({
-          ...g,
+          id: g.id,
+          name: g.name,
+          slug: g.slug,
+          debutDate: g.debutDate,
+          agency: g.agency?.name ?? null,
           memberCount: g.members.length,
-          members: g.members.map((m) => m.artist.name),
+          members: g.members.map((m) => m.artist.nameRomanized),
         })),
         count: groups.length,
-      };
+      });
     } catch (error) {
-      return { error: `Erro ao buscar grupos: ${error}` };
+      return JSON.stringify({ error: `Erro ao buscar grupos: ${error}` });
     }
   },
 });
@@ -104,7 +112,7 @@ export const searchProductionsTool = betaZodTool({
       .enum(["ALBUM", "DRAMA", "MOVIE", "MIXTAPE"])
       .optional()
       .describe("Filtrar por tipo"),
-    limit: z.number().default(5).max(10),
+    limit: z.number().max(10).default(5),
   }),
   run: async ({ query, type, limit }) => {
     try {
@@ -113,32 +121,36 @@ export const searchProductionsTool = betaZodTool({
           isHidden: false,
           type: type ? { equals: type } : undefined,
           OR: [
-            { title: { contains: query, mode: "insensitive" } },
-            { description: { contains: query, mode: "insensitive" } },
+            { titlePt: { contains: query, mode: "insensitive" } },
+            { titleKr: { contains: query, mode: "insensitive" } },
           ],
         },
         select: {
           id: true,
-          title: true,
+          titlePt: true,
           type: true,
           releaseDate: true,
-          posterUrl: true,
-          groups: {
-            select: { group: { select: { name: true } } },
+          imageUrl: true,
+          artists: {
+            select: { artist: { select: { nameRomanized: true } } },
             take: 3,
           },
         },
         take: limit,
       });
-      return {
+      return JSON.stringify({
         productions: productions.map((p) => ({
-          ...p,
-          groups: p.groups.map((g) => g.group.name),
+          id: p.id,
+          titlePt: p.titlePt,
+          type: p.type,
+          releaseDate: p.releaseDate,
+          imageUrl: p.imageUrl,
+          artists: p.artists.map((a) => a.artist.nameRomanized),
         })),
         count: productions.length,
-      };
+      });
     } catch (error) {
-      return { error: `Erro ao buscar produções: ${error}` };
+      return JSON.stringify({ error: `Erro ao buscar produções: ${error}` });
     }
   },
 });
@@ -164,7 +176,7 @@ export const getGroupDetailsTool = betaZodTool({
           agency: { select: { name: true } },
           members: {
             select: {
-              artist: { select: { name: true, role: true } },
+              artist: { select: { nameRomanized: true, roles: true } },
               role: true,
               joinDate: true,
             },
@@ -172,9 +184,9 @@ export const getGroupDetailsTool = betaZodTool({
           },
         },
       });
-      return group || { error: "Grupo não encontrado" };
+      return JSON.stringify(group || { error: "Grupo não encontrado" });
     } catch (error) {
-      return { error: `Erro ao buscar grupo: ${error}` };
+      return JSON.stringify({ error: `Erro ao buscar grupo: ${error}` });
     }
   },
 });
