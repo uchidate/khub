@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     Upload, CheckCircle, XCircle, AlertTriangle, Loader2,
     ChevronDown, ChevronRight, FileJson, Sparkles, ExternalLink, RotateCcw,
+    Globe, Server,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -84,6 +85,9 @@ export default function BlogImportPage() {
     const [metaAutoFilled, setMetaAutoFilled] = useState(false)
     const [importedPost, setImportedPost] = useState<{ id: string; slug: string; title: string } | null>(null)
     const [importError, setImportError] = useState('')
+    const [publishEnvs, setPublishEnvs] = useState<{ staging: boolean; production: boolean }>({ staging: false, production: false })
+    const [publishing, setPublishing] = useState(false)
+    const [publishResults, setPublishResults] = useState<Record<string, { success: boolean; error?: string }> | null>(null)
 
     useEffect(() => {
         fetch('/api/admin/blog/categories').then(r => r.json()).then(d => setCategories(d.categories ?? d ?? [])).catch(() => {})
@@ -171,10 +175,32 @@ export default function BlogImportPage() {
         }
     }
 
+    const publishRemote = async () => {
+        if (!importedPost) return
+        const envs = (Object.keys(publishEnvs) as Array<'staging' | 'production'>).filter(k => publishEnvs[k])
+        if (envs.length === 0) return
+        setPublishing(true)
+        setPublishResults(null)
+        try {
+            const res = await fetch('/api/admin/blog/publish-remote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId: importedPost.id, environments: envs }),
+            })
+            const data = await res.json()
+            setPublishResults(data.results ?? { error: data.error })
+        } catch {
+            setPublishResults({ error: { success: false, error: 'Erro de conexão' } })
+        } finally {
+            setPublishing(false)
+        }
+    }
+
     const reset = () => {
         setStep('input'); setRawJson(''); setBlocks([]); setParseError('')
         setValidation(null); setForm({ title: '', slug: '', excerpt: '', categoryId: '' })
         setMetaAutoFilled(false); setTags([]); setImportedPost(null); setImportError('')
+        setPublishEnvs({ staging: false, production: false }); setPublishing(false); setPublishResults(null)
     }
 
     return (
@@ -421,6 +447,54 @@ export default function BlogImportPage() {
                             >
                                 <Upload className="w-4 h-4" /> Importar outro
                             </button>
+                        </div>
+
+                        {/* Publish to remote */}
+                        <div className="w-full max-w-sm border border-border rounded-xl bg-surface/30 p-4 flex flex-col gap-3">
+                            <p className="text-[12px] font-semibold text-foreground flex items-center gap-2">
+                                <Globe className="w-3.5 h-3.5 text-accent" />
+                                Publicar nos ambientes remotos
+                            </p>
+                            <div className="flex gap-3">
+                                {(['staging', 'production'] as const).map(env => (
+                                    <label key={env} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={publishEnvs[env]}
+                                            onChange={e => setPublishEnvs(p => ({ ...p, [env]: e.target.checked }))}
+                                            className="rounded border-border accent-accent"
+                                        />
+                                        <span className={`text-[12px] font-semibold capitalize ${env === 'production' ? 'text-red-500' : 'text-amber-500'}`}>
+                                            {env}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                            <button
+                                onClick={publishRemote}
+                                disabled={publishing || (!publishEnvs.staging && !publishEnvs.production)}
+                                className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-foreground text-background text-[12px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+                            >
+                                {publishing
+                                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Publicando…</>
+                                    : <><Server className="w-3.5 h-3.5" /> Publicar e marcar como PUBLISHED</>
+                                }
+                            </button>
+                            {publishResults && (
+                                <div className="flex flex-col gap-1.5">
+                                    {Object.entries(publishResults).map(([env, r]) => (
+                                        <div key={env} className={`flex items-center gap-2 text-[11px] ${r.success ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            {r.success
+                                                ? <CheckCircle className="w-3 h-3 shrink-0" />
+                                                : <XCircle className="w-3 h-3 shrink-0" />
+                                            }
+                                            <span className="capitalize font-semibold">{env}:</span>
+                                            <span>{r.success ? 'publicado' : (r.error ?? 'erro')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <p className="text-[10px] text-muted/50">Requer STAGING_DATABASE_URL e PRODUCTION_DATABASE_URL no .env.local</p>
                         </div>
                     </div>
                 )}
