@@ -126,7 +126,7 @@ export default function BlogImportPage() {
         const saved = localStorage.getItem(LS_JSON_KEY)
         if (saved) { setRawJson(saved); setWordCount(countWords(saved)) }
         const hist = localStorage.getItem(LS_HISTORY_KEY)
-        if (hist) { try { setRecentImports(JSON.parse(hist)) } catch {} }
+        if (hist) { try { setRecentImports(JSON.parse(hist)) } catch (_e) { /* invalid JSON */ } }
         fetch('/api/admin/blog/tunnel-status').then(r => r.json()).then(setTunnelStatus).catch(() => {})
     }, [])
 
@@ -562,7 +562,6 @@ export default function BlogImportPage() {
                                             onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f) }} />
                                     </div>
                                     {form.coverImageUrl && (
-                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img src={form.coverImageUrl} alt="cover preview"
                                             className="mt-2 w-full h-28 object-cover rounded-lg border border-border"
                                             onError={e => (e.currentTarget.style.display = 'none')} />
