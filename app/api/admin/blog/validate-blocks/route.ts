@@ -11,6 +11,8 @@ const VALID_TYPES = [
     "blog_stats_row", "blog_divider", "blog_callout", "blog_highlight",
     "blog_pros_cons", "blog_steps", "blog_product_card", "blog_comparison",
     "blog_timeline",
+    "blog_accordion", "blog_tabs", "blog_ranking", "blog_trivia",
+    "blog_comeback_card", "blog_member_grid", "blog_setlist", "blog_alert",
 ]
 
 const REQUIRED_FIELDS: Record<string, string[]> = {
@@ -39,6 +41,14 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
     blog_comparison:     ["items"],
     blog_timeline:       ["events"],
     blog_divider:        [],
+    blog_accordion:      ["items"],
+    blog_tabs:           ["tabs"],
+    blog_ranking:        ["items"],
+    blog_trivia:         ["question", "answer"],
+    blog_comeback_card:  ["artist", "title", "date"],
+    blog_member_grid:    ["members"],
+    blog_setlist:        ["tracks"],
+    blog_alert:          ["text", "variant"],
 }
 
 interface ValidationIssue { block: number; type: string; message: string }

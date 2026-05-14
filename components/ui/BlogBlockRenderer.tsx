@@ -400,6 +400,91 @@ interface BlogBlockRendererProps {
     resolvedEntities?: ResolvedEntities
 }
 
+// ── Interactive blocks ────────────────────────────────────────────────────────
+
+function AccordionBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_accordion' }> }) {
+    const [open, setOpen] = useState<number | null>(null)
+    return (
+        <div className="my-8">
+            {block.title && <h3 className="text-[15px] font-bold text-foreground mb-3">{block.title}</h3>}
+            <div className="flex flex-col gap-2">
+                {block.items.map((item, i) => (
+                    <div key={i} className={`border rounded-xl overflow-hidden transition-colors ${open === i ? 'border-accent/40 bg-accent/5' : 'border-border bg-surface/30'}`}>
+                        <button
+                            onClick={() => setOpen(open === i ? null : i)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 text-left gap-3"
+                        >
+                            <span className="font-semibold text-foreground text-[14px]">{item.question}</span>
+                            <span className={`shrink-0 text-[18px] transition-transform duration-200 ${open === i ? 'rotate-45' : ''}`}>+</span>
+                        </button>
+                        {open === i && (
+                            <div className="px-5 pb-4 text-[13px] text-muted leading-relaxed border-t border-border/50">
+                                <div className="pt-3">{item.answer}</div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function TabsBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_tabs' }> }) {
+    const [active, setActive] = useState(0)
+    return (
+        <div className="my-8">
+            <div className="flex gap-1 border-b border-border mb-4 overflow-x-auto">
+                {block.tabs.map((tab, i) => (
+                    <button
+                        key={i}
+                        onClick={() => setActive(i)}
+                        className={`px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors ${
+                            active === i
+                                ? 'border-accent text-accent'
+                                : 'border-transparent text-muted hover:text-foreground'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+            <div className="text-[13px] text-muted leading-relaxed">
+                {block.tabs[active]?.content}
+            </div>
+        </div>
+    )
+}
+
+function TriviaBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_trivia' }> }) {
+    const [revealed, setRevealed] = useState(false)
+    return (
+        <div className="my-8 border border-purple-400/30 rounded-2xl bg-purple-500/5 overflow-hidden">
+            <div className="px-5 py-4">
+                <p className="text-[11px] font-bold text-purple-500 uppercase tracking-wider mb-2">🧠 Trivia</p>
+                <p className="text-[15px] font-semibold text-foreground leading-snug">{block.question}</p>
+                {block.hint && !revealed && (
+                    <p className="text-[12px] text-muted/70 italic mt-2">💬 {block.hint}</p>
+                )}
+            </div>
+            <div className="border-t border-purple-400/20 px-5 py-3">
+                {revealed ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
+                        <p className="text-[13px] font-semibold text-purple-400 mb-1">Resposta:</p>
+                        <p className="text-[13px] text-foreground leading-relaxed">{block.answer}</p>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setRevealed(true)}
+                        className="text-[12px] font-bold text-purple-500 hover:text-purple-400 transition-colors flex items-center gap-2"
+                    >
+                        <span>👁</span> Revelar resposta
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}
+
 function isCompactCard(block: BlogBlock): boolean {
     return (
         (block.type === 'blog_artist_card' && !!block.compact) ||
@@ -769,6 +854,142 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                     <div className="flex-1 h-px bg-border" />
                 </div>
             )
+
+        case 'blog_accordion':
+            return <AccordionBlock block={block} />
+
+        case 'blog_tabs':
+            return <TabsBlock block={block} />
+
+        case 'blog_ranking':
+            return (
+                <div className="my-8">
+                    {block.title && <h3 className="text-[15px] font-bold text-foreground mb-4">{block.title}</h3>}
+                    <div className="flex flex-col gap-3">
+                        {block.items.map((item, i) => (
+                            <div key={i} className="flex items-center gap-4 p-3 rounded-xl border border-border bg-surface/40 hover:bg-surface transition-colors">
+                                <span className={`w-9 h-9 shrink-0 flex items-center justify-center rounded-full font-black text-[15px] ${
+                                    item.position === 1 ? 'bg-yellow-400 text-yellow-900' :
+                                    item.position === 2 ? 'bg-slate-300 text-slate-700' :
+                                    item.position === 3 ? 'bg-amber-600 text-white' :
+                                    'bg-surface border border-border text-muted'
+                                }`}>{item.position}</span>
+                                {item.imageUrl && (
+                                    <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-border">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-foreground text-[14px]">{item.name}</p>
+                                        {item.badge && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">{item.badge}</span>}
+                                    </div>
+                                    {item.description && <p className="text-[12px] text-muted mt-0.5 line-clamp-2">{item.description}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_trivia':
+            return <TriviaBlock block={block} />
+
+        case 'blog_comeback_card':
+            return (
+                <div className="my-8 rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-surface to-background">
+                    {block.imageUrl && (
+                        <div className="h-48 relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={block.imageUrl} alt={block.title} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                            {block.type_label && (
+                                <span className="absolute top-3 left-3 text-[11px] font-bold px-2.5 py-1 rounded-full bg-accent text-white uppercase tracking-wider">
+                                    {block.type_label}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    <div className="p-5">
+                        <p className="text-[11px] font-semibold text-accent uppercase tracking-widest mb-1">{block.artist}</p>
+                        <h3 className="text-[20px] font-black text-foreground leading-tight mb-2">{block.title}</h3>
+                        <p className="text-[13px] text-muted mb-3">📅 {block.date}</p>
+                        {block.description && <p className="text-[13px] text-muted leading-relaxed">{block.description}</p>}
+                    </div>
+                </div>
+            )
+
+        case 'blog_member_grid':
+            return (
+                <div className="my-8">
+                    {block.title && <h3 className="text-[15px] font-bold text-foreground mb-4">{block.title}</h3>}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {block.members.map((m, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface/40 text-center">
+                                {m.imageUrl ? (
+                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={m.imageUrl} alt={m.name} className="w-full h-full object-cover object-top" />
+                                    </div>
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-surface border-2 border-border flex items-center justify-center text-2xl">
+                                        🎤
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="font-bold text-foreground text-[13px]">{m.name}</p>
+                                    {m.role && <p className="text-[11px] text-accent font-medium">{m.role}</p>}
+                                    {m.note && <p className="text-[10px] text-muted mt-0.5">{m.note}</p>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_setlist':
+            return (
+                <div className="my-8 border border-border rounded-2xl overflow-hidden">
+                    {(block.event || block.date || block.venue) && (
+                        <div className="bg-surface/60 px-5 py-3 border-b border-border">
+                            {block.event && <p className="font-bold text-foreground text-[14px]">🎤 {block.event}</p>}
+                            <div className="flex gap-4 mt-1">
+                                {block.date && <span className="text-[11px] text-muted">📅 {block.date}</span>}
+                                {block.venue && <span className="text-[11px] text-muted">📍 {block.venue}</span>}
+                            </div>
+                        </div>
+                    )}
+                    <div className="divide-y divide-border">
+                        {block.tracks.map((t, i) => (
+                            <div key={i} className="flex items-center gap-4 px-5 py-3 hover:bg-surface/40 transition-colors">
+                                <span className="text-[12px] font-bold text-muted/50 w-6 text-right shrink-0">{t.number}</span>
+                                <p className="flex-1 text-[13px] font-medium text-foreground">{t.title}</p>
+                                {t.note && <span className="text-[11px] text-muted italic">{t.note}</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'blog_alert': {
+            const alertStyles = {
+                info:    { border: 'border-blue-400/40',    bg: 'bg-blue-500/5',    icon: 'ℹ️',  title: 'Informação' },
+                tip:     { border: 'border-green-400/40',   bg: 'bg-green-500/5',   icon: '💡',  title: 'Dica' },
+                warning: { border: 'border-amber-400/40',   bg: 'bg-amber-500/5',   icon: '⚠️',  title: 'Atenção' },
+                spoiler: { border: 'border-purple-400/40',  bg: 'bg-purple-500/5',  icon: '🚨',  title: 'Spoiler' },
+            }
+            const s = alertStyles[block.variant] ?? alertStyles.info
+            return (
+                <div className={`my-6 border rounded-xl px-5 py-4 ${s.border} ${s.bg}`}>
+                    <p className="font-bold text-foreground text-[13px] mb-1 flex items-center gap-2">
+                        <span>{s.icon}</span>
+                        {block.title ?? s.title}
+                    </p>
+                    <p className="text-[13px] text-muted leading-relaxed">{block.text}</p>
+                </div>
+            )
+        }
 
         default:
             return null

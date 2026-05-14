@@ -262,6 +262,69 @@ export type BlogComparisonBlock = {
     rows: { label: string; values: string[] }[]
 }
 
+// Acordeão retrátil — FAQ, perguntas e respostas, seções colapsáveis
+export type BlogAccordionBlock = {
+    type: 'blog_accordion'
+    title?: string
+    items: { question: string; answer: string }[]
+}
+
+// Abas de conteúdo — perfil, discografia, curiosidades
+export type BlogTabsBlock = {
+    type: 'blog_tabs'
+    tabs: { label: string; content: string }[]
+}
+
+// Ranking numerado com imagem e descrição
+export type BlogRankingBlock = {
+    type: 'blog_ranking'
+    title?: string
+    items: { position: number; name: string; description?: string; imageUrl?: string; badge?: string }[]
+}
+
+// Trivia — pergunta com resposta oculta (clique para revelar)
+export type BlogTriviaBlock = {
+    type: 'blog_trivia'
+    question: string
+    answer: string
+    hint?: string
+}
+
+// Card de comeback / lançamento — anúncio com data, título e imagem
+export type BlogComebackCardBlock = {
+    type: 'blog_comeback_card'
+    artist: string
+    title: string
+    date: string          // ex: "2025-06-15"
+    imageUrl?: string
+    type_label?: string   // ex: "Mini Album", "Single", "Full Album"
+    description?: string
+}
+
+// Grade de membros — foto + nome + cargo para grupos
+export type BlogMemberGridBlock = {
+    type: 'blog_member_grid'
+    members: { name: string; role?: string; imageUrl?: string; note?: string }[]
+    title?: string
+}
+
+// Setlist de show — lista de músicas com número e duração opcional
+export type BlogSetlistBlock = {
+    type: 'blog_setlist'
+    event?: string        // ex: "MOTS: ON! Clip - BE-hind Story"
+    date?: string
+    venue?: string
+    tracks: { number: number; title: string; note?: string }[]
+}
+
+// Caixa de alerta / tip / aviso
+export type BlogAlertBlock = {
+    type: 'blog_alert'
+    variant: 'info' | 'tip' | 'warning' | 'spoiler'
+    text: string
+    title?: string
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -288,6 +351,14 @@ export type BlogBlock =
     | BlogStepsBlock
     | BlogProductCardBlock
     | BlogComparisonBlock
+    | BlogAccordionBlock
+    | BlogTabsBlock
+    | BlogRankingBlock
+    | BlogTriviaBlock
+    | BlogComebackCardBlock
+    | BlogMemberGridBlock
+    | BlogSetlistBlock
+    | BlogAlertBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -317,6 +388,14 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_steps:            'Passo a Passo',
     blog_product_card:     'Card de Produto',
     blog_comparison:       'Tabela Comparativa',
+    blog_accordion:        'Acordeão (FAQ)',
+    blog_tabs:             'Abas',
+    blog_ranking:          'Ranking',
+    blog_trivia:           'Trivia / Quiz',
+    blog_comeback_card:    'Card de Comeback',
+    blog_member_grid:      'Grade de Membros',
+    blog_setlist:          'Setlist',
+    blog_alert:            'Alerta / Dica',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'

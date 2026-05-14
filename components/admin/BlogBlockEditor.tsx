@@ -39,6 +39,14 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_steps:           <ChevronRight className="w-3.5 h-3.5" />,
     blog_product_card:    <Star className="w-3.5 h-3.5" />,
     blog_comparison:      <BarChart2 className="w-3.5 h-3.5" />,
+    blog_accordion:       <ChevronRight className="w-3.5 h-3.5" />,
+    blog_tabs:            <AlignLeft className="w-3.5 h-3.5" />,
+    blog_ranking:         <BarChart2 className="w-3.5 h-3.5" />,
+    blog_trivia:          <Zap className="w-3.5 h-3.5" />,
+    blog_comeback_card:   <Star className="w-3.5 h-3.5" />,
+    blog_member_grid:     <Users className="w-3.5 h-3.5" />,
+    blog_setlist:         <Music2 className="w-3.5 h-3.5" />,
+    blog_alert:           <Zap className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -67,6 +75,14 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_steps:           'bg-orange-500/20 text-orange-300 border-orange-500/30',
     blog_product_card:    'bg-orange-500/20 text-orange-300 border-orange-500/30',
     blog_comparison:      'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+    blog_accordion:       'bg-violet-500/20 text-violet-300 border-violet-500/30',
+    blog_tabs:            'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    blog_ranking:         'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+    blog_trivia:          'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    blog_comeback_card:   'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    blog_member_grid:     'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
+    blog_setlist:         'bg-green-500/20 text-green-300 border-green-500/30',
+    blog_alert:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
@@ -74,8 +90,8 @@ const COLORS: Record<BlogBlockType, string> = {
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_list', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
-    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison'] },
-    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card'] },
+    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
+    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia'] },
 ]
 
 // ─── Default block factory ────────────────────────────────────────────────────
@@ -107,6 +123,14 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_steps':           return { type, steps: [{ title: '', text: '' }], title: '' }
         case 'blog_product_card':    return { type, name: '', imageUrl: '', price: '', affiliateUrl: '', cta: 'Comprar na Shopee' }
         case 'blog_comparison':      return { type, columns: ['Opção A', 'Opção B'], rows: [{ label: '', values: ['', ''] }], title: '' }
+        case 'blog_accordion':       return { type, title: '', items: [{ question: '', answer: '' }] }
+        case 'blog_tabs':            return { type, tabs: [{ label: 'Aba 1', content: '' }, { label: 'Aba 2', content: '' }] }
+        case 'blog_ranking':         return { type, title: '', items: [{ position: 1, name: '', description: '' }] }
+        case 'blog_trivia':          return { type, question: '', answer: '', hint: '' }
+        case 'blog_comeback_card':   return { type, artist: '', title: '', date: '', type_label: '', description: '', imageUrl: '' }
+        case 'blog_member_grid':     return { type, title: '', members: [{ name: '', role: '', imageUrl: '', note: '' }] }
+        case 'blog_setlist':         return { type, event: '', date: '', venue: '', tracks: [{ number: 1, title: '', note: '' }] }
+        case 'blog_alert':           return { type, variant: 'info', title: '', text: '' }
     }
 }
 
@@ -682,6 +706,15 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_steps':           return `${block.steps.length} passo(s)`
         case 'blog_product_card':    return block.name || '(sem produto)'
         case 'blog_comparison':      return block.title || `${block.columns.length} colunas`
+        case 'blog_accordion':       return block.title || `${block.items.length} item(ns)`
+        case 'blog_tabs':            return `${block.tabs.length} aba(s)`
+        case 'blog_ranking':         return block.title || `${block.items.length} item(ns)`
+        case 'blog_trivia':          return block.question.slice(0, 60) || '(sem pergunta)'
+        case 'blog_comeback_card':   return `${block.artist} — ${block.title}` || '(sem dados)'
+        case 'blog_member_grid':     return `${block.members.length} membro(s)`
+        case 'blog_setlist':         return block.event || `${block.tracks.length} faixa(s)`
+        case 'blog_alert':           return block.title || block.text.slice(0, 60) || '(vazio)'
+        default:                     return '(bloco)'
     }
 }
 
