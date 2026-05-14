@@ -8,7 +8,7 @@ type ToolWithRun = Tool & { run: (input: Record<string, unknown>) => Promise<str
 
 export const searchArtistsTool: ToolWithRun = {
   name: "search_artists",
-  description: "Buscar artistas por nome ou informação relacionada",
+  description: "Buscar artistas por nome. Use apenas quando o usuário fornecer um nome ou palavra-chave específica. NÃO use para contar quantos artistas existem — use get_stats para isso.",
   input_schema: {
     type: "object",
     properties: {
@@ -142,7 +142,7 @@ export const searchProductionsTool: ToolWithRun = {
 
 export const getStatsTool: ToolWithRun = {
   name: "get_stats",
-  description: "Retorna contagens totais do banco: artistas, grupos, produções, artigos publicados",
+  description: "Use esta tool quando o usuário perguntar QUANTOS artistas, grupos, produções ou artigos existem no banco. Retorna o total exato de cada entidade sem precisar de nenhum argumento.",
   input_schema: { type: "object", properties: {}, required: [] },
   run: async () => {
     try {
