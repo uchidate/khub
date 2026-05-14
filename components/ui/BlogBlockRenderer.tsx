@@ -1066,7 +1066,7 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
             return (
                 <div className="my-8 rounded-2xl border border-orange-500/20 bg-orange-500/[.03] overflow-hidden">
                     <div className="flex gap-4 p-4">
-                        <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />
+                        {block.imageUrl && <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />}
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-foreground leading-snug mb-2 line-clamp-2">{block.name}</p>
                             {block.rating && (
