@@ -184,7 +184,6 @@ function Lightbox({ urls, startIdx, caption, onClose }: {
                 </button>
             )}
 
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={proxied(urls[idx])}
                 alt={caption || `Imagem ${idx + 1}`}
@@ -229,7 +228,6 @@ function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' 
                         className="relative group w-full block cursor-zoom-in"
                         aria-label="Ampliar imagem"
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={proxied(block.url)}
                             alt={block.caption || ''}
@@ -273,7 +271,6 @@ function GalleryBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_galle
                             onClick={() => setLightboxIdx(i)}
                             className="aspect-video relative rounded-xl overflow-hidden border border-border cursor-zoom-in group"
                         >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={proxied(url)}
                                 alt={`${block.caption ?? 'Imagem'} ${i + 1}`}
@@ -523,7 +520,6 @@ function VsBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_vs' }> }) 
                         <button key={side} onClick={() => vote(side)} disabled={!!voted}
                             className={`flex flex-col items-center gap-3 p-5 transition-colors ${!voted ? 'hover:bg-accent/5 cursor-pointer' : 'cursor-default'} ${voted && isWinner ? 'bg-accent/8' : ''} ${side === 'a' ? 'border-r border-border' : ''}`}>
                             {opt.imageUrl && (
-                                // eslint-disable-next-line @next/next/no-img-element
                                 <img src={opt.imageUrl} alt={opt.label} className="w-20 h-20 rounded-full object-cover object-top border-2 border-border" />
                             )}
                             <div className="text-center">
@@ -608,10 +604,8 @@ function BeforeAfterBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_b
                 onMouseUp={() => { dragging.current = false }}
                 onMouseLeave={() => { dragging.current = false }}
                 onTouchMove={e => update(e.touches[0].clientX)}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={block.after.url} alt={block.after.label || 'Depois'} className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={block.before.url} alt={block.before.label || 'Antes'} className="absolute inset-0 object-cover" style={{ width: `${10000 / position}%`, height: '100%', maxWidth: 'none' }} />
                 </div>
                 <div className="absolute inset-y-0 flex items-center pointer-events-none" style={{ left: `${position}%`, transform: 'translateX(-50%)' }}>
@@ -1072,7 +1066,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
             return (
                 <div className="my-8 rounded-2xl border border-orange-500/20 bg-orange-500/[.03] overflow-hidden">
                     <div className="flex gap-4 p-4">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-foreground leading-snug mb-2 line-clamp-2">{block.name}</p>
@@ -1151,7 +1144,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                                 }`}>{item.position}</span>
                                 {item.imageUrl && (
                                     <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-border">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                                     </div>
                                 )}
@@ -1176,7 +1168,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                 <div className="my-8 rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-surface to-background">
                     {block.imageUrl && (
                         <div className="h-48 relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={block.imageUrl} alt={block.title} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                             {block.type_label && (
@@ -1204,7 +1195,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                             <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface/40 text-center">
                                 {m.imageUrl ? (
                                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={m.imageUrl} alt={m.name} className="w-full h-full object-cover object-top" />
                                     </div>
                                 ) : (
@@ -1382,7 +1372,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                 <div className="my-8 border border-border rounded-2xl overflow-hidden">
                     <div className="p-5 flex items-center gap-5" style={{ background: 'linear-gradient(135deg, #1a0030, #2d0050)' }}>
                         {block.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={block.imageUrl} alt={block.name} className="w-16 h-16 object-contain" />
                         ) : (
                             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-3xl border border-white/20">🪄</div>
@@ -1417,7 +1406,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                         {block.members.map((m, i) => (
                             <div key={i} className="border border-border rounded-xl p-3 bg-surface/30 flex gap-3">
                                 {m.imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src={m.imageUrl} alt={m.name} className="w-10 h-10 rounded-full object-cover object-top border border-border shrink-0" />
                                 ) : (
                                     <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${m.line ? lineColors[m.line] : 'bg-surface border border-border'}`}>
@@ -1454,7 +1442,6 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                         {block.albums.map((a, i) => (
                             <div key={i} className="flex flex-col gap-1">
                                 {a.imageUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img src={a.imageUrl} alt={a.title} className="aspect-square rounded-xl object-cover border border-border" />
                                 ) : (
                                     <div className="aspect-square rounded-xl flex items-center justify-center text-2xl border border-white/5"
