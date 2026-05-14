@@ -47,6 +47,21 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_member_grid:     <Users className="w-3.5 h-3.5" />,
     blog_setlist:         <Music2 className="w-3.5 h-3.5" />,
     blog_alert:           <Zap className="w-3.5 h-3.5" />,
+    blog_vs:              <BarChart2 className="w-3.5 h-3.5" />,
+    blog_poll:            <BarChart2 className="w-3.5 h-3.5" />,
+    blog_lyrics:          <Music2 className="w-3.5 h-3.5" />,
+    blog_era_card:        <Clock className="w-3.5 h-3.5" />,
+    blog_chart_history:   <BarChart2 className="w-3.5 h-3.5" />,
+    blog_before_after:    <GalleryHorizontal className="w-3.5 h-3.5" />,
+    blog_fandom:          <Quote className="w-3.5 h-3.5" />,
+    blog_lightstick:      <Zap className="w-3.5 h-3.5" />,
+    blog_positions:       <Users className="w-3.5 h-3.5" />,
+    blog_quiz:            <Zap className="w-3.5 h-3.5" />,
+    blog_countdown:       <Clock className="w-3.5 h-3.5" />,
+    blog_discography_grid:<GalleryHorizontal className="w-3.5 h-3.5" />,
+    blog_achievement:     <Star className="w-3.5 h-3.5" />,
+    blog_mv_breakdown:    <Video className="w-3.5 h-3.5" />,
+    blog_flashcard:       <AlignLeft className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -83,6 +98,21 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_member_grid:     'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
     blog_setlist:         'bg-green-500/20 text-green-300 border-green-500/30',
     blog_alert:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    blog_vs:              'bg-red-500/20 text-red-300 border-red-500/30',
+    blog_poll:            'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+    blog_lyrics:          'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    blog_era_card:        'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    blog_chart_history:   'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+    blog_before_after:    'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    blog_fandom:          'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    blog_lightstick:      'bg-violet-500/20 text-violet-300 border-violet-500/30',
+    blog_positions:       'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
+    blog_quiz:            'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    blog_countdown:       'bg-orange-500/20 text-orange-300 border-orange-500/30',
+    blog_discography_grid:'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    blog_achievement:     'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    blog_mv_breakdown:    'bg-red-500/20 text-red-300 border-red-500/30',
+    blog_flashcard:       'bg-slate-500/20 text-slate-300 border-slate-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
@@ -92,6 +122,8 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
     { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia'] },
+    { label: 'Interativo', types: ['blog_vs', 'blog_poll', 'blog_quiz', 'blog_flashcard', 'blog_countdown', 'blog_before_after'] },
+    { label: 'K-Pop', types: ['blog_lyrics', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
 ]
 
 // ─── Default block factory ────────────────────────────────────────────────────
@@ -131,6 +163,21 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_member_grid':     return { type, title: '', members: [{ name: '', role: '', imageUrl: '', note: '' }] }
         case 'blog_setlist':         return { type, event: '', date: '', venue: '', tracks: [{ number: 1, title: '', note: '' }] }
         case 'blog_alert':           return { type, variant: 'info', title: '', text: '' }
+        case 'blog_vs':              return { type, optionA: { label: 'Opção A' }, optionB: { label: 'Opção B' }, question: '' }
+        case 'blog_poll':            return { type, question: '', options: ['Opção 1', 'Opção 2'] }
+        case 'blog_lyrics':          return { type, title: '', lines: [{ original: '', translation: '' }] }
+        case 'blog_era_card':        return { type, era: '', period: '', concept: '', colors: [] }
+        case 'blog_chart_history':   return { type, chart: 'Billboard Hot 100', entries: [{ date: '', position: 1, label: '' }] }
+        case 'blog_before_after':    return { type, before: { url: '', label: 'Antes' }, after: { url: '', label: 'Depois' } }
+        case 'blog_fandom':          return { type, quotes: [{ text: '' }] }
+        case 'blog_lightstick':      return { type, group: '', name: '', colors: [''] }
+        case 'blog_positions':       return { type, members: [{ name: '', positions: [''], imageUrl: '' }] }
+        case 'blog_quiz':            return { type, title: '', questions: [{ question: '', options: ['', ''], correct: 0 }] }
+        case 'blog_countdown':       return { type, title: '', artist: '', targetDate: '' }
+        case 'blog_discography_grid':return { type, artist: '', albums: [{ title: '', year: '', type: 'Album' }] }
+        case 'blog_achievement':     return { type, items: [{ icon: '🏆', title: '', description: '' }] }
+        case 'blog_mv_breakdown':    return { type, videoId: '', title: '', scenes: [{ time: '0:00', label: '', description: '' }] }
+        case 'blog_flashcard':       return { type, title: '', cards: [{ front: '', back: '' }] }
     }
 }
 
@@ -674,6 +721,346 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </button>
                 </div>
             )
+
+        case 'blog_vs':
+            return (
+                <div className="space-y-2">
+                    <input value={block.question || ''} onChange={e => onChange({ ...block, question: e.target.value })}
+                        placeholder="Pergunta (ex: Quem é melhor?)" className={inputCls} />
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.optionA.label} onChange={e => onChange({ ...block, optionA: { ...block.optionA, label: e.target.value } })}
+                            placeholder="Opção A" className={inputCls} />
+                        <input value={block.optionB.label} onChange={e => onChange({ ...block, optionB: { ...block.optionB, label: e.target.value } })}
+                            placeholder="Opção B" className={inputCls} />
+                    </div>
+                </div>
+            )
+
+        case 'blog_poll':
+            return (
+                <div className="space-y-2">
+                    <input value={block.question} onChange={e => onChange({ ...block, question: e.target.value })}
+                        placeholder="Pergunta da enquete..." className={inputCls} />
+                    {block.options.map((opt, i) => (
+                        <div key={i} className="flex gap-2">
+                            <input value={opt} onChange={e => {
+                                const options = [...block.options]; options[i] = e.target.value
+                                onChange({ ...block, options })
+                            }} placeholder={`Opção ${i + 1}`} className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, options: block.options.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, options: [...block.options, ''] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar opção
+                    </button>
+                </div>
+            )
+
+        case 'blog_lyrics':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título da música..." className={inputCls} />
+                    <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
+                        placeholder="Fonte (artista, álbum)..." className={inputCls} />
+                    <textarea value={block.lines.map(l => l.original).join('\n')}
+                        onChange={e => onChange({ ...block, lines: e.target.value.split('\n').map(original => ({ original, translation: '' })) })}
+                        rows={4} placeholder="Letras originais (coreano), uma por linha..." className={inputCls} />
+                    <textarea value={block.lines.map(l => l.translation).join('\n')}
+                        onChange={e => {
+                            const translations = e.target.value.split('\n')
+                            onChange({ ...block, lines: block.lines.map((l, i) => ({ ...l, translation: translations[i] ?? '' })) })
+                        }}
+                        rows={4} placeholder="Traduções (uma por linha)..." className={inputCls} />
+                </div>
+            )
+
+        case 'blog_era_card':
+            return (
+                <div className="space-y-2">
+                    <input value={block.era} onChange={e => onChange({ ...block, era: e.target.value })}
+                        placeholder="Nome da era (ex: DRAMA era)" className={inputCls} />
+                    <input value={block.period} onChange={e => onChange({ ...block, period: e.target.value })}
+                        placeholder="Período (ex: 2023–2024)" className={inputCls} />
+                    <input value={block.concept || ''} onChange={e => onChange({ ...block, concept: e.target.value })}
+                        placeholder="Conceito da era..." className={inputCls} />
+                    <input value={(block.colors ?? []).join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
+                        placeholder="Cores hex separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                        placeholder="URL da imagem representativa (opcional)" className={inputCls} />
+                </div>
+            )
+
+        case 'blog_chart_history':
+            return (
+                <div className="space-y-2">
+                    <input value={block.chart} onChange={e => onChange({ ...block, chart: e.target.value })}
+                        placeholder="Nome do chart (ex: Billboard Hot 100)" className={inputCls} />
+                    {block.entries.map((entry, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={entry.date} onChange={e => {
+                                const entries = [...block.entries]; entries[i] = { ...entry, date: e.target.value }
+                                onChange({ ...block, entries })
+                            }} placeholder="Data" className={`${inputCls} w-28`} />
+                            <input type="number" value={entry.position} onChange={e => {
+                                const entries = [...block.entries]; entries[i] = { ...entry, position: parseInt(e.target.value) || 1 }
+                                onChange({ ...block, entries })
+                            }} placeholder="#" className={`${inputCls} w-16`} />
+                            <input value={entry.label || ''} onChange={e => {
+                                const entries = [...block.entries]; entries[i] = { ...entry, label: e.target.value }
+                                onChange({ ...block, entries })
+                            }} placeholder="Rótulo (música/nota)..." className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, entries: block.entries.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, entries: [...block.entries, { date: '', position: 1, label: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar entrada
+                    </button>
+                </div>
+            )
+
+        case 'blog_before_after':
+            return (
+                <div className="grid grid-cols-2 gap-3">
+                    {(['before', 'after'] as const).map(side => (
+                        <div key={side} className="space-y-2">
+                            <label className={labelCls}>{side === 'before' ? 'Antes' : 'Depois'}</label>
+                            <input value={block[side].url} onChange={e => onChange({ ...block, [side]: { ...block[side], url: e.target.value } })}
+                                placeholder="URL da imagem..." className={inputCls} />
+                            <input value={block[side].label} onChange={e => onChange({ ...block, [side]: { ...block[side], label: e.target.value } })}
+                                placeholder="Rótulo..." className={inputCls} />
+                        </div>
+                    ))}
+                </div>
+            )
+
+        case 'blog_fandom':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
+                    {block.quotes.map((q, i) => (
+                        <div key={i} className="flex gap-2 items-start">
+                            <textarea value={q.text} onChange={e => {
+                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
+                                onChange({ ...block, quotes })
+                            }} rows={2} placeholder={`Citação ${i + 1}`} className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 pt-2"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, quotes: [...block.quotes, { text: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar citação
+                    </button>
+                </div>
+            )
+
+        case 'blog_lightstick':
+            return (
+                <div className="space-y-2">
+                    <input value={block.group} onChange={e => onChange({ ...block, group: e.target.value })}
+                        placeholder="Grupo (ex: aespa)" className={inputCls} />
+                    <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                        placeholder="Nome do lightstick (ex: MY Stick)" className={inputCls} />
+                    <input value={block.colors.join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
+                        placeholder="Cores separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                        placeholder="URL da imagem (opcional)" className={inputCls} />
+                </div>
+            )
+
+        case 'blog_positions':
+            return (
+                <div className="space-y-2">
+                    {block.members.map((member, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={member.name} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, name: e.target.value }
+                                onChange({ ...block, members })
+                            }} placeholder="Nome" className={`${inputCls} flex-1`} />
+                            <input value={member.positions.join(', ')} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, positions: e.target.value.split(',').map(p => p.trim()) }
+                                onChange({ ...block, members })
+                            }} placeholder="Posições (vírgula)" className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, members: block.members.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, members: [...block.members, { name: '', positions: [''], imageUrl: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar membro
+                    </button>
+                </div>
+            )
+
+        case 'blog_quiz':
+            return (
+                <div className="space-y-3">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título do quiz..." className={inputCls} />
+                    {block.questions.map((q, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-background border border-border space-y-2">
+                            <div className="flex gap-2">
+                                <input value={q.question} onChange={e => {
+                                    const questions = [...block.questions]; questions[i] = { ...q, question: e.target.value }
+                                    onChange({ ...block, questions })
+                                }} placeholder={`Pergunta ${i + 1}`} className={`${inputCls} flex-1`} />
+                                <button onClick={() => onChange({ ...block, questions: block.questions.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                            </div>
+                            {q.options.map((opt, oi) => (
+                                <div key={oi} className="flex gap-2 items-center">
+                                    <button onClick={() => {
+                                        const questions = [...block.questions]; questions[i] = { ...q, correct: oi }
+                                        onChange({ ...block, questions })
+                                    }} className={`w-5 h-5 rounded-full border-2 shrink-0 ${q.correct === oi ? 'border-green-500 bg-green-500' : 'border-border'}`} />
+                                    <input value={opt} onChange={e => {
+                                        const questions = [...block.questions]
+                                        const options = [...q.options]; options[oi] = e.target.value
+                                        questions[i] = { ...q, options }
+                                        onChange({ ...block, questions })
+                                    }} placeholder={`Opção ${oi + 1}`} className={`${inputCls} flex-1`} />
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, questions: [...block.questions, { question: '', options: ['', ''], correct: 0 }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar pergunta
+                    </button>
+                </div>
+            )
+
+        case 'blog_countdown':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título (ex: Comeback de)" className={inputCls} />
+                    <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
+                        placeholder="Nome do artista/grupo..." className={inputCls} />
+                    <input type="datetime-local" value={block.targetDate} onChange={e => onChange({ ...block, targetDate: e.target.value })}
+                        className={inputCls} />
+                </div>
+            )
+
+        case 'blog_discography_grid':
+            return (
+                <div className="space-y-2">
+                    <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
+                        placeholder="Nome do artista/grupo..." className={inputCls} />
+                    {block.albums.map((album, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={album.imageUrl || ''} onChange={e => {
+                                const albums = [...block.albums]; albums[i] = { ...album, imageUrl: e.target.value }
+                                onChange({ ...block, albums })
+                            }} placeholder="URL da capa" className={`${inputCls} w-32`} />
+                            <input value={album.title} onChange={e => {
+                                const albums = [...block.albums]; albums[i] = { ...album, title: e.target.value }
+                                onChange({ ...block, albums })
+                            }} placeholder="Título" className={`${inputCls} flex-1`} />
+                            <input value={album.year || ''} onChange={e => {
+                                const albums = [...block.albums]; albums[i] = { ...album, year: e.target.value }
+                                onChange({ ...block, albums })
+                            }} placeholder="Ano" className={`${inputCls} w-20`} />
+                            <button onClick={() => onChange({ ...block, albums: block.albums.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, albums: [...block.albums, { title: '', year: '', imageUrl: '', type: 'Album' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar álbum
+                    </button>
+                </div>
+            )
+
+        case 'blog_achievement':
+            return (
+                <div className="space-y-2">
+                    {block.items.map((item, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={item.icon} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, icon: e.target.value }
+                                onChange({ ...block, items })
+                            }} className={`${inputCls} w-14 text-center`} />
+                            <input value={item.title} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, title: e.target.value }
+                                onChange({ ...block, items })
+                            }} placeholder="Conquista..." className={`${inputCls} flex-1`} />
+                            <input value={item.description} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, description: e.target.value }
+                                onChange({ ...block, items })
+                            }} placeholder="Descrição/detalhe" className={`${inputCls} w-40`} />
+                            <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, items: [...block.items, { icon: '🏆', title: '', description: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar conquista
+                    </button>
+                </div>
+            )
+
+        case 'blog_mv_breakdown':
+            return (
+                <div className="space-y-2">
+                    <input value={block.videoId} onChange={e => onChange({ ...block, videoId: e.target.value })}
+                        placeholder="YouTube video ID (ex: dQw4w9WgXcQ)" className={inputCls} />
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título do MV..." className={inputCls} />
+                    {block.scenes.map((scene, i) => (
+                        <div key={i} className="flex gap-2 items-start">
+                            <input value={scene.time} onChange={e => {
+                                const scenes = [...block.scenes]; scenes[i] = { ...scene, time: e.target.value }
+                                onChange({ ...block, scenes })
+                            }} placeholder="0:00" className={`${inputCls} w-16`} />
+                            <input value={scene.label} onChange={e => {
+                                const scenes = [...block.scenes]; scenes[i] = { ...scene, label: e.target.value }
+                                onChange({ ...block, scenes })
+                            }} placeholder="Título da cena..." className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, scenes: block.scenes.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, scenes: [...block.scenes, { time: '0:00', label: '', description: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar cena
+                    </button>
+                </div>
+            )
+
+        case 'blog_flashcard':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título do deck..." className={inputCls} />
+                    {block.cards.map((card, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-2 p-2 rounded-lg border border-border">
+                            <textarea value={card.front} onChange={e => {
+                                const cards = [...block.cards]; cards[i] = { ...card, front: e.target.value }
+                                onChange({ ...block, cards })
+                            }} rows={2} placeholder="Frente" className={inputCls} />
+                            <textarea value={card.back} onChange={e => {
+                                const cards = [...block.cards]; cards[i] = { ...card, back: e.target.value }
+                                onChange({ ...block, cards })
+                            }} rows={2} placeholder="Verso" className={inputCls} />
+                            <button onClick={() => onChange({ ...block, cards: block.cards.filter((_, j) => j !== i) })}
+                                className="col-span-2 text-xs text-muted hover:text-red-400 text-right">
+                                remover card
+                            </button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, cards: [...block.cards, { front: '', back: '' }] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar card
+                    </button>
+                </div>
+            )
     }
 }
 
@@ -714,6 +1101,21 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_member_grid':     return `${block.members.length} membro(s)`
         case 'blog_setlist':         return block.event || `${block.tracks.length} faixa(s)`
         case 'blog_alert':           return block.title || block.text.slice(0, 60) || '(vazio)'
+        case 'blog_vs':              return `${block.optionA.label} vs ${block.optionB.label}`
+        case 'blog_poll':            return block.question || `${block.options.length} opções`
+        case 'blog_lyrics':          return block.title || `${block.lines.length} linha(s)`
+        case 'blog_era_card':        return `${block.era}${block.period ? ` (${block.period})` : ''}`
+        case 'blog_chart_history':   return `${block.chart} — ${block.entries.length} entrada(s)`
+        case 'blog_before_after':    return `${block.before.label} / ${block.after.label}`
+        case 'blog_fandom':          return `${block.title || '(fandom)'} — ${block.quotes.length} citação(ões)`
+        case 'blog_lightstick':      return `${block.group} — ${block.name}`
+        case 'blog_positions':       return `${block.members.length} membro(s)`
+        case 'blog_quiz':            return block.title || `${block.questions.length} pergunta(s)`
+        case 'blog_countdown':       return `${block.artist} — ${block.title}`
+        case 'blog_discography_grid':return `${block.artist} — ${block.albums.length} álbum(ns)`
+        case 'blog_achievement':     return `${block.items.length} conquista(s)`
+        case 'blog_mv_breakdown':    return `${block.title || block.videoId} — ${block.scenes.length} cena(s)`
+        case 'blog_flashcard':       return `${block.title || ''} ${block.cards.length} card(s)`
         default:                     return '(bloco)'
     }
 }

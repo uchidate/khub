@@ -13,6 +13,10 @@ const VALID_TYPES = [
     "blog_timeline",
     "blog_accordion", "blog_tabs", "blog_ranking", "blog_trivia",
     "blog_comeback_card", "blog_member_grid", "blog_setlist", "blog_alert",
+    "blog_vs", "blog_poll", "blog_lyrics", "blog_era_card", "blog_chart_history",
+    "blog_before_after", "blog_fandom", "blog_lightstick", "blog_positions",
+    "blog_quiz", "blog_countdown", "blog_discography_grid", "blog_achievement",
+    "blog_mv_breakdown", "blog_flashcard",
 ]
 
 const REQUIRED_FIELDS: Record<string, string[]> = {
@@ -49,6 +53,21 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
     blog_member_grid:    ["members"],
     blog_setlist:        ["tracks"],
     blog_alert:          ["text", "variant"],
+    blog_vs:             ["optionA", "optionB"],
+    blog_poll:           ["question", "options"],
+    blog_lyrics:         ["lines"],
+    blog_era_card:       ["era", "period"],
+    blog_chart_history:  ["chart", "entries"],
+    blog_before_after:   ["before", "after"],
+    blog_fandom:         ["quotes"],
+    blog_lightstick:     ["group", "name", "colors"],
+    blog_positions:      ["members"],
+    blog_quiz:           ["questions"],
+    blog_countdown:      ["title", "artist", "targetDate"],
+    blog_discography_grid: ["artist", "albums"],
+    blog_achievement:    ["items"],
+    blog_mv_breakdown:   ["videoId", "scenes"],
+    blog_flashcard:      ["cards"],
 }
 
 interface ValidationIssue { block: number; type: string; message: string }

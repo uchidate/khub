@@ -325,6 +325,126 @@ export type BlogAlertBlock = {
     title?: string
 }
 
+// Confronto lado a lado (A vs B) com votação local
+export type BlogVsBlock = {
+    type: 'blog_vs'
+    optionA: { label: string; imageUrl?: string; description?: string }
+    optionB: { label: string; imageUrl?: string; description?: string }
+    question?: string
+}
+
+// Enquete clicável com resultados visuais (votos em localStorage)
+export type BlogPollBlock = {
+    type: 'blog_poll'
+    question: string
+    options: string[]
+}
+
+// Trecho de letra com original + romanização + tradução
+export type BlogLyricsBlock = {
+    type: 'blog_lyrics'
+    title?: string
+    lines: { original: string; romanized?: string; translation: string }[]
+    source?: string
+}
+
+// Card de era musical com paleta de cores e conceito
+export type BlogEraCardBlock = {
+    type: 'blog_era_card'
+    era: string
+    period: string
+    concept?: string
+    colors?: string[]   // hex codes
+    imageUrl?: string
+    highlights?: string[]
+}
+
+// Histórico de posições em charts
+export type BlogChartHistoryBlock = {
+    type: 'blog_chart_history'
+    title?: string
+    chart: string       // ex: "Melon Top 100", "Billboard Hot 100"
+    entries: { date: string; position: number; label?: string }[]
+}
+
+// Slider antes/depois de imagem
+export type BlogBeforeAfterBlock = {
+    type: 'blog_before_after'
+    before: { url: string; label?: string }
+    after: { url: string; label?: string }
+    caption?: string
+}
+
+// Citações/reações de fãs estilo redes sociais
+export type BlogFandomBlock = {
+    type: 'blog_fandom'
+    title?: string
+    quotes: { text: string; author?: string; platform?: 'twitter' | 'reddit' | 'instagram' | 'tiktok' | 'forum' }[]
+}
+
+// Card do lightstick oficial
+export type BlogLightstickBlock = {
+    type: 'blog_lightstick'
+    group: string
+    name: string
+    imageUrl?: string
+    colors: string[]    // hex codes das cores do lightstick
+    funFact?: string
+    generation?: string
+}
+
+// Quiz com múltiplas perguntas e placar final
+export type BlogQuizBlock = {
+    type: 'blog_quiz'
+    title?: string
+    questions: { question: string; options: string[]; correct: number }[]
+}
+
+// Contador regressivo para comeback/evento
+export type BlogCountdownBlock = {
+    type: 'blog_countdown'
+    title: string
+    artist: string
+    targetDate: string   // ISO 8601: "2025-08-15T00:00:00+09:00"
+    description?: string
+}
+
+// Grade visual de capas de álbuns
+export type BlogDiscographyGridBlock = {
+    type: 'blog_discography_grid'
+    artist: string
+    albums: { title: string; year: string; type: string; imageUrl?: string; color?: string; emoji?: string }[]
+}
+
+// Conquistas e recordes com badges
+export type BlogAchievementBlock = {
+    type: 'blog_achievement'
+    title?: string
+    items: { icon: string; title: string; description: string; color?: string }[]
+}
+
+// Análise de MV com timestamps clicáveis
+export type BlogMvBreakdownBlock = {
+    type: 'blog_mv_breakdown'
+    title?: string
+    videoId: string      // YouTube video ID
+    scenes: { time: string; label: string; description: string }[]
+}
+
+// Flashcards para aprender coreano / vocabulário K-Pop
+export type BlogFlashcardBlock = {
+    type: 'blog_flashcard'
+    title?: string
+    cards: { front: string; back: string; romanized?: string; example?: string }[]
+}
+
+// Posições dos membros de um grupo
+export type BlogPositionsBlock = {
+    type: 'blog_positions'
+    title?: string
+    members: { name: string; positions: string[]; imageUrl?: string; line?: 'vocal' | 'dance' | 'rap' | 'visual' | 'all' }[]
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -359,6 +479,21 @@ export type BlogBlock =
     | BlogMemberGridBlock
     | BlogSetlistBlock
     | BlogAlertBlock
+    | BlogVsBlock
+    | BlogPollBlock
+    | BlogLyricsBlock
+    | BlogEraCardBlock
+    | BlogChartHistoryBlock
+    | BlogBeforeAfterBlock
+    | BlogFandomBlock
+    | BlogLightstickBlock
+    | BlogPositionsBlock
+    | BlogQuizBlock
+    | BlogCountdownBlock
+    | BlogDiscographyGridBlock
+    | BlogAchievementBlock
+    | BlogMvBreakdownBlock
+    | BlogFlashcardBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -396,6 +531,21 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_member_grid:      'Grade de Membros',
     blog_setlist:          'Setlist',
     blog_alert:            'Alerta / Dica',
+    blog_vs:               'Confronto A vs B',
+    blog_poll:             'Enquete',
+    blog_lyrics:           'Trecho de Letra',
+    blog_era_card:         'Card de Era',
+    blog_chart_history:    'Histórico de Charts',
+    blog_before_after:     'Antes e Depois',
+    blog_fandom:           'Reações dos Fãs',
+    blog_lightstick:       'Lightstick',
+    blog_positions:        'Posições do Grupo',
+    blog_quiz:             'Quiz Interativo',
+    blog_countdown:        'Countdown de Comeback',
+    blog_discography_grid: 'Grade de Discografia',
+    blog_achievement:      'Conquistas / Recordes',
+    blog_mv_breakdown:     'Análise de MV',
+    blog_flashcard:        'Flashcards',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'
