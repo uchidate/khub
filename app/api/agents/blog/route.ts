@@ -55,6 +55,7 @@ export async function GET() {
     agent: "blog",
     status: "active",
     version: "1.0.0",
+    provider: process.env.AGENT_PROVIDER ?? "anthropic",
     capabilities: [
       "search_artists",
       "search_groups",
