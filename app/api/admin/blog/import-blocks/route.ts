@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
         }
 
-        const { title, slug, excerpt, categoryId, blocks: rawBlocks } = await request.json()
+        const { title, slug, excerpt, categoryId, tags, blocks: rawBlocks } = await request.json()
 
         // Strip markdown link syntax from url fields: [text](url) → url
         const mdUrl = /\[([^\]]*)\]\(([^)]+)\)/
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
                 excerpt: excerpt || null,
                 contentMd: "",
                 blocks: blocks as object[],
+                tags: Array.isArray(tags) ? tags.map(String) : [],
                 status: "DRAFT",
                 authorId: session.user.id,
                 categoryId: categoryId || undefined,

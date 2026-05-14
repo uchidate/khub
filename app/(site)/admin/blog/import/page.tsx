@@ -80,6 +80,7 @@ export default function BlogImportPage() {
     const [validation, setValidation] = useState<ValidationResult | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [form, setForm] = useState({ title: '', slug: '', excerpt: '', categoryId: '' })
+    const [tags, setTags] = useState<string[]>([])
     const [metaAutoFilled, setMetaAutoFilled] = useState(false)
     const [importedPost, setImportedPost] = useState<{ id: string; slug: string; title: string } | null>(null)
     const [importError, setImportError] = useState('')
@@ -106,18 +107,19 @@ export default function BlogImportPage() {
 
             // Auto-fill meta if present
             if (!Array.isArray(parsed) && parsed.meta) {
-                const m = parsed.meta as Record<string, string>
-                const title = m.title ?? ''
+                const m = parsed.meta as Record<string, unknown>
+                const title = (m.title as string) ?? ''
                 const autoSlug = title.toLowerCase()
                     .normalize('NFD').replace(/[̀-ͯ]/g, '')
                     .replace(/[^a-z0-9\s-]/g, '')
                     .trim().replace(/\s+/g, '-')
                 setForm(f => ({
-                    title: m.title ?? f.title,
-                    slug: m.slug ?? (autoSlug || f.slug),
-                    excerpt: m.excerpt ?? f.excerpt,
+                    title: (m.title as string) ?? f.title,
+                    slug: (m.slug as string) ?? (autoSlug || f.slug),
+                    excerpt: (m.excerpt as string) ?? f.excerpt,
                     categoryId: f.categoryId,
                 }))
+                if (Array.isArray(m.tags)) setTags(m.tags.map(String))
                 setMetaAutoFilled(true)
             } else {
                 setMetaAutoFilled(false)
@@ -157,7 +159,7 @@ export default function BlogImportPage() {
             const res = await fetch('/api/admin/blog/import-blocks', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...form, blocks }),
+                body: JSON.stringify({ ...form, tags, blocks }),
             })
             const data = await res.json()
             if (!res.ok) { setImportError(data.error ?? 'Erro desconhecido'); setStep('validated'); return }
@@ -172,7 +174,7 @@ export default function BlogImportPage() {
     const reset = () => {
         setStep('input'); setRawJson(''); setBlocks([]); setParseError('')
         setValidation(null); setForm({ title: '', slug: '', excerpt: '', categoryId: '' })
-        setMetaAutoFilled(false); setImportedPost(null); setImportError('')
+        setMetaAutoFilled(false); setTags([]); setImportedPost(null); setImportError('')
     }
 
     return (
@@ -341,6 +343,19 @@ export default function BlogImportPage() {
                                         className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
                                     />
                                 </div>
+
+                                {tags.length > 0 && (
+                                    <div>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted block mb-1">Tags</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {tags.map(tag => (
+                                                <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-medium">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-muted block mb-1">Categoria</label>
