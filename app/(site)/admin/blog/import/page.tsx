@@ -5,9 +5,11 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     Upload, CheckCircle, XCircle, AlertTriangle, Loader2,
     ChevronDown, ChevronRight, FileJson, Sparkles, ExternalLink, RotateCcw,
-    Globe, Server, Image as ImageIcon, Link2, Eye, Clock, Hash,
+    Globe, Server, Image as ImageIcon, Link2, Eye, Clock, Hash, Wifi, WifiOff,
 } from 'lucide-react'
 import Link from 'next/link'
+import { BlogBlockRenderer } from '@/components/ui/BlogBlockRenderer'
+import type { BlogBlock } from '@/lib/types/blocks'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -112,15 +114,20 @@ export default function BlogImportPage() {
     const [publishing, setPublishing] = useState(false)
     const [publishResults, setPublishResults] = useState<Record<string, { success: boolean; error?: string }> | null>(null)
     const [recentImports, setRecentImports] = useState<RecentImport[]>([])
+    const [uploadingCover, setUploadingCover] = useState(false)
+    const [tunnelStatus, setTunnelStatus] = useState<{ staging: boolean; production: boolean } | null>(null)
+    const [showBlockPreview, setShowBlockPreview] = useState(false)
     const slugCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const coverInputRef = useRef<HTMLInputElement>(null)
 
-    // Load categories + restore localStorage
+    // Load categories + restore localStorage + check tunnels
     useEffect(() => {
         fetch('/api/admin/blog/categories').then(r => r.json()).then(d => setCategories(d.categories ?? d ?? [])).catch(() => {})
         const saved = localStorage.getItem(LS_JSON_KEY)
         if (saved) { setRawJson(saved); setWordCount(countWords(saved)) }
         const hist = localStorage.getItem(LS_HISTORY_KEY)
         if (hist) { try { setRecentImports(JSON.parse(hist)) } catch {} }
+        fetch('/api/admin/blog/tunnel-status').then(r => r.json()).then(setTunnelStatus).catch(() => {})
     }, [])
 
     // Persist JSON to localStorage
@@ -157,6 +164,20 @@ export default function BlogImportPage() {
     const handleSlugChange = (slug: string) => {
         setForm(f => ({ ...f, slug }))
         checkSlug(slug)
+    }
+
+    const handleCoverUpload = async (file: File) => {
+        setUploadingCover(true)
+        try {
+            const fd = new FormData()
+            fd.append('file', file)
+            const res = await fetch('/api/admin/blog/upload-cover', { method: 'POST', body: fd })
+            const data = await res.json()
+            if (data.url) setForm(f => ({ ...f, coverImageUrl: data.url }))
+            else alert(data.error ?? 'Erro no upload')
+        } finally {
+            setUploadingCover(false)
+        }
     }
 
     const parseJson = () => {
@@ -442,10 +463,23 @@ export default function BlogImportPage() {
 
                             {/* Block preview */}
                             <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-2">Preview dos blocos</p>
-                                <div className="flex flex-col gap-1.5 max-h-[480px] overflow-y-auto pr-1">
-                                    {blocks.map((block, i) => <BlockPreview key={i} block={block} index={i} />)}
-                                </div>
+                                <button onClick={() => setShowBlockPreview(v => !v)}
+                                    className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted mb-2 hover:text-foreground transition-colors">
+                                    <Eye className="w-3 h-3" />
+                                    {showBlockPreview ? 'Ocultar preview' : 'Ver preview real dos blocos'}
+                                    {showBlockPreview ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                </button>
+                                {showBlockPreview ? (
+                                    <div className="border border-border rounded-xl overflow-hidden">
+                                        <div className="bg-background px-6 py-4 max-h-[600px] overflow-y-auto">
+                                            <BlogBlockRenderer blocks={blocks as BlogBlock[]} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-1.5 max-h-[480px] overflow-y-auto pr-1">
+                                        {blocks.map((block, i) => <BlockPreview key={i} block={block} index={i} />)}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -504,15 +538,25 @@ export default function BlogImportPage() {
 
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-muted block mb-1 flex items-center gap-1.5">
-                                        <ImageIcon className="w-2.5 h-2.5" /> Imagem de capa (URL)
+                                        <ImageIcon className="w-2.5 h-2.5" /> Imagem de capa
                                     </label>
-                                    <input value={form.coverImageUrl} onChange={e => setForm(f => ({ ...f, coverImageUrl: e.target.value }))}
-                                        placeholder="https://..."
-                                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[12px] font-mono text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40" />
+                                    <div className="flex gap-2">
+                                        <input value={form.coverImageUrl} onChange={e => setForm(f => ({ ...f, coverImageUrl: e.target.value }))}
+                                            placeholder="https:// ou faça upload →"
+                                            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-[12px] font-mono text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40" />
+                                        <button onClick={() => coverInputRef.current?.click()}
+                                            disabled={uploadingCover}
+                                            className="shrink-0 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-hover text-[11px] font-medium text-foreground transition-colors flex items-center gap-1.5">
+                                            {uploadingCover ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                                            Upload
+                                        </button>
+                                        <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
+                                            onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f) }} />
+                                    </div>
                                     {form.coverImageUrl && (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={form.coverImageUrl} alt="cover preview"
-                                            className="mt-2 w-full h-24 object-cover rounded-lg border border-border"
+                                            className="mt-2 w-full h-28 object-cover rounded-lg border border-border"
                                             onError={e => (e.currentTarget.style.display = 'none')} />
                                     )}
                                 </div>
@@ -594,6 +638,20 @@ export default function BlogImportPage() {
                                 <Globe className="w-3.5 h-3.5 text-accent" />
                                 Publicar nos ambientes remotos
                             </p>
+                            {tunnelStatus && (
+                                <div className="flex gap-3 text-[10px]">
+                                    {(['staging', 'production'] as const).map(env => {
+                                        const port = env === 'staging' ? 5434 : 5433
+                                        const ok = tunnelStatus[env]
+                                        return (
+                                            <span key={env} className={`flex items-center gap-1 font-medium ${ok ? 'text-green-500' : 'text-red-500'}`}>
+                                                {ok ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                                                Tunnel {env} :{port} {ok ? 'ativo' : 'inativo'}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            )}
                             <div className="flex gap-4">
                                 {(['staging', 'production'] as const).map(env => (
                                     <label key={env} className="flex items-center gap-2 cursor-pointer">

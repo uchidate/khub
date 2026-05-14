@@ -13,12 +13,17 @@ export async function POST(request: NextRequest) {
         const { title, slug, excerpt, categoryId, tags, coverImageUrl, blocks: rawBlocks } = await request.json()
 
         // Strip markdown link syntax from url fields: [text](url) → url
+        // If the href is a Google Search wrapper, prefer the link text (which is usually the real URL)
         const mdUrl = /\[([^\]]*)\]\(([^)]+)\)/
         const blocks = Array.isArray(rawBlocks)
             ? rawBlocks.map((b: Record<string, unknown>) => {
                 if (typeof b.url === "string" && mdUrl.test(b.url)) {
                     const match = b.url.match(mdUrl)
-                    return { ...b, url: match?.[2] ?? b.url }
+                    const text = match?.[1] ?? ""
+                    const href = match?.[2] ?? b.url
+                    const isGoogleWrapper = href.includes("google.com/search")
+                    const resolved = isGoogleWrapper && text.startsWith("http") ? text : href
+                    return { ...b, url: resolved }
                 }
                 return b
             })

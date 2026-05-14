@@ -39,7 +39,7 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
     blog_steps:          ["steps"],
     blog_product_card:   ["name"],
     blog_comparison:     ["items"],
-    blog_timeline:       ["events"],
+    blog_timeline:       ["items"],
     blog_divider:        [],
     blog_accordion:      ["items"],
     blog_tabs:           ["tabs"],
@@ -108,6 +108,8 @@ Avalie também: o artigo tem introdução? Tem pelo menos um heading? O conteúd
 
 Responda em no máximo 5 linhas.`
 
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 5000)
         const res = await fetch(`${OLLAMA_BASE_URL}/chat/completions`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -116,7 +118,8 @@ Responda em no máximo 5 linhas.`
                 messages: [{ role: "user", content: prompt }],
                 max_tokens: 300,
             }),
-        })
+            signal: controller.signal,
+        }).finally(() => clearTimeout(timeout))
         if (!res.ok) return ""
         const data = await res.json()
         return data.choices?.[0]?.message?.content ?? ""
@@ -133,7 +136,10 @@ export async function POST(request: NextRequest) {
         }
 
         const issues = validateBlocks(blocks)
-        const suggestions = await getOllamaSuggestions(blocks, issues)
+        const suggestions = await Promise.race([
+            getOllamaSuggestions(blocks, issues),
+            new Promise<string>(resolve => setTimeout(() => resolve(""), 6000)),
+        ])
 
         return NextResponse.json({
             valid: issues.length === 0,
