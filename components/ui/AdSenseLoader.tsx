@@ -103,34 +103,6 @@ export function AdSenseLoader() {
 
     useEffect(() => {
         if (!ADSENSE_ENABLED) return
-        const handleClick = (event: MouseEvent) => {
-            if (event.defaultPrevented || event.button !== 0) return
-            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-
-            const target = event.target
-            if (!(target instanceof Element)) return
-
-            const link = target.closest<HTMLAnchorElement>('a[href]')
-            if (!link) return
-            if (link.target && link.target !== '_self') return
-            if (link.hasAttribute('download')) return
-            if (link.dataset.nextDocumentNav === 'false') return
-
-            const url = new URL(link.href, window.location.href)
-            if (url.origin !== window.location.origin) return
-            if (isExcludedPath(url.pathname)) return
-            if (url.pathname === window.location.pathname && url.search === window.location.search) return
-
-            event.preventDefault()
-            window.location.assign(url.href)
-        }
-
-        document.addEventListener('click', handleClick, { capture: true })
-        return () => document.removeEventListener('click', handleClick, { capture: true })
-    }, [])
-
-    useEffect(() => {
-        if (!ADSENSE_ENABLED) return
         if (typeof window === 'undefined') return
 
         let frame = 0

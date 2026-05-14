@@ -19,7 +19,6 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
-import { SideRailAds } from "@/components/ui/SideRailAds"
 
 const getTickerPosts = unstable_cache(
     async () => {
@@ -195,7 +194,6 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <SideRailAds />
                     <div className="site-shell min-h-screen flex flex-col">
                         <NavBar tickerPosts={tickerPosts} />
                         <ErrorBoundary>
