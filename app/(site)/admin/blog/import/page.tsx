@@ -80,6 +80,7 @@ export default function BlogImportPage() {
     const [validation, setValidation] = useState<ValidationResult | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [form, setForm] = useState({ title: '', slug: '', excerpt: '', categoryId: '' })
+    const [metaAutoFilled, setMetaAutoFilled] = useState(false)
     const [importedPost, setImportedPost] = useState<{ id: string; slug: string; title: string } | null>(null)
     const [importError, setImportError] = useState('')
 
@@ -102,6 +103,26 @@ export default function BlogImportPage() {
             const arr = Array.isArray(parsed) ? parsed : parsed.blocks ?? parsed.content ?? []
             if (!Array.isArray(arr) || arr.length === 0) throw new Error('JSON deve ser um array de blocos')
             setBlocks(arr)
+
+            // Auto-fill meta if present
+            if (!Array.isArray(parsed) && parsed.meta) {
+                const m = parsed.meta as Record<string, string>
+                const title = m.title ?? ''
+                const autoSlug = title.toLowerCase()
+                    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .trim().replace(/\s+/g, '-')
+                setForm(f => ({
+                    title: m.title ?? f.title,
+                    slug: m.slug ?? (autoSlug || f.slug),
+                    excerpt: m.excerpt ?? f.excerpt,
+                    categoryId: f.categoryId,
+                }))
+                setMetaAutoFilled(true)
+            } else {
+                setMetaAutoFilled(false)
+            }
+
             return arr
         } catch (e) {
             setParseError(`JSON inválido: ${e instanceof Error ? e.message : e}`)
@@ -151,7 +172,7 @@ export default function BlogImportPage() {
     const reset = () => {
         setStep('input'); setRawJson(''); setBlocks([]); setParseError('')
         setValidation(null); setForm({ title: '', slug: '', excerpt: '', categoryId: '' })
-        setImportedPost(null); setImportError('')
+        setMetaAutoFilled(false); setImportedPost(null); setImportError('')
     }
 
     return (
@@ -281,7 +302,14 @@ export default function BlogImportPage() {
                         {/* Right: form */}
                         <div className="flex flex-col gap-4">
                             <div className="border border-border rounded-xl bg-surface/30 p-4 flex flex-col gap-3">
-                                <p className="text-[13px] font-semibold text-foreground mb-1">Dados do artigo</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-[13px] font-semibold text-foreground">Dados do artigo</p>
+                                    {metaAutoFilled && (
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-semibold">
+                                            ✦ preenchido pelo Gemini
+                                        </span>
+                                    )}
+                                </div>
 
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-muted block mb-1">Título *</label>
