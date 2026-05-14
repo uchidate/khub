@@ -71,6 +71,10 @@ function validateBlocks(blocks: unknown[]): ValidationIssue[] {
         if (b.type === "blog_list" && !Array.isArray(b.items)) {
             issues.push({ block: i, type: "campo", message: "blog_list deve ter 'items' como array" })
         }
+        // Detect markdown link syntax in url fields
+        if (typeof b.url === "string" && /\[([^\]]*)\]\(([^)]+)\)/.test(b.url)) {
+            issues.push({ block: i, type: "url", message: `URL do bloco ${b.type} está em formato markdown — será corrigida automaticamente no import` })
+        }
         if (b.type === "blog_rating") {
             const score = Number(b.score)
             if (isNaN(score) || score < 0 || score > 10) {

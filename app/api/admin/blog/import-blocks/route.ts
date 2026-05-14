@@ -10,7 +10,19 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
         }
 
-        const { title, slug, excerpt, categoryId, blocks } = await request.json()
+        const { title, slug, excerpt, categoryId, blocks: rawBlocks } = await request.json()
+
+        // Strip markdown link syntax from url fields: [text](url) → url
+        const mdUrl = /\[([^\]]*)\]\(([^)]+)\)/
+        const blocks = Array.isArray(rawBlocks)
+            ? rawBlocks.map((b: Record<string, unknown>) => {
+                if (typeof b.url === "string" && mdUrl.test(b.url)) {
+                    const match = b.url.match(mdUrl)
+                    return { ...b, url: match?.[2] ?? b.url }
+                }
+                return b
+            })
+            : rawBlocks
 
         if (!title || typeof title !== "string") return NextResponse.json({ error: "Título obrigatório" }, { status: 400 })
         if (!slug || typeof slug !== "string") return NextResponse.json({ error: "Slug obrigatório" }, { status: 400 })
