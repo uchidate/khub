@@ -158,7 +158,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         openGraph: {
             title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
-            images: artist.primaryImageUrl ? [{ url: artist.primaryImageUrl, width: 1200, height: 630, alt: artist.nameRomanized }] : [],
             type: 'profile',
             url: `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
         },
@@ -166,7 +165,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
             card: 'summary_large_image',
             title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
-            images: artist.primaryImageUrl ? [artist.primaryImageUrl] : []
         }
     }, 'artist', artist.id)
 }

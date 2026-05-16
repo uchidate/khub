@@ -112,12 +112,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         openGraph: {
             title: `${production.titlePt} | HallyuHub`,
             description: fullDescription.slice(0, 160),
-            images: production.imageUrl ? [{
-                url: production.imageUrl,
-                width: 1200,
-                height: 630,
-                alt: production.titlePt
-            }] : [],
             type: 'video.movie',
             url: `${BASE_URL}/productions/${production.slug ?? production.id}`,
         },
@@ -125,7 +119,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
             card: 'summary_large_image',
             title: `${production.titlePt} | HallyuHub`,
             description: fullDescription.slice(0, 160),
-            images: production.imageUrl ? [production.imageUrl] : []
         }
     }, 'production', production.id)
 }
