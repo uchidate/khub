@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
     Search, Eye, Newspaper, Music2, Users,
-    BarChart3, RefreshCw, BookOpen, UserPlus, Loader2, Heart,
+    BarChart3, RefreshCw, BookOpen, UserPlus, Loader2, Heart, Globe,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -54,6 +54,10 @@ interface AnalyticsData {
 }
 
 type Period = '0' | '7' | '30' | '90'
+
+interface Ga4Metrics { sessions: number; users: number; pageviews: number; bounceRate: number; avgSessionDuration: number }
+interface Ga4Page    { path: string; title: string; pageviews: number; users: number }
+interface Ga4Data    { metrics: Ga4Metrics; activeUsers: number; blogPosts: Ga4Page[]; productions: Ga4Page[]; artists: Ga4Page[]; days: number }
 
 // ─── Bar Chart (CSS) ──────────────────────────────────────────────────────────
 
@@ -216,6 +220,8 @@ export default function AdminAnalyticsPage() {
     const [period,  setPeriod]  = useState<Period>('30')
     const [data,    setData]    = useState<AnalyticsData | null>(null)
     const [loading, setLoading] = useState(true)
+    const [ga4,     setGa4]     = useState<Ga4Data | null>(null)
+    const [ga4Loading, setGa4Loading] = useState(true)
 
     const load = useCallback(async (p: Period) => {
         setLoading(true)
@@ -231,6 +237,14 @@ export default function AdminAnalyticsPage() {
     }, [])
 
     useEffect(() => { load(period) }, [period, load])
+
+    useEffect(() => {
+        setGa4Loading(true)
+        fetch('/api/admin/analytics/ga4?days=30', { credentials: 'include' })
+            .then(r => r.json())
+            .then(d => { if (!d.error) setGa4(d) })
+            .finally(() => setGa4Loading(false))
+    }, [])
 
     // Auto-refresh every 60s when "Hoje" is active
     useEffect(() => {
@@ -470,6 +484,67 @@ export default function AdminAnalyticsPage() {
                             )}
                         </div>
                     </section>
+                </div>
+
+                {/* ── Google Analytics 4 ── */}
+                <div className="space-y-4 pt-2">
+                    <div className="flex items-center gap-2">
+                        <Globe size={14} className="text-blue-400" />
+                        <h2 className="text-xs font-bold text-foreground uppercase tracking-widest">Google Analytics 4 — 30 dias</h2>
+                        {ga4Loading && <Loader2 size={12} className="animate-spin text-muted" />}
+                    </div>
+
+                    {ga4 && (
+                        <>
+                            {/* Métricas GA4 */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <StatCard icon={Users}    label="Usuários (GA4)"    value={ga4.metrics.users}     color="text-blue-400"   bg="bg-blue-500/5" />
+                                <StatCard icon={Eye}      label="Pageviews (GA4)"   value={ga4.metrics.pageviews} color="text-cyan-400"   bg="bg-cyan-500/5" />
+                                <StatCard icon={BarChart3} label="Sessões (GA4)"    value={ga4.metrics.sessions}  color="text-purple-400" bg="bg-purple-500/5" />
+                                <StatCard icon={Globe}    label="Ativos agora"      value={ga4.activeUsers}       color="text-green-400"  bg="bg-green-500/5"
+                                    sub={`${Math.round(ga4.metrics.avgSessionDuration / 60)}min avg sessão`} />
+                            </div>
+
+                            {/* Top páginas por seção */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                {([
+                                    { label: 'Top Blog (tráfego real)', items: ga4.blogPosts,   icon: BookOpen,   href: '/blog/' },
+                                    { label: 'Top Produções (tráfego real)', items: ga4.productions, icon: Newspaper, href: '/productions/' },
+                                    { label: 'Top Artistas (tráfego real)', items: ga4.artists,    icon: Music2,    href: '/artists/' },
+                                ] as const).map(({ label, items, icon: Icon }) => (
+                                    <section key={label} className="bg-surface border border-border rounded-xl overflow-hidden">
+                                        <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                                            <Icon size={13} className="text-blue-400" />
+                                            <h3 className="text-xs font-bold text-foreground">{label}</h3>
+                                        </div>
+                                        <div className="divide-y divide-border">
+                                            {items.length === 0 && (
+                                                <p className="text-sm text-muted p-4">Sem dados</p>
+                                            )}
+                                            {items.map((page, i) => {
+                                                const slug = page.path.split('/').filter(Boolean).pop() ?? ''
+                                                return (
+                                                    <div key={page.path} className="flex items-center gap-3 px-4 py-2.5">
+                                                        <span className="text-[11px] font-black text-muted w-4 shrink-0">{i + 1}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <Link href={page.path} target="_blank" className="text-xs font-medium text-foreground hover:text-accent truncate block">
+                                                                {slug}
+                                                            </Link>
+                                                        </div>
+                                                        <span className="text-[11px] font-black text-blue-400 shrink-0">{page.pageviews.toLocaleString('pt-BR')}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </section>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {!ga4 && !ga4Loading && (
+                        <p className="text-sm text-muted">GA4 não disponível.</p>
+                    )}
                 </div>
 
             </div>

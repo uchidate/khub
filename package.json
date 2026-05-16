@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
+    "@google-analytics/data": "^6.0.0",
     "@google/generative-ai": "^0.24.1",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@next/third-parties": "^16.2.3",
@@ -47,6 +48,7 @@
     "dotenv": "^17.4.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.36.0",
+    "google-auth-library": "^10.6.2",
     "googleapis": "^171.0.0",
     "jsdom": "^29.0.0",
     "lucide-react": "^0.577.0",
