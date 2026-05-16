@@ -16,7 +16,6 @@ export interface AgentConfig {
   maxIterations?: number;
   maxTokens?: number;
   systemPrompt: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: any[];
 }
 
@@ -29,7 +28,6 @@ async function runAnthropicAgent(
   const { model = "claude-opus-4-7", maxIterations = 10, maxTokens = 8000, systemPrompt, tools } = config;
   const client = new Anthropic();
   const iterations = { count: 0 };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toolCalls: Array<{ name: string; input: unknown; result: any }> = [];
   let messages: Anthropic.MessageParam[] = [{ role: "user", content: userQuery }];
 
@@ -53,10 +51,8 @@ async function runAnthropicAgent(
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const toolUse of toolUseBlocks) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const tool = tools.find((t: any) => t.name === toolUse.name);
           if (!tool) throw new Error(`Tool não encontrada: ${toolUse.name}`);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const result = await (tool as any).run(toolUse.input);
           toolCalls.push({ name: toolUse.name, input: toolUse.input, result });
           toolResults.push({ type: "tool_result", tool_use_id: toolUse.id, content: typeof result === "string" ? result : JSON.stringify(result) });
@@ -93,7 +89,6 @@ async function runOllamaAgent(
   const client = new OpenAI({ baseURL: OLLAMA_BASE_URL, apiKey: "ollama" });
   const openaiTools = toOpenAITools(tools);
   const iterations = { count: 0 };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toolCalls: Array<{ name: string; input: unknown; result: any }> = [];
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -125,17 +120,14 @@ async function runOllamaAgent(
       }
 
       for (const tc of msg.tool_calls) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const fn = (tc as any).function as { name: string; arguments: string };
         const fnName = fn.name;
         let parsed: Record<string, unknown> = {};
         try { parsed = JSON.parse(fn.arguments || "{}"); } catch { /* keep empty */ }
 
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const tool = tools.find((t: any) => t.name === fnName);
           if (!tool) throw new Error(`Tool não encontrada: ${fnName}`);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const result = await (tool as any).run(parsed);
           toolCalls.push({ name: fnName, input: parsed, result });
           messages.push({ role: "tool", tool_call_id: tc.id, content: typeof result === "string" ? result : JSON.stringify(result) });

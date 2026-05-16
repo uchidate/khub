@@ -101,7 +101,7 @@ export default function ProductionEnrichPage() {
     const toast = useAdminToast()
 
     const [current, setCurrent] = useState<ProductionCurrent | null>(null)
-    const [loadingCurrent, setLoadingCurrent] = useState(true)
+    const [_loadingCurrent, setLoadingCurrent] = useState(true)
     const [jsonInput, setJsonInput] = useState('')
     const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
     const [parsed, setParsed] = useState<Record<string, unknown> | null>(null)

@@ -108,7 +108,7 @@ export async function POST(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const { error, session } = await requireAdmin()
+    const { error } = await requireAdmin()
     if (error) return error
 
     const { id } = await params

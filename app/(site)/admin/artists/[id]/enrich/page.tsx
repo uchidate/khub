@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { CheckCircle, XCircle, AlertTriangle, ChevronLeft, Send, RefreshCw, Eye, Sparkles, Copy, ClipboardCheck } from 'lucide-react'
+import { CheckCircle, XCircle, AlertTriangle, ChevronLeft, Send, RefreshCw, Eye, Copy, ClipboardCheck } from 'lucide-react'
 
 interface ArtistCurrent {
     id: string
@@ -91,11 +91,10 @@ function buildDiff(current: ArtistCurrent, incoming: Record<string, unknown>): D
 
 export default function ArtistEnrichPage() {
     const { id } = useParams<{ id: string }>()
-    const router = useRouter()
     const toast = useAdminToast()
 
     const [current, setCurrent] = useState<ArtistCurrent | null>(null)
-    const [loadingCurrent, setLoadingCurrent] = useState(true)
+    const [_loadingCurrent, setLoadingCurrent] = useState(true)
     const [jsonInput, setJsonInput] = useState('')
     const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
     const [parsed, setParsed] = useState<Record<string, unknown> | null>(null)

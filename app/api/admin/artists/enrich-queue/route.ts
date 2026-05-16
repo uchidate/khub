@@ -21,15 +21,6 @@ export async function GET(req: Request) {
     const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
     const PAGE_SIZE = 50
 
-    // Filtros de busca por nome
-    const nameFilter = q ? {
-        OR: [
-            { nameRomanized: { contains: q, mode: 'insensitive' as const } },
-            { nameHangul:    { contains: q, mode: 'insensitive' as const } },
-            { slug:          { contains: q, mode: 'insensitive' as const } },
-        ],
-    } : {}
-
     const where: Prisma.ArtistWhereInput = {
         isHidden: false,
         flaggedAsNonKorean: false,
