@@ -145,6 +145,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         ...(artist.nameHangul ? [artist.nameHangul] : []),
         ...roles.map(r => `${artist.nameRomanized} ${r}`),
         ...(primaryGroup ? [`${primaryGroup.name}`, `${artist.nameRomanized} ${primaryGroup.name}`] : []),
+        ...((artist as any).seoTags ?? []),
         'K-Pop', 'artista coreano', 'HallyuHub',
     ].filter(Boolean).join(', ')
 
@@ -289,6 +290,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
                 "birthPlace": artist.placeOfBirth ? { "@type": "Place", "name": artist.placeOfBirth } : undefined,
                 "jobTitle": artist.roles?.[0] ?? undefined,
+                ...((artist as any).debutDate ? { "foundingDate": new Date((artist as any).debutDate).toISOString().split('T')[0] } : {}),
                 "nationality": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
@@ -306,6 +308,22 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     { "@type": "ListItem", "position": 2, "name": artist.nameRomanized, "item": `${BASE_URL}/artists/${artist.slug ?? artist.id}` },
                 ],
             }} />
+
+            {(() => {
+                const faq = (artist as any).faq as { pergunta: string; resposta: string }[] | null
+                if (!faq?.length) return null
+                return (
+                    <JsonLd data={{
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": faq.map(f => ({
+                            "@type": "Question",
+                            "name": f.pergunta,
+                            "acceptedAnswer": { "@type": "Answer", "text": f.resposta },
+                        })),
+                    }} />
+                )
+            })()}
 
             {/* ── HERO ── */}
             <div className="relative h-[65vh] md:h-[75vh] overflow-hidden">
