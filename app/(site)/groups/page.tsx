@@ -42,6 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GroupsPage() {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <GroupsList />
     const [_total, heroGroups] = await Promise.all([
         prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
         prisma.musicalGroup.findMany({
