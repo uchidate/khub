@@ -48,6 +48,46 @@ export async function getSiteMetrics(days = 30) {
     }
 }
 
+export async function getDailyMetrics(days = 30) {
+    const client = getClient()
+    const [response] = await client.runReport({
+        property: `properties/${PROPERTY_ID}`,
+        dateRanges: [{ startDate: `${days}daysAgo`, endDate: 'today' }],
+        dimensions: [{ name: 'date' }],
+        metrics: [{ name: 'sessions' }, { name: 'activeUsers' }, { name: 'screenPageViews' }],
+        orderBys: [{ dimension: { dimensionName: 'date' }, desc: false }],
+    })
+    return (response.rows ?? []).map(row => ({
+        date:      row.dimensionValues?.[0]?.value ?? '',
+        sessions:  Number(row.metricValues?.[0]?.value ?? 0),
+        users:     Number(row.metricValues?.[1]?.value ?? 0),
+        pageviews: Number(row.metricValues?.[2]?.value ?? 0),
+    }))
+}
+
+export async function getPreviousPeriodMetrics(days = 30) {
+    const client = getClient()
+    const [response] = await client.runReport({
+        property: `properties/${PROPERTY_ID}`,
+        dateRanges: [{ startDate: `${days * 2}daysAgo`, endDate: `${days + 1}daysAgo` }],
+        metrics: [
+            { name: 'sessions' },
+            { name: 'activeUsers' },
+            { name: 'screenPageViews' },
+            { name: 'bounceRate' },
+            { name: 'averageSessionDuration' },
+        ],
+    })
+    const row = response.rows?.[0]?.metricValues ?? []
+    return {
+        sessions:           Number(row[0]?.value ?? 0),
+        users:              Number(row[1]?.value ?? 0),
+        pageviews:          Number(row[2]?.value ?? 0),
+        bounceRate:         parseFloat(row[3]?.value ?? '0'),
+        avgSessionDuration: parseFloat(row[4]?.value ?? '0'),
+    }
+}
+
 export async function getTopPages(days = 30, limit = 50) {
     const client = getClient()
     const [response] = await client.runReport({
@@ -268,12 +308,17 @@ export async function getSearchConsoleMetrics(days = 30) {
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
-    const fmt = (d: Date) => d.toISOString().split('T')[0]
-    const base = { startDate: fmt(startDate), endDate: fmt(endDate), rowLimit: 20, dataState: 'all' }
+    const fmtDate = (d: Date) => d.toISOString().split('T')[0]
+    const base = { startDate: fmtDate(startDate), endDate: fmtDate(endDate), dataState: 'all' }
 
-    const [queriesRes, pagesRes] = await Promise.all([
-        gscQuery(token, { ...base, dimensions: ['query'] }),
-        gscQuery(token, { ...base, dimensions: ['page'], rowLimit: 15 }),
+    const [queriesRes, pagesRes, dailyRes, countriesRes, devicesRes, opportunitiesRes] = await Promise.all([
+        gscQuery(token, { ...base, dimensions: ['query'], rowLimit: 25 }),
+        gscQuery(token, { ...base, dimensions: ['page'], rowLimit: 20 }),
+        gscQuery(token, { ...base, dimensions: ['date'], rowLimit: 90 }),
+        gscQuery(token, { ...base, dimensions: ['country'], rowLimit: 10 }),
+        gscQuery(token, { ...base, dimensions: ['device'], rowLimit: 5 }),
+        // Queries posição 4-30 com impressões altas = oportunidades de SEO
+        gscQuery(token, { ...base, dimensions: ['query'], rowLimit: 100 }),
     ])
 
     const mapRows = (rows: typeof queriesRes.rows) =>
@@ -285,8 +330,27 @@ export async function getSearchConsoleMetrics(days = 30) {
             position:    parseFloat(r.position.toFixed(1)),
         }))
 
+    const allQueries = mapRows(opportunitiesRes.rows)
+    const opportunities = allQueries
+        .filter(r => r.position >= 4 && r.position <= 30 && r.impressions >= 5)
+        .sort((a, b) => b.impressions - a.impressions)
+        .slice(0, 20)
+
+    const totalRows = allQueries
+    const totals = {
+        clicks:      totalRows.reduce((s, r) => s + r.clicks, 0),
+        impressions: totalRows.reduce((s, r) => s + r.impressions, 0),
+        avgCtr:      totalRows.length > 0 ? parseFloat((totalRows.reduce((s, r) => s + r.ctr, 0) / totalRows.length).toFixed(4)) : 0,
+        avgPosition: totalRows.length > 0 ? parseFloat((totalRows.reduce((s, r) => s + r.position, 0) / totalRows.length).toFixed(1)) : 0,
+    }
+
     return {
-        topQueries: mapRows(queriesRes.rows),
-        topPages:   mapRows(pagesRes.rows),
+        topQueries:    mapRows(queriesRes.rows),
+        topPages:      mapRows(pagesRes.rows),
+        dailyTrend:    mapRows(dailyRes.rows).map(r => ({ date: r.key, clicks: r.clicks, impressions: r.impressions })),
+        countries:     mapRows(countriesRes.rows),
+        devices:       mapRows(devicesRes.rows),
+        opportunities,
+        totals,
     }
 }
