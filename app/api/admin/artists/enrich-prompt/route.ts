@@ -14,7 +14,10 @@ export async function GET(req: Request) {
     const artistId = searchParams.get('artistId')
 
     const promptPath = join(process.cwd(), 'prompts', 'idol-enrich.md')
+    const currentYear = new Date().getFullYear()
     const prompt = readFileSync(promptPath, 'utf-8')
+        .replace(/\b2025\b/g, String(currentYear))
+        .replace(/\b2023-2025\b/g, `${currentYear - 2}-${currentYear}`)
 
     let productions: string[] = []
     if (artistId) {
