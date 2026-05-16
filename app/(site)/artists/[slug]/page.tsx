@@ -133,8 +133,10 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     if (artist.isHidden) return { title: 'Artista não encontrado', robots: { index: false, follow: false } }
 
     const roles = artist.roles || []
-    const description = artist.bio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
-    const isThinContent = !artist.primaryImageUrl && !artist.bio
+    const GENERIC_BIO = /conhecido\(a\) na ind[uú]stria|talentoso\(a\).*ind[uú]stria|de destaque na ind[uú]stria/i
+    const cleanBio = artist.bio && !GENERIC_BIO.test(artist.bio) ? artist.bio : null
+    const description = cleanBio || `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''} - ${roles.join(', ')}${artist.agency ? ` · ${artist.agency.name}` : ''}`
+    const isThinContent = !artist.primaryImageUrl && !cleanBio
 
     const canonicalUrl = `${BASE_URL}/artists/${artist.slug ?? artist.id}`
     const primaryGroup = artist.memberships?.find(m => m.isActive)?.group ?? artist.memberships?.[0]?.group ?? null
@@ -252,8 +254,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const allGroups = artist.memberships
 
     // Profile sections: bio as "Perfil" + analiseEditorial sections
+    const GENERIC_BIO_RE = /conhecido\(a\) na ind[uú]stria|talentoso\(a\).*ind[uú]stria|de destaque na ind[uú]stria/i
     const profileSections: { title: string; content: string }[] = []
-    const bioText = bioPt ?? artist.bio
+    const cleanBioPt = bioPt && !GENERIC_BIO_RE.test(bioPt) ? bioPt : null
+    const cleanBioRaw = artist.bio && !GENERIC_BIO_RE.test(artist.bio) ? artist.bio : null
+    const bioText = cleanBioPt ?? cleanBioRaw
     if (artist.analiseEditorial) {
         const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
         let m: RegExpExecArray | null
