@@ -9,7 +9,6 @@ function slugify(text: string): string {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[̀-ͯ]/g, '')  // remove diacritics
-        .replace(/[^\x00-\x7F]/g, '')     // remove non-ASCII (Korean, etc.)
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_]+/g, '-')
         .replace(/-+/g, '-')

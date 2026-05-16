@@ -51,7 +51,6 @@ function slugify(text: string): string {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[̀-ͯ]/g, '')
-        .replace(/[^\x00-\x7F]/g, '')
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_]+/g, '-')
         .replace(/-+/g, '-')
