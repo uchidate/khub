@@ -135,6 +135,18 @@ export async function POST(
         return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
     }
 
+    // Limpa URLs markdown [texto](url) → url, e rejeita redirects google.com/search
+    if (body && typeof body === 'object' && 'socialLinks' in body && body.socialLinks && typeof body.socialLinks === 'object') {
+        const cleaned: Record<string, string | null> = {}
+        for (const [k, v] of Object.entries(body.socialLinks as Record<string, unknown>)) {
+            if (!v || typeof v !== 'string') { cleaned[k] = null; continue }
+            const mdMatch = v.match(/\[.*?\]\((.*?)\)/)
+            const url = mdMatch ? mdMatch[1] : v
+            cleaned[k] = url.includes('google.com/search') ? null : url.trim() || null
+        }
+        ;(body as Record<string, unknown>).socialLinks = cleaned
+    }
+
     const parsed = EnrichSchema.safeParse(body)
     if (!parsed.success) {
         return NextResponse.json({
