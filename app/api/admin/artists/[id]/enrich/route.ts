@@ -189,8 +189,8 @@ export async function POST(
         const genderMap = { female: 1, male: 2, 'non-binary': 3 } as const
         update.gender = genderMap[data.gender]
     }
-    if (data.tags?.length)  update.tags = data.tags
-    if (data.faq)           update.faq  = data.faq
+    if (data.tags?.length)  update.seoTags = data.tags
+    if (data.faq)           update.faq     = data.faq
 
     try {
         const updated = await prisma.artist.update({
