@@ -222,6 +222,7 @@ export default function AdminAnalyticsPage() {
     const [loading, setLoading] = useState(true)
     const [ga4,     setGa4]     = useState<Ga4Data | null>(null)
     const [ga4Loading, setGa4Loading] = useState(true)
+    const [ga4Error, setGa4Error] = useState<string | null>(null)
 
     const load = useCallback(async (p: Period) => {
         setLoading(true)
@@ -238,13 +239,20 @@ export default function AdminAnalyticsPage() {
 
     useEffect(() => { load(period) }, [period, load])
 
-    useEffect(() => {
+    const loadGa4 = useCallback(() => {
         setGa4Loading(true)
+        setGa4Error(null)
         fetch('/api/admin/analytics/ga4?days=30', { credentials: 'include' })
             .then(r => r.json())
-            .then(d => { if (!d.error) setGa4(d) })
+            .then(d => {
+                if (d.error) setGa4Error(d.error)
+                else setGa4(d)
+            })
+            .catch(e => setGa4Error(e.message ?? 'Erro desconhecido'))
             .finally(() => setGa4Loading(false))
     }, [])
+
+    useEffect(() => { loadGa4() }, [loadGa4])
 
     // Auto-refresh every 60s when "Hoje" is active
     useEffect(() => {
@@ -543,7 +551,12 @@ export default function AdminAnalyticsPage() {
                     )}
 
                     {!ga4 && !ga4Loading && (
-                        <p className="text-sm text-muted">GA4 não disponível.</p>
+                        <div className="flex items-center gap-3">
+                            <p className="text-sm text-muted">
+                                {ga4Error ? `GA4 erro: ${ga4Error}` : 'GA4 não disponível.'}
+                            </p>
+                            <button onClick={loadGa4} className="text-xs text-accent underline">Tentar novamente</button>
+                        </div>
                     )}
                 </div>
 

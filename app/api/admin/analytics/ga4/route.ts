@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ metrics, activeUsers, blogPosts, productions, artists, days })
     } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro desconhecido'
+        console.error('[GA4]', message, err)
         return NextResponse.json({ error: message }, { status: 500 })
     }
 }
