@@ -57,6 +57,10 @@ const EnrichSchema = z.object({
     debutDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato YYYY-MM-DD').optional().nullable(),
     roles: z.array(z.string()).optional(),
     socialLinks: z.record(z.string(), z.string().url().or(z.literal('')).nullable()).optional().nullable(),
+    seoTitle: z.string().max(60).optional().nullable(),
+    metaDescription: z.string().min(140).max(158).optional().nullable(),
+    tags: z.array(z.string()).min(1).max(15).optional(),
+    faq: z.array(z.object({ pergunta: z.string(), resposta: z.string() })).min(1).max(10).optional().nullable(),
 })
 
 /**
@@ -168,6 +172,8 @@ export async function POST(
         )
         if (Object.keys(cleaned).length > 0) update.socialLinks = cleaned
     }
+    if (data.tags?.length)  update.tags = data.tags
+    if (data.faq)           update.faq  = data.faq
 
     try {
         const updated = await prisma.artist.update({
@@ -175,6 +181,23 @@ export async function POST(
             data: update,
             select: { id: true, nameRomanized: true, slug: true, enrichedAt: true },
         })
+
+        if (data.seoTitle || data.metaDescription) {
+            await prisma.seoMeta.upsert({
+                where: { entityType_entityId: { entityType: 'artist', entityId: id } },
+                create: {
+                    entityType: 'artist',
+                    entityId: id,
+                    ...(data.seoTitle && { metaTitle: data.seoTitle }),
+                    ...(data.metaDescription && { metaDesc: data.metaDescription }),
+                },
+                update: {
+                    ...(data.seoTitle && { metaTitle: data.seoTitle }),
+                    ...(data.metaDescription && { metaDesc: data.metaDescription }),
+                },
+            })
+        }
+
         revalidatePath(`/artists/${updated.slug ?? updated.id}`)
         revalidatePath('/artists')
         return NextResponse.json({ ok: true, artist: updated, fieldsUpdated: Object.keys(update).filter(k => k !== 'enrichedAt') })

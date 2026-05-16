@@ -24,7 +24,11 @@ Você é um especialista em cultura K-Pop e K-Drama com acesso às informações
   "debutDate": "Data de debut no formato YYYY-MM-DD. Debut solo ou no primeiro grupo — o que vier primeiro. null se não confirmado",
   "placeOfBirth": "Cidade, Província, South Korea (em inglês)",
 
-  "bio": "Biografia em PT-BR. APENAS ESTE CAMPO — não criar campos extras como bio2023_2025, bio_recente ou similares. 2 parágrafos no total (150-200 palavras). Primeiro parágrafo: quem é, de onde veio, como surgiu na cena. Segundo parágrafo: o que está fazendo nos últimos anos (incluindo 2023-2025 se relevante). Tom: direto e factual, como uma boa Wikipedia em português — sem exagero, sem adjetivo solto. Pode usar termos do K-Pop em inglês quando for o vocabulário natural (idol, comeback, debut). Proibido: 'Com uma trajetória marcada por...', 'É impossível falar de X sem...', 'um dos maiores...', qualquer frase que seria igual pra qualquer outro artista.",
+  "seoTitle": "Título SEO em PT-BR, máximo 60 caracteres. Formato recomendado: 'Nome — Papel Principal | HallyuHub'. Exemplos: 'Park Bo-gum — Ator e Cantor | HallyuHub', 'IU — Cantora e Atriz | HallyuHub', 'BTS — Grupo de K-Pop | HallyuHub'. Inclua a palavra-chave mais buscada sobre o artista.",
+
+  "metaDescription": "Descrição SEO em PT-BR, entre 140-158 caracteres. Deve incluir: nome completo, papel principal (ator/cantor/idol), algo concreto que o identifica (drama mais famoso OU álbum mais conhecido OU grupo), e um gancho que estimule o clique. Não copie a bio — escreva como se fosse o texto que aparece no Google abaixo do título. Exemplo: 'Park Bo-gum é um ator sul-coreano conhecido por Reply 1988 e Moon Lovers. Conheça sua carreira, dramas, discografia e curiosidades.'",
+
+  "bio": "Biografia em PT-BR. APENAS ESTE CAMPO — não criar campos extras como bio2023_2025, bio_recente ou similares. 3 parágrafos no total (250-350 palavras). Primeiro parágrafo: quem é, de onde veio, como surgiu na cena — inclua nome completo, origem e contexto do debut. Segundo parágrafo: projetos de maior impacto e o que os tornou relevantes (cite títulos reais). Terceiro parágrafo: atividade recente (2023-2026 se disponível) e situação atual. Tom: direto e factual, como uma boa Wikipedia em português — sem exagero, sem adjetivo solto. Pode usar termos do K-Pop em inglês quando for o vocabulário natural (idol, comeback, debut). Proibido: 'Com uma trajetória marcada por...', 'É impossível falar de X sem...', 'um dos maiores...', qualquer frase que seria igual pra qualquer outro artista.",
 
   "analiseEditorial": "Análise editorial em PT-BR. DIFERENTE da bio — não repita os mesmos fatos. Foco em: estilo artístico específico, o que esse artista faz de diferente na prática, prêmios com contexto do que representam, influências concretas. 2 parágrafos com títulos em negrito. 200-300 palavras. Tom: informado e direto, como um jornalista de cultura pop que respeita o leitor — nem fã babando nem crítico distante. Evite superlativos vazios ('o maior', 'incomparável', 'sensação mundial') — deixe os fatos falarem.\n\nTítulos: devem ser simples e temáticos, não corporativos. Exemplos bons: '**Voz e Composição**', '**Na tela**', '**O que a diferencia**', '**Carreira solo**'. Exemplos ruins (PROIBIDO): 'Métricas de Desempenho', 'Validação Institucional', 'Gestão de Imagem', 'Posicionamento Estratégico' — qualquer coisa que pareça relatório de negócios.\n\nFormato:\n**Título 1**\nConteúdo\n\n**Título 2**\nConteúdo",
 
@@ -71,6 +75,15 @@ Você é um especialista em cultura K-Pop e K-Drama com acesso às informações
   "awards": [
     {"premio": "Nome do prêmio (ex: Baeksang Arts Awards)", "categoria": "Melhor Ator", "ano": 2023},
     {"premio": "Outro prêmio", "categoria": "Categoria", "ano": 2024}
+  ],
+
+  "tags": ["tag1", "tag2", "tag3"],
+
+  "faq": [
+    {
+      "pergunta": "Pergunta exatamente como alguém digitaria no Google — ex: 'Qual o nome real de IU?', 'Quando Park Bo-gum fez debut?', 'IU e BTS têm colaboração?'",
+      "resposta": "Resposta direta, 1-2 frases, sem rodeio. Inclua o dado mais específico disponível."
+    }
   ]
 }
 ```
@@ -81,6 +94,10 @@ Você é um especialista em cultura K-Pop e K-Drama com acesso às informações
 - `bio` e `analiseEditorial` **devem ser diferentes** — não repita os mesmos fatos
 - Cada curiosidade: mínimo 2 frases completas, máximo 3
 - `roles` em maiúsculo: `ATOR`, `CANTOR`, `MODELO`, `IDOL`, `APRESENTADOR`, `DANÇARINO`
+- `seoTitle`: máximo 60 caracteres — conta espaços. Se passar, corte o papel e deixe só o nome + HallyuHub
+- `metaDescription`: entre 140-158 caracteres — muito curta não aproveita o espaço, muito longa é cortada
+- `tags`: 4-8 termos em português/inglês que as pessoas buscam sobre esse artista — ex: `["K-Drama", "Ator", "Park Bo-gum dramas", "Goblin elenco", "Reply 1988"]`. Inclua: gênero, papel, dramas/grupos famosos, nome completo se tiver variação conhecida
+- `faq`: 3-5 perguntas **evergreen** (que não ficam desatualizadas) — ex: "Qual o nome real de X?", "Quando X fez debut?", "X é casado?", "Qual o grupo de X?". **PROIBIDO** perguntas sobre streaming, datas de lançamento futuras ou ranking atual
 - `height`: apenas número, sem "cm"
 - `bloodType`: apenas A, B, AB, O ou null
 - Datas nos `awards` e `destaques`: ano inteiro (ex: 2023)
