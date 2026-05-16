@@ -166,21 +166,6 @@ export async function getSectionEngagement(days = 30) {
     }).filter(s => s.pageviews > 0).sort((a, b) => b.pageviews - a.pageviews)
 }
 
-export async function getTopExitPages(days = 30, limit = 10) {
-    const client = getClient()
-    const [response] = await client.runReport({
-        property: `properties/${PROPERTY_ID}`,
-        dateRanges: [{ startDate: `${days}daysAgo`, endDate: 'today' }],
-        dimensions: [{ name: 'exitPagePath' }],
-        metrics: [{ name: 'sessions' }],
-        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-        limit,
-    })
-    return (response.rows ?? []).map(row => ({
-        path:     row.dimensionValues?.[0]?.value ?? '',
-        sessions: Number(row.metricValues?.[0]?.value ?? 0),
-    }))
-}
 
 export async function getLandingPages(days = 30, limit = 10) {
     const client = getClient()

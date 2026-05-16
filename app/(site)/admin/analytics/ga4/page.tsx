@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { RefreshCw, Loader2, Globe, Monitor, TrendingUp, Users, Eye, Clock, ArrowUpRight, Search, LogOut, ExternalLink } from 'lucide-react'
+import { RefreshCw, Loader2, Globe, Monitor, TrendingUp, Users, Eye, Clock, ArrowUpRight, Search, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -15,7 +15,6 @@ interface Ga4Source  { channel: string; sessions: number; users: number }
 interface Ga4NvR     { type: string; users: number; sessions: number }
 interface Ga4Search  { term: string; sessions: number; users: number }
 interface Ga4Section { section: string; pageviews: number; users: number; avgDuration: number; engagementRate: number }
-interface Ga4ExitPage { path: string; sessions: number }
 interface GscRow { key: string; clicks: number; impressions: number; ctr: number; position: number }
 interface GscData { topQueries: GscRow[]; topPages: GscRow[] }
 interface Ga4Data {
@@ -30,7 +29,6 @@ interface Ga4Data {
     newVsReturning: Ga4NvR[]
     searchTerms: Ga4Search[]
     sectionEngagement: Ga4Section[]
-    exitPages: Ga4ExitPage[]
     landingPages: Ga4Page[]
     gsc: GscData | null
     days: number
@@ -445,30 +443,17 @@ export default function Ga4AnalyticsPage() {
                             </div>
                         )}
 
-                        {/* Landing Pages + Páginas de Saída */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
-                                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                                    <ArrowUpRight size={14} /> Páginas de Entrada
-                                    <span className="text-muted text-xs font-normal ml-auto">onde usuários chegam</span>
-                                </div>
-                                <TopList
-                                    items={data.landingPages as unknown as Record<string, unknown>[]}
-                                    valueKey="sessions" labelKey="path"
-                                    href={item => String(item.path ?? '')}
-                                />
+                        {/* Landing Pages */}
+                        <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+                            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                                <ArrowUpRight size={14} /> Páginas de Entrada
+                                <span className="text-muted text-xs font-normal ml-auto">onde usuários chegam</span>
                             </div>
-                            <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
-                                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                                    <LogOut size={14} /> Páginas de Saída
-                                    <span className="text-muted text-xs font-normal ml-auto">onde usuários saem</span>
-                                </div>
-                                <TopList
-                                    items={data.exitPages as unknown as Record<string, unknown>[]}
-                                    valueKey="sessions" labelKey="path"
-                                    href={item => String(item.path ?? '')}
-                                />
-                            </div>
+                            <TopList
+                                items={data.landingPages as unknown as Record<string, unknown>[]}
+                                valueKey="sessions" labelKey="path"
+                                href={item => String(item.path ?? '')}
+                            />
                         </div>
                     </>
                 )}
