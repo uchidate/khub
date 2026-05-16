@@ -13,7 +13,10 @@ const EnrichSchema = z.object({
     nameRomanized: z.string().min(1).optional(),
     nameHangul: z.string().optional().nullable(),
     birthName: z.string().optional().nullable(),
-    height: z.string().regex(/^\d{2,3}$/, 'Altura deve ser apenas número (ex: 183)').optional().nullable(),
+    height: z.union([
+        z.string().regex(/^\d{2,3}$/, 'Altura deve ser apenas número (ex: 183)'),
+        z.number().int().min(100).max(999).transform(n => String(n)),
+    ]).optional().nullable(),
     bloodType: z.enum(BLOOD_TYPES).optional().nullable(),
     placeOfBirth: z.string().optional().nullable(),
     bio: z.string().min(100, 'Bio muito curta (mín. 100 chars)').optional(),
@@ -52,7 +55,7 @@ const EnrichSchema = z.object({
     nationality: z.string().optional().nullable(),
     debutDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato YYYY-MM-DD').optional().nullable(),
     roles: z.array(z.string()).optional(),
-    socialLinks: z.record(z.string(), z.string().url().or(z.literal(''))).optional(),
+    socialLinks: z.record(z.string(), z.string().url().or(z.literal('')).nullable()).optional().nullable(),
 })
 
 /**
@@ -159,7 +162,7 @@ export async function POST(
         .filter(r => VALID_ROLES.includes(r))
     if (data.socialLinks) {
         const cleaned = Object.fromEntries(
-            Object.entries(data.socialLinks).filter(([, v]) => v.trim() !== '')
+            Object.entries(data.socialLinks).filter(([, v]) => v && v.trim() !== '')
         )
         if (Object.keys(cleaned).length > 0) update.socialLinks = cleaned
     }
