@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import { getSiteMetrics, getActiveUsers, getTopBlogPosts, getTopProductions, getTopArtists } from '@/lib/analytics-client'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
     const { error } = await requireAdmin()
     if (error) return error
 
-    const { searchParams } = new URL(req.url)
+    const { searchParams } = req.nextUrl
     const days = Math.min(90, Math.max(1, parseInt(searchParams.get('days') ?? '30')))
 
     try {
