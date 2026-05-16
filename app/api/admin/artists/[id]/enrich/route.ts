@@ -57,6 +57,7 @@ const EnrichSchema = z.object({
     debutDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato YYYY-MM-DD').optional().nullable(),
     roles: z.array(z.string()).optional(),
     socialLinks: z.record(z.string(), z.string().url().or(z.literal('')).nullable()).optional().nullable(),
+    gender: z.enum(['male', 'female', 'non-binary']).optional().nullable(),
     seoTitle: z.string().max(60).optional().nullable(),
     metaDescription: z.string().min(140).max(158).optional().nullable(),
     tags: z.array(z.string()).min(1).max(15).optional(),
@@ -171,6 +172,10 @@ export async function POST(
             Object.entries(data.socialLinks).filter(([, v]) => v && v.trim() !== '')
         )
         if (Object.keys(cleaned).length > 0) update.socialLinks = cleaned
+    }
+    if (data.gender) {
+        const genderMap = { female: 1, male: 2, 'non-binary': 3 } as const
+        update.gender = genderMap[data.gender]
     }
     if (data.tags?.length)  update.tags = data.tags
     if (data.faq)           update.faq  = data.faq
