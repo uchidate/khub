@@ -20,7 +20,6 @@ const EnrichSchema = z.object({
     bloodType: z.enum(BLOOD_TYPES).optional().nullable(),
     placeOfBirth: z.string().optional().nullable(),
     bio: z.string().min(100, 'Bio muito curta (mín. 100 chars)').optional(),
-    bio2023_2025: z.string().optional(),
     analiseEditorial: z.string().min(100, 'Análise muito curta (mín. 100 chars)').optional(),
     curiosidades: z.array(z.string().min(20, 'Curiosidade muito curta')).min(3).max(10).optional(),
     musicalStyle: z.string().optional().nullable(),
@@ -153,8 +152,7 @@ export async function POST(
     if (data.nationality)      update.nationality      = data.nationality
     if (data.debutDate)        update.debutDate        = new Date(data.debutDate)
     const GENERIC_BIO_PATTERNS = [/conhecido\(a\) na indústria/, /talentoso\(a\).*indústria/, /de destaque na indústria/]
-    const rawBio = [data.bio, data.bio2023_2025].filter(Boolean).join('\n\n')
-    if (rawBio && !GENERIC_BIO_PATTERNS.some(p => p.test(rawBio))) update.bio = rawBio
+    if (data.bio && !GENERIC_BIO_PATTERNS.some(p => p.test(data.bio!))) update.bio = data.bio
     if (data.analiseEditorial) update.analiseEditorial = data.analiseEditorial
     if (data.curiosidades)     update.curiosidades     = data.curiosidades
     if (data.musicalStyle)     update.musicalStyle     = data.musicalStyle
