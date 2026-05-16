@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Star, TrendingUp } from 'lucide-react'
@@ -18,6 +19,9 @@ import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+        return { title: 'Doramas & Filmes Coreanos', description: 'Doramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, tudo em português.' }
+    }
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}doramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, tudo em português.`
@@ -35,6 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <ProductionsList />
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const baseWhere = { flaggedAsNonKorean: false, isHidden: false, ...ageFilter }
 

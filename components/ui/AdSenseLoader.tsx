@@ -135,6 +135,11 @@ export function AdSenseLoader() {
         lastRoute.current = currentRoute
 
         if (isExcludedPath(pathname ?? '')) {
+            // Remove AdSense script and all injected ad iframes so auto ads stop
+            document.querySelectorAll('script[data-hallyuhub-adsense="true"], script[src*="pagead2.googlesyndication.com"]')
+                .forEach(el => el.remove())
+            document.querySelectorAll('iframe[id*="google_ads"], iframe[src*="googlesyndication"], ins.adsbygoogle')
+                .forEach(el => el.closest('[id^="aswift_"]')?.remove() ?? el.remove())
             return
         }
 
