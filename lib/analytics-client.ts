@@ -166,21 +166,6 @@ export async function getSectionEngagement(days = 30) {
     }).filter(s => s.pageviews > 0).sort((a, b) => b.pageviews - a.pageviews)
 }
 
-export async function getTopExitPages(days = 30, limit = 10) {
-    const client = getClient()
-    const [response] = await client.runReport({
-        property: `properties/${PROPERTY_ID}`,
-        dateRanges: [{ startDate: `${days}daysAgo`, endDate: 'today' }],
-        dimensions: [{ name: 'exitPagePath' }],
-        metrics: [{ name: 'sessions' }],
-        orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-        limit,
-    })
-    return (response.rows ?? []).map(row => ({
-        path:     row.dimensionValues?.[0]?.value ?? '',
-        sessions: Number(row.metricValues?.[0]?.value ?? 0),
-    }))
-}
 
 export async function getLandingPages(days = 30, limit = 10) {
     const client = getClient()
@@ -236,4 +221,72 @@ export async function getNewVsReturning(days = 30) {
         users:    Number(row.metricValues?.[0]?.value ?? 0),
         sessions: Number(row.metricValues?.[1]?.value ?? 0),
     }))
+}
+
+// ─── Google Search Console ────────────────────────────────────────────────────
+
+async function getGscAccessToken(): Promise<string> {
+    const clientId     = process.env.GA4_CLIENT_ID
+    const clientSecret = process.env.GA4_CLIENT_SECRET
+    const refreshToken = process.env.GA4_REFRESH_TOKEN
+    if (!clientId || !clientSecret || !refreshToken) {
+        throw new Error('GA4_CLIENT_ID, GA4_CLIENT_SECRET ou GA4_REFRESH_TOKEN não configurados')
+    }
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token',
+        }),
+    })
+    const json = await res.json() as { access_token?: string; error?: string }
+    if (!json.access_token) throw new Error(`OAuth2 token refresh failed: ${json.error ?? 'unknown'}`)
+    return json.access_token
+}
+
+const SITE_URL = 'https://www.hallyuhub.com.br/'
+
+async function gscQuery(token: string, body: Record<string, unknown>) {
+    const encoded = encodeURIComponent(SITE_URL)
+    const res = await fetch(
+        `https://www.googleapis.com/webmasters/v3/sites/${encoded}/searchAnalytics/query`,
+        {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        },
+    )
+    if (!res.ok) throw new Error(`GSC API error: ${res.status} ${await res.text()}`)
+    return res.json() as Promise<{ rows?: Array<{ keys: string[]; clicks: number; impressions: number; ctr: number; position: number }> }>
+}
+
+export async function getSearchConsoleMetrics(days = 30) {
+    const token = await getGscAccessToken()
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    const fmt = (d: Date) => d.toISOString().split('T')[0]
+    const base = { startDate: fmt(startDate), endDate: fmt(endDate), rowLimit: 20, dataState: 'all' }
+
+    const [queriesRes, pagesRes] = await Promise.all([
+        gscQuery(token, { ...base, dimensions: ['query'] }),
+        gscQuery(token, { ...base, dimensions: ['page'], rowLimit: 15 }),
+    ])
+
+    const mapRows = (rows: typeof queriesRes.rows) =>
+        (rows ?? []).map(r => ({
+            key:         r.keys[0] ?? '',
+            clicks:      r.clicks,
+            impressions: r.impressions,
+            ctr:         parseFloat(r.ctr.toFixed(4)),
+            position:    parseFloat(r.position.toFixed(1)),
+        }))
+
+    return {
+        topQueries: mapRows(queriesRes.rows),
+        topPages:   mapRows(pagesRes.rows),
+    }
 }
