@@ -435,6 +435,25 @@ export async function getSearchConsoleMetrics(days = 30) {
         position:    parseFloat(r.position.toFixed(1)),
     }))
 
+    // ── Content gaps: queries sem página dedicada ─────────────────────────────
+    // Para cada query, pega a melhor página que aparece. Se essa página ainda
+    // rankeia mal (pos > 10), o site não tem uma landing page focada no tema.
+    const queryBestPage = new Map<string, number>()
+    queryByPage.forEach(r => {
+        const best = queryBestPage.get(r.query)
+        if (best === undefined || r.position < best) queryBestPage.set(r.query, r.position)
+    })
+    const contentGaps = allQueries
+        .filter(q =>
+            q.impressions >= 20 &&
+            q.position >= 5 &&
+            q.position <= 40 &&
+            q.ctr < 0.03 &&
+            (queryBestPage.get(q.key) ?? 99) > 10
+        )
+        .sort((a, b) => b.impressions - a.impressions)
+        .slice(0, 20)
+
     return {
         topQueries:    mapRows(queriesRes.rows),
         topPages:      allPages.slice(0, 20),
@@ -449,5 +468,6 @@ export async function getSearchConsoleMetrics(days = 30) {
         ctrBuckets,
         brandVsGeneric,
         queryByPage,
+        contentGaps,
     }
 }

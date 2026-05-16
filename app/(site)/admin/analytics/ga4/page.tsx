@@ -33,6 +33,7 @@ interface GscData {
     countries: GscRow[]; devices: GscRow[]; opportunities: GscRow[]; totals: GscTotals
     pagesNoClick: GscRow[]; sectionHealth: GscSectionHealth[]; fallingQueries: GscFalling[]
     ctrBuckets: GscCtrBucket[]; brandVsGeneric: GscBrandVsGeneric; queryByPage: GscQueryPage[]
+    contentGaps: GscRow[]
 }
 interface Ga4Data {
     metrics: Ga4Metrics; prevMetrics: Ga4Metrics; dailyTrend: Ga4Daily[]
@@ -921,6 +922,23 @@ export default function Ga4AnalyticsPage() {
                                             }>Páginas sem Clique</CardTitle>
                                             <p className="text-[11px] text-muted mb-3">O Google mostra essas páginas nos resultados, mas ninguém clica — o título ou meta description provavelmente não atraem.</p>
                                             <GscTable rows={gsc.pagesNoClick} keyLabel="Página" isPage />
+                                        </Card>
+                                    )}
+
+                                    {/* Lacunas de conteúdo */}
+                                    {gsc.contentGaps.length > 0 && (
+                                        <Card>
+                                            <CardTitle icon={Zap} right={
+                                                <button onClick={() => exportCsv(gsc.contentGaps as unknown as Record<string,unknown>[], 'lacunas-conteudo.csv')}
+                                                    className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors">
+                                                    <Download size={10} /> CSV
+                                                </button>
+                                            }>Lacunas de Conteúdo</CardTitle>
+                                            <p className="text-[11px] text-muted mb-3">
+                                                Queries com muitas impressões mas sem página dedicada — nenhuma URL do site rankeia bem para esses termos.
+                                                Criar uma página focada pode capturar esse tráfego que já existe.
+                                            </p>
+                                            <GscTable rows={gsc.contentGaps} />
                                         </Card>
                                     )}
 
