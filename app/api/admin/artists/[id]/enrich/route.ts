@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
@@ -172,8 +173,10 @@ export async function POST(
         const updated = await prisma.artist.update({
             where: { id },
             data: update,
-            select: { id: true, nameRomanized: true, enrichedAt: true },
+            select: { id: true, nameRomanized: true, slug: true, enrichedAt: true },
         })
+        revalidatePath(`/artists/${updated.slug ?? updated.id}`)
+        revalidatePath('/artists')
         return NextResponse.json({ ok: true, artist: updated, fieldsUpdated: Object.keys(update).filter(k => k !== 'enrichedAt') })
     } catch (err) {
         return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
