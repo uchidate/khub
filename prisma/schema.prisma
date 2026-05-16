@@ -119,8 +119,13 @@ model Artist {
   // Conteúdo editorial original (gerado via IA ou escrito manualmente)
   analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
   curiosidades       String[]                    // 5-8 curiosidades autorais
+  musicalStyle       String?                     // estilo musical/atuação característico (2-3 frases)
+  fanInfo            Json?                       // { fanName, fanColor, lightstick }
+  awards             Json?                       // [{ premio, categoria, ano }]
+  destaques          Json?                       // { dramas: [], filmes: [], albuns: [] }
   editorialGeneratedAt DateTime?                 // quando o conteúdo editorial foi gerado/atualizado
   editorialCuratedAt   DateTime?                 // quando a curadoria humana foi concluída
+  enrichedAt           DateTime?                 // quando o enriquecimento via Gemini foi aplicado
   primaryImageUrl    String?
   socialLinks        Json?
   agency             Agency?            @relation(fields: [agencyId], references: [id])
@@ -162,6 +167,8 @@ model Artist {
   isHidden           Boolean            @default(false) // Oculto do site público pelo admin
   autoHidden         Boolean            @default(false) // Oculto automaticamente pelo sistema (sem produções visíveis)
   placeOfBirth       String?            // Local de nascimento (do TMDB)
+  nationality        String?            // Nacionalidade (ex: "South Korean", "Thai")
+  debutDate          DateTime?          // Data de debut solo ou no primeiro grupo
   // Rastreio de origem dos campos (JSON: { campo: { source: 'manual'|'tmdb'|'wikidata'|'system', at: ISO, by?: adminId } })
   // Usado para proteger campos editados manualmente do sync automático TMDB/Wikidata
   fieldSources       Json?
@@ -267,6 +274,8 @@ model Production {
   editorialReview    String?  @db.Text // nossa análise, 400+ palavras PT-BR
   editorialRating    Float?             // nossa nota (0-10)
   whyWatch           String?            // "Por que assistir?" — parágrafo curto autoral
+  curiosidades       String[]           // fatos/curiosidades autorais sobre a produção
+  enrichedAt         DateTime?          // quando o enriquecimento via Gemini foi aplicado
   editorialGeneratedAt DateTime?        // quando foi gerado/atualizado
   blogPosts          BlogPostProduction[]
   // Classificação etária DJCTQ

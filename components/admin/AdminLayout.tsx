@@ -89,6 +89,7 @@ const navSections: NavSection[] = [
       {
         href: '/admin/artists', label: 'Artistas', icon: Mic2, exact: true,
         subItems: [
+          { href: '/admin/artists/enrich',       label: 'Enriquecimento', icon: Sparkles },
           { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
           { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
@@ -112,6 +113,7 @@ const navSections: NavSection[] = [
           { href: '/admin/productions/sync',        label: 'Sync TMDB',    icon: RefreshCw },
           { href: '/admin/productions/moderation',  label: 'Moderação',    icon: AlertTriangle },
           { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
+          { href: '/admin/productions/enrich',      label: 'Enriquecimento', icon: Sparkles },
         ],
       },
       { href: '/admin/albums', label: 'Álbuns', icon: Disc3 },

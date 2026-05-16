@@ -1263,6 +1263,30 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
         case 'blog_countdown': return <CountdownBlock block={block} />
         case 'blog_flashcard': return <FlashcardBlock block={block} />
 
+        case 'blog_idol_facts': {
+            return (
+                <div className="my-8 rounded-2xl border border-border overflow-hidden bg-surface">
+                    <div className="flex items-center gap-4 px-5 py-4 border-b border-border bg-surface/60">
+                        {block.imageUrl && (
+                            <img src={block.imageUrl} alt={block.name} className="w-12 h-12 rounded-full object-cover object-top border-2 border-accent/30" />
+                        )}
+                        <div>
+                            <p className="text-[10px] font-black text-muted uppercase tracking-widest">Ficha</p>
+                            <p className="text-base font-black text-foreground">{block.name}</p>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-border">
+                        {block.facts.map((f, i) => (
+                            <div key={i} className="flex justify-between items-center px-5 py-3 text-sm">
+                                <span className="text-muted font-medium">{f.label}</span>
+                                <span className="text-foreground font-bold text-right">{f.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
+        }
+
         case 'blog_lyrics':
             return (
                 <div className="my-8 border border-border rounded-2xl overflow-hidden">

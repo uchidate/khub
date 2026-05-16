@@ -49,7 +49,7 @@ const getArtist = cache(async (slugOrId: string) => {
     return prisma.artist.findFirst({
         where,
         include: {
-            agency: true,
+            agency: { select: { id: true, name: true, slug: true, logoUrl: true } },
             albums: { orderBy: { releaseDate: 'desc' }, take: 20 },
             productions: {
                 where: {
@@ -76,7 +76,7 @@ const getArtist = cache(async (slugOrId: string) => {
             },
             memberships: {
                 include: { group: { select: { id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true } } },
-                orderBy: { isActive: 'desc' },
+                orderBy: [{ isActive: 'desc' }, { joinDate: 'asc' }],
             },
             streamingSignals: {
                 where: { expiresAt: { gt: new Date() } },
@@ -357,6 +357,16 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     {activeGroup.name}
                                 </Link>
                             )}
+                            {(artist as any).nationality && (artist as any).nationality !== 'South Korean' && (
+                                <span className="text-xs font-bold px-3 py-1 bg-white/10 backdrop-blur-sm text-white/90 rounded-full border border-white/20">
+                                    🌏 {(artist as any).nationality}
+                                </span>
+                            )}
+                            {(artist as any).debutDate && (
+                                <span className="text-xs font-bold px-3 py-1 bg-white/10 backdrop-blur-sm text-white/90 rounded-full border border-white/20">
+                                    Debut {new Date((artist as any).debutDate).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric', timeZone: 'UTC' })}
+                                </span>
+                            )}
                             {artist.birthDate && (
                                 <AnniversaryCountdown
                                     date={new Date(artist.birthDate).toISOString()}
@@ -446,11 +456,36 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} label="Naturalidade" value={artist.placeOfBirth} />
                                 )}
                                 {artist.height && (
-                                    <InfoRow icon={<Ruler className="w-3.5 h-3.5" />} label="Altura" value={artist.height} />
+                                    <InfoRow icon={<Ruler className="w-3.5 h-3.5" />} label="Altura" value={`${artist.height} cm`} />
+                                )}
+                                {(artist as any).bloodType && (
+                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Tipo Sanguíneo" value={(artist as any).bloodType} />
                                 )}
                                 {artist.zodiacSign && (
                                     <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Signo" value={artist.zodiacSign} />
                                 )}
+                                {(() => {
+                                    const fi = (artist as any).fanInfo as { fanName?: string; fanColor?: string } | null
+                                    if (!fi?.fanName) return null
+                                    return (
+                                        <div className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
+                                            <span className="flex items-center gap-1.5 text-xs text-muted">
+                                                <Heart className="w-3.5 h-3.5" />
+                                                Fandom
+                                            </span>
+                                            <span className="flex items-center gap-2 text-sm font-medium text-foreground text-right">
+                                                {fi.fanColor && (
+                                                    <span
+                                                        className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0"
+                                                        style={{ backgroundColor: fi.fanColor }}
+                                                        title={fi.fanColor}
+                                                    />
+                                                )}
+                                                {fi.fanName}
+                                            </span>
+                                        </div>
+                                    )
+                                })()}
                                 {artist.agency && (
                                     <div className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
                                         <div className="flex items-center gap-2 text-muted">
@@ -463,19 +498,49 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     </div>
                                 )}
                                 {/* Grupos */}
-                                {allGroups.map(m => (
-                                    <div key={m.id} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
-                                        <div className="flex items-center gap-2 text-muted">
-                                            <Music className="w-3.5 h-3.5" />
-                                            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">
-                                                {m.isActive ? 'Grupo' : 'Ex-grupo'}
-                                            </span>
-                                        </div>
-                                        <Link href={`/groups/${m.group.slug ?? m.group.id}`} className={`text-xs md:text-sm font-bold transition-colors ${m.isActive ? 'text-accent hover:underline' : 'text-muted hover:text-foreground'}`}>
-                                            {m.group.name}
-                                        </Link>
+                                {allGroups.length > 0 && (
+                                    <div className="pt-1 pb-1 space-y-2">
+                                        <p className="text-[10px] font-black text-muted uppercase tracking-widest flex items-center gap-1.5 px-0.5">
+                                            <Music className="w-3 h-3" />
+                                            {allGroups.length === 1 ? 'Grupo' : 'Grupos'}
+                                        </p>
+                                        {allGroups.map(m => {
+                                            const startYear = m.joinDate ? new Date(m.joinDate).getFullYear() : null
+                                            const endYear   = m.leaveDate ? new Date(m.leaveDate).getFullYear() : null
+                                            const period    = startYear
+                                                ? endYear ? `${startYear}–${endYear}` : `${startYear}–presente`
+                                                : m.isActive ? 'Ativo' : null
+                                            return (
+                                                <Link
+                                                    key={m.id}
+                                                    href={`/groups/${m.group.slug ?? m.group.id}`}
+                                                    className="flex items-center gap-3 p-2.5 rounded-xl border border-border hover:border-accent/40 hover:bg-accent/5 transition-all group/g"
+                                                >
+                                                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface-hover shrink-0">
+                                                        {m.group.profileImageUrl ? (
+                                                            <Image src={m.group.profileImageUrl} alt={m.group.name} width={40} height={40} className="w-full h-full object-cover object-top" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-black">
+                                                                {m.group.name.slice(0, 2).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className={`text-sm font-bold truncate ${m.isActive ? 'text-accent' : 'text-foreground'}`}>
+                                                            {m.group.name}
+                                                        </p>
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            {m.role && <span className="text-[10px] text-muted capitalize">{m.role}</span>}
+                                                            {period && m.role && <span className="text-[10px] text-muted/40">·</span>}
+                                                            {period && <span className="text-[10px] text-muted">{period}</span>}
+                                                            {!m.isActive && <span className="text-[9px] font-bold text-muted/50 bg-surface-hover px-1.5 py-0.5 rounded-full">ex</span>}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            )
+                                        })}
                                     </div>
-                                ))}
+                                )}
                             </div>
                             </div>
                         </div>
@@ -557,6 +622,87 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 </ul>
                             </section>
                         )}
+
+                        {/* Estilo Musical */}
+                        {(artist as any).musicalStyle && (
+                            <section>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-sm font-black text-foreground uppercase tracking-widest">Estilo</span>
+                                    <div className="flex-1 h-px bg-border" />
+                                </div>
+                                <p className="text-sm text-muted leading-relaxed text-justify">{(artist as any).musicalStyle}</p>
+                            </section>
+                        )}
+
+                        {/* Prêmios */}
+                        {(() => {
+                            const awards = (artist as any).awards as Array<{ premio: string; categoria: string; ano: number }> | null
+                            if (!awards?.length) return null
+                            return (
+                                <section>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-sm font-black text-foreground uppercase tracking-widest">Prêmios</span>
+                                        <div className="flex-1 h-px bg-border" />
+                                    </div>
+                                    <ul className="space-y-2">
+                                        {awards.slice(0, 6).map((a, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm">
+                                                <span className="text-accent font-bold shrink-0">{a.ano}</span>
+                                                <span className="text-muted">
+                                                    <span className="text-foreground font-medium">{a.categoria}</span>
+                                                    {' — '}{a.premio}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )
+                        })()}
+
+                        {/* Destaques (dramas, filmes, álbuns) */}
+                        {(() => {
+                            const dest = (artist as any).destaques as {
+                                dramas?: { titulo: string; ano: number; personagem?: string; nota?: string }[]
+                                filmes?: { titulo: string; ano: number; nota?: string }[]
+                                albuns?: { titulo: string; ano: number; tipo?: string; destaque?: string }[]
+                            } | null
+                            if (!dest) return null
+                            const sections = [
+                                { label: 'Dramas', items: dest.dramas ?? [] },
+                                { label: 'Filmes', items: dest.filmes ?? [] },
+                                { label: 'Discografia', items: dest.albuns ?? [] },
+                            ].filter(s => s.items.length > 0)
+                            if (!sections.length) return null
+                            return (
+                                <section>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-sm font-black text-foreground uppercase tracking-widest">Destaques</span>
+                                        <div className="flex-1 h-px bg-border" />
+                                    </div>
+                                    <div className="space-y-5">
+                                        {sections.map(s => (
+                                            <div key={s.label}>
+                                                <p className="text-xs font-black text-muted uppercase tracking-widest mb-2">{s.label}</p>
+                                                <ul className="space-y-2">
+                                                    {(s.items as Record<string, unknown>[]).slice(0, 5).map((item, i) => (
+                                                        <li key={i} className="flex items-start gap-3 text-sm">
+                                                            <span className="text-accent font-bold shrink-0 w-10 text-right">{String(item.ano)}</span>
+                                                            <span className="text-muted">
+                                                                <span className="text-foreground font-medium">{String(item.titulo)}</span>
+                                                                {item.personagem ? <span className="text-muted"> · {String(item.personagem)}</span> : null}
+                                                                {item.tipo ? <span className="text-muted/60 text-xs"> · {String(item.tipo)}</span> : null}
+                                                                {item.destaque ? <span className="text-muted/70 text-xs block">✦ {String(item.destaque)}</span> : null}
+                                                                {item.nota ? <span className="text-muted/70 text-xs block">{String(item.nota)}</span> : null}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )
+                        })()}
 
                         {/* YouTube / TikTok CTAs */}
                         {(() => {

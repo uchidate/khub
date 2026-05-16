@@ -62,6 +62,7 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_achievement:     <Star className="w-3.5 h-3.5" />,
     blog_mv_breakdown:    <Video className="w-3.5 h-3.5" />,
     blog_flashcard:       <AlignLeft className="w-3.5 h-3.5" />,
+    blog_idol_facts:      <User className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -113,6 +114,7 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_achievement:     'bg-amber-500/20 text-amber-300 border-amber-500/30',
     blog_mv_breakdown:    'bg-red-500/20 text-red-300 border-red-500/30',
     blog_flashcard:       'bg-slate-500/20 text-slate-300 border-slate-500/30',
+    blog_idol_facts:      'bg-pink-500/20 text-pink-300 border-pink-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
@@ -121,7 +123,7 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_list', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
     { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
-    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia'] },
+    { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia', 'blog_idol_facts'] },
     { label: 'Interativo', types: ['blog_vs', 'blog_poll', 'blog_quiz', 'blog_flashcard', 'blog_countdown', 'blog_before_after'] },
     { label: 'K-Pop', types: ['blog_lyrics', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
 ]
@@ -178,6 +180,7 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_achievement':     return { type, items: [{ icon: '🏆', title: '', description: '' }] }
         case 'blog_mv_breakdown':    return { type, videoId: '', title: '', scenes: [{ time: '0:00', label: '', description: '' }] }
         case 'blog_flashcard':       return { type, title: '', cards: [{ front: '', back: '' }] }
+        case 'blog_idol_facts':      return { type, name: '', facts: [{ label: '', value: '' }] }
     }
 }
 

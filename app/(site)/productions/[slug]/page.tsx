@@ -362,7 +362,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                         {production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+`}
                                     </span>
                                 )}
-                                {production.voteAverage && production.voteAverage > 0 && (
+                                {production.voteAverage && production.voteAverage > 0 && (production.voteCount ?? 0) >= 50 && (
                                     <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
                                         production.voteAverage >= 7 ? 'text-green-400 bg-green-950/50 border border-green-800/40' :
                                         production.voteAverage >= 5 ? 'text-yellow-400 bg-yellow-950/50 border border-yellow-800/40' :
@@ -415,42 +415,60 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         {synopsis && (
                             <div>
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sinopse</h3>
-                                <p className="text-muted leading-relaxed font-medium text-lg break-words">{synopsis}</p>
+                                <p className="text-muted leading-relaxed font-medium text-lg break-words text-justify">{synopsis}</p>
                             </div>
                         )}
 
                         {/* Nossa Análise Editorial */}
                         {(production.whyWatch || production.editorialReview) && (
-                            <div className="space-y-6 border-t border-border pt-8">
+                            <div className="space-y-5 border-t border-border pt-8">
                                 {production.whyWatch && (
-                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-[#ff2d78]/5 border border-[#ff2d78]/20">
-                                        <div className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center">
-                                            <span className="text-[#ff2d78] text-xs font-black">▶</span>
+                                    <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#ff2d78]/10 via-[#ff2d78]/5 to-transparent border border-[#ff2d78]/25">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d78]" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78]">Por que assistir</p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1">Por que assistir</p>
-                                            <p className="text-sm text-muted leading-relaxed">{production.whyWatch}</p>
-                                        </div>
+                                        <p className="text-[15px] text-foreground/80 leading-relaxed text-justify">{production.whyWatch}</p>
                                     </div>
                                 )}
                                 {production.editorialReview && (
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <h3 className="text-xs font-black text-muted uppercase tracking-widest">Nossa Análise</h3>
+                                    <div className="rounded-2xl border border-border overflow-hidden">
+                                        <div className="px-5 py-4 bg-gradient-to-r from-surface to-background flex items-center justify-between border-b border-border">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                                                <h3 className="text-xs font-black text-foreground uppercase tracking-widest">Nossa Análise</h3>
+                                            </div>
                                             {production.editorialRating != null && (
-                                                <span className="px-2 py-0.5 rounded bg-[#ff2d78]/10 text-[#ff2d78] text-xs font-black border border-[#ff2d78]/30">
-                                                    {production.editorialRating.toFixed(1)}/10
-                                                </span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-1 w-24 rounded-full bg-border overflow-hidden">
+                                                        <div className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent transition-all" style={{ width: `${(production.editorialRating / 10) * 100}%` }} />
+                                                    </div>
+                                                    <span className="text-sm font-black text-accent tabular-nums">{production.editorialRating.toFixed(1)}<span className="text-muted text-xs font-normal">/10</span></span>
+                                                </div>
                                             )}
-                                            <div className="flex-1 h-px bg-[#e8e8e8]" />
                                         </div>
-                                        <div className="space-y-3 text-muted leading-relaxed text-sm">
+                                        <div className="px-5 py-5 space-y-3 text-muted leading-relaxed text-[15px] text-justify">
                                             {production.editorialReview.split('\n\n').map((p, i) => (
                                                 <p key={i}>{p}</p>
                                             ))}
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Curiosidades */}
+                        {(production as any).curiosidades?.length > 0 && (
+                            <div>
+                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Curiosidades</h3>
+                                <ul className="space-y-2">
+                                    {((production as any).curiosidades as string[]).map((c, i) => (
+                                        <li key={i} className="group flex items-start gap-4 rounded-2xl border border-border px-5 py-4 bg-surface hover:border-accent/40 hover:bg-accent/[0.03] transition-all">
+                                            <span className="shrink-0 mt-0.5 text-[10px] font-black text-accent/70 group-hover:text-accent bg-accent/8 group-hover:bg-accent/15 w-6 h-6 rounded-full flex items-center justify-center tabular-nums transition-all">{i + 1}</span>
+                                            <span className="text-[15px] text-muted leading-relaxed text-justify">{c}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         )}
 
@@ -642,7 +660,17 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     <div className="min-w-0">
                         <div className="sticky top-24 flex flex-col gap-4">
                         <div className="bg-background rounded-2xl border border-border p-6">
-                            {production.voteAverage && production.voteAverage > 0 && (
+                            {(production as any).editorialRating != null && (
+                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Nossa Nota</span>
+                                    <span className={`text-sm font-black ${
+                                        (production as any).editorialRating >= 7 ? 'text-accent' :
+                                        (production as any).editorialRating >= 5 ? 'text-amber-500' :
+                                        'text-red-500'
+                                    }`}>★ {(production as any).editorialRating.toFixed(1)}<span className="text-muted font-normal text-xs">/10</span></span>
+                                </div>
+                            )}
+                            {production.voteAverage && production.voteAverage > 0 && (production.voteCount ?? 0) >= 50 && (
                                 <div className="flex justify-between py-3 border-b border-border items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Nota TMDB</span>
                                     <span className={`text-sm font-black ${
