@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 
 const CLIENT_ID = process.env.GA4_CLIENT_ID ?? ''
 const REDIRECT_URI = 'http://localhost:3000/api/auth/ga4/callback'
-const SCOPE = 'https://www.googleapis.com/auth/analytics.readonly'
+const SCOPE = [
+    'https://www.googleapis.com/auth/analytics.readonly',
+    'https://www.googleapis.com/auth/webmasters.readonly',
+].join(' ')
 
 export async function GET() {
     const url = new URL('https://accounts.google.com/o/oauth2/v2/auth')

@@ -237,3 +237,66 @@ export async function getNewVsReturning(days = 30) {
         sessions: Number(row.metricValues?.[1]?.value ?? 0),
     }))
 }
+
+// ─── Google Search Console ────────────────────────────────────────────────────
+
+import { google } from 'googleapis'
+
+function getSearchConsoleClient() {
+    const clientId     = process.env.GA4_CLIENT_ID
+    const clientSecret = process.env.GA4_CLIENT_SECRET
+    const refreshToken = process.env.GA4_REFRESH_TOKEN
+    if (!clientId || !clientSecret || !refreshToken) {
+        throw new Error('GA4_CLIENT_ID, GA4_CLIENT_SECRET ou GA4_REFRESH_TOKEN não configurados')
+    }
+    const auth = new google.auth.OAuth2(clientId, clientSecret)
+    auth.setCredentials({ refresh_token: refreshToken })
+    return google.webmasters({ version: 'v3', auth })
+}
+
+const SITE_URL = 'https://www.hallyuhub.com.br/'
+
+export async function getSearchConsoleMetrics(days = 30) {
+    const client = getSearchConsoleClient()
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    const fmt = (d: Date) => d.toISOString().split('T')[0]
+
+    const [topQueries, topPages] = await Promise.all([
+        client.searchanalytics.query({
+            siteUrl: SITE_URL,
+            requestBody: {
+                startDate: fmt(startDate),
+                endDate: fmt(endDate),
+                dimensions: ['query'],
+                rowLimit: 20,
+                dataState: 'all',
+            },
+        }),
+        client.searchanalytics.query({
+            siteUrl: SITE_URL,
+            requestBody: {
+                startDate: fmt(startDate),
+                endDate: fmt(endDate),
+                dimensions: ['page'],
+                rowLimit: 15,
+                dataState: 'all',
+            },
+        }),
+    ])
+
+    const mapRows = (rows: typeof topQueries.data.rows) =>
+        (rows ?? []).map(r => ({
+            key:          r.keys?.[0] ?? '',
+            clicks:       r.clicks ?? 0,
+            impressions:  r.impressions ?? 0,
+            ctr:          parseFloat((r.ctr ?? 0).toFixed(4)),
+            position:     parseFloat((r.position ?? 0).toFixed(1)),
+        }))
+
+    return {
+        topQueries:  mapRows(topQueries.data.rows),
+        topPages:    mapRows(topPages.data.rows),
+    }
+}

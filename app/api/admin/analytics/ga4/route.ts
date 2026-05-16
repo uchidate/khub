@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
-import { getSiteMetrics, getActiveUsers, getTopBlogPosts, getTopProductions, getTopArtists, getTopCountries, getDeviceBreakdown, getTrafficSources, getNewVsReturning, getTopSearchTerms, getSectionEngagement, getTopExitPages, getLandingPages } from '@/lib/analytics-client'
+import { getSiteMetrics, getActiveUsers, getTopBlogPosts, getTopProductions, getTopArtists, getTopCountries, getDeviceBreakdown, getTrafficSources, getNewVsReturning, getTopSearchTerms, getSectionEngagement, getTopExitPages, getLandingPages, getSearchConsoleMetrics } from '@/lib/analytics-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const days = Math.min(90, Math.max(1, parseInt(searchParams.get('days') ?? '30')))
 
     try {
-        const [metrics, activeUsers, blogPosts, productions, artists, countries, devices, sources, newVsReturning, searchTerms, sectionEngagement, exitPages, landingPages] = await Promise.all([
+        const [metrics, activeUsers, blogPosts, productions, artists, countries, devices, sources, newVsReturning, searchTerms, sectionEngagement, exitPages, landingPages, gsc] = await Promise.all([
             getSiteMetrics(days),
             getActiveUsers(),
             getTopBlogPosts(days),
@@ -26,9 +26,10 @@ export async function GET(req: NextRequest) {
             getSectionEngagement(days),
             getTopExitPages(days),
             getLandingPages(days),
+            getSearchConsoleMetrics(days).catch(() => null),
         ])
 
-        return NextResponse.json({ metrics, activeUsers, blogPosts, productions, artists, countries, devices, sources, newVsReturning, searchTerms, sectionEngagement, exitPages, landingPages, days })
+        return NextResponse.json({ metrics, activeUsers, blogPosts, productions, artists, countries, devices, sources, newVsReturning, searchTerms, sectionEngagement, exitPages, landingPages, gsc, days })
     } catch (err) {
         const e = err as Record<string, unknown>
         const message = (

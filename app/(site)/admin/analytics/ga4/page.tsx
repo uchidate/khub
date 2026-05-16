@@ -16,6 +16,8 @@ interface Ga4NvR     { type: string; users: number; sessions: number }
 interface Ga4Search  { term: string; sessions: number; users: number }
 interface Ga4Section { section: string; pageviews: number; users: number; avgDuration: number; engagementRate: number }
 interface Ga4ExitPage { path: string; sessions: number }
+interface GscRow { key: string; clicks: number; impressions: number; ctr: number; position: number }
+interface GscData { topQueries: GscRow[]; topPages: GscRow[] }
 interface Ga4Data {
     metrics: Ga4Metrics
     activeUsers: number
@@ -30,6 +32,7 @@ interface Ga4Data {
     sectionEngagement: Ga4Section[]
     exitPages: Ga4ExitPage[]
     landingPages: Ga4Page[]
+    gsc: GscData | null
     days: number
 }
 
@@ -387,6 +390,60 @@ export default function Ga4AnalyticsPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Google Search Console */}
+                        {data.gsc && (
+                            <div className="space-y-4">
+                                <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                                    <Search size={15} /> Google Search Console
+                                    <span className="text-xs font-normal text-muted ml-1">— cliques e impressões orgânicas</span>
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+                                        <h3 className="text-sm font-bold text-foreground">Top Queries (busca orgânica)</h3>
+                                        <div className="space-y-1">
+                                            <div className="grid grid-cols-[1fr_56px_72px_56px_56px] text-[10px] text-muted font-semibold uppercase tracking-wide pb-1 border-b border-border">
+                                                <span>Query</span><span className="text-right">Cliques</span><span className="text-right">Impressões</span><span className="text-right">CTR</span><span className="text-right">Pos.</span>
+                                            </div>
+                                            {data.gsc.topQueries.map((row, i) => (
+                                                <div key={i} className="grid grid-cols-[1fr_56px_72px_56px_56px] text-xs py-0.5 hover:bg-surface-hover rounded px-1 transition-colors">
+                                                    <span className="text-foreground truncate">{row.key}</span>
+                                                    <span className="text-right font-mono text-accent font-bold">{fmt(row.clicks)}</span>
+                                                    <span className="text-right font-mono text-muted">{fmt(row.impressions)}</span>
+                                                    <span className="text-right font-mono text-muted">{(row.ctr * 100).toFixed(1)}%</span>
+                                                    <span className={`text-right font-mono font-bold ${row.position <= 3 ? 'text-green-400' : row.position <= 10 ? 'text-yellow-400' : 'text-muted'}`}>#{row.position.toFixed(0)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
+                                        <h3 className="text-sm font-bold text-foreground">Top Páginas (busca orgânica)</h3>
+                                        <div className="space-y-1">
+                                            <div className="grid grid-cols-[1fr_56px_72px_56px_56px] text-[10px] text-muted font-semibold uppercase tracking-wide pb-1 border-b border-border">
+                                                <span>Página</span><span className="text-right">Cliques</span><span className="text-right">Impressões</span><span className="text-right">CTR</span><span className="text-right">Pos.</span>
+                                            </div>
+                                            {data.gsc.topPages.map((row, i) => {
+                                                const path = row.key.replace('https://www.hallyuhub.com.br', '')
+                                                return (
+                                                    <div key={i} className="group grid grid-cols-[1fr_56px_72px_56px_56px] text-xs py-0.5 hover:bg-surface-hover rounded px-1 transition-colors">
+                                                        <span className="text-foreground truncate flex items-center gap-1">
+                                                            <a href={row.key} target="_blank" rel="noopener" className="hover:text-accent transition-colors truncate">
+                                                                {shortPath(path)}
+                                                            </a>
+                                                            <ExternalLink size={8} className="shrink-0 opacity-0 group-hover:opacity-60" />
+                                                        </span>
+                                                        <span className="text-right font-mono text-accent font-bold">{fmt(row.clicks)}</span>
+                                                        <span className="text-right font-mono text-muted">{fmt(row.impressions)}</span>
+                                                        <span className="text-right font-mono text-muted">{(row.ctr * 100).toFixed(1)}%</span>
+                                                        <span className={`text-right font-mono font-bold ${row.position <= 3 ? 'text-green-400' : row.position <= 10 ? 'text-yellow-400' : 'text-muted'}`}>#{row.position.toFixed(0)}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Landing Pages + Páginas de Saída */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
