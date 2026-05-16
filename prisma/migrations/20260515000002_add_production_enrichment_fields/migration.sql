@@ -1,0 +1,3 @@
+ALTER TABLE "Production"
+  ADD COLUMN IF NOT EXISTS "curiosidades" TEXT[] DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS "enrichedAt" TIMESTAMP(3);

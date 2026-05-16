@@ -1,0 +1,12 @@
+# Scripts utilitários pontuais (não fazem parte do build)
+scripts/test-email.js
+scripts/monitor-news.js
+scripts/shopee-import.mjs
+scripts/refresh-news-images.js
+scripts/shopee-bookmarklet.js
+scripts/run-gdrive-auth.js
+scripts/_enrich-blackpink.mjs
+
+# Arquivos públicos (service worker, bookmarklets)
+public/sw.js
+public/bookmarklet-shopee.js

@@ -445,6 +445,13 @@ export type BlogPositionsBlock = {
     members: { name: string; positions: string[]; imageUrl?: string; line?: 'vocal' | 'dance' | 'rap' | 'visual' | 'all' }[]
 }
 
+export type BlogIdolFactsBlock = {
+    type: 'blog_idol_facts'
+    name: string
+    imageUrl?: string
+    facts: { label: string; value: string }[]
+}
+
 export type BlogBlock =
     | BlogHeadingBlock
     | BlogParagraphBlock
@@ -494,6 +501,7 @@ export type BlogBlock =
     | BlogAchievementBlock
     | BlogMvBreakdownBlock
     | BlogFlashcardBlock
+    | BlogIdolFactsBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -546,6 +554,7 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_achievement:      'Conquistas / Recordes',
     blog_mv_breakdown:     'Análise de MV',
     blog_flashcard:        'Flashcards',
+    blog_idol_facts:       'Ficha do Idol',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'

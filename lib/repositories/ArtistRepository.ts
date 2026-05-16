@@ -40,6 +40,11 @@ export const ArtistSchema = z.object({
     socialLinks: z.record(z.string(), z.string()).optional(),
     analiseEditorial: z.string().optional(),
     curiosidades: z.array(z.string()).optional(),
+    musicalStyle: z.string().optional(),
+    fanInfo: z.record(z.string(), z.unknown()).optional(),
+    awards: z.array(z.record(z.string(), z.unknown())).optional(),
+    destaques: z.record(z.string(), z.unknown()).optional(),
+    enrichedAt: z.string().datetime().optional(),
     flaggedAsNonKorean: z.boolean().optional(),
     tmdbId: z.string().optional(),
     mbid: z.string().optional(),
@@ -88,6 +93,7 @@ function normalizeArtistData(validated: Partial<ArtistInput>) {
     if (validated.placeOfBirth === '') data.placeOfBirth = null
     if (validated.birthName === '') data.birthName = null
     if (validated.height === '') data.height = null
+    if (validated.bloodType === '') data.bloodType = null
     if (validated.zodiacSign === '') data.zodiacSign = null
     if (validated.analiseEditorial === '') data.analiseEditorial = null
     if (validated.tmdbId === '') data.tmdbId = null
@@ -217,9 +223,10 @@ export const ArtistRepository = {
                 id: true, nameRomanized: true, nameHangul: true, stageNames: true,
                 primaryImageUrl: true, birthDate: true, placeOfBirth: true,
                 gender: true, roles: true, bio: true, birthName: true, height: true,
-                zodiacSign: true, socialLinks: true, analiseEditorial: true,
-                curiosidades: true, flaggedAsNonKorean: true, discographySyncAt: true,
-                tmdbId: true, mbid: true, isHidden: true, fieldSources: true,
+                bloodType: true, zodiacSign: true, socialLinks: true, analiseEditorial: true,
+                curiosidades: true, musicalStyle: true, fanInfo: true, awards: true,
+                destaques: true, enrichedAt: true, flaggedAsNonKorean: true,
+                discographySyncAt: true, tmdbId: true, mbid: true, isHidden: true, fieldSources: true,
             },
         })
         if (!artist) throw new RepositoryError('Artista não encontrado', 'NOT_FOUND', 404)

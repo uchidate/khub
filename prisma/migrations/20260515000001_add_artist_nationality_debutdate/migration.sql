@@ -1,0 +1,3 @@
+ALTER TABLE "Artist"
+  ADD COLUMN IF NOT EXISTS "nationality" TEXT,
+  ADD COLUMN IF NOT EXISTS "debutDate"   TIMESTAMP(3);

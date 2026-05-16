@@ -23,6 +23,7 @@ interface Artist {
     birthDate: string | null
     placeOfBirth: string | null
     height: string | null
+    bloodType: string | null
     zodiacSign: string | null
     gender: string | null
     roles: string[]
@@ -175,6 +176,7 @@ export default function EditArtistPage() {
                 birthDate: form.birthDate || '',
                 placeOfBirth: form.placeOfBirth || '',
                 height: form.height || '',
+                bloodType: form.bloodType || '',
                 zodiacSign: form.zodiacSign || '',
                 gender: form.gender ? parseInt(form.gender as string) : null,
                 roles: typeof form.roles === 'string'
@@ -412,8 +414,8 @@ export default function EditArtistPage() {
                             </div>
                         </div>
 
-                        {/* Altura + Signo */}
-                        <div className="grid grid-cols-2 gap-4">
+                        {/* Altura + Tipo Sanguíneo + Signo */}
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className={labelCls}>Altura</label>
                                 <input
@@ -423,6 +425,19 @@ export default function EditArtistPage() {
                                     placeholder="163 cm"
                                     className={inputCls}
                                 />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Tipo Sanguíneo</label>
+                                <select
+                                    value={form.bloodType ?? ''}
+                                    onChange={e => setManual('bloodType', e.target.value)}
+                                    className={inputCls}
+                                >
+                                    <option value="">Não informado</option>
+                                    {['A', 'B', 'AB', 'O'].map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Signo</label>
@@ -890,8 +905,14 @@ export default function EditArtistPage() {
                                 Cancelar
                             </Link>
                             <Link
+                                href={`/admin/artists/${id}/enrich`}
+                                className="ml-auto px-5 py-2.5 bg-surface border border-accent/30 text-accent hover:bg-accent/10 rounded-lg text-sm font-bold transition-colors"
+                            >
+                                ✦ Enriquecer →
+                            </Link>
+                            <Link
                                 href={`/admin/artists/${id}/discography`}
-                                className="ml-auto px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
+                                className="px-5 py-2.5 bg-surface border border-border text-foreground hover:bg-surface-hover rounded-lg text-sm font-bold transition-colors"
                             >
                                 Discografia →
                             </Link>

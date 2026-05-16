@@ -137,7 +137,7 @@ export function AiWidget() {
       try {
         const res = await fetch('/api/admin/ai/widget')
         if (res.ok) setData(await res.json())
-      } catch {}
+      } catch { /* ignore */ }
       finally { setLoading(false) }
     }
     fetchData()

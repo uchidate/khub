@@ -9,7 +9,7 @@ import {
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
-  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon, ChevronDown,
+  TrendingUp, BarChart3, Layers, Tv, Database, Globe, FolderOpen, ServerIcon, ChevronDown,
   ShoppingBag,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
@@ -89,6 +89,7 @@ const navSections: NavSection[] = [
       {
         href: '/admin/artists', label: 'Artistas', icon: Mic2, exact: true,
         subItems: [
+          { href: '/admin/artists/enrich',       label: 'Enriquecimento', icon: Sparkles },
           { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
           { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
@@ -112,6 +113,7 @@ const navSections: NavSection[] = [
           { href: '/admin/productions/sync',        label: 'Sync TMDB',    icon: RefreshCw },
           { href: '/admin/productions/moderation',  label: 'Moderação',    icon: AlertTriangle },
           { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
+          { href: '/admin/productions/enrich',      label: 'Enriquecimento', icon: Sparkles },
         ],
       },
       { href: '/admin/albums', label: 'Álbuns', icon: Disc3 },
@@ -176,7 +178,7 @@ function usePendingCounts(): PendingCounts {
     try {
       const res = await fetch('/api/admin/pending-counts')
       if (res.ok) setCounts(await res.json())
-    } catch {}
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -654,7 +656,7 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
       try {
         const arr = JSON.parse(savedSubnav) as string[]
         if (Array.isArray(arr)) setExpandedSubnav(new Set(arr))
-      } catch {}
+      } catch { /* ignore */ }
     }
   }, [])
 

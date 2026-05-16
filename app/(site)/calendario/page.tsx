@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Calendar } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
