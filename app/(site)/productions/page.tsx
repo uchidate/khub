@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProductionsPage() {
-    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <ProductionsList />
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <Suspense><ProductionsList /></Suspense>
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const baseWhere = { flaggedAsNonKorean: false, isHidden: false, ...ageFilter }
 
