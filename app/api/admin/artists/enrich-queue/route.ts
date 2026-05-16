@@ -42,7 +42,6 @@ export async function GET(req: Request) {
             { analiseEditorial: null },
             { fanInfo:          { equals: Prisma.JsonNull } },
             { awards:           { equals: Prisma.JsonNull } },
-            { musicalStyle:     null },
         ]
         if (where.AND) {
             (where.AND as Prisma.ArtistWhereInput[]).push({ OR: incompleteOr })
