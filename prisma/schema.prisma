@@ -120,6 +120,7 @@ model Artist {
   analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
   curiosidades       String[]                    // 5-8 curiosidades autorais
   faq                Json?                       // [{ pergunta, resposta }] — FAQs evergreen para SEO
+  seoTags            String[]                    // tags de busca para SEO (ex: "IU dramas", "Lee Ji-eun")
   musicalStyle       String?                     // estilo musical/atuação característico (2-3 frases)
   fanInfo            Json?                       // { fanName, fanColor, lightstick }
   awards             Json?                       // [{ premio, categoria, ano }]
