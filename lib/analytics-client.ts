@@ -240,15 +240,14 @@ export async function getNewVsReturning(days = 30) {
 
 // ─── Google Search Console ────────────────────────────────────────────────────
 
-import { google } from 'googleapis'
-
-function getSearchConsoleClient() {
+async function getSearchConsoleClient() {
     const clientId     = process.env.GA4_CLIENT_ID
     const clientSecret = process.env.GA4_CLIENT_SECRET
     const refreshToken = process.env.GA4_REFRESH_TOKEN
     if (!clientId || !clientSecret || !refreshToken) {
         throw new Error('GA4_CLIENT_ID, GA4_CLIENT_SECRET ou GA4_REFRESH_TOKEN não configurados')
     }
+    const { google } = await import('googleapis')
     const auth = new google.auth.OAuth2(clientId, clientSecret)
     auth.setCredentials({ refresh_token: refreshToken })
     return google.webmasters({ version: 'v3', auth })
@@ -257,7 +256,7 @@ function getSearchConsoleClient() {
 const SITE_URL = 'https://www.hallyuhub.com.br/'
 
 export async function getSearchConsoleMetrics(days = 30) {
-    const client = getSearchConsoleClient()
+    const client = await getSearchConsoleClient()
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
