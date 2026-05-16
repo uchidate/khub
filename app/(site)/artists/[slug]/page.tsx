@@ -248,8 +248,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const stageNames = artist.stageNames || []
     const socialLinks = (artist.socialLinks as Record<string, string>) || {}
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
+    const deathDate = (artist as any).deathDate ? new Date((artist as any).deathDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
-    const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
+    const deathDateFormatted = deathDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+    const ageRef = deathDate ?? new Date()
+    const age = birthDate ? Math.floor((ageRef.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
@@ -288,6 +291,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "image": artist.primaryImageUrl ?? undefined,
                 "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
                 "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
+                "deathDate": deathDate ? deathDate.toISOString().split('T')[0] : undefined,
                 "birthPlace": artist.placeOfBirth ? { "@type": "Place", "name": artist.placeOfBirth } : undefined,
                 "jobTitle": artist.roles?.[0] ?? undefined,
                 ...((artist as any).debutDate ? { "foundingDate": new Date((artist as any).debutDate).toISOString().split('T')[0] } : {}),
@@ -406,7 +410,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 <p className="text-lg md:text-3xl font-bold mt-1 text-accent drop-shadow-lg flex items-baseline gap-2 flex-wrap">
                                     <span>{artist.nameHangul}</span>
                                     {age !== null && (
-                                        <span className="text-sm md:text-xl font-semibold text-white/70">{age} anos</span>
+                                        <span className="text-sm md:text-xl font-semibold text-white/70">
+                                            {age} anos{deathDate ? ' †' : ''}
+                                        </span>
                                     )}
                                 </p>
                             )}
@@ -472,6 +478,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 )}
                                 {birthDateFormatted && (
                                     <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Nascimento" value={birthDateFormatted} />
+                                )}
+                                {deathDateFormatted && (
+                                    <InfoRow icon={<Sparkles className="w-3.5 h-3.5" />} label="Falecimento" value={deathDateFormatted} />
                                 )}
                                 {artist.placeOfBirth && (
                                     <InfoRow icon={<MapPin className="w-3.5 h-3.5" />} label="Naturalidade" value={artist.placeOfBirth} />
