@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
@@ -15,6 +16,10 @@ const EnrichSchema = z.object({
     editorialReview: z.string().min(100, 'Muito curto (mín. 100 chars)').optional().nullable(),
     editorialRating: z.number().min(0).max(10).optional().nullable(),
     curiosidades:    z.array(z.string().min(20)).min(1).max(8).optional(),
+    seoTitle:        z.string().max(60).optional().nullable(),
+    metaDescription: z.string().min(140).max(158).optional().nullable(),
+    tags:            z.array(z.string()).min(1).max(15).optional(),
+    faq:             z.array(z.object({ pergunta: z.string(), resposta: z.string() })).min(1).max(10).optional().nullable(),
 })
 
 export async function GET(
@@ -107,6 +112,8 @@ export async function POST(
     if (data.editorialReview != null) update.editorialReview = data.editorialReview
     if (data.editorialRating != null) update.editorialRating = data.editorialRating
     if (data.curiosidades?.length)    update.curiosidades    = data.curiosidades
+    if (data.tags?.length)            update.tags            = data.tags
+    if (data.faq)                     update.faq             = data.faq
 
     // Campos que o enriquecimento manual sobrescreve — apagar traduções automáticas para evitar conflito
     const fieldsToClean = ['synopsis', 'tagline', 'whyWatch', 'editorialReview'].filter(f => update[f] != null)
@@ -116,7 +123,30 @@ export async function POST(
         })
     }
 
-    await prisma.production.update({ where: { id }, data: update })
+    const updated = await prisma.production.update({
+        where: { id },
+        data: update,
+        select: { id: true, slug: true },
+    })
+
+    if (data.seoTitle || data.metaDescription) {
+        await prisma.seoMeta.upsert({
+            where: { entityType_entityId: { entityType: 'production', entityId: id } },
+            create: {
+                entityType: 'production',
+                entityId: id,
+                ...(data.seoTitle && { metaTitle: data.seoTitle }),
+                ...(data.metaDescription && { metaDesc: data.metaDescription }),
+            },
+            update: {
+                ...(data.seoTitle && { metaTitle: data.seoTitle }),
+                ...(data.metaDescription && { metaDesc: data.metaDescription }),
+            },
+        })
+    }
+
+    revalidatePath(`/productions/${updated.slug ?? updated.id}`)
+    revalidatePath('/productions')
 
     return NextResponse.json({ ok: true, fieldsUpdated: Object.keys(update).filter(k => k !== 'enrichedAt') })
 }

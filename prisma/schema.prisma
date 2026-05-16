@@ -119,6 +119,7 @@ model Artist {
   // Conteúdo editorial original (gerado via IA ou escrito manualmente)
   analiseEditorial   String?            @db.Text // análise autoral 400+ palavras PT-BR
   curiosidades       String[]                    // 5-8 curiosidades autorais
+  faq                Json?                       // [{ pergunta, resposta }] — FAQs evergreen para SEO
   musicalStyle       String?                     // estilo musical/atuação característico (2-3 frases)
   fanInfo            Json?                       // { fanName, fanColor, lightstick }
   awards             Json?                       // [{ premio, categoria, ano }]
@@ -275,6 +276,7 @@ model Production {
   editorialRating    Float?             // nossa nota (0-10)
   whyWatch           String?            // "Por que assistir?" — parágrafo curto autoral
   curiosidades       String[]           // fatos/curiosidades autorais sobre a produção
+  faq                Json?              // [{ pergunta, resposta }] — FAQs evergreen para SEO
   enrichedAt         DateTime?          // quando o enriquecimento via Gemini foi aplicado
   editorialGeneratedAt DateTime?        // quando foi gerado/atualizado
   blogPosts          BlogPostProduction[]
