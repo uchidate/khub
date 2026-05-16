@@ -9,7 +9,7 @@ import {
   UsersRound, RefreshCw, Clapperboard, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
-  TrendingUp, BarChart3, Layers, Tv, Database, Globe, Calendar, FolderOpen, ServerIcon, ChevronDown,
+  TrendingUp, BarChart3, Layers, Tv, Database, Globe, FolderOpen, ServerIcon, ChevronDown,
   ShoppingBag,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
@@ -178,7 +178,7 @@ function usePendingCounts(): PendingCounts {
     try {
       const res = await fetch('/api/admin/pending-counts')
       if (res.ok) setCounts(await res.json())
-    } catch {}
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -656,7 +656,7 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
       try {
         const arr = JSON.parse(savedSubnav) as string[]
         if (Array.isArray(arr)) setExpandedSubnav(new Set(arr))
-      } catch {}
+      } catch { /* ignore */ }
     }
   }, [])
 
