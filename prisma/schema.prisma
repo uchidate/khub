@@ -108,6 +108,7 @@ model Artist {
   nameRomanized      String
   nameHangul         String?
   birthDate          DateTime?
+  deathDate          DateTime?          // data de falecimento (null = vivo)
   birthName          String?
   stageNames         String[]
   roles              String[]
