@@ -52,7 +52,8 @@ const navSections: NavSection[] = [
       { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard, exact: true },
       { href: '/admin/pipeline', label: 'Pipeline',  icon: Workflow },
       { href: '/admin/trending', label: 'Trending',  icon: TrendingUp },
-      { href: '/admin/analytics',label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/analytics',    label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/analytics/ga4', label: 'GA4',       icon: BarChart3 },
     ],
   },
 
