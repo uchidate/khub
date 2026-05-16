@@ -240,62 +240,68 @@ export async function getNewVsReturning(days = 30) {
 
 // ─── Google Search Console ────────────────────────────────────────────────────
 
-async function getSearchConsoleClient() {
+async function getGscAccessToken(): Promise<string> {
     const clientId     = process.env.GA4_CLIENT_ID
     const clientSecret = process.env.GA4_CLIENT_SECRET
     const refreshToken = process.env.GA4_REFRESH_TOKEN
     if (!clientId || !clientSecret || !refreshToken) {
         throw new Error('GA4_CLIENT_ID, GA4_CLIENT_SECRET ou GA4_REFRESH_TOKEN não configurados')
     }
-    const { google } = await import('googleapis')
-    const auth = new google.auth.OAuth2(clientId, clientSecret)
-    auth.setCredentials({ refresh_token: refreshToken })
-    return google.webmasters({ version: 'v3', auth })
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token',
+        }),
+    })
+    const json = await res.json() as { access_token?: string; error?: string }
+    if (!json.access_token) throw new Error(`OAuth2 token refresh failed: ${json.error ?? 'unknown'}`)
+    return json.access_token
 }
 
 const SITE_URL = 'https://www.hallyuhub.com.br/'
 
+async function gscQuery(token: string, body: Record<string, unknown>) {
+    const encoded = encodeURIComponent(SITE_URL)
+    const res = await fetch(
+        `https://www.googleapis.com/webmasters/v3/sites/${encoded}/searchAnalytics/query`,
+        {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        },
+    )
+    if (!res.ok) throw new Error(`GSC API error: ${res.status} ${await res.text()}`)
+    return res.json() as Promise<{ rows?: Array<{ keys: string[]; clicks: number; impressions: number; ctr: number; position: number }> }>
+}
+
 export async function getSearchConsoleMetrics(days = 30) {
-    const client = await getSearchConsoleClient()
+    const token = await getGscAccessToken()
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
     const fmt = (d: Date) => d.toISOString().split('T')[0]
+    const base = { startDate: fmt(startDate), endDate: fmt(endDate), rowLimit: 20, dataState: 'all' }
 
-    const [topQueries, topPages] = await Promise.all([
-        client.searchanalytics.query({
-            siteUrl: SITE_URL,
-            requestBody: {
-                startDate: fmt(startDate),
-                endDate: fmt(endDate),
-                dimensions: ['query'],
-                rowLimit: 20,
-                dataState: 'all',
-            },
-        }),
-        client.searchanalytics.query({
-            siteUrl: SITE_URL,
-            requestBody: {
-                startDate: fmt(startDate),
-                endDate: fmt(endDate),
-                dimensions: ['page'],
-                rowLimit: 15,
-                dataState: 'all',
-            },
-        }),
+    const [queriesRes, pagesRes] = await Promise.all([
+        gscQuery(token, { ...base, dimensions: ['query'] }),
+        gscQuery(token, { ...base, dimensions: ['page'], rowLimit: 15 }),
     ])
 
-    const mapRows = (rows: typeof topQueries.data.rows) =>
+    const mapRows = (rows: typeof queriesRes.rows) =>
         (rows ?? []).map(r => ({
-            key:          r.keys?.[0] ?? '',
-            clicks:       r.clicks ?? 0,
-            impressions:  r.impressions ?? 0,
-            ctr:          parseFloat((r.ctr ?? 0).toFixed(4)),
-            position:     parseFloat((r.position ?? 0).toFixed(1)),
+            key:         r.keys[0] ?? '',
+            clicks:      r.clicks,
+            impressions: r.impressions,
+            ctr:         parseFloat(r.ctr.toFixed(4)),
+            position:    parseFloat(r.position.toFixed(1)),
         }))
 
     return {
-        topQueries:  mapRows(topQueries.data.rows),
-        topPages:    mapRows(topPages.data.rows),
+        topQueries: mapRows(queriesRes.rows),
+        topPages:   mapRows(pagesRes.rows),
     }
 }
