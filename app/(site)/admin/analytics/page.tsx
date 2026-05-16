@@ -56,8 +56,30 @@ interface AnalyticsData {
 type Period = '0' | '7' | '30' | '90'
 
 interface Ga4Metrics { sessions: number; users: number; pageviews: number; bounceRate: number; avgSessionDuration: number }
-interface Ga4Page    { path: string; title: string; pageviews: number; users: number }
-interface Ga4Data    { metrics: Ga4Metrics; activeUsers: number; blogPosts: Ga4Page[]; productions: Ga4Page[]; artists: Ga4Page[]; days: number }
+interface Ga4Page    { path: string; title?: string; pageviews: number; users: number; bounceRate?: number }
+interface Ga4Country { country: string; users: number; pageviews: number }
+interface Ga4Device  { device: string; users: number; sessions: number }
+interface Ga4Source  { channel: string; sessions: number; users: number }
+interface Ga4NvR     { type: string; users: number; sessions: number }
+interface Ga4Search  { term: string; sessions: number; users: number }
+interface Ga4Section { section: string; pageviews: number; users: number; avgDuration: number; engagementRate: number }
+interface Ga4ExitPage { path: string; sessions: number }
+interface Ga4Data {
+    metrics: Ga4Metrics
+    activeUsers: number
+    blogPosts: Ga4Page[]
+    productions: Ga4Page[]
+    artists: Ga4Page[]
+    countries: Ga4Country[]
+    devices: Ga4Device[]
+    sources: Ga4Source[]
+    newVsReturning: Ga4NvR[]
+    searchTerms: Ga4Search[]
+    sectionEngagement: Ga4Section[]
+    exitPages: Ga4ExitPage[]
+    landingPages: Ga4Page[]
+    days: number
+}
 
 // ─── Bar Chart (CSS) ──────────────────────────────────────────────────────────
 
