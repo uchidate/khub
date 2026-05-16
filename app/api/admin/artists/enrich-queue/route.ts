@@ -27,21 +27,28 @@ export async function GET(req: Request) {
     }
 
     if (q) {
-        where.OR = [
-            { nameRomanized: { contains: q, mode: 'insensitive' } },
-            { nameHangul:    { contains: q, mode: 'insensitive' } },
-            { slug:          { contains: q, mode: 'insensitive' } },
+        where.AND = [
+            { OR: [
+                { nameRomanized: { contains: q, mode: 'insensitive' } },
+                { nameHangul:    { contains: q, mode: 'insensitive' } },
+                { slug:          { contains: q, mode: 'insensitive' } },
+            ]},
         ]
     }
 
     if (filter === 'incomplete') {
-        where.OR = [
+        const incompleteOr = [
             { bio:              null },
             { analiseEditorial: null },
             { fanInfo:          { equals: Prisma.JsonNull } },
             { awards:           { equals: Prisma.JsonNull } },
             { musicalStyle:     null },
         ]
+        if (where.AND) {
+            (where.AND as Prisma.ArtistWhereInput[]).push({ OR: incompleteOr })
+        } else {
+            where.OR = incompleteOr
+        }
     } else if (filter === 'enriched') {
         where.enrichedAt = { not: null }
     }
