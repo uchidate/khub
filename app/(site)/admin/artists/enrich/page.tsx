@@ -51,7 +51,6 @@ const FIELD_DOTS: Array<{ key: keyof ArtistEnrichStatus; abbr: string; label: st
     { key: 'hasBloodType',    abbr: 'SA', label: 'Tipo Sanguíneo' },
     { key: 'hasFanInfo',      abbr: 'FA', label: 'Fandom' },
     { key: 'hasAwards',       abbr: 'PR', label: 'Prêmios' },
-    { key: 'hasMusicalStyle', abbr: 'ES', label: 'Estilo' },
 ]
 
 function completudeScore(a: ArtistEnrichStatus): number {
