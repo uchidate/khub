@@ -308,17 +308,25 @@ export async function getSearchConsoleMetrics(days = 30) {
     const endDate = new Date()
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
-    const fmtDate = (d: Date) => d.toISOString().split('T')[0]
-    const base = { startDate: fmtDate(startDate), endDate: fmtDate(endDate), dataState: 'all' }
 
-    const [queriesRes, pagesRes, dailyRes, countriesRes, devicesRes, opportunitiesRes] = await Promise.all([
-        gscQuery(token, { ...base, dimensions: ['query'], rowLimit: 25 }),
-        gscQuery(token, { ...base, dimensions: ['page'], rowLimit: 20 }),
-        gscQuery(token, { ...base, dimensions: ['date'], rowLimit: 90 }),
-        gscQuery(token, { ...base, dimensions: ['country'], rowLimit: 10 }),
-        gscQuery(token, { ...base, dimensions: ['device'], rowLimit: 5 }),
-        // Queries posição 4-30 com impressões altas = oportunidades de SEO
-        gscQuery(token, { ...base, dimensions: ['query'], rowLimit: 100 }),
+    const prevEnd = new Date(startDate)
+    prevEnd.setDate(prevEnd.getDate() - 1)
+    const prevStart = new Date(prevEnd)
+    prevStart.setDate(prevStart.getDate() - days)
+
+    const fmtDate = (d: Date) => d.toISOString().split('T')[0]
+    const base     = { startDate: fmtDate(startDate), endDate: fmtDate(endDate),   dataState: 'all' }
+    const prevBase = { startDate: fmtDate(prevStart),  endDate: fmtDate(prevEnd),   dataState: 'all' }
+
+    const [queriesRes, pagesRes, dailyRes, countriesRes, devicesRes, allQueriesRes, queryPageRes, prevQueriesRes] = await Promise.all([
+        gscQuery(token, { ...base,     dimensions: ['query'],          rowLimit: 25  }),
+        gscQuery(token, { ...base,     dimensions: ['page'],           rowLimit: 100 }),
+        gscQuery(token, { ...base,     dimensions: ['date'],           rowLimit: 90  }),
+        gscQuery(token, { ...base,     dimensions: ['country'],        rowLimit: 10  }),
+        gscQuery(token, { ...base,     dimensions: ['device'],         rowLimit: 5   }),
+        gscQuery(token, { ...base,     dimensions: ['query'],          rowLimit: 200 }),
+        gscQuery(token, { ...base,     dimensions: ['query', 'page'],  rowLimit: 300 }),
+        gscQuery(token, { ...prevBase, dimensions: ['query'],          rowLimit: 200 }),
     ])
 
     const mapRows = (rows: typeof queriesRes.rows) =>
@@ -330,27 +338,116 @@ export async function getSearchConsoleMetrics(days = 30) {
             position:    parseFloat(r.position.toFixed(1)),
         }))
 
-    const allQueries = mapRows(opportunitiesRes.rows)
+    const allQueries  = mapRows(allQueriesRes.rows)
+    const prevQueries = mapRows(prevQueriesRes.rows)
+    const allPages    = mapRows(pagesRes.rows)
+
+    // ── Opportunities ────────────────────────────────────────────────────────
     const opportunities = allQueries
         .filter(r => r.position >= 4 && r.position <= 30 && r.impressions >= 5)
         .sort((a, b) => b.impressions - a.impressions)
         .slice(0, 20)
 
-    const totalRows = allQueries
+    // ── Totals ───────────────────────────────────────────────────────────────
     const totals = {
-        clicks:      totalRows.reduce((s, r) => s + r.clicks, 0),
-        impressions: totalRows.reduce((s, r) => s + r.impressions, 0),
-        avgCtr:      totalRows.length > 0 ? parseFloat((totalRows.reduce((s, r) => s + r.ctr, 0) / totalRows.length).toFixed(4)) : 0,
-        avgPosition: totalRows.length > 0 ? parseFloat((totalRows.reduce((s, r) => s + r.position, 0) / totalRows.length).toFixed(1)) : 0,
+        clicks:      allQueries.reduce((s, r) => s + r.clicks, 0),
+        impressions: allQueries.reduce((s, r) => s + r.impressions, 0),
+        avgCtr:      allQueries.length > 0 ? parseFloat((allQueries.reduce((s, r) => s + r.ctr, 0) / allQueries.length).toFixed(4)) : 0,
+        avgPosition: allQueries.length > 0 ? parseFloat((allQueries.reduce((s, r) => s + r.position, 0) / allQueries.length).toFixed(1)) : 0,
     }
+
+    // ── Pages with zero clicks (high impressions, no clicks) ─────────────────
+    const pagesNoClick = allPages
+        .filter(r => r.clicks === 0 && r.impressions >= 5)
+        .sort((a, b) => b.impressions - a.impressions)
+        .slice(0, 20)
+
+    // ── Section health (group pages by first path segment) ───────────────────
+    const sectionMap = new Map<string, { clicks: number; impressions: number; posSum: number; count: number }>()
+    allPages.forEach(p => {
+        const path    = p.key.replace('https://www.hallyuhub.com.br', '')
+        const segment = path.split('/')[1] ?? ''
+        const section = segment ? `/${segment}` : '/'
+        const s = sectionMap.get(section) ?? { clicks: 0, impressions: 0, posSum: 0, count: 0 }
+        s.clicks      += p.clicks
+        s.impressions += p.impressions
+        s.posSum      += p.position * (p.impressions || 1)
+        s.count       += p.impressions || 1
+        sectionMap.set(section, s)
+    })
+    const sectionHealth = Array.from(sectionMap.entries())
+        .map(([section, s]) => ({
+            section,
+            clicks:      s.clicks,
+            impressions: s.impressions,
+            ctr:         s.impressions > 0 ? parseFloat((s.clicks / s.impressions).toFixed(4)) : 0,
+            avgPosition: s.count > 0 ? parseFloat((s.posSum / s.count).toFixed(1)) : 0,
+            pageCount:   allPages.filter(p => p.key.includes(`hallyuhub.com.br${section}/`) || p.key.endsWith(`hallyuhub.com.br${section}`)).length,
+        }))
+        .filter(s => s.impressions > 0)
+        .sort((a, b) => b.clicks - a.clicks)
+
+    // ── Falling queries (dropped > 3 positions vs previous period) ───────────
+    const prevMap = new Map(prevQueries.map(q => [q.key, q]))
+    const fallingQueries = allQueries
+        .filter(q => {
+            const prev = prevMap.get(q.key)
+            return prev && (q.position - prev.position) > 3 && q.impressions >= 10
+        })
+        .map(q => {
+            const prev = prevMap.get(q.key)!
+            return { ...q, prevPosition: parseFloat(prev.position.toFixed(1)), drop: parseFloat((q.position - prev.position).toFixed(1)) }
+        })
+        .sort((a, b) => b.drop - a.drop)
+        .slice(0, 15)
+
+    // ── CTR by position bucket (actual vs expected industry average) ──────────
+    const ctrBuckets = [
+        { label: 'Posição 1',  range: [1, 1],   expected: 0.278 },
+        { label: 'Posição 2',  range: [2, 2],   expected: 0.153 },
+        { label: 'Posição 3',  range: [3, 3],   expected: 0.114 },
+        { label: 'Top 4–10',   range: [4, 10],  expected: 0.050 },
+        { label: 'Pos 11–20',  range: [11, 20], expected: 0.016 },
+        { label: 'Pos 21–30',  range: [21, 30], expected: 0.005 },
+    ].map(({ label, range, expected }) => {
+        const qs      = allQueries.filter(q => q.position >= range[0] && q.position <= range[1])
+        const impr    = qs.reduce((s, q) => s + q.impressions, 0)
+        const clicks  = qs.reduce((s, q) => s + q.clicks, 0)
+        const actual  = impr > 0 ? clicks / impr : 0
+        return { label, expected, actual: parseFloat(actual.toFixed(4)), count: qs.length, impressions: impr, clicks }
+    }).filter(b => b.impressions > 0)
+
+    // ── Brand vs generic ─────────────────────────────────────────────────────
+    const brandQ   = allQueries.filter(q => q.key.toLowerCase().includes('hallyuhub'))
+    const genericQ = allQueries.filter(q => !q.key.toLowerCase().includes('hallyuhub'))
+    const brandVsGeneric = {
+        brand:   { clicks: brandQ.reduce((s, q) => s + q.clicks, 0),   impressions: brandQ.reduce((s, q) => s + q.impressions, 0),   count: brandQ.length },
+        generic: { clicks: genericQ.reduce((s, q) => s + q.clicks, 0), impressions: genericQ.reduce((s, q) => s + q.impressions, 0), count: genericQ.length },
+    }
+
+    // ── Query by page drill-down ─────────────────────────────────────────────
+    const queryByPage = (queryPageRes.rows ?? []).map(r => ({
+        query:       r.keys[0] ?? '',
+        page:        r.keys[1] ?? '',
+        clicks:      r.clicks,
+        impressions: r.impressions,
+        ctr:         parseFloat(r.ctr.toFixed(4)),
+        position:    parseFloat(r.position.toFixed(1)),
+    }))
 
     return {
         topQueries:    mapRows(queriesRes.rows),
-        topPages:      mapRows(pagesRes.rows),
+        topPages:      allPages.slice(0, 20),
         dailyTrend:    mapRows(dailyRes.rows).map(r => ({ date: r.key, clicks: r.clicks, impressions: r.impressions })),
         countries:     mapRows(countriesRes.rows),
         devices:       mapRows(devicesRes.rows),
         opportunities,
         totals,
+        pagesNoClick,
+        sectionHealth,
+        fallingQueries,
+        ctrBuckets,
+        brandVsGeneric,
+        queryByPage,
     }
 }
