@@ -169,8 +169,14 @@ export async function POST(
     if (data.placeOfBirth)     update.placeOfBirth     = data.placeOfBirth
     if (data.nationality)      update.nationality      = data.nationality
     if (data.debutDate)        update.debutDate        = new Date(data.debutDate)
-    const GENERIC_BIO_PATTERNS = [/conhecido\(a\) na indústria/, /talentoso\(a\).*indústria/, /de destaque na indústria/]
-    if (data.bio && !GENERIC_BIO_PATTERNS.some(p => p.test(data.bio!))) update.bio = data.bio
+    const GENERIC_BIO_PATTERNS = [/conhecido\(a\) na ind[uú]stria/, /talentoso\(a\).*ind[uú]stria/, /de destaque na ind[uú]stria/]
+    if (data.bio && !GENERIC_BIO_PATTERNS.some(p => p.test(data.bio!))) {
+        update.bio = data.bio
+        // Apaga tradução automática antiga que pode ser genérica — bio nova tem prioridade
+        await prisma.contentTranslation.deleteMany({
+            where: { entityType: 'artist', entityId: id, field: 'bio' },
+        }).catch(() => null)
+    }
     if (data.analiseEditorial) update.analiseEditorial = data.analiseEditorial
     if (data.curiosidades)     update.curiosidades     = data.curiosidades
     if (data.musicalStyle)     update.musicalStyle     = data.musicalStyle
