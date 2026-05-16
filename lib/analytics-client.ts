@@ -12,7 +12,8 @@ function getClient() {
     }
     const oauth2 = new OAuth2Client(clientId, clientSecret)
     oauth2.setCredentials({ refresh_token: refreshToken })
-    return new BetaAnalyticsDataClient({ authClient: oauth2 as never })
+    // fallback:'rest' usa HTTP/JSON em vez de gRPC — necessário em containers Docker
+    return new BetaAnalyticsDataClient({ authClient: oauth2 as never, fallback: 'rest' })
 }
 
 export async function getActiveUsers(): Promise<number> {
