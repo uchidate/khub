@@ -79,6 +79,13 @@ export async function POST(
         return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
     }
 
+    // Trunca seoTitle/metaDescription se o LLM retornou além do limite
+    if (body && typeof body === 'object') {
+        const b = body as Record<string, unknown>
+        if (typeof b.seoTitle === 'string' && b.seoTitle.length > 60) b.seoTitle = b.seoTitle.slice(0, 60).trimEnd()
+        if (typeof b.metaDescription === 'string' && b.metaDescription.length > 158) b.metaDescription = b.metaDescription.slice(0, 158).trimEnd()
+    }
+
     const parsed = EnrichSchema.safeParse(body)
     if (!parsed.success) {
         return NextResponse.json({
