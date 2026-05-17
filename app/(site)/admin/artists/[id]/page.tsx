@@ -278,14 +278,17 @@ export default function EditArtistPage() {
         setSpotifyError('')
         try {
             const res = await fetch(`/api/admin/artists/spotify-search?name=${encodeURIComponent(query)}`)
-            const data = await res.json()
+            const raw = await res.text()
+            const data = raw ? JSON.parse(raw) : {}
             if (!res.ok) {
-                setSpotifyError(data.error || 'Erro ao buscar no Spotify')
+                setSpotifyError(data.error || `Erro ao buscar no Spotify (${res.status})`)
                 return
             }
             setSpotifyCandidates(data.artists ?? [])
-        } catch {
-            setSpotifyError('Erro de rede')
+        } catch (error) {
+            setSpotifyError(error instanceof SyntaxError
+                ? 'Resposta inválida do servidor. Verifique se a versão nova foi implantada em produção.'
+                : 'Erro de rede')
         } finally {
             setSpotifyLoading(false)
         }
