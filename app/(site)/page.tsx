@@ -26,7 +26,7 @@ const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 
 const getHomePublicData = unstable_cache(
     () => buildHomeRuntimeData(),
-    ['home-page-public-data-v24'],
+    ['home-page-public-data-v25'],
     { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 
@@ -110,6 +110,7 @@ export default async function Home() {
         trendingArtists,
         featuredPost,
         carouselPosts,
+        secondaryPosts,
         feedPosts,
         streamingShowsRaw,
         trendingGroups,
@@ -121,7 +122,16 @@ export default async function Home() {
         randomProduction,
         topStreamingShow,
         featuredCluster,
+        trendingCluster,
+        composition,
     } = publicData
+    const spotlightSeedPosts = [...secondaryPosts, ...feedPosts]
+    const spotlightSeenIds = new Set<string>()
+    const editorialSpotlightPosts = spotlightSeedPosts
+        .filter(post => !spotlightSeenIds.has(post.id) && spotlightSeenIds.add(post.id))
+        .slice(0, 4)
+    const editorialSpotlightIds = new Set(editorialSpotlightPosts.map(post => post.id))
+    const belowFoldFeedPosts = feedPosts.filter(post => !editorialSpotlightIds.has(post.id))
 
     // Agrupa streaming shows por plataforma
     const showsByPlatform: ShowsByPlatform = {}
@@ -141,6 +151,7 @@ export default async function Home() {
         })
     }
     const hasStreaming = Object.keys(showsByPlatform).length > 0
+    const compositionMode = composition?.mode ?? 'balanced'
     return (
         <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
             <JsonLd data={{
@@ -167,12 +178,13 @@ export default async function Home() {
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
             />
-            <HomeEditorialSpotlight posts={feedPosts} />
+            <HomeEditorialSpotlight posts={editorialSpotlightPosts} mode={compositionMode} />
             <HomeDiscoverySection
-                cluster={featuredCluster}
+                cluster={featuredCluster ?? trendingCluster}
                 artist={randomArtist ? { id: randomArtist.id, slug: randomArtist.slug, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
                 group={randomGroup ? { id: randomGroup.id, slug: randomGroup.slug, name: randomGroup.name, nameHangul: randomGroup.nameHangul, profileImageUrl: randomGroup.profileImageUrl } : null}
                 production={randomProduction ? { id: randomProduction.id, slug: randomProduction.slug, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
+                mode={compositionMode}
             />
             <HomeNowStrip
                 artist={trendingArtists[0] ?? null}
@@ -189,14 +201,16 @@ export default async function Home() {
                     year: randomProduction.year,
                 } : null}
                 birthday={todaysBirthdays[0] ?? null}
+                mode={compositionMode}
             />
             <HomeTodaysBirthdays artists={todaysBirthdays.slice(1)} />
             <HomeBelowFold
                 watchProductions={watchProductions}
-                feedPosts={feedPosts.slice(4)}
+                feedPosts={belowFoldFeedPosts}
                 showsByPlatform={showsByPlatform}
                 trendingGroups={trendingGroups}
                 hasStreaming={hasStreaming}
+                compositionMode={compositionMode}
             />
             <HomeQuizBanner />
             <HomeLojaDestaque products={featuredProducts} />

@@ -56,7 +56,7 @@ interface HomeFrontPageProps {
     spotlightProduction: SpotlightProduction | null
 }
 
-const AVATAR_GRADIENTS = [
+const _AVATAR_GRADIENTS = [
     "from-[#c084fc] to-[#818cf8]",
     "from-[#ff2d78] to-[#ff6da3]",
     "from-[#38bdf8] to-[#818cf8]",
@@ -197,14 +197,14 @@ export function HomeFrontPage({
                 <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)] flex flex-col">
                     {/* Trending Artists panel */}
                     <div className="border-b border-border flex-1">
-                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border bg-surface/40">
+                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-accent/15 bg-surface-editorial">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">
+                                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                                     Artistas em alta
                                 </span>
-                                <span className="text-[10px] text-muted/70 hidden sm:block">Ranking semanal da comunidade</span>
+                                <span className="text-[10px] text-muted hidden sm:block">Ranking semanal da comunidade</span>
                             </div>
-                            <Link href="/artists" className="text-[9px] font-semibold text-muted hover:text-foreground transition-colors">
+                            <Link href="/artists" className="text-[9px] font-semibold text-accent hover:text-foreground transition-colors">
                                 Ver todos →
                             </Link>
                         </div>
@@ -332,7 +332,7 @@ export function HomeFrontPage({
 
                     {/* Artist Spotlight */}
                         {spotlightArtist ? (
-                            <div className="p-4 bg-gradient-to-b from-surface/70 to-background flex flex-col gap-3">
+                        <div className="p-4 bg-surface-tint flex flex-col gap-3">
                             {/* Label */}
                             <div className="flex items-center justify-between">
                                 <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">

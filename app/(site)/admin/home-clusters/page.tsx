@@ -16,6 +16,23 @@ type HomeClusterInsightsResponse = {
         secondary: EditorialMeta | null
         feed: EditorialMeta
     }
+    composition: {
+        mode: "editorial" | "watch" | "balanced"
+        recentArticleCount: number
+        streamingPlatformCount: number
+        streamingShowCount: number
+        reason: string
+    }
+    articleAffinity: {
+        carousel: ArticleAffinityItem[]
+        secondary: ArticleAffinityItem[]
+        feed: ArticleAffinityItem[]
+    }
+    affinityWeights: {
+        artist: number
+        group: number
+        production: number
+    }
 }
 
 type EditorialMeta = {
@@ -24,6 +41,20 @@ type EditorialMeta = {
     maxPerCategory: number
     categoryCounts: Record<string, number>
     relaxedCategoryCap: boolean
+}
+
+type ArticleAffinityItem = {
+    id: string
+    slug: string
+    title: string
+    score: number
+    matchedSignals: Array<"artist" | "group" | "production">
+}
+
+const AFFINITY_SIGNAL_LABELS: Record<ArticleAffinityItem["matchedSignals"][number], string> = {
+    artist: "Artista em alta",
+    group: "Grupo em alta",
+    production: "Produção no radar",
 }
 
 const SCORE_LABELS = [
@@ -77,11 +108,49 @@ function EditorialMetaCard({
     )
 }
 
+function ArticleAffinityList({
+    title,
+    items,
+}: {
+    title: string
+    items: ArticleAffinityItem[]
+}) {
+    return (
+        <div className="rounded-xl border border-border bg-background p-4">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">{title}</p>
+            <div className="mt-3 space-y-3">
+                {items.map((item) => (
+                    <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3 last:border-b-0 last:pb-0">
+                        <div className="min-w-0">
+                            <Link href={`/blog/${item.slug}`} className="block truncate text-[13px] font-semibold text-foreground hover:text-accent">
+                                {item.title}
+                            </Link>
+                            <div className="mt-1 flex flex-wrap gap-1.5">
+                                {item.matchedSignals.length > 0 ? item.matchedSignals.map((signal) => (
+                                    <span key={signal} className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                                        {AFFINITY_SIGNAL_LABELS[signal]}
+                                    </span>
+                                )) : (
+                                    <span className="text-[11px] text-muted">Sem afinidade direta</span>
+                                )}
+                            </div>
+                        </div>
+                        <span className="rounded-full bg-foreground px-2 py-1 text-[10px] font-bold text-background">
+                            afinidade {item.score}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
 export default function AdminHomeClustersPage() {
     const toast = useAdminToast()
     const [data, setData] = useState<HomeClusterInsightsResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
+    const [savingWeights, setSavingWeights] = useState(false)
 
     const fetchData = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true)
@@ -102,6 +171,30 @@ export default function AdminHomeClustersPage() {
     useEffect(() => {
         fetchData()
     }, [fetchData])
+
+    const updateAffinityWeight = async (key: keyof HomeClusterInsightsResponse["affinityWeights"], value: number) => {
+        if (!data) return
+        const nextWeights = { ...data.affinityWeights, [key]: value }
+        setData({ ...data, affinityWeights: nextWeights })
+        setSavingWeights(true)
+        try {
+            const response = await fetch("/api/admin/settings/homepage", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    homeAffinityArtistWeight: nextWeights.artist,
+                    homeAffinityGroupWeight: nextWeights.group,
+                    homeAffinityProductionWeight: nextWeights.production,
+                }),
+            })
+            if (!response.ok) throw new Error("Falha ao salvar pesos de afinidade")
+            await fetchData(true)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erro ao salvar pesos de afinidade")
+        } finally {
+            setSavingWeights(false)
+        }
+    }
 
     return (
         <AdminLayout title="Inteligência da Home">
@@ -134,10 +227,74 @@ export default function AdminHomeClustersPage() {
                 </div>
 
                 {data && (
+                    <div className="rounded-xl border border-border bg-background p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Composição ativa</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-foreground px-2 py-1 text-[11px] font-bold uppercase text-background">
+                                {data.composition?.mode ?? "balanced"}
+                            </span>
+                            <span className="rounded-full border border-border px-2 py-1 text-[11px] text-muted">
+                                {data.composition?.recentArticleCount ?? 0} artigos recentes
+                            </span>
+                            <span className="rounded-full border border-border px-2 py-1 text-[11px] text-muted">
+                                {data.composition?.streamingPlatformCount ?? 0} plataformas
+                            </span>
+                            <span className="rounded-full border border-border px-2 py-1 text-[11px] text-muted">
+                                {data.composition?.streamingShowCount ?? 0} títulos no radar
+                            </span>
+                        </div>
+                        <p className="mt-3 text-[13px] text-muted">
+                            {data.composition?.reason ?? "Composição equilibrada usada como fallback enquanto os dados são recalculados."}
+                        </p>
+                    </div>
+                )}
+
+                {data && (
+                    <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Pesos de afinidade</p>
+                                <p className="mt-1 text-[13px] text-muted">Definem quanto cada conexão empurra uma matéria para cima na seleção automática.</p>
+                            </div>
+                            {savingWeights && <span className="text-[11px] text-muted">Salvando...</span>}
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            {([
+                                ["artist", "Artista em alta"],
+                                ["group", "Grupo em alta"],
+                                ["production", "Produção no radar"],
+                            ] as const).map(([key, label]) => (
+                                <label key={key} className="rounded-xl border border-border bg-surface/30 p-3">
+                                    <span className="block text-[11px] font-semibold text-foreground">{label}</span>
+                                    <input
+                                        type="range"
+                                        min={0}
+                                        max={10}
+                                        step={1}
+                                        value={data.affinityWeights[key]}
+                                        onChange={(event) => updateAffinityWeight(key, Number(event.target.value))}
+                                        className="mt-3 w-full"
+                                    />
+                                    <span className="mt-2 block text-[12px] text-muted">Peso atual: {data.affinityWeights[key]}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {data && (
                     <div className="grid gap-4 lg:grid-cols-3">
                         <EditorialMetaCard title="Composição do carrossel" meta={data.editorialMeta.carousel} />
                         <EditorialMetaCard title="Composição dos secundários" meta={data.editorialMeta.secondary} />
                         <EditorialMetaCard title="Composição do feed" meta={data.editorialMeta.feed} />
+                    </div>
+                )}
+
+                {data && (
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        <ArticleAffinityList title="Afinidade do carrossel" items={data.articleAffinity.carousel} />
+                        <ArticleAffinityList title="Afinidade dos secundários" items={data.articleAffinity.secondary} />
+                        <ArticleAffinityList title="Afinidade do feed" items={data.articleAffinity.feed.slice(0, 6)} />
                     </div>
                 )}
 

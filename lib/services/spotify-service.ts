@@ -82,6 +82,7 @@ interface SpotifyAlbumTracksResponse {
 class SpotifyService {
   private cachedToken: { value: string; expiresAt: number } | null = null
   private dispatcher: Agent | null = null
+  private lastApiRequestAt = 0
 
   private getDispatcher() {
     if (this.dispatcher) return this.dispatcher
@@ -157,6 +158,39 @@ class SpotifyService {
     return data.access_token
   }
 
+  private async wait(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  private async requestApi(url: string, token: string): Promise<Response> {
+    const minGapMs = 250
+    const elapsed = Date.now() - this.lastApiRequestAt
+    if (elapsed < minGapMs) await this.wait(minGapMs - elapsed)
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      this.lastApiRequestAt = Date.now()
+      const response = await undiciFetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+        ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
+      } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+
+      if (response.status !== 429) return response
+
+      const retryAfter = Number(response.headers.get('retry-after'))
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(30_000, 1_000 * (attempt + 1))
+      await this.wait(waitMs)
+    }
+
+    return undiciFetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+      ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
+    } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+  }
+
   async searchArtists(query: string, limit = 8): Promise<SpotifyArtistCandidate[]> {
     const token = await this.getAccessToken()
     const params = new URLSearchParams({
@@ -166,11 +200,7 @@ class SpotifyService {
     })
     let response: Response
     try {
-      response = await undiciFetch(`${SPOTIFY_API_BASE}/search?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-        ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
-      } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+      response = await this.requestApi(`${SPOTIFY_API_BASE}/search?${params}`, token)
     } catch {
       throw new Error('Não foi possível consultar o Spotify. Verifique a conexão de rede/DNS do servidor.')
     }
@@ -198,15 +228,11 @@ class SpotifyService {
     const items: SpotifyArtistAlbumsResponse['items'] = []
     let nextUrl: string | null = `${SPOTIFY_API_BASE}/artists/${artistId}/albums?${new URLSearchParams({
       include_groups: 'album,single',
-      limit: '10',
+      limit: '50',
     })}`
 
     while (nextUrl) {
-      const response = await undiciFetch(nextUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: 'no-store',
-        ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
-      } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+      const response = await this.requestApi(nextUrl, token)
 
       if (!response.ok) {
         throw new Error(`Spotify artist albums request failed (${response.status})`)
@@ -234,11 +260,7 @@ class SpotifyService {
 
   async getAlbumTracks(albumId: string): Promise<SpotifyTrack[]> {
     const token = await this.getAccessToken()
-    const response = await undiciFetch(`${SPOTIFY_API_BASE}/albums/${albumId}/tracks?limit=50`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-      ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
-    } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+    const response = await this.requestApi(`${SPOTIFY_API_BASE}/albums/${albumId}/tracks?limit=50`, token)
 
     if (!response.ok) {
       throw new Error(`Spotify album tracks request failed (${response.status})`)

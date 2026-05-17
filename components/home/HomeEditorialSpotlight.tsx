@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowRight, Clock } from "lucide-react"
 import { BlogImage } from "@/components/ui/BlogImage"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
+import type { HomeCompositionMode } from "@/lib/home/home-composition"
 
 type EditorialPost = {
     id: string
@@ -12,6 +13,9 @@ type EditorialPost = {
     publishedAt: string | null
     readingTimeMin: number
     category: { name: string; slug: string } | null
+    relatedArtists?: Array<{ artist: { id: string; slug: string | null; nameRomanized: string; primaryImageUrl: string | null } }>
+    relatedGroups?: Array<{ group: { id: string; slug: string | null; name: string; profileImageUrl: string | null } }>
+    relatedProductions?: Array<{ production: { id: string; slug: string | null; titlePt: string; imageUrl: string | null } }>
 }
 
 function formatDate(iso: string | null) {
@@ -32,18 +36,52 @@ function CategoryPill({ category }: { category: EditorialPost["category"] }) {
     )
 }
 
-export function HomeEditorialSpotlight({ posts }: { posts: EditorialPost[] }) {
+function getRelatedEntities(post: EditorialPost) {
+    return [
+        ...(post.relatedArtists ?? []).map(({ artist }) => ({
+            key: `artist-${artist.id}`,
+            href: `/artists/${artist.slug ?? artist.id}`,
+            label: "Artista",
+            title: artist.nameRomanized,
+        })),
+        ...(post.relatedGroups ?? []).map(({ group }) => ({
+            key: `group-${group.id}`,
+            href: `/groups/${group.slug ?? group.id}`,
+            label: "Grupo",
+            title: group.name,
+        })),
+        ...(post.relatedProductions ?? []).map(({ production }) => ({
+            key: `production-${production.id}`,
+            href: `/productions/${production.slug ?? production.id}`,
+            label: "Produção",
+            title: production.titlePt,
+        })),
+    ].slice(0, 3)
+}
+
+export function HomeEditorialSpotlight({
+    posts,
+    mode,
+}: {
+    posts: EditorialPost[]
+    mode: HomeCompositionMode
+}) {
     const [lead, ...rest] = posts.slice(0, 4)
     if (!lead) return null
+    const heading = mode === "editorial"
+        ? "O que está movimentando o noticiário"
+        : "Reportagens e histórias em destaque"
+    const eyebrow = mode === "editorial" ? "Em pauta" : "Novidades"
+    const leadRelatedEntities = getRelatedEntities(lead)
 
     return (
-        <section className="bg-background py-4 sm:py-5">
+        <section className="bg-background py-6 sm:py-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-3 flex items-end justify-between">
-                    <div>
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Novidades</p>
+                <div className="mb-4 flex items-end justify-between">
+                    <div className="border-l-2 border-accent pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{eyebrow}</p>
                         <h2 className="mt-1 text-[20px] font-bold tracking-[-0.02em] text-foreground sm:text-[22px]">
-                            Reportagens e histórias em destaque
+                            {heading}
                         </h2>
                     </div>
                     <Link href="/blog" className="hidden items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground sm:inline-flex">
@@ -52,7 +90,8 @@ export function HomeEditorialSpotlight({ posts }: { posts: EditorialPost[] }) {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
-                    <Link href={`/blog/${lead.slug}`} className="group relative min-h-[300px] overflow-hidden rounded-2xl border border-border bg-surface sm:min-h-[360px]">
+                    <article className="group relative min-h-[300px] overflow-hidden rounded-2xl border border-border bg-surface sm:min-h-[360px]">
+                        <Link href={`/blog/${lead.slug}`} aria-label={lead.title} className="absolute inset-0 z-10" />
                         <BlogImage
                             src={lead.coverImageUrl}
                             alt={lead.title}
@@ -80,15 +119,29 @@ export function HomeEditorialSpotlight({ posts }: { posts: EditorialPost[] }) {
                                     </span>
                                 )}
                             </div>
+                            {leadRelatedEntities.length > 0 && (
+                                <div className="relative z-20 mt-4 flex flex-wrap gap-2">
+                                    {leadRelatedEntities.map((entity) => (
+                                        <Link
+                                            key={entity.key}
+                                            href={entity.href}
+                                            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/20 bg-black/25 px-2.5 py-1 text-[10px] text-white/80 backdrop-blur-sm"
+                                        >
+                                            <span className="font-semibold text-white/60">{entity.label}</span>
+                                            <span className="truncate">{entity.title}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    </Link>
+                    </article>
 
                     <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                         {rest.map((post) => (
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className="group overflow-hidden rounded-2xl border border-border bg-background transition-colors hover:bg-surface"
+                                className="group overflow-hidden rounded-2xl border border-accent/15 bg-background shadow-sm transition-colors hover:bg-surface"
                             >
                                 <div className="relative aspect-[16/9] bg-surface lg:aspect-[2.5/1]">
                                     <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 1024px) 33vw, 28vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
@@ -98,11 +151,27 @@ export function HomeEditorialSpotlight({ posts }: { posts: EditorialPost[] }) {
                                     <h3 className="mt-2 text-[13px] font-semibold leading-snug text-foreground line-clamp-2 group-hover:text-accent">
                                         {post.title}
                                     </h3>
+                                    <div className="mt-2 flex items-center gap-2 text-[10px] text-muted">
+                                        <span>{formatDate(post.publishedAt)}</span>
+                                        {post.readingTimeMin > 0 && (
+                                            <>
+                                                <span className="h-1 w-1 rounded-full bg-border" />
+                                                <span>{post.readingTimeMin} min</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </Link>
                         ))}
                     </div>
                 </div>
+
+                <Link
+                    href="/blog"
+                    className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground sm:hidden"
+                >
+                    Ver todos <ArrowRight className="h-3 w-3" />
+                </Link>
             </div>
         </section>
     )

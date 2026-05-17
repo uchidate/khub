@@ -17,12 +17,12 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
     if (!lead) return null
 
     return (
-        <section className="bg-background py-4 sm:py-5">
+        <section className="bg-background py-6 sm:py-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-                    <div className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-3">
-                        <div>
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Dramas & Filmes</p>
+                <div className="overflow-hidden rounded-2xl border border-sky-500/15 bg-background shadow-sm">
+                    <div className="flex items-center justify-between border-b border-sky-500/15 bg-surface-media px-4 sm:px-6 py-3.5">
+                        <div className="border-l-2 border-sky-500 pl-3">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sky-600 dark:text-sky-400">Dramas & Filmes</p>
                             <h2 className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">O que assistir agora</h2>
                         </div>
                         <Link href="/productions" className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted hover:text-foreground transition-colors">
@@ -60,7 +60,7 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
                             </div>
                         </Link>
 
-                        <div className="grid grid-cols-2 divide-x divide-y divide-border">
+                        <div className="grid grid-cols-2 divide-x divide-y divide-border bg-surface-media/45">
                             {rest.map((production) => (
                                 <Link
                                     key={production.id}

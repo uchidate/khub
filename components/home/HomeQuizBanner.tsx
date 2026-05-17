@@ -9,11 +9,11 @@ const PREVIEW_QUESTIONS = [
 
 export function HomeQuizBanner() {
     return (
-        <section className="bg-background py-4 pb-6 sm:pb-8">
+        <section className="bg-background py-5 pb-7 sm:pb-9">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Link
                     href="/quiz"
-                    className="group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-surface border border-border hover:border-accent/40 rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-surface-hover"
+                    className="group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-surface-editorial border border-accent/15 hover:border-accent/35 rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-surface-editorial"
                 >
                     {/* Glow de fundo */}
                     <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-purple-500/5 pointer-events-none" />

@@ -21,6 +21,7 @@ interface Props {
     showsByPlatform: ShowsByPlatform
     trendingGroups: TrendingGroup[]
     hasStreaming: boolean
+    compositionMode: 'editorial' | 'watch' | 'balanced'
 }
 
 const HomeRecommended = dynamic(() => import('./HomeRecommended').then(m => ({ default: m.HomeRecommended })), { ssr: false, loading: () => null })
@@ -30,36 +31,42 @@ const StreamingTopShows = dynamic(() => import('@/components/features/StreamingT
 const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m => ({ default: m.HomeTrendingGroups })), { loading: () => <div className="h-[400px]" /> })
 
 
-export function HomeBelowFold({ watchProductions = [], feedPosts, showsByPlatform, trendingGroups, hasStreaming }: Props) {
+export function HomeBelowFold({ watchProductions = [], feedPosts, showsByPlatform, trendingGroups, hasStreaming, compositionMode }: Props) {
     const radarTitle = hasStreaming && trendingGroups.length > 0
         ? 'O que está dominando as plataformas'
         : hasStreaming
             ? 'O que assistir nas plataformas'
             : 'Grupos que estão puxando a conversa'
 
+    const radarSection = (hasStreaming || trendingGroups.length > 0) ? (
+        <section key="radar" className="bg-background pt-6 sm:pt-7">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 border-l-2 border-sky-500 pl-3">
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sky-600 dark:text-sky-400">Radar</p>
+                <h2 className="mt-1 text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-foreground">{radarTitle}</h2>
+            </div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="overflow-hidden rounded-2xl border border-sky-500/15 bg-background shadow-sm grid lg:grid-cols-[1fr_360px]">
+                    {hasStreaming && (
+                        <div className="border-b lg:border-b-0 lg:border-r border-border">
+                            <StreamingTopShows showsByPlatform={showsByPlatform} />
+                        </div>
+                    )}
+                    <HomeTrendingGroups groups={trendingGroups} />
+                </div>
+            </div>
+        </section>
+    ) : null
+
+    const orderedSections = compositionMode === 'editorial'
+        ? [<HomeLatestArticles key="articles" posts={feedPosts} />, radarSection, <HomeWatchSection key="watch" productions={watchProductions} />]
+        : compositionMode === 'watch'
+            ? [radarSection, <HomeWatchSection key="watch" productions={watchProductions} />, <HomeLatestArticles key="articles" posts={feedPosts} />]
+            : [radarSection, <HomeLatestArticles key="articles" posts={feedPosts} />, <HomeWatchSection key="watch" productions={watchProductions} />]
+
     return (
         <div>
             <HomeRecommended />
-            {(hasStreaming || trendingGroups.length > 0) && (
-                <section className="bg-background pt-4 sm:pt-5">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Radar</p>
-                        <h2 className="mt-1 text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-foreground">{radarTitle}</h2>
-                    </div>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)] grid lg:grid-cols-[1fr_360px]">
-                        {hasStreaming && (
-                            <div className="border-b lg:border-b-0 lg:border-r border-border">
-                                <StreamingTopShows showsByPlatform={showsByPlatform} />
-                            </div>
-                        )}
-                        <HomeTrendingGroups groups={trendingGroups} />
-                    </div>
-                    </div>
-                </section>
-            )}
-            <HomeWatchSection productions={watchProductions} />
-            <HomeLatestArticles posts={feedPosts} />
+            {orderedSections}
         </div>
     )
 }
