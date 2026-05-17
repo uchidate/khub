@@ -13,9 +13,9 @@ const nextConfig = {
         // 301 — resulta em um único redirect 301 visível para browser/Googlebot
         return [
             { source: '/um/script.js', destination: 'https://umami.hallyuhub.com.br/script.js' },
-            { source: '/groups/:id(c[a-z0-9]{24})', destination: '/api/r/groups/:id' },
-            { source: '/artists/:id(c[a-z0-9]{24})', destination: '/api/r/artists/:id' },
-            { source: '/productions/:id(c[a-z0-9]{24})', destination: '/api/r/productions/:id' },
+            { source: '/groups/:id(c[a-z0-9]{24})', missing: [{ type: 'query', key: '_direct' }], destination: '/api/r/groups/:id' },
+            { source: '/artists/:id(c[a-z0-9]{24})', missing: [{ type: 'query', key: '_direct' }], destination: '/api/r/artists/:id' },
+            { source: '/productions/:id(c[a-z0-9]{24})', missing: [{ type: 'query', key: '_direct' }], destination: '/api/r/productions/:id' },
         ]
     },
     async headers() {

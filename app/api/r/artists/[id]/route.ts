@@ -13,7 +13,8 @@ export async function GET(
         select: { slug: true, id: true },
     }).catch(() => null)
 
-    const target = artist?.slug ?? artist?.id ?? id
+    const slug = artist?.slug ?? artist?.id ?? id
     const base = process.env.NEXTAUTH_URL ?? 'https://www.hallyuhub.com.br'
+    const target = slug === id ? `${slug}?_direct=1` : slug
     return NextResponse.redirect(`${base}/artists/${target}`, { status: 301 })
 }
