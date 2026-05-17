@@ -20,6 +20,7 @@ import { getTranslation, getTranslations } from "@/lib/translations"
 import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
 import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
+import { ExternalMusicEntityType } from "@prisma/client"
 
 import { SITE_URL } from '@/lib/constants/site'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
@@ -208,7 +209,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             ],
         },
     }
-    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles, totalProductions, totalAlbums] = await Promise.all([
+    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles, totalProductions, catalogReleases] = await Promise.all([
         prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: artist.id } } } }).catch(() => 0),
         getTranslation('artist', artist.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
@@ -236,8 +237,75 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             take: 6,
         }).catch(() => []),
         prisma.artistProduction.count({ where: productionWhere }).catch(() => artist.productions.length),
-        prisma.album.count({ where: { artistId: artist.id } }).catch(() => artist.albums.length),
+        prisma.musicRelease.findMany({
+            where: {
+                credits: {
+                    some: {
+                        musicCatalogArtist: { artistId: artist.id },
+                    },
+                },
+                externalLinks: {
+                    some: {
+                        entityType: ExternalMusicEntityType.RELEASE,
+                        platform: { slug: 'spotify' },
+                    },
+                },
+            },
+            select: {
+                id: true,
+                title: true,
+                releaseType: true,
+                releaseDate: true,
+                coverUrl: true,
+                externalLinks: {
+                    where: {
+                        entityType: ExternalMusicEntityType.RELEASE,
+                        platform: { slug: 'spotify' },
+                    },
+                    select: { url: true },
+                    take: 1,
+                },
+                tracks: {
+                    orderBy: [{ discNumber: 'asc' }, { trackNumber: 'asc' }],
+                    select: {
+                        id: true,
+                        title: true,
+                        trackNumber: true,
+                        durationMs: true,
+                        externalLinks: {
+                            where: {
+                                entityType: ExternalMusicEntityType.TRACK,
+                                platform: { slug: 'spotify' },
+                            },
+                            select: { url: true },
+                            take: 1,
+                        },
+                    },
+                },
+            },
+            orderBy: { releaseDate: 'desc' },
+            take: 20,
+        }).catch(() => []),
     ])
+
+    const discographyReleases = catalogReleases.map(release => ({
+        id: release.id,
+        title: release.title,
+        type: release.releaseType,
+        releaseDate: release.releaseDate,
+        coverUrl: release.coverUrl,
+        spotifyUrl: release.externalLinks[0]?.url ?? null,
+        appleMusicUrl: null,
+        youtubeUrl: null,
+        mbid: null,
+        tracks: release.tracks.map(track => ({
+            id: track.id,
+            title: track.title,
+            trackNumber: track.trackNumber,
+            durationMs: track.durationMs,
+            spotifyUrl: track.externalLinks[0]?.url ?? null,
+        })),
+    }))
 
     // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
     const streamingByTmdbId = new Map(
@@ -793,7 +861,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <span className="flex items-center gap-1 text-xs font-bold text-accent"><Film className="w-3 h-3" />{totalProductions}</span>
                                     <span className="text-muted">·</span>
-                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-500"><Disc3 className="w-3 h-3" />{totalAlbums}</span>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-500"><Disc3 className="w-3 h-3" />{discographyReleases.length}</span>
                                     <span className="text-muted">·</span>
                                     <span className="flex items-center gap-1 text-xs font-bold text-amber-500"><Newspaper className="w-3 h-3" />{newsCount}</span>
                                 </div>
@@ -912,8 +980,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         </section>
 
                         {/* Discography */}
-                        {artist.albums.length > 0 && (
-                            <DiscographySection albums={artist.albums} />
+                        {discographyReleases.length > 0 && (
+                            <DiscographySection albums={discographyReleases} />
                         )}
 
                         {/* Membros do grupo */}

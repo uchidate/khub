@@ -54,6 +54,23 @@ interface TMDBPreview {
     alsoKnownAs: string[]
 }
 
+interface SpotifyArtistCandidate {
+    id: string
+    name: string
+    url: string
+    imageUrl: string | null
+    followers: number
+    popularity: number
+    genres: string[]
+}
+
+interface SpotifyArtistLink {
+    externalId: string
+    url: string
+    matchStatus: string
+    matchedAt: string | null
+}
+
 const ZODIAC_SIGNS = [
     'Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
     'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes',
@@ -95,6 +112,12 @@ export default function EditArtistPage() {
     const [previewError, setPreviewError] = useState('')
     const [bioSource, setBioSource] = useState<'tmdb_pt' | 'tmdb_en' | null>(null)
     const [tmdbAppliedFields, setTmdbAppliedFields] = useState<Set<string>>(new Set())
+    const [spotifyQuery, setSpotifyQuery] = useState('')
+    const [spotifyCandidates, setSpotifyCandidates] = useState<SpotifyArtistCandidate[]>([])
+    const [spotifyLink, setSpotifyLink] = useState<SpotifyArtistLink | null>(null)
+    const [spotifyLoading, setSpotifyLoading] = useState(false)
+    const [spotifySavingId, setSpotifySavingId] = useState<string | null>(null)
+    const [spotifyError, setSpotifyError] = useState('')
 
     useEffect(() => {
         fetch(`/api/admin/artists?id=${id}`)
@@ -112,6 +135,13 @@ export default function EditArtistPage() {
             .catch(() => toast.error('Erro ao carregar artista'))
             .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id])
+
+    useEffect(() => {
+        fetch(`/api/admin/artists/${id}/spotify-link`)
+            .then(r => r.json())
+            .then(data => setSpotifyLink(data.link ?? null))
+            .catch(() => null)
     }, [id])
 
     const set = (key: keyof Artist, value: unknown) => {
@@ -239,6 +269,84 @@ export default function EditArtistPage() {
         } finally {
             setGeneratingEditorial(false)
         }
+    }
+
+    const searchSpotify = async () => {
+        const query = (spotifyQuery || form.nameRomanized || '').trim()
+        if (!query) return
+        setSpotifyLoading(true)
+        setSpotifyError('')
+        try {
+            const res = await fetch(`/api/admin/artists/spotify-search?name=${encodeURIComponent(query)}`)
+            const data = await res.json()
+            if (!res.ok) {
+                setSpotifyError(data.error || 'Erro ao buscar no Spotify')
+                return
+            }
+            setSpotifyCandidates(data.artists ?? [])
+        } catch {
+            setSpotifyError('Erro de rede')
+        } finally {
+            setSpotifyLoading(false)
+        }
+    }
+
+    const linkSpotify = async (candidate: SpotifyArtistCandidate) => {
+        setSpotifySavingId(candidate.id)
+        try {
+            const res = await fetch(`/api/admin/artists/${id}/spotify-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ externalId: candidate.id, url: candidate.url }),
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                toast.error(data.error || 'Erro ao vincular Spotify')
+                return
+            }
+            setSpotifyLink(data.link)
+            setSpotifyCandidates([])
+            toast.success('Perfil do Spotify vinculado')
+        } catch {
+            toast.error('Erro ao vincular Spotify')
+        } finally {
+            setSpotifySavingId(null)
+        }
+    }
+
+    const unlinkSpotify = async () => {
+        try {
+            const res = await fetch(`/api/admin/artists/${id}/spotify-link`, { method: 'DELETE' })
+            if (!res.ok) {
+                const data = await res.json().catch(() => null)
+                toast.error(data?.error || 'Erro ao remover vínculo')
+                return
+            }
+            setSpotifyLink(null)
+            toast.success('Vínculo removido')
+        } catch {
+            toast.error('Erro ao remover vínculo')
+        }
+    }
+
+    const spotifySearchTerms = Array.from(new Set(
+        [form.nameRomanized, ...(form.stageNames ?? []), form.nameHangul]
+            .map(value => typeof value === 'string' ? value.trim() : '')
+            .filter(Boolean)
+    ))
+    const normalizeName = (value: string) => value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣]/g, '')
+    const knownSpotifyNames = new Set(spotifySearchTerms.map(normalizeName))
+    const getSpotifyMatchLabel = (candidate: SpotifyArtistCandidate) => {
+        const normalized = normalizeName(candidate.name)
+        if (knownSpotifyNames.has(normalized)) return 'Correspondência forte'
+        if (spotifySearchTerms.some(term => normalized.includes(normalizeName(term)) || normalizeName(term).includes(normalized))) {
+            return 'Nome parecido'
+        }
+        return null
     }
 
     const inputCls = "w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted focus:outline-none focus:border-accent text-sm"
@@ -648,6 +756,142 @@ export default function EditArtistPage() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Catálogo musical */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">
+                                    Catálogo Musical
+                                </span>
+                                {spotifyLink && (
+                                    <a
+                                        href={spotifyLink.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-green-400 hover:text-green-300"
+                                    >
+                                        Abrir Spotify
+                                        <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                )}
+                            </div>
+
+                            {spotifyLink ? (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/5 p-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-foreground">Spotify vinculado</p>
+                                        <p className="text-xs text-muted truncate">{spotifyLink.url}</p>
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase px-2 py-1 rounded bg-green-500/15 text-green-400">
+                                        Confirmado
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={unlinkSpotify}
+                                        className="text-xs text-muted hover:text-red-400 transition-colors"
+                                    >
+                                        Remover
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted">Nenhum perfil do Spotify vinculado.</p>
+                            )}
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    type="text"
+                                    value={spotifyQuery}
+                                    onChange={e => setSpotifyQuery(e.target.value)}
+                                    placeholder={form.nameRomanized ? `Buscar por ${form.nameRomanized}` : 'Buscar artista no Spotify'}
+                                    className={inputCls}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={searchSpotify}
+                                    disabled={spotifyLoading}
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-hover text-sm disabled:opacity-50"
+                                >
+                                    {spotifyLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                                    Buscar Spotify
+                                </button>
+                            </div>
+
+                            {spotifySearchTerms.length > 1 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {spotifySearchTerms.map(term => (
+                                        <button
+                                            key={term}
+                                            type="button"
+                                            onClick={() => setSpotifyQuery(term)}
+                                            className="px-2 py-1 rounded-md border border-border bg-background text-[11px] text-muted hover:text-foreground hover:border-accent/40 transition-colors"
+                                        >
+                                            {term}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {spotifyError && <p className="text-xs text-red-400">{spotifyError}</p>}
+
+                            {spotifyCandidates.length > 0 && (
+                                <div className="space-y-2">
+                                    {spotifyCandidates.map(candidate => (
+                                        <div key={candidate.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
+                                            {candidate.imageUrl ? (
+                                                <Image
+                                                    src={candidate.imageUrl}
+                                                    alt={candidate.name}
+                                                    width={44}
+                                                    height={44}
+                                                    className="w-11 h-11 rounded object-cover"
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <div className="w-11 h-11 rounded bg-background flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-muted" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <p className="text-sm font-semibold text-foreground truncate">{candidate.name}</p>
+                                                    {getSpotifyMatchLabel(candidate) && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
+                                                            {getSpotifyMatchLabel(candidate)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted">
+                                                    {candidate.followers.toLocaleString('pt-BR')} seguidores
+                                                    {' · '}
+                                                    popularidade {candidate.popularity}
+                                                </p>
+                                                {candidate.genres.length > 0 && (
+                                                    <p className="text-[10px] text-muted truncate">{candidate.genres.join(', ')}</p>
+                                                )}
+                                            </div>
+                                            <a
+                                                href={candidate.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 px-2 py-2 rounded-lg border border-border text-xs text-muted hover:text-foreground hover:bg-background transition-colors"
+                                            >
+                                                Abrir
+                                                <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() => linkSpotify(candidate)}
+                                                disabled={spotifySavingId === candidate.id}
+                                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 text-xs font-bold disabled:opacity-50"
+                                            >
+                                                {spotifySavingId === candidate.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                                                Vincular
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Conteúdo Editorial (IA) */}
