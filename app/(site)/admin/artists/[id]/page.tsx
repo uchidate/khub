@@ -118,6 +118,8 @@ export default function EditArtistPage() {
     const [spotifyLoading, setSpotifyLoading] = useState(false)
     const [spotifySavingId, setSpotifySavingId] = useState<string | null>(null)
     const [spotifyError, setSpotifyError] = useState('')
+    const [spotifySyncing, setSpotifySyncing] = useState(false)
+    const [spotifySyncResult, setSpotifySyncResult] = useState<string | null>(null)
 
     useEffect(() => {
         fetch(`/api/admin/artists?id=${id}`)
@@ -326,9 +328,30 @@ export default function EditArtistPage() {
                 return
             }
             setSpotifyLink(null)
+            setSpotifySyncResult(null)
             toast.success('Vínculo removido')
         } catch {
             toast.error('Erro ao remover vínculo')
+        }
+    }
+
+    const syncSpotify = async () => {
+        setSpotifySyncing(true)
+        setSpotifySyncResult(null)
+        try {
+            const res = await fetch(`/api/admin/artists/${id}/spotify-sync`, { method: 'POST' })
+            const data = await res.json()
+            if (!res.ok) {
+                toast.error(data.error || 'Erro ao sincronizar')
+                return
+            }
+            const msg = `${data.albumsSynced ?? 0} álbuns, ${data.tracksSynced ?? 0} faixas`
+            setSpotifySyncResult(msg)
+            toast.success(`Discografia sincronizada — ${msg}`)
+        } catch {
+            toast.error('Erro ao sincronizar discografia')
+        } finally {
+            setSpotifySyncing(false)
         }
     }
 
@@ -799,6 +822,25 @@ export default function EditArtistPage() {
                                 </div>
                             ) : (
                                 <p className="text-xs text-muted">Nenhum perfil do Spotify vinculado.</p>
+                            )}
+
+                            {spotifyLink && (
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={syncSpotify}
+                                        disabled={spotifySyncing}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 disabled:opacity-50 text-green-400 rounded-lg text-xs font-bold transition-colors border border-green-500/20"
+                                    >
+                                        {spotifySyncing
+                                            ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Sincronizando...</>
+                                            : <><RefreshCw className="w-3.5 h-3.5" /> Sincronizar discografia</>
+                                        }
+                                    </button>
+                                    {spotifySyncResult && (
+                                        <span className="text-[10px] text-muted">{spotifySyncResult}</span>
+                                    )}
+                                </div>
                             )}
 
                             <div className="flex flex-col sm:flex-row gap-2">
