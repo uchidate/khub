@@ -67,6 +67,7 @@ const navSections: NavSection[] = [
         subItems: [
           { href: '/admin/blog/inspiration', label: 'Inspiração', icon: Sparkles },
           { href: '/admin/blog/homepage',   label: 'Homepage Editorial', icon: Layers },
+          { href: '/admin/home-clusters',   label: 'Inteligência da Home', icon: Sparkles },
           { href: '/admin/blog/categories', label: 'Categorias',         icon: Tag },
           { href: '/admin/seo',             label: 'SEO',                icon: Globe },
         ],
@@ -207,6 +208,7 @@ const SECTION_LABELS: Record<string, string> = {
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
   streaming: 'Streaming', seo: 'SEO', categories: 'Categorias', homepage: 'Homepage Editorial',
   visibility: 'Visibilidade', 'mb-import': 'Import MB', 'music-catalog': 'Catálogo Musical',
+  'home-clusters': 'Inteligência da Home',
 }
 
 function isIdSegment(s: string) {

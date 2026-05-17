@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import dynamic from "next/dynamic"
+import { CalendarDays, Film, Music2, Users } from "lucide-react"
 import { type ArtistForBadge } from "@/lib/trending/badges"
 import { getArtistBadgeDisplay } from "@/lib/trending/display"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
@@ -18,16 +19,9 @@ interface FeaturedStory {
     excerpt?: string | null
     category: { name: string; slug: string } | null
     tags: string[]
-}
-
-interface SecondaryStory {
-    id: string
-    slug: string
-    title: string
-    coverImageUrl: string | null
-    publishedAt: string | null
-    category: { name: string; slug: string } | null
-    tags: string[]
+    relatedArtists?: Array<{ artist: { id: string; slug: string | null; nameRomanized: string; primaryImageUrl: string | null } }>
+    relatedGroups?: Array<{ group: { id: string; slug: string | null; name: string; profileImageUrl: string | null } }>
+    relatedProductions?: Array<{ production: { id: string; slug: string | null; titlePt: string; imageUrl: string | null } }>
 }
 
 interface TrendingArtist extends ArtistForBadge {
@@ -57,7 +51,6 @@ interface SpotlightProduction {
 interface HomeFrontPageProps {
     featuredStory: FeaturedStory | undefined
     carouselPosts?: FeaturedStory[]
-    secondaryStories: SecondaryStory[]
     trendingArtists: TrendingArtist[]
     spotlightArtist: TrendingArtist | null
     spotlightProduction: SpotlightProduction | null
@@ -81,19 +74,6 @@ function getCategoryStyle(slug: string | undefined): { color: string; bg: string
     return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: '#f3f4f6' }
 }
 
-function formatDate(iso: string | null) {
-    if (!iso) return ''
-    try {
-        return new Date(iso).toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        })
-    } catch {
-        return iso
-    }
-}
-
 const ROLE_LABELS: Record<string, [string, string]> = {
     'ATOR':       ['Ator',       'Atriz'],
     'ACTRIZ':     ['Atriz',      'Atriz'],
@@ -105,10 +85,11 @@ const ROLE_LABELS: Record<string, [string, string]> = {
     'Ator/Atriz': ['Ator',       'Atriz'],
 }
 
-const EMPTY_SECONDARY_CTAS = [
-    { label: "Explore artistas", href: "/artists" },
-    { label: "Veja producoes populares", href: "/productions" },
-    { label: "Complete seu perfil de interesses", href: "/profile" },
+const DISCOVERY_SHORTCUTS = [
+    { label: "Artistas", href: "/artists", icon: Music2, detail: "Perfis e discografias" },
+    { label: "Grupos", href: "/groups", icon: Users, detail: "Fandoms e membros" },
+    { label: "Dramas & Filmes", href: "/productions", icon: Film, detail: "O que assistir" },
+    { label: "Agenda", href: "/calendario", icon: CalendarDays, detail: "Aniversários e datas" },
 ]
 
 function formatRole(role: string, gender?: string | number | null): string {
@@ -130,7 +111,6 @@ function getInitials(name: string) {
 export function HomeFrontPage({
     featuredStory,
     carouselPosts,
-    secondaryStories,
     trendingArtists,
     spotlightArtist,
     spotlightProduction,
@@ -138,18 +118,15 @@ export function HomeFrontPage({
     const hasCarousel = carouselPosts && carouselPosts.length > 0
     if (!hasCarousel && !featuredStory) return null
 
-    const safeSecondary = secondaryStories.slice(0, 8)
-    const missingSecondary = Math.max(0, 8 - safeSecondary.length)
     const safeArtists = trendingArtists.slice(0, 8)
-
     return (
         <section className="bg-background py-4 sm:py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid lg:grid-cols-[2fr_0.65fr] rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-                {/* LEFT COLUMN */}
-                <div className="flex flex-col">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+                {/* MAIN HERO */}
+                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
                     {/* Hero: carousel or static featured */}
-                    <div className="border-b border-border">
+                    <div>
                         {hasCarousel ? (
                             <FeaturedCarousel posts={carouselPosts} />
                         ) : featuredStory ? (
@@ -206,7 +183,7 @@ export function HomeFrontPage({
                                             Ler agora
                                         </span>
                                         <span className="hidden sm:inline-flex items-center rounded-full border border-white/35 text-white/85 text-[10px] sm:text-[10.5px] font-semibold px-3 py-1.5">
-                                            Explorar notícias
+                                            Ver artigos
                                         </span>
                                     </div>
                                 </div>
@@ -214,63 +191,10 @@ export function HomeFrontPage({
                         ) : null}
                     </div>
 
-                    {/* Secondary stories 2×2 grid */}
-                    {safeSecondary.length > 0 && (
-                        <div className="border-t border-border">
-                            <div className="flex items-center justify-between px-3.5 sm:px-5 py-2 border-b border-border bg-surface/45">
-                                <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Principais agora</span>
-                                <Link href="/blog" className="text-[9px] font-semibold text-muted hover:text-foreground transition-colors">Ver mais</Link>
-                            </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2">
-                            {safeSecondary.map((story, idx) => {
-                                const cs = getCategoryStyle(story.category?.slug ?? story.tags?.[0])
-                                return (
-                                <Link
-                                    key={story.slug}
-                                    href={`/blog/${story.slug}`}
-                                    className={`group p-3.5 sm:p-4 flex gap-3 hover:bg-surface/80 transition-all duration-200 border-b border-border
-                                        ${idx % 2 === 0 ? "sm:border-r sm:border-border" : ""}
-                                        ${idx >= safeSecondary.length - (safeSecondary.length % 2 === 0 ? 2 : 1) ? "sm:border-b-0" : ""}
-                                    `}
-                                >
-                                    <span className="text-[9px] font-bold text-muted/55 leading-none mt-1 w-4 shrink-0">{String(idx + 1).padStart(2, '0')}</span>
-                                    {story.coverImageUrl && (
-                                        <div className="relative w-24 h-20 rounded-md overflow-hidden bg-surface shrink-0 border border-border/60">
-                                            <Image src={story.coverImageUrl} alt={story.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="192px" priority={idx < 2} />
-                                        </div>
-                                    )}
-                                    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                                        <span className="text-[8px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded self-start" style={{ color: cs.color, backgroundColor: cs.bg }}>
-                                            {story.category?.name ?? story.tags?.[0] ?? 'Blog'}
-                                        </span>
-                                        <h3 className="text-[13.5px] font-bold text-foreground leading-snug group-hover:text-foreground/85 transition-colors line-clamp-2">
-                                            {story.title}
-                                        </h3>
-                                        <span className="text-[9px] text-muted mt-auto">{formatDate(story.publishedAt)}</span>
-                                    </div>
-                                </Link>
-                                )
-                            })}
-                            {missingSecondary > 0 && EMPTY_SECONDARY_CTAS.slice(0, missingSecondary).map((cta) => (
-                                <Link
-                                    key={cta.label}
-                                    href={cta.href}
-                                    className="group p-4 flex items-center justify-between border-b border-border sm:border-b-0 sm:odd:border-r sm:border-border hover:bg-surface/70 transition-colors"
-                                >
-                                    <div>
-                                        <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted mb-1">Sugestao</p>
-                                        <p className="text-[13px] font-semibold text-foreground group-hover:text-foreground/80">{cta.label}</p>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-muted">Abrir</span>
-                                </Link>
-                            ))}
-                        </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div className="border-t lg:border-t-0 lg:border-l border-border flex flex-col">
+                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)] flex flex-col">
                     {/* Trending Artists panel */}
                     <div className="border-b border-border flex-1">
                         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border bg-surface/40">
@@ -285,17 +209,53 @@ export function HomeFrontPage({
                             </Link>
                         </div>
 
-                        {/* Desktop: vertical list — 7 artistas para não ultrapassar altura da coluna esquerda */}
+                        {/* Desktop: featured artist + supporting list */}
                         <div className="hidden sm:block">
-                            {safeArtists.length > 0 ? safeArtists.slice(0, 7).map((artist, idx) => (
+                            {safeArtists.length > 0 ? (
+                                <>
+                                    <Link
+                                        href={`/artists/${safeArtists[0].slug ?? safeArtists[0].id}`}
+                                        className="group flex items-center gap-4 border-b border-border px-4 py-4 hover:bg-surface transition-colors"
+                                    >
+                                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-surface" style={{ background: nameToGradient(safeArtists[0].nameRomanized || safeArtists[0].nameHangul || 'artist') }}>
+                                            {safeArtists[0].primaryImageUrl ? (
+                                                <Image src={safeArtists[0].primaryImageUrl} alt={safeArtists[0].nameRomanized || ''} fill sizes="64px" className="object-cover" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
+                                                    {getInitials(safeArtists[0].nameRomanized || safeArtists[0].nameHangul || '?')}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="mb-1 flex items-center gap-2">
+                                                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-accent">#1 agora</span>
+                                                {(() => {
+                                                    const display = getArtistBadgeDisplay(safeArtists[0])
+                                                    return display ? <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded ${display.className}`}>{display.label}</span> : null
+                                                })()}
+                                            </div>
+                                            <p className="truncate text-[16px] font-black tracking-[-0.03em] text-foreground group-hover:text-accent transition-colors">
+                                                {safeArtists[0].nameRomanized || safeArtists[0].nameHangul || '—'}
+                                            </p>
+                                            <p className="mt-0.5 truncate text-[10px] text-muted">
+                                                {safeArtists[0].roles?.slice(0, 2).map(r => formatRole(r, safeArtists[0].gender)).join(', ')}
+                                                {safeArtists[0].agency?.name ? ` · ${safeArtists[0].agency.name}` : ''}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                    <div className="grid grid-cols-2">
+                                        {safeArtists.slice(1, 7).map((artist, idx) => (
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.slug ?? artist.id}`}
-                                    className="group flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-surface transition-colors min-h-[44px]"
+                                    className={`group flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors min-h-[44px]
+                                        ${idx % 2 === 0 ? 'border-r border-border' : ''}
+                                        ${idx < 4 ? 'border-b border-border' : ''}
+                                    `}
                                 >
                                     <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
                                         <span className="text-[8.5px] font-bold text-muted/70 text-center leading-none">
-                                            {String(idx + 1).padStart(2, '0')}
+                                            {String(idx + 2).padStart(2, '0')}
                                         </span>
                                         {artist.trendingRank != null && artist.trendingRankPrev != null ? (
                                             artist.trendingRank < artist.trendingRankPrev
@@ -334,7 +294,10 @@ export function HomeFrontPage({
                                         )
                                     })()}
                                 </Link>
-                            )) : (
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
                                 <div className="px-4 py-4 text-center">
                                     <p className="text-[12px] text-muted">Ainda sem artistas em destaque.</p>
                                     <Link href="/artists" className="inline-flex mt-2 text-[11px] font-semibold text-foreground hover:underline">Explore artistas</Link>
@@ -343,7 +306,7 @@ export function HomeFrontPage({
                         </div>
                         {/* Mobile: compact 2-col avatar grid */}
                         <div className="sm:hidden grid grid-cols-4 gap-0">
-                            {safeArtists.map((artist, idx) => (
+                            {safeArtists.slice(0, 4).map((artist, idx) => (
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.slug ?? artist.id}`}
@@ -461,6 +424,31 @@ export function HomeFrontPage({
                     )}
                 </div>
                 </div>
+
+                <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2 border-b border-border bg-surface/20">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Descubra o HallyuHub</span>
+                        <span className="text-[9px] text-muted">Explore por interesse</span>
+                    </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4">
+                        {DISCOVERY_SHORTCUTS.map(({ label, href, icon: Icon, detail }, idx) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className={`group flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3 hover:bg-surface transition-colors
+                                    ${idx % 2 === 0 ? 'border-r border-border' : ''}
+                                    ${idx < 2 ? 'border-b border-border lg:border-b-0' : ''}
+                                    ${idx < 3 ? 'lg:border-r lg:border-border' : ''}
+                                `}
+                            >
+                                <Icon className="h-4 w-4 text-muted group-hover:text-accent transition-colors" />
+                                <span className="text-[12px] font-bold text-foreground">{label}</span>
+                                <span className="text-[10px] text-muted leading-tight">{detail}</span>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </section>
     )
