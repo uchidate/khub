@@ -132,6 +132,13 @@ export default async function RootLayout({
                         <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
+                        <script
+                            key="adsense-auto-ads"
+                            async
+                            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+                            crossOrigin="anonymous"
+                            data-hallyuhub-adsense="true"
+                        />
                     </>
                 )}
             </head>
