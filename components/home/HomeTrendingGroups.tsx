@@ -18,7 +18,7 @@ export function HomeTrendingGroups({ groups }: { groups: TrendingGroup[] }) {
     if (!groups.length) return null
 
     return (
-        <div className="border-t md:border-t-0 md:border-l border-border">
+        <div className="border-t lg:border-t-0 lg:border-l border-border">
             <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-border">
                 <span className="text-[9px] font-bold uppercase tracking-[0.13em] text-muted">Grupos em alta</span>
                 <Link href="/groups" className="text-[9px] font-bold text-muted hover:text-accent transition-colors">Ver todos →</Link>

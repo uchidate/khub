@@ -33,11 +33,12 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
-        { label: "Blog", href: "/blog" },
+        { label: "Descobrir", href: "/" },
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
-        { label: "Produções", href: "/productions" },
-        { label: "Calendário", href: "/calendario" },
+        { label: "Dramas & Filmes", href: "/productions" },
+        { label: "Agenda", href: "/calendario" },
+        { label: "Artigos", href: "/blog" },
         { label: "Loja", href: "/loja" },
     ]
 
@@ -153,7 +154,7 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                                     style={{ backgroundColor: 'var(--color-ticker-bg)' }}
                                 >
                                     <div className="flex-shrink-0 flex items-center self-stretch px-3 bg-accent">
-                                        <span className="text-white text-[11px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">Blog</span>
+                                        <span className="text-white text-[11px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">Artigos</span>
                                     </div>
                                     <div className="overflow-hidden flex-1 min-w-0">
                                         <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>

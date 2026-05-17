@@ -10,70 +10,56 @@ interface BlogFeedItem {
     coverImageUrl: string | null; publishedAt: string | null
     readingTimeMin: number; category: { name: string; slug: string } | null; tags: string[]
 }
-interface ProductionItem {
-    id: string; titlePt: string; type: string; year: number | null
-    imageUrl: string | null; voteAverage: number | null
-}
-interface SiteStats { artists: number; productions: number; groups: number }
-interface RandomArtist { id: string; nameRomanized: string; nameHangul: string | null; primaryImageUrl: string | null }
-interface RandomGroup { id: string; name: string; nameHangul: string | null; profileImageUrl: string | null }
-interface RandomProduction { id: string; titlePt: string; posterUrl: string | null; year: number | null }
-
-interface AgencyItem {
-    id: string; slug: string | null; name: string; logoUrl: string | null
-    accentColor: string | null; type: string
-    _count: { artists: number; musicalGroups: number }
+interface WatchProduction {
+    id: string; slug?: string | null; titlePt: string; type: string
+    year: number | null; imageUrl: string | null; voteAverage: number | null
 }
 
 interface Props {
-    artist: RandomArtist | null
-    group: RandomGroup | null
-    production: RandomProduction | null
+    watchProductions?: WatchProduction[]
     feedPosts: BlogFeedItem[]
-    sidebarPosts: BlogFeedItem[]
-    latestProductions: ProductionItem[]
-    categoryCountMap: Record<string, number>
     showsByPlatform: ShowsByPlatform
     trendingGroups: TrendingGroup[]
     hasStreaming: boolean
-    siteStats: SiteStats
-    topAgencies: AgencyItem[]
 }
 
-const HomeRandomDiscovery = dynamic(() => import('./HomeRandomDiscovery').then(m => ({ default: m.HomeRandomDiscovery })), { loading: () => <div className="h-28" /> })
-const HomeRecommended = dynamic(() => import('./HomeRecommended').then(m => ({ default: m.HomeRecommended })), { ssr: false, loading: () => <div className="h-[220px]" /> })
-const HomeBlogFeed = dynamic(() => import('./HomeNewsFeed').then(m => ({ default: m.HomeBlogFeed })), { loading: () => <div className="h-[600px]" /> })
+const HomeRecommended = dynamic(() => import('./HomeRecommended').then(m => ({ default: m.HomeRecommended })), { ssr: false, loading: () => null })
+const HomeLatestArticles = dynamic(() => import('./HomeLatestArticles').then(m => ({ default: m.HomeLatestArticles })), { loading: () => <div className="h-[420px]" /> })
+const HomeWatchSection = dynamic(() => import('./HomeWatchSection').then(m => ({ default: m.HomeWatchSection })), { loading: () => <div className="h-[360px]" /> })
 const StreamingTopShows = dynamic(() => import('@/components/features/StreamingTopShows').then(m => ({ default: m.StreamingTopShows })), { loading: () => <div className="h-[400px]" /> })
 const HomeTrendingGroups = dynamic(() => import('./HomeTrendingGroups').then(m => ({ default: m.HomeTrendingGroups })), { loading: () => <div className="h-[400px]" /> })
-const HomeBlogSection = dynamic(() => import('./HomeBlogSection').then(m => ({ default: m.HomeBlogSection })), { loading: () => <div className="h-48" /> })
-import { HomeTopAgencies } from './HomeTopAgencies'
 
 
-export function HomeBelowFold({ artist, group, production, feedPosts, sidebarPosts, latestProductions, categoryCountMap, showsByPlatform, trendingGroups, hasStreaming, siteStats, topAgencies }: Props) {
+export function HomeBelowFold({ watchProductions = [], feedPosts, showsByPlatform, trendingGroups, hasStreaming }: Props) {
+    const radarTitle = hasStreaming && trendingGroups.length > 0
+        ? 'O que está dominando as plataformas'
+        : hasStreaming
+            ? 'O que assistir nas plataformas'
+            : 'Grupos que estão puxando a conversa'
+
     return (
-        <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 2400px' }}>
-            <HomeRandomDiscovery artist={artist} group={group} production={production} />
+        <div>
             <HomeRecommended />
-            <HomeBlogFeed
-                blogPosts={feedPosts}
-                sidebarPosts={sidebarPosts}
-                productions={latestProductions}
-                categoryCounts={categoryCountMap}
-            />
             {(hasStreaming || trendingGroups.length > 0) && (
-                <section className="border-b border-border bg-background">
-                    <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_360px]">
+                <section className="bg-background pt-4 sm:pt-5">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Radar</p>
+                        <h2 className="mt-1 text-[18px] sm:text-[20px] font-bold tracking-[-0.02em] text-foreground">{radarTitle}</h2>
+                    </div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)] grid lg:grid-cols-[1fr_360px]">
                         {hasStreaming && (
-                            <div className="border-b md:border-b-0 md:border-r border-border">
+                            <div className="border-b lg:border-b-0 lg:border-r border-border">
                                 <StreamingTopShows showsByPlatform={showsByPlatform} />
                             </div>
                         )}
                         <HomeTrendingGroups groups={trendingGroups} />
                     </div>
+                    </div>
                 </section>
             )}
-            <HomeTopAgencies agencies={topAgencies} />
-            <HomeBlogSection siteStats={siteStats} />
+            <HomeWatchSection productions={watchProductions} />
+            <HomeLatestArticles posts={feedPosts} />
         </div>
     )
 }
