@@ -69,6 +69,7 @@ model MusicalGroup {
   instagramFeedUrl  String?               // RSS.app JSON feed URL
   instagramLastSync DateTime?             // última sincronização bem-sucedida
   instagramPosts    InstagramPost[]
+  musicCatalogArtist MusicCatalogArtist?
   // Trending metrics
   viewCount       Int                     @default(0)
   favoriteCount   Int                     @default(0)
@@ -182,6 +183,7 @@ model Artist {
   news                 NewsArtist[]
   kpoppingSuggestions  KpoppingMembershipSuggestion[]
   streamingSignals     StreamingTrendSignal[]
+  musicCatalogArtist    MusicCatalogArtist?
 
   @@index([agencyId])
   @@index([createdAt])
@@ -237,6 +239,7 @@ model Album {
 
   artistId String
   artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  legacyRelease MusicRelease?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -244,6 +247,159 @@ model Album {
   @@index([artistId])
   @@index([releaseDate])
   @@index([mbid])
+}
+
+enum MusicCatalogArtistKind {
+  PERSON
+  GROUP
+}
+
+enum MusicReleaseType {
+  ALBUM
+  EP
+  SINGLE
+  MINI_ALBUM
+  FULL_ALBUM
+  OST
+  REPACKAGE
+  COMPILATION
+}
+
+enum MusicCreditRole {
+  PRIMARY
+  FEATURED
+  PRODUCER
+  COMPOSER
+}
+
+enum ExternalMusicEntityType {
+  ARTIST
+  RELEASE
+  TRACK
+}
+
+enum ExternalMusicMatchStatus {
+  UNVERIFIED
+  AUTO_MATCHED
+  MANUAL_VERIFIED
+  REJECTED
+}
+
+model MusicCatalogArtist {
+  id            String                 @id @default(cuid())
+  kind          MusicCatalogArtistKind
+  canonicalName String
+  artistId      String?                @unique
+  groupId       String?                @unique
+  artist        Artist?                @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  group         MusicalGroup?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  releaseCredits MusicReleaseCredit[]
+  trackCredits   MusicTrackCredit[]
+  externalLinks  ExternalMusicEntity[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([kind])
+  @@index([canonicalName])
+}
+
+model MusicRelease {
+  id             String               @id @default(cuid())
+  title          String
+  releaseType    MusicReleaseType
+  releaseDate    DateTime?
+  coverUrl       String?
+  legacyAlbumId  String?              @unique
+  legacyAlbum    Album?               @relation(fields: [legacyAlbumId], references: [id], onDelete: SetNull)
+  credits        MusicReleaseCredit[]
+  tracks         MusicTrack[]
+  externalLinks  ExternalMusicEntity[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([releaseDate])
+  @@index([releaseType])
+  @@index([title])
+}
+
+model MusicTrack {
+  id            String                @id @default(cuid())
+  title         String
+  trackNumber   Int?
+  discNumber    Int?
+  durationMs    Int?
+  isrc          String?
+  releaseId     String
+  release       MusicRelease          @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  credits       MusicTrackCredit[]
+  externalLinks ExternalMusicEntity[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([releaseId])
+  @@index([isrc])
+}
+
+model MusicReleaseCredit {
+  id                   String             @id @default(cuid())
+  releaseId            String
+  musicCatalogArtistId String
+  role                 MusicCreditRole    @default(PRIMARY)
+  displayOrder         Int                @default(0)
+  release              MusicRelease       @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  musicCatalogArtist   MusicCatalogArtist @relation(fields: [musicCatalogArtistId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseId, musicCatalogArtistId, role])
+  @@index([musicCatalogArtistId])
+}
+
+model MusicTrackCredit {
+  id                   String             @id @default(cuid())
+  trackId              String
+  musicCatalogArtistId String
+  role                 MusicCreditRole    @default(PRIMARY)
+  displayOrder         Int                @default(0)
+  track                MusicTrack         @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  musicCatalogArtist   MusicCatalogArtist @relation(fields: [musicCatalogArtistId], references: [id], onDelete: Cascade)
+
+  @@unique([trackId, musicCatalogArtistId, role])
+  @@index([musicCatalogArtistId])
+}
+
+model StreamingPlatform {
+  id            String                @id @default(cuid())
+  slug          String                @unique
+  name          String
+  externalLinks ExternalMusicEntity[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+model ExternalMusicEntity {
+  id                   String                   @id @default(cuid())
+  platformId           String
+  entityType           ExternalMusicEntityType
+  externalId           String
+  url                  String
+  musicCatalogArtistId String?
+  releaseId            String?
+  trackId              String?
+  confidence           Float?
+  matchStatus          ExternalMusicMatchStatus @default(UNVERIFIED)
+  source               String
+  matchedAt            DateTime?
+  platform             StreamingPlatform        @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  musicCatalogArtist   MusicCatalogArtist?      @relation(fields: [musicCatalogArtistId], references: [id], onDelete: Cascade)
+  release              MusicRelease?            @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  track                MusicTrack?              @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+
+  @@unique([platformId, entityType, externalId])
+  @@index([musicCatalogArtistId])
+  @@index([releaseId])
+  @@index([trackId])
+  @@index([matchStatus])
 }
 
 model Production {

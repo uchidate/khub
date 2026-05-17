@@ -94,6 +94,7 @@ const navSections: NavSection[] = [
           { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
           { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
           { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
+          { href: '/admin/music-catalog',         label: 'Catálogo Musical', icon: Disc3 },
           { href: '/admin/instagram',            label: 'Instagram',      icon: Instagram },
           { href: '/admin/instagram/status',     label: 'Status do Sync', icon: Activity },
           { href: '/admin/artists/moderation',   label: 'Moderação',     icon: AlertTriangle },
@@ -205,7 +206,7 @@ const SECTION_LABELS: Record<string, string> = {
   reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync TMDB', status: 'Status',
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
   streaming: 'Streaming', seo: 'SEO', categories: 'Categorias', homepage: 'Homepage Editorial',
-  visibility: 'Visibilidade', 'mb-import': 'Import MB',
+  visibility: 'Visibilidade', 'mb-import': 'Import MB', 'music-catalog': 'Catálogo Musical',
 }
 
 function isIdSegment(s: string) {
