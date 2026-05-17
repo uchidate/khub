@@ -108,11 +108,14 @@ export default function MusicCatalogPage() {
     setSpotifyLoading(true)
     try {
       const res = await fetch(`/api/admin/artists/spotify-search?name=${encodeURIComponent(spotifyQuery.trim())}`)
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao buscar no Spotify')
+      const raw = await res.text()
+      const data = raw ? JSON.parse(raw) : {}
+      if (!res.ok) throw new Error(data.error || `Erro ao buscar no Spotify (${res.status})`)
       setSpotifyCandidates(data.artists ?? [])
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao buscar no Spotify')
+      toast.error(error instanceof SyntaxError
+        ? 'Resposta inválida do servidor. Verifique se a versão nova foi implantada em produção.'
+        : error instanceof Error ? error.message : 'Erro ao buscar no Spotify')
     } finally {
       setSpotifyLoading(false)
     }
