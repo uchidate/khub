@@ -892,6 +892,9 @@ model SystemSettings {
   homeSidebarPostIds        String[] // "Artigos em destaque" sidebar (até 4)
   homeCarouselPostIds       String[] // carrossel hero (até 5 posts)
   homeSpotlightArtistId     String?  // override manual do "artista da semana"
+  homeAffinityArtistWeight  Int      @default(3) // peso de afinidade para artista em alta
+  homeAffinityGroupWeight   Int      @default(3) // peso de afinidade para grupo em alta
+  homeAffinityProductionWeight Int   @default(2) // peso de afinidade para produção no radar
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 

@@ -21,8 +21,28 @@ function parseSpotifyDate(value: string | null): Date | null {
 }
 
 export async function syncSpotifyCatalogForArtist(artistId: string) {
-  const musicArtist = await prisma.musicCatalogArtist.findUnique({
+  return syncSpotifyCatalog({
     where: { artistId },
+    missingLinkMessage: 'Artista ainda não tem perfil Spotify vinculado',
+  })
+}
+
+export async function syncSpotifyCatalogForGroup(groupId: string) {
+  return syncSpotifyCatalog({
+    where: { groupId },
+    missingLinkMessage: 'Grupo ainda não tem perfil Spotify vinculado',
+  })
+}
+
+async function syncSpotifyCatalog({
+  where,
+  missingLinkMessage,
+}: {
+  where: { artistId: string } | { groupId: string }
+  missingLinkMessage: string
+}) {
+  const musicArtist = await prisma.musicCatalogArtist.findUnique({
+    where,
     select: {
       id: true,
       externalLinks: {
@@ -36,7 +56,7 @@ export async function syncSpotifyCatalogForArtist(artistId: string) {
     },
   })
   if (!musicArtist?.externalLinks[0]) {
-    throw new Error('Artista ainda não tem perfil Spotify vinculado')
+    throw new Error(missingLinkMessage)
   }
 
   const platform = await prisma.streamingPlatform.findUniqueOrThrow({

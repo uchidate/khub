@@ -345,7 +345,7 @@ export default function EditArtistPage() {
                 toast.error(data.error || 'Erro ao sincronizar')
                 return
             }
-            const msg = `${data.albumsSynced ?? 0} álbuns, ${data.tracksSynced ?? 0} faixas`
+            const msg = `${data.releasesSynced ?? 0} lançamentos, ${data.tracksSynced ?? 0} faixas`
             setSpotifySyncResult(msg)
             toast.success(`Discografia sincronizada — ${msg}`)
         } catch {

@@ -7,6 +7,9 @@ const DEFAULT_SETTINGS = {
   allowAdultContent: false,
   allowUnclassifiedContent: false,
   maintenanceMode: false,
+  homeAffinityArtistWeight: 3,
+  homeAffinityGroupWeight: 3,
+  homeAffinityProductionWeight: 2,
   createdAt: new Date(0),
   updatedAt: new Date(0),
 }

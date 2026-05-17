@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
+const HOME_CACHE_TAG = 'home-public-data'
 
 function normalizeIds(value: unknown, max: number): string[] {
     if (!Array.isArray(value)) return []
@@ -29,6 +30,9 @@ export async function GET() {
             homeSidebarPostIds: true,
             homeCarouselPostIds: true,
             homeSpotlightArtistId: true,
+            homeAffinityArtistWeight: true,
+            homeAffinityGroupWeight: true,
+            homeAffinityProductionWeight: true,
         },
     })
 
@@ -38,6 +42,9 @@ export async function GET() {
         homeSidebarPostIds: [],
         homeCarouselPostIds: [],
         homeSpotlightArtistId: null,
+        homeAffinityArtistWeight: 3,
+        homeAffinityGroupWeight: 3,
+        homeAffinityProductionWeight: 2,
     }
 
     // Busca os posts dos slots para exibir no admin
@@ -94,6 +101,9 @@ export async function PUT(req: NextRequest) {
             homeSidebarPostIds?: string[]
             homeCarouselPostIds?: string[]
             homeSpotlightArtistId?: string | null
+            homeAffinityArtistWeight?: number
+            homeAffinityGroupWeight?: number
+            homeAffinityProductionWeight?: number
         }
 
         const current = await prisma.systemSettings.findUnique({
@@ -104,6 +114,9 @@ export async function PUT(req: NextRequest) {
                 homeSidebarPostIds: true,
                 homeCarouselPostIds: true,
                 homeSpotlightArtistId: true,
+                homeAffinityArtistWeight: true,
+                homeAffinityGroupWeight: true,
+                homeAffinityProductionWeight: true,
             },
         })
 
@@ -113,6 +126,9 @@ export async function PUT(req: NextRequest) {
             homeSidebarPostIds: current?.homeSidebarPostIds ?? [],
             homeCarouselPostIds: current?.homeCarouselPostIds ?? [],
             homeSpotlightArtistId: current?.homeSpotlightArtistId ?? null,
+            homeAffinityArtistWeight: current?.homeAffinityArtistWeight ?? 3,
+            homeAffinityGroupWeight: current?.homeAffinityGroupWeight ?? 3,
+            homeAffinityProductionWeight: current?.homeAffinityProductionWeight ?? 2,
         }
 
         if ('homeFeaturedPostId' in body) {
@@ -127,6 +143,15 @@ export async function PUT(req: NextRequest) {
             nextConfig.homeSpotlightArtistId = typeof body.homeSpotlightArtistId === 'string' && body.homeSpotlightArtistId.trim().length > 0
                 ? body.homeSpotlightArtistId.trim()
                 : null
+        }
+        if ('homeAffinityArtistWeight' in body && Number.isFinite(body.homeAffinityArtistWeight)) {
+            nextConfig.homeAffinityArtistWeight = Math.max(0, Math.min(10, Math.round(body.homeAffinityArtistWeight!)))
+        }
+        if ('homeAffinityGroupWeight' in body && Number.isFinite(body.homeAffinityGroupWeight)) {
+            nextConfig.homeAffinityGroupWeight = Math.max(0, Math.min(10, Math.round(body.homeAffinityGroupWeight!)))
+        }
+        if ('homeAffinityProductionWeight' in body && Number.isFinite(body.homeAffinityProductionWeight)) {
+            nextConfig.homeAffinityProductionWeight = Math.max(0, Math.min(10, Math.round(body.homeAffinityProductionWeight!)))
         }
 
         const allIds = [
@@ -149,6 +174,9 @@ export async function PUT(req: NextRequest) {
             homeSidebarPostIds?: string[]
             homeCarouselPostIds?: string[]
             homeSpotlightArtistId?: string | null
+            homeAffinityArtistWeight?: number
+            homeAffinityGroupWeight?: number
+            homeAffinityProductionWeight?: number
         } = {}
 
         data.homeFeaturedPostId = nextConfig.homeFeaturedPostId
@@ -156,6 +184,9 @@ export async function PUT(req: NextRequest) {
         data.homeSidebarPostIds = nextConfig.homeSidebarPostIds
         data.homeCarouselPostIds = nextConfig.homeCarouselPostIds
         data.homeSpotlightArtistId = nextConfig.homeSpotlightArtistId
+        data.homeAffinityArtistWeight = nextConfig.homeAffinityArtistWeight
+        data.homeAffinityGroupWeight = nextConfig.homeAffinityGroupWeight
+        data.homeAffinityProductionWeight = nextConfig.homeAffinityProductionWeight
 
         await prisma.systemSettings.upsert({
             where: { id: 'singleton' },
@@ -170,11 +201,15 @@ export async function PUT(req: NextRequest) {
                 homeSidebarPostIds: [],
                 homeCarouselPostIds: [],
                 homeSpotlightArtistId: null,
+                homeAffinityArtistWeight: 3,
+                homeAffinityGroupWeight: 3,
+                homeAffinityProductionWeight: 2,
                 ...data,
             },
         })
 
         revalidatePath('/')
+        revalidateTag(HOME_CACHE_TAG, { expire: 0 })
         return NextResponse.json({ success: true })
     } catch (err) {
         console.error('Error updating homepage config:', err)

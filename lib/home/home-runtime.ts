@@ -10,6 +10,8 @@ import {
     selectDistinctRotatingItem,
 } from "@/lib/home/home-diversity"
 import { orchestrateEditorialSelection } from "@/lib/home/home-editorial-orchestrator"
+import { buildHomeComposition } from "@/lib/home/home-composition"
+import { getHomePostAffinity, rankPostsByHomeAffinity } from "@/lib/home/home-post-affinity"
 
 const POST_SELECT = {
     id: true, slug: true, title: true, excerpt: true,
@@ -157,19 +159,35 @@ export async function buildHomeRuntimeData(now = new Date()) {
     ])
 
     const slottedById = Object.fromEntries(slottedPostsRaw.map((post) => [post.id, post]))
+    const affinitySignals = {
+        artistIds: new Set(trendingArtists.slice(0, 3).map((artist) => artist.id)),
+        groupIds: new Set(trendingGroupsRaw.slice(0, 3).map((group) => group.id)),
+        productionIds: new Set(
+            streamingShowsRaw
+                .map((show) => show.productionId)
+                .filter((productionId): productionId is string => Boolean(productionId))
+                .slice(0, 5)
+        ),
+    }
+    const affinityWeights = {
+        artist: settings?.homeAffinityArtistWeight ?? 3,
+        group: settings?.homeAffinityGroupWeight ?? 3,
+        production: settings?.homeAffinityProductionWeight ?? 2,
+    }
+    const affinityRankedFallbackPosts = rankPostsByHomeAffinity(fallbackPostsRaw, affinitySignals, affinityWeights)
     const carouselSelection = settings?.homeCarouselPostIds?.length
         ? {
             items: settings.homeCarouselPostIds.map((id) => slottedById[id]).filter(Boolean).slice(0, 5),
             meta: null,
         }
         : orchestrateEditorialSelection({
-            posts: fallbackPostsRaw,
+            posts: affinityRankedFallbackPosts,
             count: 5,
             maxPerCategory: 2,
         })
     const carouselPosts = carouselSelection.items
     const carouselIds = new Set(carouselPosts.map((post) => post.id))
-    const fallback = fallbackPostsRaw.filter((post) => !carouselIds.has(post.id))
+    const fallback = affinityRankedFallbackPosts.filter((post) => !carouselIds.has(post.id))
     const featuredPost = settings?.homeFeaturedPostId
         ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
         : fallback[0]
@@ -190,7 +208,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
         })
     const secondaryPosts = secondarySelection.items
     const secondaryIds = new Set(secondaryPosts.map((post) => post.id))
-    const feedCandidates = fallbackPostsRaw.filter(
+    const feedCandidates = affinityRankedFallbackPosts.filter(
         (post) => !carouselIds.has(post.id) && post.id !== featuredId && !secondaryIds.has(post.id)
     )
     const feedSelection = orchestrateEditorialSelection({
@@ -199,6 +217,16 @@ export async function buildHomeRuntimeData(now = new Date()) {
         maxPerCategory: 3,
     })
     const feedPosts = feedSelection.items
+    const recentArticleCutoff = new Date(now.getTime() - 7 * 86_400_000)
+    const recentArticleCount = fallbackPostsRaw.filter((post) =>
+        post.publishedAt != null && post.publishedAt >= recentArticleCutoff
+    ).length
+    const streamingPlatformCount = new Set(streamingShowsRaw.map((show) => show.source)).size
+    const composition = buildHomeComposition({
+        recentArticleCount,
+        streamingPlatformCount,
+        streamingShowCount: streamingShowsRaw.length,
+    })
 
     const spotlightCandidates = trendingArtists.slice(0, 8)
     const spotlightArtist = spotlightCandidates.length > 0
@@ -329,6 +357,33 @@ export async function buildHomeRuntimeData(now = new Date()) {
         featuredContext,
         featuredCluster,
         trendingCluster,
+        composition,
+        affinitySignals: {
+            artistIds: Array.from(affinitySignals.artistIds),
+            groupIds: Array.from(affinitySignals.groupIds),
+            productionIds: Array.from(affinitySignals.productionIds),
+        },
+        affinityWeights,
+        articleAffinity: {
+            carousel: carouselPosts.map((post) => ({
+                id: post.id,
+                slug: post.slug,
+                title: post.title,
+                ...getHomePostAffinity(post, affinitySignals, affinityWeights),
+            })),
+            secondary: secondaryPosts.map((post) => ({
+                id: post.id,
+                slug: post.slug,
+                title: post.title,
+                ...getHomePostAffinity(post, affinitySignals, affinityWeights),
+            })),
+            feed: feedPosts.map((post) => ({
+                id: post.id,
+                slug: post.slug,
+                title: post.title,
+                ...getHomePostAffinity(post, affinitySignals, affinityWeights),
+            })),
+        },
         editorialMeta: {
             carousel: carouselSelection.meta,
             secondary: secondarySelection.meta,

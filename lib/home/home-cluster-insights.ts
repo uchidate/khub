@@ -28,6 +28,41 @@ export type HomeClusterInsights = {
             relaxedCategoryCap: boolean
         }
     }
+    composition: {
+        mode: "editorial" | "watch" | "balanced"
+        recentArticleCount: number
+        streamingPlatformCount: number
+        streamingShowCount: number
+        reason: string
+    }
+    affinityWeights: {
+        artist: number
+        group: number
+        production: number
+    }
+    articleAffinity: {
+        carousel: Array<{
+            id: string
+            slug: string
+            title: string
+            score: number
+            matchedSignals: Array<"artist" | "group" | "production">
+        }>
+        secondary: Array<{
+            id: string
+            slug: string
+            title: string
+            score: number
+            matchedSignals: Array<"artist" | "group" | "production">
+        }>
+        feed: Array<{
+            id: string
+            slug: string
+            title: string
+            score: number
+            matchedSignals: Array<"artist" | "group" | "production">
+        }>
+    }
 }
 
 export async function buildHomeClusterInsights(): Promise<HomeClusterInsights> {
@@ -41,5 +76,8 @@ export async function buildHomeClusterInsights(): Promise<HomeClusterInsights> {
         clusters: [runtime.featuredCluster, runtime.trendingCluster]
             .filter((cluster): cluster is HomeCluster => cluster !== null),
         editorialMeta: runtime.editorialMeta,
+        composition: runtime.composition,
+        affinityWeights: runtime.affinityWeights,
+        articleAffinity: runtime.articleAffinity,
     }
 }

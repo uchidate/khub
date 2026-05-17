@@ -19,9 +19,9 @@ export function HomeTodaysBirthdays({ artists }: Props) {
     if (artists.length === 0) return null
 
     return (
-        <section className="bg-background py-4 sm:py-5">
+        <section className="bg-background py-5 sm:py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                <div className="overflow-hidden rounded-2xl border border-accent/15 bg-background shadow-sm">
                     <div className="flex items-center gap-2 border-b border-border px-4 py-3 sm:px-6">
                         <Cake className="w-4 h-4 text-pink-400 flex-shrink-0" />
                         <div>

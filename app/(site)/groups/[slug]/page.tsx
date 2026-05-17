@@ -22,6 +22,8 @@ import { permanentRedirect } from 'next/navigation'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { DiscographySection } from '@/components/features/DiscographySection'
+import { ExternalMusicEntityType } from '@prisma/client'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -136,7 +138,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
     const activeMembers = group.members.filter(m => m.isActive)
     const formerMembers = group.members.filter(m => !m.isActive)
-    const memberArtistIds = group.members.map(m => m.artistId)
     const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
     const disbandYear = group.disbandDate ? new Date(group.disbandDate).getUTCFullYear() : null
     const currentYear = new Date().getFullYear()
@@ -170,7 +171,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const relevanceTerms = [group.name, group.nameHangul].filter(Boolean) as string[]
 
     // Step 2: queries secundárias todas em paralelo
-    const [bioPt, themeColorFetched, relatedGroups, recentAlbums, linkedPosts, fallbackPosts] = await Promise.all([
+    const [bioPt, themeColorFetched, relatedGroups, linkedPosts, fallbackPosts, catalogReleases, spotifyProfileLink] = await Promise.all([
         getTranslation('group', group.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
@@ -188,14 +189,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             orderBy: { trendingScore: 'desc' },
             select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
         }).catch(() => []),
-        memberArtistIds.length > 0
-            ? prisma.album.findMany({
-                where: { artistId: { in: memberArtistIds } },
-                take: 6,
-                orderBy: { releaseDate: 'desc' },
-                select: { id: true, title: true, type: true, coverUrl: true, releaseDate: true, spotifyUrl: true, artist: { select: { nameRomanized: true } } },
-            }).catch(() => [])
-            : Promise.resolve([]),
         prisma.blogPost.findMany({
             where: {
                 status: 'PUBLISHED',
@@ -223,6 +216,63 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 select: postSelect,
             }).catch(() => [])
             : Promise.resolve([]),
+        prisma.musicRelease.findMany({
+            where: {
+                credits: {
+                    some: {
+                        musicCatalogArtist: { groupId: group.id },
+                    },
+                },
+                externalLinks: {
+                    some: {
+                        entityType: ExternalMusicEntityType.RELEASE,
+                        platform: { slug: 'spotify' },
+                    },
+                },
+            },
+            select: {
+                id: true,
+                title: true,
+                releaseType: true,
+                releaseDate: true,
+                coverUrl: true,
+                externalLinks: {
+                    where: {
+                        entityType: ExternalMusicEntityType.RELEASE,
+                        platform: { slug: 'spotify' },
+                    },
+                    select: { url: true },
+                    take: 1,
+                },
+                tracks: {
+                    orderBy: [{ discNumber: 'asc' }, { trackNumber: 'asc' }],
+                    select: {
+                        id: true,
+                        title: true,
+                        trackNumber: true,
+                        durationMs: true,
+                        externalLinks: {
+                            where: {
+                                entityType: ExternalMusicEntityType.TRACK,
+                                platform: { slug: 'spotify' },
+                            },
+                            select: { url: true },
+                            take: 1,
+                        },
+                    },
+                },
+            },
+            orderBy: { releaseDate: 'desc' },
+            take: 20,
+        }).catch(() => []),
+        prisma.externalMusicEntity.findFirst({
+            where: {
+                entityType: ExternalMusicEntityType.ARTIST,
+                musicCatalogArtist: { groupId: group.id },
+                platform: { slug: 'spotify' },
+            },
+            select: { url: true },
+        }).catch(() => null),
     ])
 
     const linkedPostIds = new Set(linkedPosts.map((p) => p.id))
@@ -232,6 +282,34 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             .filter((p) => !linkedPostIds.has(p.id))
             .map((p) => ({ ...p, source: 'recommended' as const })),
     ].slice(0, 6)
+    const discographyReleases = catalogReleases.map(release => ({
+        id: release.id,
+        title: release.title,
+        type: release.releaseType,
+        releaseDate: release.releaseDate,
+        coverUrl: release.coverUrl,
+        spotifyUrl: release.externalLinks[0]?.url ?? null,
+        appleMusicUrl: null,
+        youtubeUrl: null,
+        mbid: null,
+        tracks: release.tracks.map(track => ({
+            id: track.id,
+            title: track.title,
+            trackNumber: track.trackNumber,
+            durationMs: track.durationMs,
+            spotifyUrl: track.externalLinks[0]?.url ?? null,
+        })),
+    }))
+    const spotifyUrl = spotifyProfileLink?.url ?? null
+    const visibleSocialLinks = Object.entries(socialLinks)
+        .filter(([key]) => !['website', 'Website', 'official'].includes(key))
+        .filter(([key]) => !key.toLowerCase().includes('spotify'))
+    const sameAsLinks = [
+        ...Object.entries(socialLinks)
+            .filter(([key]) => !key.toLowerCase().includes('spotify'))
+            .map(([, url]) => url),
+        ...(spotifyUrl ? [spotifyUrl] : []),
+    ].filter(Boolean)
 
     const themeColor = officialColorRaw ?? themeColorFetched
     const accent = themeColor ?? '#9333ea'
@@ -271,11 +349,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 ...(disbandYear ? { "dissolutionDate": String(disbandYear) } : {}),
                 ...(group.agency ? { "memberOf": { "@type": "Organization", "name": group.agency.name } } : {}),
                 ...(memberPersons.length ? { "member": memberPersons } : {}),
-                ...(() => {
-                    const links = (group.socialLinks as Record<string, string> | null) ?? {}
-                    const sameAs = Object.values(links).filter(Boolean)
-                    return sameAs.length > 0 ? { "sameAs": sameAs } : {}
-                })(),
+                ...(sameAsLinks.length > 0 ? { "sameAs": sameAsLinks } : {}),
             }} />
             <JsonLd data={{
                 "@context": "https://schema.org",
@@ -455,7 +529,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             {relatedGroups.length > 0 && (
                                 <a href="#relacionados" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Relacionados</a>
                             )}
-                            {recentAlbums.length > 0 && (
+                            {discographyReleases.length > 0 && (
                                 <a href="#discografia" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Discografia</a>
                             )}
                             {relatedPosts.length > 0 && (
@@ -607,16 +681,34 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </a>
                         )}
 
-                        {/* Redes Sociais (sem website — já mostrado acima) */}
-                        {Object.keys(socialLinks).filter(k => !['website', 'Website', 'official'].includes(k)).length > 0 && (
+                        {/* Spotify oficial vindo do catálogo musical */}
+                        {spotifyUrl && (
+                            <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
+                                className="block p-5 rounded-2xl border border-green-500/25 bg-green-500/5 hover:bg-green-500/10 transition-all group/spotify">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Spotify</span>
+                                    <ExternalLink className="w-3.5 h-3.5 text-muted group-hover/spotify:text-green-400 transition-colors" />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-green-500/15 border border-green-500/20">
+                                        <Music className="w-4 h-4 text-green-500" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold text-foreground">Ouvir no Spotify</p>
+                                        <p className="text-[10px] text-muted mt-0.5 truncate">Perfil oficial do grupo</p>
+                                    </div>
+                                </div>
+                            </a>
+                        )}
+
+                        {/* Redes Sociais (sem website e sem Spotify — já mostrados acima) */}
+                        {visibleSocialLinks.length > 0 && (
                             <div className="p-6 rounded-2xl bg-background border border-border">
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Redes Sociais</h3>
                                 <div className="flex flex-col gap-2">
-                                    {Object.entries(socialLinks)
-                                        .filter(([k]) => !['website', 'Website', 'official'].includes(k))
-                                        .map(([platform, url]) => (
-                                            <SocialLink key={platform} platform={platform} url={url} />
-                                        ))}
+                                    {visibleSocialLinks.map(([platform, url]) => (
+                                        <SocialLink key={platform} platform={platform} url={url} />
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -764,50 +856,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        {/* Discografia recente */}
-                        {recentAlbums.length > 0 && (
-                            <section id="discografia">
-                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Discografia Recente" accent={accent} />
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    {recentAlbums.map(album => (
-                                        <div key={album.id} className="group">
-                                            <div className="album-card relative aspect-square rounded-xl overflow-hidden bg-surface mb-3 border border-border transition-colors">
-                                                {album.coverUrl ? (
-                                                    <Image src={album.coverUrl} alt={album.title} fill sizes="(max-width: 640px) 50vw, 33vw"
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/20 to-surface">
-                                                        <Music className="w-8 h-8 text-muted" />
-                                                    </div>
-                                                )}
-                                                {/* Type badge */}
-                                                <div className="absolute top-2 left-2">
-                                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-black/70 backdrop-blur-sm rounded"
-                                                        style={{ color: accent }}>
-                                                        {album.type === 'ALBUM' ? 'Álbum' : album.type === 'EP' ? 'EP' : 'Single'}
-                                                    </span>
-                                                </div>
-                                                {/* Spotify link */}
-                                                {album.spotifyUrl && (
-                                                    <a href={album.spotifyUrl} target="_blank" rel="noopener noreferrer"
-                                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/50 backdrop-blur-sm transition-all">
-                                                        <span className="text-xs font-black text-white bg-green-500 px-3 py-1.5 rounded-full">
-                                                            Ouvir no Spotify
-                                                        </span>
-                                                    </a>
-                                                )}
-                                            </div>
-                                            <h3 className="album-title text-sm font-bold text-foreground line-clamp-1 transition-colors">{album.title}</h3>
-                                            <p className="text-xs text-muted mt-0.5">{album.artist.nameRomanized}</p>
-                                            {album.releaseDate && (
-                                                <p className="text-[10px] text-muted mt-0.5">
-                                                    {new Date(album.releaseDate).getUTCFullYear()}
-                                                </p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
+                        {/* Discografia Spotify */}
+                        {discographyReleases.length > 0 && (
+                            <div id="discografia">
+                                <DiscographySection albums={discographyReleases} />
+                            </div>
                         )}
 
                         {/* MVs principais */}
@@ -947,6 +1000,7 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
         twitter: <Twitter className="w-4 h-4" />,
         x: <Twitter className="w-4 h-4" />,
         youtube: <Youtube className="w-4 h-4" />,
+        spotify: <Music className="w-4 h-4" />,
         website: <Globe className="w-4 h-4" />,
     }
     const colors: Record<string, string> = {
@@ -954,6 +1008,7 @@ function SocialLink({ platform, url }: { platform: string; url: string }) {
         twitter: 'text-sky-500 hover:text-sky-400',
         x: 'text-sky-500 hover:text-sky-400',
         youtube: 'text-red-500 hover:text-red-400',
+        spotify: 'text-green-500 hover:text-green-400',
         website: 'text-muted hover:text-foreground',
     }
     const key = platform.toLowerCase()

@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Cake, Film, Music2, Users } from "lucide-react"
 import { nameToGradient } from "@/lib/utils"
+import type { HomeCompositionMode } from "@/lib/home/home-composition"
 
 interface NowArtist {
     id: string
@@ -91,21 +92,30 @@ export function HomeNowStrip({
     group,
     production,
     birthday,
+    mode,
 }: {
     artist: NowArtist | null
     group: NowGroup | null
     production: NowProduction | null
     birthday: NowBirthday | null
+    mode: HomeCompositionMode
 }) {
     if (!artist && !group && !production && !birthday) return null
+    const heading = mode === "watch"
+        ? "O que está ganhando tração agora"
+        : mode === "editorial"
+            ? "Os nomes por trás das conversas de hoje"
+            : "O que merece sua atenção hoje"
 
     return (
-        <section className="bg-background pb-4 sm:pb-5">
+        <section className="bg-background pb-6 sm:pb-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-                    <div className="border-b border-border px-4 py-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Em movimento</p>
-                        <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">O que merece sua atenção hoje</p>
+                <div className="overflow-hidden rounded-2xl border border-accent/10 bg-background shadow-sm">
+                    <div className="border-b border-accent/15 bg-surface-editorial px-4 py-3.5">
+                        <div className="border-l-2 border-accent pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Em movimento</p>
+                        <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">{heading}</p>
+                        </div>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:[&>*:nth-child(n+3)]:border-t lg:[&>*:nth-child(n+3)]:border-t-0 lg:divide-x divide-border">
                         {artist && (
