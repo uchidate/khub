@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT ?? 'ca-pub-6015098995926392'
 const ADSENSE_ENABLED = process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ADSENSE_DEV === 'true'
 const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}`
-const ROUTE_PUSH_DELAYS = [600]
+const ROUTE_PUSH_DELAYS = [400, 1200, 2500]
 const EXCLUDED_PATH_PREFIXES = ['/admin', '/auth', '/write', '/api']
 const MOBILE_BREAKPOINT = 640
 const TOP_ANCHOR_OFFSET_MULTIPLIER = 1.7
