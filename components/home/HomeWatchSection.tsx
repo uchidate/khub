@@ -19,13 +19,13 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
     return (
         <section className="bg-background py-6 sm:py-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-sky-500/15 bg-background shadow-sm">
-                    <div className="flex items-center justify-between border-b border-sky-500/15 bg-surface-media px-4 sm:px-6 py-3.5">
-                        <div className="border-l-2 border-sky-500 pl-3">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-sky-600 dark:text-sky-400">Dramas & Filmes</p>
-                            <h2 className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">O que assistir agora</h2>
+                <div className="home-border-pop overflow-hidden rounded-2xl border-violet bg-background shadow-[0_18px_55px_rgba(18,15,21,0.10)]">
+                    <div className="flex items-center justify-between border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
+                        <div className="border-l-[3px] border-violet pl-3">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Dramas & Filmes</p>
+                            <h2 className="mt-0.5 text-[15px] font-bold text-foreground sm:text-[17px]">O que assistir agora</h2>
                         </div>
-                        <Link href="/productions" className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted hover:text-foreground transition-colors">
+                        <Link href="/productions" className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground">
                             Ver todos <ArrowRight className="h-3 w-3" />
                         </Link>
                     </div>
@@ -60,7 +60,7 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
                             </div>
                         </Link>
 
-                        <div className="grid grid-cols-2 divide-x divide-y divide-border bg-surface-media/45">
+                        <div className="grid grid-cols-2 divide-x divide-y divide-violet/15 bg-surface-media/55">
                             {rest.map((production) => (
                                 <Link
                                     key={production.id}

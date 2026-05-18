@@ -124,13 +124,13 @@ export function HomeFrontPage({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
                 {/* MAIN HERO */}
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                <div className="overflow-hidden rounded-2xl border border-home-frame bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] lg:min-h-[438px]">
                     {/* Hero: carousel or static featured */}
-                    <div>
+                    <div className="h-full">
                         {hasCarousel ? (
                             <FeaturedCarousel posts={carouselPosts} />
                         ) : featuredStory ? (
-                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[320px] md:h-[460px] overflow-hidden bg-surface">
+                            <Link href={`/blog/${featuredStory.slug}`} className="block group relative h-[320px] overflow-hidden bg-surface md:h-[460px] lg:h-full lg:min-h-[438px]">
                                 {featuredStory.coverImageUrl ? (
                                     <Image
                                         src={featuredStory.coverImageUrl}
@@ -194,10 +194,10 @@ export function HomeFrontPage({
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)] flex flex-col">
+                <div className="overflow-hidden rounded-2xl border border-home-frame bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] flex flex-col">
                     {/* Trending Artists panel */}
-                    <div className="border-b border-border flex-1">
-                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-accent/15 bg-surface-editorial">
+                    <div className="border-b border-violet/25 flex-1">
+                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-violet/25 bg-surface-editorial/70">
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                                     Artistas em alta
@@ -215,7 +215,7 @@ export function HomeFrontPage({
                                 <>
                                     <Link
                                         href={`/artists/${safeArtists[0].slug ?? safeArtists[0].id}`}
-                                        className="group flex items-center gap-4 border-b border-border px-4 py-4 hover:bg-surface transition-colors"
+                                        className="group flex items-center gap-4 border-b border-violet/20 px-4 py-4 hover:bg-surface transition-colors"
                                     >
                                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-surface" style={{ background: nameToGradient(safeArtists[0].nameRomanized || safeArtists[0].nameHangul || 'artist') }}>
                                             {safeArtists[0].primaryImageUrl ? (
@@ -228,7 +228,7 @@ export function HomeFrontPage({
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="mb-1 flex items-center gap-2">
-                                                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-accent">#1 agora</span>
+                                                <span className="rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-white">#1 agora</span>
                                                 {(() => {
                                                     const display = getArtistBadgeDisplay(safeArtists[0])
                                                     return display ? <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded ${display.className}`}>{display.label}</span> : null
@@ -249,8 +249,8 @@ export function HomeFrontPage({
                                     key={artist.id}
                                     href={`/artists/${artist.slug ?? artist.id}`}
                                     className={`group flex items-center gap-3 px-4 py-2.5 hover:bg-surface transition-colors min-h-[44px]
-                                        ${idx % 2 === 0 ? 'border-r border-border' : ''}
-                                        ${idx < 4 ? 'border-b border-border' : ''}
+                                        ${idx % 2 === 0 ? 'border-r border-violet/15' : ''}
+                                        ${idx < 4 ? 'border-b border-violet/15' : ''}
                                     `}
                                 >
                                     <div className="flex flex-col items-center gap-px w-4 flex-shrink-0">
@@ -332,10 +332,10 @@ export function HomeFrontPage({
 
                     {/* Artist Spotlight */}
                         {spotlightArtist ? (
-                        <div className="p-4 bg-surface-tint flex flex-col gap-3">
+                        <div className="p-4 bg-white text-foreground flex flex-col gap-3">
                             {/* Label */}
                             <div className="flex items-center justify-between">
-                                <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-muted">
+                                <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-accent">
                                     Destaque da semana
                                 </p>
                                 <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
@@ -410,7 +410,7 @@ export function HomeFrontPage({
 
                             <Link
                                 href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`}
-                                className="w-full text-center bg-foreground text-background text-[12px] font-semibold rounded-full py-2.5 hover:opacity-90 transition-all"
+                                className="w-full text-center bg-accent text-white text-[12px] font-semibold rounded-full py-2.5 shadow-sm shadow-accent/25 hover:opacity-90 transition-all"
                             >
                                 Ver perfil →
                             </Link>
@@ -425,20 +425,20 @@ export function HomeFrontPage({
                 </div>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2 border-b border-border bg-surface/20">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Descubra o HallyuHub</span>
+                <div className="mt-4 overflow-hidden rounded-2xl border border-accent bg-background shadow-sm transition-[border-width,border-color] hover:border-2">
+                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2.5 border-b border-accent/20 bg-[linear-gradient(90deg,rgba(255,36,110,0.10),rgba(124,77,255,0.08))]">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Descubra o HallyuHub</span>
                         <span className="text-[9px] text-muted">Explore por interesse</span>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-2 bg-white lg:grid-cols-4 dark:bg-background">
                         {DISCOVERY_SHORTCUTS.map(({ label, href, icon: Icon, detail }, idx) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3 hover:bg-surface transition-colors
-                                    ${idx % 2 === 0 ? 'border-r border-border' : ''}
-                                    ${idx < 2 ? 'border-b border-border lg:border-b-0' : ''}
-                                    ${idx < 3 ? 'lg:border-r lg:border-border' : ''}
+                                className={`group flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3 transition-colors hover:bg-accent/5
+                                    ${idx % 2 === 0 ? 'border-r border-accent/15' : ''}
+                                    ${idx < 2 ? 'border-b border-accent/15 lg:border-b-0' : ''}
+                                    ${idx < 3 ? 'lg:border-r lg:border-accent/15' : ''}
                                 `}
                             >
                                 <Icon className="h-4 w-4 text-muted group-hover:text-accent transition-colors" />
