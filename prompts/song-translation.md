@@ -64,6 +64,34 @@ Retorne APENAS um JSON objeto válido — sem texto fora do JSON:
     - `blog_quote` com `text` = letra original (em coreano ou inglês) e `author` = "Estrofe N / Refrão / Ponte — tradução: [tradução]"
     - `blog_paragraph` com análise do trecho: metáforas, expressões idiomáticas, nuances do idioma, o que a construção revela emocionalmente
 12. `blog_highlight` — O verso mais marcante da música, com 1 frase de contexto
+12a. `blog_heading` — "Letra completa"
+12b. `blog_lyrics_parallel` — **OBRIGATÓRIO** — letra completa lado a lado (original + romanização à esquerda, tradução em português à direita), agrupada por seções (Estrofe 1, Refrão, Ponte, etc.). Formato:
+    ```json
+    {
+      "type": "blog_lyrics_parallel",
+      "title": "[Nome da Música] — letra completa",
+      "artist": "[Nome do Artista]",
+      "lang": "ko",
+      "sections": [
+        {
+          "label": "🎵 Estrofe 1",
+          "original": "linha 1\nlinha 2\nlinha 3\nlinha 4",
+          "romanized": "romanização 1\nromanização 2\nromanização 3\nromanização 4",
+          "translation": "tradução 1\ntradução 2\ntradução 3\ntradução 4"
+        },
+        {
+          "label": "🔥 Refrão",
+          "original": "...",
+          "romanized": "...",
+          "translation": "..."
+        }
+      ],
+      "source": "Genius / tradução HallyuHub"
+    }
+    ```
+    - Para músicas em inglês: `"lang": "en"`, campo `romanized` vazio `""`
+    - Para músicas em japonês: `"lang": "ja"`
+    - Labels sugeridos: `🎵 Estrofe 1`, `🎵 Estrofe 2`, `🔥 Refrão`, `🌊 Ponte`, `🎙️ Bridge`, `✨ Outro`
 13. `blog_heading` — "O que se perde na tradução" (obrigatório para músicas em coreano; adaptar para músicas em inglês com título "Expressões que precisam de contexto")
 14. `blog_paragraph` — Nuances do coreano/inglês que não traduzem diretamente: honoríficos, tempo verbal, onomatopeias, gírias, duplos sentidos — mínimo 4 frases
 15. `blog_heading` — "Por que [nome da música] marcou"
@@ -75,7 +103,9 @@ Retorne APENAS um JSON objeto válido — sem texto fora do JSON:
 21. `blog_spotify` — Link da faixa ou álbum (omitir se não tiver certeza)
 
 ### Regras obrigatórias:
-- **MÍNIMO 22 blocos**
+- **MÍNIMO 25 blocos**
+- **`blog_lyrics_parallel` é OBRIGATÓRIO** — toda tradução deve ter a letra completa lado a lado
+- **Use blocos ricos além do básico**: `blog_alert` para gírias/expressões difíceis, `blog_accordion` para curiosidades expandíveis, `blog_tabs` para comparar versões/contextos, `blog_pros_cons` para análises comparativas, `blog_timeline` para contexto cronológico na carreira
 - Tradução fiel mas natural — soar bem em português, não palavra por palavra
 - Explique termos coreanos que aparecem ou que ficam na letra (oppa, sunbae, sufixos verbais, etc.)
 - Cite o título original em hangul ao menos uma vez no corpo do artigo
