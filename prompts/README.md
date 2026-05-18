@@ -12,6 +12,7 @@ Prompts para geração de artigos via Gemini. Cole o conteúdo do arquivo no Gem
 | `ranking.md` | Listas e rankings temáticos |
 | `event-coverage.md` | Cobertura de show, award show ou evento |
 | `news-editorial.md` | Artigo editorial sobre notícia ou tendência |
+| `song-translation.md` | Tradução comentada de música com contexto e análise cultural |
 
 ## Como usar
 

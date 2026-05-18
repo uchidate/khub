@@ -57,6 +57,34 @@ const EXISTING_BLOCKS: BlogBlock[] = [
     { type: 'blog_comparison', title: 'aespa vs BLACKPINK — Comparativo', columns: ['aespa', 'BLACKPINK'], rows: [{ label: 'Debut', values: ['2020', '2016'] }, { label: 'Membros', values: ['4', '4'] }, { label: 'Agência', values: ['SM', 'YG'] }, { label: 'Conceito', values: ['Cyberpunk/Lore', 'Fashion/Swag'] }] },
 ]
 
+const LYRICS_PARALLEL_DEMO = [{
+    type: 'blog_lyrics_parallel' as const,
+    title: 'Earthquake',
+    artist: 'Jisoo',
+    lang: 'ko' as const,
+    source: 'Genius / tradução HallyuHub',
+    sections: [
+        {
+            label: 'Estrofe 1',
+            original: '내 맘이 흔들려\n이유도 없이 떨려\n멈출 수가 없어\n지진처럼 무너져',
+            romanized: 'Nae mam-i heundeullyeo\nIyudo eopsi tteollyeo\nMeomchul su ga eopseo\nJijincheoreom muneojyeo',
+            translation: 'Meu coração treme\nVibra sem razão\nNão consigo parar\nDesmorono como um terremoto',
+        },
+        {
+            label: 'Refrão',
+            original: '심장이 쿵쿵 뛰어\n너 때문에 달려\n어딜 가도 네 생각뿐\n지진처럼',
+            romanized: 'Simjangi kungkung twieo\nNeo ttaemune dallyeo\nEodil gado ne saenggakppun\nJijincheoreom',
+            translation: 'Meu coração bate forte\nCorre por sua causa\nAonde quer que eu vá, só penso em você\nComo um terremoto',
+        },
+        {
+            label: 'Ponte',
+            original: '멈추고 싶어도\n이미 늦어버렸어\n너라는 지진에\n완전히 무너졌어',
+            romanized: 'Meomchugo sipeo-do\nImi neujeobeotyeosseo\nNeoraeneun jijine\nWanjeonhi muneojyeosseo',
+            translation: 'Mesmo querendo parar\nJá é tarde demais\nNo terremoto que é você\nDesabei completamente',
+        },
+    ],
+}]
+
 // ── New block type mocks (not yet in BlogBlockRenderer) ───────────────────────
 
 function MockVs() {
@@ -665,6 +693,9 @@ export default function BlocksDemoPage() {
                         </Section>
                         <Section title="Trecho de Letra (Original + Romanização + Tradução)" badge="novo">
                             <MockLyrics />
+                        </Section>
+                        <Section title="Letra Lado a Lado (Paralela)" badge="novo">
+                            <BlogBlockRenderer blocks={LYRICS_PARALLEL_DEMO} />
                         </Section>
                         <Section title="Card de Era Musical" badge="novo">
                             <MockEraCard />

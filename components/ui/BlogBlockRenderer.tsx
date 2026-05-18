@@ -1309,6 +1309,71 @@ function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolved
                 </div>
             )
 
+        case 'blog_lyrics_parallel':
+            return (
+                <div className="my-8 overflow-hidden rounded-2xl border border-border">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-border bg-surface/60 px-5 py-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">🎵</span>
+                            <p className="text-[13px] font-bold text-foreground">
+                                {block.title ?? 'Letra'}
+                                {block.artist && <span className="ml-1.5 font-normal text-muted">— {block.artist}</span>}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {block.source && <span className="text-[10px] text-muted">{block.source}</span>}
+                            <span className="rounded-full bg-surface px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted border border-border">
+                                {block.lang === 'en' ? 'EN → PT' : block.lang === 'ja' ? 'JP → PT' : 'KO → PT'}
+                            </span>
+                        </div>
+                    </div>
+                    {/* Column headers */}
+                    <div className="grid grid-cols-2 divide-x divide-border border-b border-border bg-surface/30">
+                        <div className="px-5 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
+                            {block.lang === 'en' ? 'Original (Inglês)' : block.lang === 'ja' ? 'Original (Japonês)' : 'Original (Coreano)'}
+                        </div>
+                        <div className="px-5 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Tradução (Português)</div>
+                    </div>
+                    {/* Sections */}
+                    {block.sections.map((section, i) => (
+                        <div key={i} className={i < block.sections.length - 1 ? 'border-b border-border' : ''}>
+                            {section.label && (
+                                <div className="border-b border-border/50 bg-surface/20 px-5 py-1.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet">{section.label}</span>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 divide-x divide-border">
+                                {/* Original + romanização */}
+                                <div className="space-y-0.5 px-5 py-4">
+                                    {section.original.split('\n').map((line, j) => (
+                                        <div key={j}>
+                                            <p className="text-[13px] font-semibold leading-relaxed text-foreground">{line}</p>
+                                            {section.romanized && (
+                                                <p className="text-[11px] italic leading-snug text-muted">
+                                                    {section.romanized.split('\n')[j] ?? ''}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Tradução */}
+                                <div className="px-5 py-4">
+                                    {section.translation.split('\n').map((line, j) => (
+                                        <p key={j} className="text-[13px] leading-relaxed text-accent">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="border-t border-border bg-surface/20 px-5 py-2">
+                        <span className="text-[10px] text-muted">
+                            {block.lang === 'en' ? 'Inglês' : block.lang === 'ja' ? 'Japonês + Romanização' : 'Coreano + Romanização'} • Tradução em Português
+                        </span>
+                    </div>
+                </div>
+            )
+
         case 'blog_era_card':
             return (
                 <div className="my-8 rounded-2xl border border-border overflow-hidden bg-gradient-to-br from-surface to-background">

@@ -340,11 +340,26 @@ export type BlogPollBlock = {
     options: string[]
 }
 
-// Trecho de letra com original + romanização + tradução
+// Trecho de letra com original + romanização + tradução (tabela linha a linha)
 export type BlogLyricsBlock = {
     type: 'blog_lyrics'
     title?: string
     lines: { original: string; romanized?: string; translation: string }[]
+    source?: string
+}
+
+// Letra completa lado a lado — original + romanização (esq) | tradução (dir), por seção
+export type BlogLyricsParallelBlock = {
+    type: 'blog_lyrics_parallel'
+    title?: string
+    artist?: string
+    lang?: 'ko' | 'en' | 'ja'   // default 'ko'
+    sections: {
+        label?: string            // 'Estrofe 1', 'Refrão', 'Ponte', etc.
+        original: string          // versos separados por \n
+        romanized?: string        // romanização separada por \n (opcional)
+        translation: string       // tradução pt-BR separada por \n
+    }[]
     source?: string
 }
 
@@ -489,6 +504,7 @@ export type BlogBlock =
     | BlogVsBlock
     | BlogPollBlock
     | BlogLyricsBlock
+    | BlogLyricsParallelBlock
     | BlogEraCardBlock
     | BlogChartHistoryBlock
     | BlogBeforeAfterBlock
@@ -542,6 +558,7 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_vs:               'Confronto A vs B',
     blog_poll:             'Enquete',
     blog_lyrics:           'Trecho de Letra',
+    blog_lyrics_parallel:  'Letra Lado a Lado',
     blog_era_card:         'Card de Era',
     blog_chart_history:    'Histórico de Charts',
     blog_before_after:     'Antes e Depois',
