@@ -50,6 +50,7 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_vs:              <BarChart2 className="w-3.5 h-3.5" />,
     blog_poll:            <BarChart2 className="w-3.5 h-3.5" />,
     blog_lyrics:          <Music2 className="w-3.5 h-3.5" />,
+    blog_lyrics_parallel: <Music2 className="w-3.5 h-3.5" />,
     blog_era_card:        <Clock className="w-3.5 h-3.5" />,
     blog_chart_history:   <BarChart2 className="w-3.5 h-3.5" />,
     blog_before_after:    <GalleryHorizontal className="w-3.5 h-3.5" />,
@@ -102,6 +103,7 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_vs:              'bg-red-500/20 text-red-300 border-red-500/30',
     blog_poll:            'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     blog_lyrics:          'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    blog_lyrics_parallel: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
     blog_era_card:        'bg-pink-500/20 text-pink-300 border-pink-500/30',
     blog_chart_history:   'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
     blog_before_after:    'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
@@ -125,7 +127,7 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia', 'blog_idol_facts'] },
     { label: 'Interativo', types: ['blog_vs', 'blog_poll', 'blog_quiz', 'blog_flashcard', 'blog_countdown', 'blog_before_after'] },
-    { label: 'K-Pop', types: ['blog_lyrics', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
+    { label: 'K-Pop', types: ['blog_lyrics', 'blog_lyrics_parallel', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
 ]
 
 // ─── Default block factory ────────────────────────────────────────────────────
@@ -168,6 +170,7 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_vs':              return { type, optionA: { label: 'Opção A' }, optionB: { label: 'Opção B' }, question: '' }
         case 'blog_poll':            return { type, question: '', options: ['Opção 1', 'Opção 2'] }
         case 'blog_lyrics':          return { type, title: '', lines: [{ original: '', translation: '' }] }
+        case 'blog_lyrics_parallel': return { type, title: '', lang: 'ko', sections: [{ label: 'Estrofe 1', original: '', romanized: '', translation: '' }] }
         case 'blog_era_card':        return { type, era: '', period: '', concept: '', colors: [] }
         case 'blog_chart_history':   return { type, chart: 'Billboard Hot 100', entries: [{ date: '', position: 1, label: '' }] }
         case 'blog_before_after':    return { type, before: { url: '', label: 'Antes' }, after: { url: '', label: 'Depois' } }
@@ -1105,6 +1108,7 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_vs':              return `${block.optionA.label} vs ${block.optionB.label}`
         case 'blog_poll':            return block.question || `${block.options.length} opções`
         case 'blog_lyrics':          return block.title || `${block.lines.length} linha(s)`
+        case 'blog_lyrics_parallel': return block.title || `${block.sections.length} seção(ões)`
         case 'blog_era_card':        return `${block.era}${block.period ? ` (${block.period})` : ''}`
         case 'blog_chart_history':   return `${block.chart} — ${block.entries.length} entrada(s)`
         case 'blog_before_after':    return `${block.before.label} / ${block.after.label}`
