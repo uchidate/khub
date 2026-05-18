@@ -37,12 +37,12 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
     if (visiblePosts.length === 0) return null
 
     return (
-        <section className="bg-background py-6 sm:py-7">
+        <section className="bg-background py-7 sm:py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-4 flex items-end justify-between">
-                    <div className="border-l-2 border-accent pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Artigos</p>
-                        <h2 className="mt-1 text-[18px] font-bold tracking-[-0.02em] text-foreground sm:text-[20px]">
+                    <div className="border-l-[4px] border-violet pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Artigos</p>
+                        <h2 className="mt-1 text-[19px] font-black tracking-[-0.025em] text-foreground sm:text-[21px]">
                             Mais recentes
                         </h2>
                     </div>
@@ -52,21 +52,32 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {visiblePosts.map((post) => {
+                    {visiblePosts.map((post, index) => {
                         const categoryConfig = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
+                        const isLead = index === 0
                         return (
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className={`group overflow-hidden rounded-2xl border border-border shadow-sm transition-colors hover:border-accent/20 hover:bg-surface ${
+                                className={`group grid overflow-hidden rounded-2xl border border-foreground shadow-[0_10px_28px_rgba(18,15,21,0.06)] transition-all hover:-translate-y-1 hover:border-foreground hover:shadow-[0_16px_38px_rgba(18,15,21,0.12)] ${
+                                    isLead
+                                        ? "grid-cols-1 sm:col-span-2 lg:col-span-1"
+                                        : "grid-cols-[88px_minmax(0,1fr)] sm:block"
+                                } ${
                                     post.category?.slug === "cultura"
-                                        ? "bg-surface-editorial/55"
+                                        ? "bg-surface-editorial/35"
                                         : post.category?.slug === "k-drama" || post.category?.slug === "filmes"
-                                            ? "bg-surface-media/55"
-                                            : "bg-background"
+                                            ? "bg-surface-media/35"
+                                            : isLead
+                                                ? "bg-surface-tint/65"
+                                                : "bg-background"
                                 }`}
                             >
-                                <div className="relative aspect-[16/10] overflow-hidden bg-surface">
+                                <div className={`relative overflow-hidden bg-surface ${
+                                    isLead
+                                        ? "min-h-[220px] sm:aspect-[16/9] sm:min-h-0"
+                                        : "min-h-[104px] sm:aspect-[16/10] sm:min-h-0"
+                                }`}>
                                     <BlogImage
                                         src={post.coverImageUrl}
                                         alt={post.title}
@@ -76,17 +87,20 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                                         fallbackGradient={categoryConfig ? `linear-gradient(135deg, ${categoryConfig.bg}, ${categoryConfig.color}55)` : "#f3f4f6"}
                                     />
                                 </div>
-                                <div className="p-3.5">
+                                <div className={isLead ? "p-4" : "p-3"}>
                                     <CategoryPill category={post.category} />
-                                    <h3 className="mt-2 text-[14px] font-semibold leading-snug text-foreground line-clamp-2 transition-colors group-hover:text-accent">
+                                    <h3
+                                        className={`${isLead ? "text-[17px] sm:text-[18px]" : "text-[13px] sm:text-[14px]"} mt-2 font-semibold leading-snug text-foreground line-clamp-2 transition-colors`}
+                                        style={{ color: categoryConfig?.color }}
+                                    >
                                         {post.title}
                                     </h3>
                                     {post.excerpt && (
-                                        <p className="mt-2 text-[11px] leading-relaxed text-muted line-clamp-2">
+                                        <p className={`${isLead ? "block" : "hidden sm:block"} mt-2 text-[11px] leading-relaxed text-muted line-clamp-2`}>
                                             {post.excerpt}
                                         </p>
                                     )}
-                                    <div className="mt-3 flex items-center gap-2 text-[10px] text-muted">
+                                    <div className="mt-2 flex items-center gap-2 text-[10px] text-muted sm:mt-3">
                                         <span>{formatDate(post.publishedAt)}</span>
                                         {post.readingTimeMin > 0 && (
                                             <>

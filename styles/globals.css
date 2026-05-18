@@ -10,14 +10,20 @@
     --color-surface-hover:#f0edf2;
     --color-border:       #e8e3ea;
     --color-border-strong:#d8d0db;
+    --color-home-frame:   #111111;
     --color-fg:           #080808;
     --color-fg-subtle:    #3a3a3a;
     --color-muted:        #6b6b6b;
-    --color-accent:       #ff2d78;
-    --color-accent-soft:  rgba(255, 45, 120, 0.08);
-    --color-surface-editorial: #fff4f8;
-    --color-surface-media:     #f3f7fb;
-    --color-surface-tint:      #faf7fb;
+    --color-accent:       #ff246e;
+    --color-accent-soft:  rgba(255, 36, 110, 0.10);
+    --color-accent-strong:#e91562;
+    --color-cyan:         #b14cff;
+    --color-violet:       #7c4dff;
+    --color-gold:         #ff6bb0;
+    --color-ink-panel:    #120f15;
+    --color-surface-editorial: #fff3f8;
+    --color-surface-media:     #f8f3ff;
+    --color-surface-tint:      #fbf7ff;
     --color-shimmer:      rgba(0, 0, 0, 0.04);
     --color-overlay:      rgba(0, 0, 0, 0.4);
     --color-skeleton:     #e8e8e8;
@@ -52,14 +58,20 @@
     --color-surface-hover:#211d24;
     --color-border:       #302a33;
     --color-border-strong:#433b47;
+    --color-home-frame:   #f1eef3;
     --color-fg:           #f2f2f2;
     --color-fg-subtle:    #c8c8c8;
     --color-muted:        #999999;
-    --color-accent:       #ff2d78;
-    --color-accent-soft:  rgba(255, 45, 120, 0.15);
-    --color-surface-editorial: #24171d;
-    --color-surface-media:     #161c24;
-    --color-surface-tint:      #19151b;
+    --color-accent:       #ff367d;
+    --color-accent-soft:  rgba(255, 54, 125, 0.18);
+    --color-accent-strong:#ff4b8d;
+    --color-cyan:         #c084fc;
+    --color-violet:       #9b7bff;
+    --color-gold:         #ff7fbd;
+    --color-ink-panel:    #0b0910;
+    --color-surface-editorial: #2a1821;
+    --color-surface-media:     #201726;
+    --color-surface-tint:      #221925;
     --color-shimmer:      rgba(255, 255, 255, 0.04);
     --color-overlay:      rgba(0, 0, 0, 0.6);
     --color-skeleton:     #2a2a2a;
@@ -121,6 +133,10 @@ body {
 
   .glass-card-hover {
     @apply hover:-translate-y-1;
+  }
+
+  .home-border-pop {
+    border-width: 1.5px;
   }
 
   .btn-primary {

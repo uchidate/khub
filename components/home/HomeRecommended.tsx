@@ -50,9 +50,9 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
         return (
             <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                    <div className="rounded-2xl border border-border bg-background shadow-sm">
                         <div className="px-4 sm:px-6 lg:px-12 py-4 sm:py-5">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Para voce</p>
+                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Para voce</p>
                             <h3 className="text-[15px] sm:text-[17px] font-bold text-foreground mt-1">Ainda estamos montando suas recomendacoes</h3>
                             <p className="text-[12px] text-muted mt-1.5">Enquanto isso, estes caminhos ajudam voce a descobrir mais rapido.</p>
 
@@ -77,11 +77,11 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
     return (
         <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="rounded-2xl border border-border bg-background shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+                <div className="rounded-2xl border border-accent bg-background shadow-sm">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-3 border-b border-border">
+                <div className="flex items-center justify-between border-b border-accent/20 bg-accent-soft px-4 py-3 sm:px-6 lg:px-12">
                     <div>
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                             Para você
                         </p>
                         <p className="text-[11px] text-muted/60 mt-0.5">
@@ -92,7 +92,7 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
                     </div>
                     <Link
                         href="/artists"
-                        className="text-[9px] font-semibold text-muted hover:text-accent transition-colors"
+                        className="text-[9px] font-semibold text-accent hover:text-foreground transition-colors"
                     >
                         Ver todos →
                     </Link>

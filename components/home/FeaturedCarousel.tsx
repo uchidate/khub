@@ -58,7 +58,7 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
 
     return (
         <div
-            className="relative h-[340px] md:h-[480px] overflow-hidden bg-accent-soft"
+            className="relative h-[340px] overflow-hidden bg-accent-soft md:h-[480px] lg:flex-1 lg:min-h-[438px]"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}

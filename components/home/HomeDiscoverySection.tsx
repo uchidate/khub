@@ -47,8 +47,8 @@ function MiniEntityCard({
     icon: React.ElementType
 }) {
     return (
-        <Link href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-background/95 p-3 hover:border-accent/35 hover:bg-surface transition-colors">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-surface">
+        <Link href={href} className="group flex items-center gap-3 rounded-xl border border-violet/20 bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-violet hover:bg-surface-media/35">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
                 {imageUrl ? (
                     <Image src={imageUrl} alt={title} fill sizes="48px" className="object-cover" />
                 ) : (
@@ -62,12 +62,14 @@ function MiniEntityCard({
                     <Icon className="h-3 w-3" />
                     {label}
                 </div>
-                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-accent transition-colors">{title}</p>
+                <p className="truncate text-[13px] font-bold text-foreground transition-colors group-hover:text-violet">{title}</p>
                 {subtitle && <p className="truncate text-[10px] text-muted">{subtitle}</p>}
             </div>
         </Link>
     )
 }
+
+const SUPPORTING_LABELS = ["Leia também", "Contexto", "Próximo passo", "Relacionado"]
 
 export function HomeDiscoverySection({
     cluster,
@@ -98,21 +100,21 @@ export function HomeDiscoverySection({
     return (
         <section className="bg-background py-6 sm:py-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className={`grid overflow-hidden rounded-2xl border border-accent/10 bg-background shadow-sm ${cluster ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`}>
+                <div className={`grid overflow-hidden rounded-2xl home-border-pop border-violet bg-background shadow-sm ${cluster ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`}>
                     {cluster && (
                         <div className="border-b border-border lg:border-b-0 lg:border-r">
-                            <div className="border-b border-accent/15 bg-surface-editorial px-4 py-3.5 sm:px-6">
-                                <div className="border-l-2 border-accent pl-3">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{cluster.eyebrow}</p>
+                            <div className="border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
+                                <div className="border-l-[3px] border-violet pl-3">
+                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">{cluster.eyebrow}</p>
                                 <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{cluster.title}</h2>
                                 </div>
                             </div>
                             {leadClusterItem && (
                                 <Link
                                     href={leadClusterItem.href}
-                                    className="group grid gap-3 border-b border-border bg-surface-editorial/55 p-4 transition-colors hover:bg-surface-editorial sm:grid-cols-[132px_minmax(0,1fr)] sm:p-5"
+                                    className="group grid grid-cols-[88px_minmax(0,1fr)] gap-3 border-b border-border bg-background p-4 transition-colors hover:bg-surface-editorial/45 sm:grid-cols-[116px_minmax(0,1fr)] sm:p-5"
                                 >
-                                    <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-surface sm:aspect-square">
+                                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface">
                                         {leadClusterItem.imageUrl ? (
                                             <Image src={leadClusterItem.imageUrl} alt={leadClusterItem.title} fill sizes="(max-width: 640px) 100vw, 132px" className="object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
                                         ) : (
@@ -122,11 +124,11 @@ export function HomeDiscoverySection({
                                         )}
                                     </div>
                                     <div className="min-w-0 self-center">
-                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">{leadClusterItem.reasonLabel}</p>
-                                        <h3 className="mt-1 text-[18px] font-bold leading-tight text-foreground transition-colors group-hover:text-accent">
+                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet">Destaque relacionado</p>
+                                        <h3 className="mt-1 text-[15px] font-bold leading-tight text-foreground transition-colors group-hover:text-violet sm:text-[18px]">
                                             {leadClusterItem.title}
                                         </h3>
-                                        <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                                        <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted sm:mt-2 sm:text-[11px]">
                                             {leadDescription}
                                         </p>
                                     </div>
@@ -138,23 +140,23 @@ export function HomeDiscoverySection({
                                         <Link
                                             key={`${cluster.key}-${item.href}`}
                                             href={item.href}
-                                            className={`group flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors
+                                            className={`group flex items-center gap-2.5 px-4 py-3 hover:bg-surface transition-colors
                                                 ${index % 2 === 0 ? "sm:border-r sm:border-border" : ""}
                                                 ${index < 2 ? "border-b border-border" : ""}
                                             `}
                                         >
-                                            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
+                                            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border bg-surface">
                                                 {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="48px" className="object-cover" />
+                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="36px" className="object-cover" />
                                                 ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted">
+                                                    <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">
                                                         {item.title[0]}
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-muted">{item.reasonLabel}</p>
-                                                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-accent transition-colors">{item.title}</p>
+                                                <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">{SUPPORTING_LABELS[index] ?? "Relacionado"}</p>
+                                                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-violet transition-colors">{item.title}</p>
                                             </div>
                                         </Link>
                                     ))}
@@ -163,13 +165,13 @@ export function HomeDiscoverySection({
                         </div>
                     )}
 
-                    <div className="bg-surface-tint/70">
-                        <div className="flex items-center justify-between border-b border-accent/15 bg-surface-tint px-4 py-3.5 sm:px-6">
-                            <div className="border-l-2 border-accent pl-3">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Descobrir</p>
+                    <div className="bg-background lg:border-l lg:border-border">
+                        <div className="flex items-center justify-between border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
+                            <div className="border-l-[3px] border-violet pl-3">
+                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Descobrir</p>
                                 <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{discoveryTitle}</h2>
                             </div>
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet/10 text-violet">
                                 <Shuffle className="h-4 w-4" />
                             </div>
                         </div>

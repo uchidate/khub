@@ -73,7 +73,7 @@ function NowCard({
     image: React.ReactNode
 }) {
     return (
-        <Link href={href} className="group flex min-h-[84px] items-center gap-3 px-4 py-3 hover:bg-surface transition-colors">
+        <Link href={href} className="group flex min-h-[84px] items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-editorial/45">
             {image}
             <div className="min-w-0">
                 <div className="mb-1 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
@@ -110,14 +110,14 @@ export function HomeNowStrip({
     return (
         <section className="bg-background pb-6 sm:pb-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-accent/10 bg-background shadow-sm">
-                    <div className="border-b border-accent/15 bg-surface-editorial px-4 py-3.5">
-                        <div className="border-l-2 border-accent pl-3">
+                <div className="overflow-hidden rounded-2xl border border-accent bg-background shadow-sm">
+                    <div className="border-b border-accent/20 bg-accent-soft px-4 py-3.5">
+                        <div className="border-l-[3px] border-accent pl-3">
                         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Em movimento</p>
                         <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">{heading}</p>
                         </div>
                     </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:[&>*:nth-child(n+3)]:border-t lg:[&>*:nth-child(n+3)]:border-t-0 lg:divide-x divide-border">
+                    <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:[&>*:nth-child(n+3)]:border-t lg:grid-cols-4 lg:divide-x lg:[&>*:nth-child(n+3)]:border-t-0">
                         {artist && (
                             <NowCard
                                 href={`/artists/${artist.slug ?? artist.id}`}
