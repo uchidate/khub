@@ -124,9 +124,9 @@ export function HomeFrontPage({
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
                 {/* MAIN HERO */}
-                <div className="overflow-hidden rounded-2xl border border-home-frame bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] lg:min-h-[438px]">
+                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] lg:min-h-[438px] flex flex-col">
                     {/* Hero: carousel or static featured */}
-                    <div className="h-full">
+                    <div className="flex-1 flex flex-col">
                         {hasCarousel ? (
                             <FeaturedCarousel posts={carouselPosts} />
                         ) : featuredStory ? (
@@ -194,10 +194,10 @@ export function HomeFrontPage({
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div className="overflow-hidden rounded-2xl border border-home-frame bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] flex flex-col">
+                <div className="overflow-hidden rounded-2xl border border-accent bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] flex flex-col">
                     {/* Trending Artists panel */}
-                    <div className="border-b border-violet/25 flex-1">
-                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-violet/25 bg-surface-editorial/70">
+                    <div className="border-b border-accent/25 flex-1">
+                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-accent/25 bg-accent-soft">
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                                     Artistas em alta
@@ -426,7 +426,7 @@ export function HomeFrontPage({
                 </div>
 
                 <div className="mt-4 overflow-hidden rounded-2xl border border-accent bg-background shadow-sm transition-[border-width,border-color] hover:border-2">
-                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2.5 border-b border-accent/20 bg-[linear-gradient(90deg,rgba(255,36,110,0.10),rgba(124,77,255,0.08))]">
+                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2.5 border-b border-accent/20 bg-accent-soft">
                         <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Descubra o HallyuHub</span>
                         <span className="text-[9px] text-muted">Explore por interesse</span>
                     </div>

@@ -59,7 +59,7 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className={`group grid overflow-hidden rounded-2xl border border-border shadow-[0_10px_28px_rgba(18,15,21,0.06)] transition-all hover:-translate-y-1 hover:border-border-strong hover:shadow-[0_16px_38px_rgba(18,15,21,0.12)] ${
+                                className={`group grid overflow-hidden rounded-2xl border border-foreground shadow-[0_10px_28px_rgba(18,15,21,0.06)] transition-all hover:-translate-y-1 hover:border-foreground hover:shadow-[0_16px_38px_rgba(18,15,21,0.12)] ${
                                     isLead
                                         ? "grid-cols-1 sm:col-span-2 lg:col-span-1"
                                         : "grid-cols-[88px_minmax(0,1fr)] sm:block"

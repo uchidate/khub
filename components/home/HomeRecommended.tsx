@@ -77,9 +77,9 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
     return (
         <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="rounded-2xl border border-border bg-background shadow-sm">
+                <div className="rounded-2xl border border-accent bg-background shadow-sm">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3 sm:px-6 lg:px-12">
+                <div className="flex items-center justify-between border-b border-accent/20 bg-accent-soft px-4 py-3 sm:px-6 lg:px-12">
                     <div>
                         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                             Para você

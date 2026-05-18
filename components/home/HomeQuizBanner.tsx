@@ -13,7 +13,7 @@ export function HomeQuizBanner() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Link
                     href="/quiz"
-                    className="home-border-pop group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-surface-editorial/65 border-violet hover:border-accent rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-surface-editorial"
+                    className="home-border-pop group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-accent-soft border-accent hover:border-accent rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-accent/15"
                 >
                     {/* Glow de fundo */}
                     <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-purple-500/5 pointer-events-none" />

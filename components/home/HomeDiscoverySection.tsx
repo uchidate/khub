@@ -100,12 +100,12 @@ export function HomeDiscoverySection({
     return (
         <section className="bg-background py-6 sm:py-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className={`grid overflow-hidden rounded-2xl border border-border bg-background shadow-sm ${cluster ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`}>
+                <div className={`grid overflow-hidden rounded-2xl home-border-pop border-violet bg-background shadow-sm ${cluster ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`}>
                     {cluster && (
                         <div className="border-b border-border lg:border-b-0 lg:border-r">
-                            <div className="border-b border-border bg-background px-4 py-3.5 sm:px-6">
-                                <div className="border-l-[3px] border-accent pl-3">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{cluster.eyebrow}</p>
+                            <div className="border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
+                                <div className="border-l-[3px] border-violet pl-3">
+                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">{cluster.eyebrow}</p>
                                 <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{cluster.title}</h2>
                                 </div>
                             </div>
@@ -124,8 +124,8 @@ export function HomeDiscoverySection({
                                         )}
                                     </div>
                                     <div className="min-w-0 self-center">
-                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Destaque relacionado</p>
-                                        <h3 className="mt-1 text-[15px] font-bold leading-tight text-foreground transition-colors group-hover:text-accent sm:text-[18px]">
+                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet">Destaque relacionado</p>
+                                        <h3 className="mt-1 text-[15px] font-bold leading-tight text-foreground transition-colors group-hover:text-violet sm:text-[18px]">
                                             {leadClusterItem.title}
                                         </h3>
                                         <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted sm:mt-2 sm:text-[11px]">
@@ -156,7 +156,7 @@ export function HomeDiscoverySection({
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">{SUPPORTING_LABELS[index] ?? "Relacionado"}</p>
-                                                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-accent transition-colors">{item.title}</p>
+                                                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-violet transition-colors">{item.title}</p>
                                             </div>
                                         </Link>
                                     ))}
@@ -166,7 +166,7 @@ export function HomeDiscoverySection({
                     )}
 
                     <div className="bg-background lg:border-l lg:border-border">
-                        <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3.5 sm:px-6">
+                        <div className="flex items-center justify-between border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
                             <div className="border-l-[3px] border-violet pl-3">
                                 <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Descobrir</p>
                                 <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{discoveryTitle}</h2>

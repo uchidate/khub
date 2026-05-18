@@ -110,8 +110,8 @@ export function HomeNowStrip({
     return (
         <section className="bg-background pb-6 sm:pb-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
-                    <div className="border-b border-border bg-background px-4 py-3.5">
+                <div className="overflow-hidden rounded-2xl border border-accent bg-background shadow-sm">
+                    <div className="border-b border-accent/20 bg-accent-soft px-4 py-3.5">
                         <div className="border-l-[3px] border-accent pl-3">
                         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Em movimento</p>
                         <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">{heading}</p>
