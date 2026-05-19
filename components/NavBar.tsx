@@ -30,6 +30,14 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
 
+    useEffect(() => {
+        const root = document.documentElement
+        root.style.setProperty('--site-header-h', tickerPosts.length > 0 ? 'calc(var(--nav-h) + var(--ticker-h))' : 'var(--nav-h)')
+        return () => {
+            root.style.removeProperty('--site-header-h')
+        }
+    }, [tickerPosts.length])
+
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
 
     const navLinks = [
@@ -44,17 +52,14 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
 
     const navBorder = tickerPosts.length > 0 ? '' : 'border-b border-border'
     const navBg = isScrolled
-        ? `backdrop-blur-xl ${navBorder} shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
+        ? `bg-background backdrop-blur-xl ${navBorder} shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
         : `bg-background ${navBorder}`
-    const spacerClass = tickerPosts.length > 0
-        ? 'h-[80px] sm:h-[88px] lg:h-[92px]'
-        : 'h-[52px] sm:h-[60px] lg:h-[64px]'
+    const spacerClass = 'h-[var(--site-header-h)]'
 
     return (
         <>
             <nav
-                className={`fixed left-0 right-0 z-[300] top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
-                style={isScrolled ? { background: 'linear-gradient(to right, var(--color-bg) 0%, var(--color-bg) 200px, transparent 300px)' } : undefined}
+                className={`fixed left-0 right-0 z-[320] top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
             >
                 <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-2 sm:gap-3 h-[52px] sm:h-[60px] lg:h-[64px] px-2 sm:px-0">

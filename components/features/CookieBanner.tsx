@@ -28,30 +28,32 @@ export function CookieBanner() {
 
     return (
         <>
-            {/* Mobile: barra na base */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[9998] bg-background border-t border-border px-4 pt-4 pb-5 shadow-2xl animate-[slideUp_300ms_ease-out]">
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-lg bg-[#ff2d78]/15 flex items-center justify-center shrink-0">
-                        <Cookie className="w-4 h-4 text-[#ff2d78]" />
+            {/* Mobile: card compacto acima da navegação inferior */}
+            <div data-cookie-banner="mobile" className="md:hidden fixed left-3 right-3 bottom-[calc(70px+env(safe-area-inset-bottom,0px))] z-[260] rounded-2xl border border-border bg-white p-3 shadow-[0_12px_32px_rgba(18,15,21,0.18)] animate-[slideUp_300ms_ease-out] dark:bg-background">
+                <div className="flex items-start gap-2">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#ff2d78]/15">
+                        <Cookie className="h-4 w-4 text-[#ff2d78]" />
                     </div>
-                    <p className="text-sm font-bold text-foreground">Preferências de cookies</p>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-bold leading-tight text-foreground">Cookies</p>
+                        <p className="mt-0.5 text-[11px] leading-snug text-muted">
+                            Usamos cookies essenciais e métricas para melhorar o site.{' '}
+                            <Link href="/privacidade" className="text-[#ff2d78] underline underline-offset-2">
+                                Saiba mais
+                            </Link>
+                        </p>
+                    </div>
                 </div>
-                <p className="text-xs text-muted leading-relaxed mb-4">
-                    Usamos cookies para manter sua sessão e entender como o site é utilizado.{' '}
-                    <Link href="/privacidade" className="text-[#ff2d78] underline-offset-2 underline">
-                        Saiba mais
-                    </Link>
-                </p>
-                <div className="flex gap-2">
+                <div className="mt-3 flex gap-2">
                     <button
                         onClick={acceptNecessary}
-                        className="flex-1 py-2.5 text-sm font-semibold text-foreground bg-surface hover:bg-surface-hover rounded-xl transition-colors border border-border"
+                        className="flex-1 rounded-xl border border-border bg-surface px-2 py-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-surface-hover"
                     >
-                        Apenas essenciais
+                        Essenciais
                     </button>
                     <button
                         onClick={acceptAll}
-                        className="flex-1 py-2.5 text-sm font-bold text-white bg-[#ff2d78] rounded-xl transition-colors shadow-lg"
+                        className="flex-1 rounded-xl bg-[#ff2d78] px-2 py-2 text-[11px] font-bold text-white shadow-lg transition-colors"
                     >
                         Aceitar todos
                     </button>
@@ -59,7 +61,7 @@ export function CookieBanner() {
             </div>
 
             {/* Desktop: card flutuante no canto inferior direito */}
-            <div className="hidden md:block fixed bottom-6 right-6 z-[9998] w-[380px] rounded-2xl border border-border bg-background shadow-xl overflow-hidden animate-[fadeInUp_350ms_ease-out]">
+            <div data-cookie-banner="desktop" className="hidden md:block fixed bottom-6 right-6 z-[9998] w-[380px] rounded-2xl border border-border bg-background shadow-xl overflow-hidden animate-[fadeInUp_350ms_ease-out]">
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-[#ff2d78]/40 to-transparent" />
                 <div className="p-5">
                     <div className="flex items-start justify-between gap-3 mb-4">

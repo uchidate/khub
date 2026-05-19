@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronDown, Film, SlidersHorizontal, Star } from 'lucide-react'
+import { Film, SlidersHorizontal, Star, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
@@ -70,21 +70,24 @@ const AGE_BADGE_STYLE: Record<string, string> = {
 
 function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
     const typeLabel = prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null
-    const imageUrl = prod.imageUrl || prod.backdropUrl
+    const [imageFailed, setImageFailed] = useState(false)
+    const imageUrl = !imageFailed ? (prod.imageUrl || prod.backdropUrl) : null
     const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
     const platforms = (prod.streamingPlatforms as string[] || []).slice(0, 2)
 
     return (
-        <Link href={`/productions/${prod.slug ?? prod.id}`} className="group block rounded-2xl p-2 -m-2">
+        <Link href={`/productions/${prod.slug ?? prod.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 shadow-sm transition-all hover:border-violet/35 hover:bg-surface-media/35 hover:shadow-md sm:block sm:border-0 sm:bg-transparent sm:p-2 sm:-m-2 sm:shadow-none sm:hover:bg-transparent">
             {/* Poster 2:3 */}
-            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm group-hover:border-accent/40 group-hover:shadow-md transition-all mb-3">
+            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm group-hover:border-violet/40 group-hover:shadow-md transition-all sm:mb-3">
                 {imageUrl ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                         src={imageUrl}
                         alt={prod.titlePt}
-                        fill
-                        className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                        priority={priority}
+                        loading={priority ? 'eager' : 'lazy'}
+                        decoding={priority ? 'sync' : 'async'}
+                        className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        onError={() => setImageFailed(true)}
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2"
@@ -102,8 +105,8 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                     </div>
                 )}
             </div>
-            <div className="space-y-1">
-                <h3 className="text-[0.92rem] font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prod.titlePt}</h3>
+            <div className="min-w-0 self-center space-y-1 sm:self-auto">
+                <h3 className="text-[0.95rem] font-bold text-foreground group-hover:text-violet transition-colors line-clamp-2 leading-snug sm:text-[0.92rem]">{prod.titlePt}</h3>
                 <div className="flex items-center gap-2 text-xs text-muted min-h-[1rem]">
                     {prod.year && <span>{prod.year}</span>}
                     {typeLabel && <span>• {typeLabel}</span>}
@@ -121,69 +124,6 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                         ))}
                     </div>
                 )}
-            </div>
-        </Link>
-    )
-}
-
-function FeaturedProductionCard({ prod }: { prod: Production }) {
-    const typeLabel = prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null
-    const imageUrl = prod.imageUrl || prod.backdropUrl
-    const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
-
-    return (
-        <Link href={`/productions/${prod.slug ?? prod.id}`}
-            className="group sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row rounded-2xl overflow-hidden border border-border bg-surface hover:border-accent/30 hover:shadow-lg transition-all duration-300">
-            <div className="relative aspect-video sm:aspect-auto sm:w-2/5 sm:min-h-[280px] overflow-hidden bg-surface shrink-0">
-                {imageUrl ? (
-                    <Image
-                        src={imageUrl}
-                        alt={prod.titlePt}
-                        fill
-                        sizes="(max-width: 640px) 100vw, 40vw"
-                        className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
-                        priority
-                    />
-                ) : (
-                    <div className="w-full h-full" style={{ background: nameToGradient(prod.titlePt) }} />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30" />
-                {prod.ageRating && (
-                    <div className="absolute top-3 left-3"><AgeRatingBadge rating={prod.ageRating} /></div>
-                )}
-                {score !== null && (
-                    <div className="absolute top-3 right-3 flex items-center gap-0.5 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg text-[11px] font-black text-yellow-400">
-                        <Star className="w-3 h-3 fill-yellow-400" />
-                        {score.toFixed(1)}
-                    </div>
-                )}
-            </div>
-            <div className="flex flex-col gap-3 p-5 sm:p-7 flex-1">
-                {(typeLabel || prod.year) && (
-                    <p className="text-[11px] text-muted font-semibold flex items-center gap-2">
-                        {typeLabel && <span className="px-2 py-0.5 bg-accent/10 text-accent rounded font-bold">{typeLabel}</span>}
-                        {prod.year && <span>{prod.year}</span>}
-                    </p>
-                )}
-                <h2 className="font-black text-foreground text-xl sm:text-2xl leading-tight line-clamp-2 group-hover:text-accent transition-colors">
-                    {prod.titlePt}
-                </h2>
-                {prod.titleKr && (
-                    <p className="text-sm text-muted">{prod.titleKr}</p>
-                )}
-                {(prod.streamingPlatforms as string[] || []).length > 0 && (
-                    <div className="flex gap-1.5 flex-wrap">
-                        {(prod.streamingPlatforms as string[]).slice(0, 4).map(p => (
-                            <span key={p} className="px-2 py-0.5 text-[11px] font-semibold bg-surface border border-border rounded-full text-muted">{p}</span>
-                        ))}
-                    </div>
-                )}
-                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-border text-[11px] text-muted">
-                    {score !== null && (
-                        <span className="flex items-center gap-1 text-yellow-500 font-black"><Star className="w-3 h-3 fill-yellow-500" />{score.toFixed(1)}</span>
-                    )}
-                    <span className="text-accent font-semibold ml-auto flex items-center gap-1">Ver detalhes →</span>
-                </div>
             </div>
         </Link>
     )
@@ -221,7 +161,6 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
     const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
     const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
     const [typeCounts, setTypeCounts] = useState<Record<string, number> | null>(null)
-    const [showMobileFilters, setShowMobileFilters] = useState(false)
 
     useEffect(() => {
         fetch('/api/productions/list?typeCounts=1')
@@ -316,45 +255,23 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
     return (
         <div id="productions-list">
             {/* Filters */}
-            {!hideFilter && <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-                <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold text-foreground/90 inline-flex items-center gap-2">
-                        <SlidersHorizontal className="w-3.5 h-3.5 text-muted" />
-                        Filtros
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <p className="hidden sm:block text-xs text-muted">
-                            {pagination.total > 0 ? `${pagination.total.toLocaleString('pt-BR')} resultados` : 'Refine sua busca'}
-                        </p>
-                        <button
-                            onClick={() => setShowMobileFilters(v => !v)}
-                            className="md:hidden inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full bg-background border border-border text-foreground"
-                            aria-expanded={showMobileFilters}
-                            aria-controls="productions-advanced-filters"
-                        >
-                            Mais filtros
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showMobileFilters ? 'rotate-180' : ''}`} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Search */}
-                <SearchInput
-                    value={searchInput}
-                    onChange={setSearchInput}
-                    onCommit={handleSearch}
-                    placeholder="Buscar filme, série ou drama"
-                />
-
-                <div className="flex items-center justify-end gap-2 flex-wrap">
+            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 rounded-2xl border border-violet/20 bg-white p-3 shadow-[0_12px_30px_rgba(18,15,21,0.10)] dark:bg-background sm:p-4">
+                <div className="flex items-center gap-2">
+                    <SearchInput
+                        value={searchInput}
+                        onChange={setSearchInput}
+                        onCommit={handleSearch}
+                        placeholder="Buscar por drama, filme ou título em coreano..."
+                        className="flex-1"
+                    />
                     {(hasActiveFilters || filters.sortBy !== 'popular') && (
-                        <button onClick={clearAll} className="text-xs text-accent hover:text-accent/70 transition-colors">
-                            Limpar filtros
+                        <button onClick={clearAll} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-violet/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
+                            <X className="h-4 w-4" />
                         </button>
                     )}
                 </div>
 
-                <div id="productions-advanced-filters" className={`${showMobileFilters ? 'block' : 'hidden'} md:block space-y-3`}>
+                <div id="productions-advanced-filters" className="mt-3 space-y-3">
                     {activeChips.length > 0 && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {activeChips.map(chip => (
@@ -370,16 +287,20 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
                     )}
 
                     {/* Type + Sort */}
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-1 flex-wrap">
+                    <div className="flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                        <div className="flex shrink-0 items-center gap-1 rounded-full border border-violet/20 bg-surface-media px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet">
+                            <SlidersHorizontal className="h-3 w-3" />
+                            Filtros
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
                             {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                                 <button
                                     key={opt.value}
                                     onClick={() => handleType(opt.value)}
-                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                         filters.type === opt.value
                                             ? 'bg-foreground text-background'
-                                            : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                            : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
                                     }`}
                                 >
                                     {opt.label}
@@ -391,43 +312,41 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
                                 </button>
                             ))}
                         </div>
-
-                        <div className="flex items-center gap-1 flex-wrap">
+                        <div className="h-7 w-px shrink-0 bg-border" />
+                        <div className="flex shrink-0 items-center gap-1">
                             {SORT_OPTIONS.map(opt => (
                                 <button
                                     key={opt.value}
                                     onClick={() => handleSort(opt.value)}
-                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                         filters.sortBy === opt.value
-                                            ? 'bg-foreground text-background'
-                                            : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                            ? 'bg-violet text-white'
+                                            : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
                                     }`}
                                 >
                                     {opt.label}
                                 </button>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Age Rating filter */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-bold text-muted uppercase tracking-wider mr-1">Classificação:</span>
+                        <div className="h-7 w-px shrink-0 bg-border" />
+                        <div className="flex shrink-0 items-center gap-1">
                         {AGE_RATING_OPTIONS.map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => handleAgeRating(opt.value)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                     filters.ageRating === opt.value
-                                        ? 'bg-foreground text-background'
-                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                        ? 'bg-violet text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
                             </button>
                         ))}
                         {!filters.ageRating && (
-                            <span className="text-[10px] text-muted italic ml-1">18+ e sem classificação ocultos</span>
+                            <span className="shrink-0 self-center text-[10px] text-muted italic ml-1">18+ ocultos</span>
                         )}
+                        </div>
                     </div>
                 </div>
 
@@ -449,9 +368,17 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
             {/* Grid */}
             {!isLoading && productions.length > 0 && (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
-                        {productions.length > 0 && <FeaturedProductionCard prod={productions[0]} />}
-                        {productions.slice(1).map((prod, index) => (
+                    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet">Catálogo</p>
+                            <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Dramas & filmes</h2>
+                        </div>
+                        <p className="text-xs text-muted">
+                            {pagination.total > 0 ? `${pagination.total.toLocaleString('pt-BR')} resultados` : 'Refine sua busca'}
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                        {productions.map((prod, index) => (
                             <ProductionCard key={prod.id} prod={prod} priority={index < 5} />
                         ))}
                     </div>

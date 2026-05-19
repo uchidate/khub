@@ -165,13 +165,6 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
 
-                    {/* Filtro — sobreposto no topo do hero */}
-                    <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
-                        <Suspense>
-                            <ArtistFilters initialFilters={{ search, sortBy }} hero />
-                        </Suspense>
-                    </div>
-
                     <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[460px] overflow-hidden">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto">
@@ -259,9 +252,12 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
+                <Suspense>
+                    <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
+                </Suspense>
                 <ArtistsList
                     artists={artists}
-                    pagination={{ page, total, pages: Math.ceil(total / limit) }}
+                    pagination={{ page, total, pages: Math.ceil(total / limit), perPage: limit }}
                     initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }}
                 />
                 <ScrollToTop />

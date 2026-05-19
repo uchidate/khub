@@ -85,7 +85,7 @@ export function ProductionsHeroFilter({ hero = false }: Props) {
     }
 
     return (
-        <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+        <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
             <SearchInput value={search} onChange={setSearch} placeholder="Buscar drama ou filme..." />
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1">

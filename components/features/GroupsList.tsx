@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Users } from 'lucide-react'
+import { SlidersHorizontal, Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -51,22 +51,24 @@ function getGeneration(debutDate: string | null): string | null {
 function GroupsSkeleton() {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {Array.from({ length: 15 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                    <div className="aspect-square rounded-xl bg-skeleton mb-3" />
-                    <div className="h-3.5 bg-skeleton rounded w-3/4 mb-1.5" />
-                    <div className="h-3 bg-skeleton rounded w-1/2 mb-1" />
-                    <div className="h-2.5 bg-skeleton rounded w-2/3" />
+            {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 sm:block sm:border-0 sm:bg-transparent sm:p-0">
+                    <div className="aspect-square rounded-xl bg-skeleton sm:mb-3" />
+                    <div className="self-center">
+                        <div className="h-3.5 bg-skeleton rounded w-3/4 mb-1.5" />
+                        <div className="h-3 bg-skeleton rounded w-1/2 mb-1" />
+                        <div className="h-2.5 bg-skeleton rounded w-2/3" />
+                    </div>
                 </div>
             ))}
         </div>
     )
 }
 
-export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
+export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFilter?: boolean; initialGroups?: Group[] }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
-    const [groups, setGroups] = useState<Group[]>([])
+    const [groups, setGroups] = useState<Group[]>(initialGroups)
     const [search, setSearch] = useState(searchParams.get('search') || '')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disbanded'>('all')
     const [generationFilter, setGenerationFilter] = useState<string>('all')
@@ -81,11 +83,12 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
     }, [searchParams.toString()])
 
     useEffect(() => {
+        if (initialGroups.length > 0) return
         fetch('/api/groups/list?full=true')
             .then(r => r.json())
             .then(data => setGroups(data.groups ?? []))
             .catch(() => {})
-    }, [])
+    }, [initialGroups.length])
 
     const filtered = useMemo(() => {
         let result = groups
@@ -129,23 +132,40 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
 
     const hasActiveFilters = search || statusFilter !== 'all' || generationFilter !== 'all' || sortBy !== 'popular'
 
-    if (groups.length === 0) return <GroupsSkeleton />
+    const resetFilters = () => {
+        setSearch('')
+        setStatusFilter('all')
+        setGenerationFilter('all')
+        setSortBy('popular')
+    }
 
     return (
         <div id="groups-list">
 
             {/* Filtros */}
-            {!hideFilter && <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
+            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 rounded-2xl border border-violet/20 bg-white p-3 shadow-[0_12px_30px_rgba(18,15,21,0.10)] dark:bg-background sm:p-4">
                 {/* Busca */}
-                <SearchInput
-                    value={search}
-                    onChange={setSearch}
-                    placeholder="Buscar grupo ou agência"
-                />
+                <div className="flex items-center gap-2">
+                    <SearchInput
+                        value={search}
+                        onChange={setSearch}
+                        placeholder="Buscar por grupo, hangul ou agência..."
+                        className="flex-1"
+                    />
+                    {hasActiveFilters && (
+                        <button onClick={resetFilters} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-violet/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
 
                 {/* Status + Geração */}
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-1 flex-wrap">
+                <div className="mt-3 flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                    <div className="flex shrink-0 items-center gap-1 rounded-full border border-violet/20 bg-surface-media px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet">
+                        <SlidersHorizontal className="h-3 w-3" />
+                        Filtros
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
                         {([
                             { value: 'all', label: 'Todos' },
                             { value: 'active', label: 'Ativos' },
@@ -154,7 +174,7 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                             <button
                                 key={opt.value}
                                 onClick={() => setStatusFilter(opt.value)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                     statusFilter === opt.value
                                         ? 'bg-foreground text-background'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
@@ -163,26 +183,28 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                                 {opt.label}
                             </button>
                         ))}
-                        <span className="w-px h-4 bg-border mx-0.5" />
+                    </div>
+                    <div className="h-7 w-px shrink-0 bg-border" />
+                    <div className="flex shrink-0 items-center gap-1">
                         {([
-                            { value: 'all', label: 'Toda Geração' },
+                            { value: 'all', label: 'Gerações' },
                             ...GENERATIONS.map(g => ({ value: g.label, label: g.label })),
                         ]).map(opt => (
                             <button
                                 key={opt.value}
                                 onClick={() => setGenerationFilter(opt.value)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                     generationFilter === opt.value
-                                        ? 'bg-foreground text-background'
-                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                        ? 'bg-violet text-white'
+                                        : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
                             </button>
                         ))}
                     </div>
-
-                    <div className="flex items-center gap-1 flex-wrap">
+                    <div className="h-7 w-px shrink-0 bg-border" />
+                    <div className="flex shrink-0 items-center gap-1">
                         {([
                             { value: 'popular', label: 'Populares' },
                             { value: 'name', label: 'A–Z' },
@@ -193,9 +215,9 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                             <button
                                 key={opt.value}
                                 onClick={() => setSortBy(opt.value)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
+                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                                     sortBy === opt.value
-                                        ? 'bg-foreground text-background'
+                                        ? 'bg-violet text-white'
                                         : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
                                 }`}
                             >
@@ -206,7 +228,7 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                 </div>
 
                 {hasActiveFilters && (
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="mt-2 flex items-center gap-3 flex-wrap">
                         <p className="text-xs text-muted">
                             {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
                         </p>
@@ -226,8 +248,8 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                             </span>
                         )}
                         <button
-                            onClick={() => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setSortBy('popular') }}
-                            className="text-xs text-accent hover:text-accent/70 transition-colors"
+                            onClick={resetFilters}
+                            className="text-xs font-semibold text-violet hover:text-foreground transition-colors"
                         >
                             Limpar filtros
                         </button>
@@ -235,21 +257,33 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                 )}
             </div>}
 
+            {groups.length === 0 && <GroupsSkeleton />}
+
             {/* Grid */}
-            {filtered.length === 0 ? (
+            {groups.length > 0 && filtered.length === 0 ? (
                 <EmptyState
                     title="Nenhum grupo encontrado"
-                    action={{ label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); setGenerationFilter('all'); setSortBy('popular') } }}
+                    action={{ label: 'Limpar filtros', onClick: resetFilters }}
                 />
-            ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
+            ) : groups.length > 0 ? (
+                <>
+                <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet">Catálogo</p>
+                        <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Todos os grupos</h2>
+                    </div>
+                    <p className="text-xs text-muted">
+                        {filtered.length.toLocaleString('pt-BR')} de {groups.length.toLocaleString('pt-BR')} grupos
+                    </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
                     {filtered.map((group, index) => {
                         const faded = !!group.disbandDate
                         const gen = getGeneration(group.debutDate)
                         return (
-                            <div key={group.id} className={`group/card relative ${faded ? 'opacity-60 hover:opacity-100 transition-opacity duration-300' : ''}`}>
-                                <Link href={`/groups/${group.slug ?? group.id}`} className="group block">
-                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm card-hover mb-3 group-hover:shadow-md transition-all">
+                            <div key={group.id} className={`group/card relative ${faded ? 'opacity-70 hover:opacity-100 transition-opacity duration-300' : ''}`}>
+                                <Link href={`/groups/${group.slug ?? group.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 shadow-sm transition-all hover:border-violet/35 hover:bg-surface-media/35 hover:shadow-md sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:hover:bg-transparent">
+                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm card-hover group-hover:shadow-md transition-all sm:mb-3">
                                         {group.profileImageUrl ? (
                                             <Image
                                                 src={group.profileImageUrl}
@@ -292,8 +326,8 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                                             )}
                                         </div>
                                     </div>
-                                    <div>
-                                        <h3 className="font-black text-foreground text-sm leading-tight group-hover:text-accent transition-colors">{group.name}</h3>
+                                    <div className="min-w-0 self-center sm:self-auto">
+                                        <h3 className="font-black text-foreground text-[15px] leading-tight group-hover:text-violet transition-colors sm:text-sm">{group.name}</h3>
                                         {group.nameHangul && (
                                             <p className="text-xs text-muted font-medium mt-0.5">{group.nameHangul}</p>
                                         )}
@@ -307,7 +341,7 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                                                 )
                                             })()}
                                             {group.agency && (
-                                                <span className="text-[10px] font-bold text-accent/80 truncate max-w-[100px]">{group.agency.name}</span>
+                                                <span className="max-w-[140px] truncate rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted sm:max-w-[100px]">{group.agency.name}</span>
                                             )}
                                         </div>
                                     </div>
@@ -319,7 +353,8 @@ export function GroupsList({ hideFilter = false }: { hideFilter?: boolean }) {
                         )
                     })}
                 </div>
-            )}
+                </>
+            ) : null}
         </div>
     )
 }

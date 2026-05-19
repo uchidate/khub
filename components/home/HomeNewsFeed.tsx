@@ -288,7 +288,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
 
                 {/* ── Barra de categorias editorial (sticky) ───────────────── */}
                 <div
-                    className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-3 border-b border-border overflow-x-auto bg-background"
+                    className="sticky top-[var(--site-sticky-top)] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-3 border-b border-border overflow-x-auto bg-background"
                     style={{ scrollbarWidth: 'none' }}
                 >
                     {TABS.map(tab => {
@@ -319,7 +319,7 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
 
                 {/* ── Tags populares ─────────────────────────────────────────── */}
                 {availableTags.length > 0 && (
-                    <div className="sticky top-[96px] sm:top-[104px] lg:top-[108px] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-2.5 border-b border-border overflow-x-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85" style={{ scrollbarWidth: 'none' }}>
+                    <div className="sticky top-[calc(var(--site-sticky-top)+44px)] z-10 flex items-center gap-2 px-4 sm:px-6 lg:px-12 py-2.5 border-b border-border overflow-x-auto bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85" style={{ scrollbarWidth: 'none' }}>
                         <button
                             onClick={() => handleTagChange('all')}
                             className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
@@ -540,4 +540,3 @@ export function HomeBlogFeed({ blogPosts, sidebarPosts, categoryCounts = {}, ini
         </section>
     )
 }
-

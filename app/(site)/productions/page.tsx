@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { ArrowRight, Star, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
-import { ProductionsHeroFilter } from "@/components/features/ProductionsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
@@ -105,13 +104,6 @@ export default async function ProductionsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
-                    {/* Filtro — sobreposto no topo do hero */}
-                    <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
-                        <Suspense>
-                            <ProductionsHeroFilter hero />
-                        </Suspense>
-                    </div>
-
                     <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px] overflow-hidden">
                         {/* Bottom: destaque + side picks */}
                         <div className="flex items-end gap-6 mt-auto min-w-0">
@@ -185,7 +177,7 @@ export default async function ProductionsPage() {
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                 <Suspense>
-                    <ProductionsList hideFilter />
+                    <ProductionsList />
                 </Suspense>
                 <ScrollToTop />
             </div>

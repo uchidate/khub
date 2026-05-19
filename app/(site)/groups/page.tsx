@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { ArrowRight, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
-import { GroupsHeroFilter } from "@/components/features/GroupsHeroFilter"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
@@ -43,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GroupsPage() {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <Suspense><GroupsList /></Suspense>
-    const [_total, heroGroups] = await Promise.all([
+    const [_total, heroGroups, listGroups] = await Promise.all([
         prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
         prisma.musicalGroup.findMany({
             where: { isHidden: false, profileImageUrl: { not: null } },
@@ -55,7 +54,29 @@ export default async function GroupsPage() {
                 _count: { select: { members: { where: { isActive: true } } } },
             },
         }).catch(() => []),
+        prisma.musicalGroup.findMany({
+            where: { isHidden: false },
+            select: {
+                id: true,
+                slug: true,
+                name: true,
+                nameHangul: true,
+                profileImageUrl: true,
+                debutDate: true,
+                disbandDate: true,
+                agency: { select: { id: true, name: true } },
+                _count: { select: { members: true } },
+                viewCount: true,
+                trendingScore: true,
+            },
+            orderBy: { name: 'asc' },
+        }).catch(() => []),
     ])
+    const initialGroups = listGroups.map(group => ({
+        ...group,
+        debutDate: group.debutDate ? group.debutDate.toISOString() : null,
+        disbandDate: group.disbandDate ? group.disbandDate.toISOString() : null,
+    }))
 
     const [spotlight, ...sidePicks] = heroGroups
 
@@ -106,13 +127,6 @@ export default async function GroupsPage() {
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
-
-                    {/* Filtro — sobreposto no topo do hero */}
-                    <div className="absolute top-3 left-4 right-4 sm:left-6 sm:right-6 z-20">
-                        <Suspense>
-                            <GroupsHeroFilter />
-                        </Suspense>
-                    </div>
 
                     <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px] overflow-hidden">
                         {/* Bottom: destaque + side picks */}
@@ -203,7 +217,7 @@ export default async function GroupsPage() {
             {/* ── Conteúdo principal ──────────────────────────────── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
                 <Suspense>
-                    <GroupsList hideFilter />
+                    <GroupsList initialGroups={initialGroups} />
                 </Suspense>
                 <ScrollToTop />
             </div>

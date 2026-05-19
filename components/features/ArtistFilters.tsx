@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 
 export interface ArtistFilterValues {
@@ -23,6 +23,20 @@ interface ArtistFiltersProps {
 const SORT_OPTIONS = [
     { value: 'trending', label: 'Em alta' },
     { value: 'name', label: 'A–Z' },
+    { value: 'newest', label: 'Novos' },
+]
+
+const ROLE_OPTIONS = [
+    { value: 'CANTOR', label: 'Cantores' },
+    { value: 'ATOR', label: 'Atores' },
+    { value: 'RAPPER', label: 'Rappers' },
+    { value: 'DANÇARINO', label: 'Dança' },
+    { value: 'MODELO', label: 'Modelos' },
+]
+
+const MEMBER_TYPE_OPTIONS = [
+    { value: 'group', label: 'Em grupo' },
+    { value: 'solo', label: 'Solo' },
 ]
 
 export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFiltersProps) {
@@ -32,33 +46,51 @@ export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFilte
 
     const [search, setSearch] = useState(initialFilters.search || '')
     const [sortBy, setSortBy] = useState(initialFilters.sortBy || 'trending')
+    const [role, setRole] = useState(initialFilters.role || '')
+    const [memberType, setMemberType] = useState(initialFilters.memberType || '')
 
     const initialSearch = initialFilters.search || ''
     const initialSortBy = initialFilters.sortBy || 'trending'
+    const initialRole = initialFilters.role || ''
+    const initialMemberType = initialFilters.memberType || ''
 
-    const buildUrl = (s: string, sort: string) => {
+    const buildUrl = (s: string, sort: string, selectedRole: string, selectedMemberType: string) => {
         const params = new URLSearchParams(searchParams.toString())
         if (s) params.set('search', s); else params.delete('search')
         if (sort && sort !== 'trending') params.set('sortBy', sort); else params.delete('sortBy')
+        if (selectedRole) params.set('role', selectedRole); else params.delete('role')
+        if (selectedMemberType) params.set('memberType', selectedMemberType); else params.delete('memberType')
         params.delete('page')
         return params.toString() ? `${pathname}?${params}` : pathname
     }
 
     useEffect(() => {
         if (search === initialSearch) return
-        const timer = setTimeout(() => router.push(buildUrl(search, sortBy)), 400)
+        const timer = setTimeout(() => router.push(buildUrl(search, sortBy, role, memberType)), 400)
         return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search])
 
     useEffect(() => {
         if (sortBy === initialSortBy) return
-        router.push(buildUrl(search, sortBy))
+        router.push(buildUrl(search, sortBy, role, memberType))
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sortBy])
 
-    const clear = () => { setSearch(''); setSortBy('trending') }
-    const hasActive = !!(search || sortBy !== 'trending')
+    useEffect(() => {
+        if (role === initialRole) return
+        router.push(buildUrl(search, sortBy, role, memberType))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [role])
+
+    useEffect(() => {
+        if (memberType === initialMemberType) return
+        router.push(buildUrl(search, sortBy, role, memberType))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [memberType])
+
+    const clear = () => { setSearch(''); setSortBy('trending'); setRole(''); setMemberType('') }
+    const hasActive = !!(search || sortBy !== 'trending' || role || memberType)
 
     if (hero) {
         return (
@@ -101,10 +133,21 @@ export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFilte
     }
 
     return (
-        <div className="sticky top-[52px] sm:top-[60px] lg:top-[64px] z-20 bg-background py-3 px-3 sm:px-4 mb-8 space-y-3 rounded-2xl border border-border shadow-[0_8px_20px_rgba(0,0,0,0.12)]">
-            <SearchInput value={search} onChange={setSearch} placeholder="Buscar artistas..." />
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1">
+        <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 rounded-2xl border border-violet/20 bg-white p-3 shadow-[0_12px_30px_rgba(18,15,21,0.10)] dark:bg-background sm:p-4">
+            <div className="flex items-center gap-2">
+                <SearchInput value={search} onChange={setSearch} placeholder="Buscar por nome, hangul ou stage name..." className="flex-1" />
+                {hasActive && (
+                    <button onClick={clear} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-violet/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
+            </div>
+            <div className="mt-3 flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex shrink-0 items-center gap-1 rounded-full border border-violet/20 bg-surface-media px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet">
+                    <SlidersHorizontal className="h-3 w-3" />
+                    Filtros
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
                     {SORT_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
@@ -119,11 +162,38 @@ export function ArtistFilters({ initialFilters = {}, hero = false }: ArtistFilte
                         </button>
                     ))}
                 </div>
-                {hasActive && (
-                    <button onClick={clear} className="p-1.5 text-muted hover:text-foreground transition-colors" title="Limpar filtros">
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                )}
+                <div className="h-7 w-px shrink-0 bg-border" />
+                <div className="flex shrink-0 items-center gap-1">
+                    {ROLE_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setRole(role === opt.value ? '' : opt.value)}
+                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                role === opt.value
+                                    ? 'bg-violet text-white'
+                                    : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="h-7 w-px shrink-0 bg-border" />
+                <div className="flex shrink-0 items-center gap-1">
+                    {MEMBER_TYPE_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setMemberType(memberType === opt.value ? '' : opt.value)}
+                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                memberType === opt.value
+                                    ? 'bg-violet text-white'
+                                    : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     )
