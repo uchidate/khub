@@ -21,11 +21,11 @@ export function HomeTodaysBirthdays({ artists }: Props) {
     return (
         <section className="bg-background py-5 sm:py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="home-border-pop overflow-hidden rounded-2xl border-accent bg-background shadow-sm">
-                    <div className="flex items-center gap-2 border-b border-accent/25 bg-surface-editorial px-4 py-3 sm:px-6">
-                        <Cake className="w-4 h-4 text-accent flex-shrink-0" />
+                <div className="home-border-pop overflow-hidden rounded-2xl border-violet bg-background shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-violet/20 bg-surface-media px-4 py-3 sm:px-6">
+                        <Cake className="w-4 h-4 text-violet flex-shrink-0" />
                         <div>
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Calendário</p>
+                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Calendário</p>
                             <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">Aniversariantes de hoje</p>
                         </div>
                         <Link
@@ -41,7 +41,7 @@ export function HomeTodaysBirthdays({ artists }: Props) {
                             <Link
                                 key={artist.id}
                                 href={`/artists/${artist.slug ?? artist.id}`}
-                                className="group flex-shrink-0 w-20 sm:w-24 rounded-xl overflow-hidden border-2 border-accent/35 hover:border-accent transition-all duration-300"
+                                className="group flex-shrink-0 w-20 sm:w-24 rounded-xl overflow-hidden border-2 border-violet/35 hover:border-violet transition-all duration-300"
                             >
                                 <div className="relative h-24 sm:h-32 bg-surface">
                                     {artist.primaryImageUrl ? (
@@ -63,8 +63,8 @@ export function HomeTodaysBirthdays({ artists }: Props) {
                                             {artist.nameRomanized}
                                         </p>
                                         <div className="flex items-center gap-1 mt-0.5">
-                                            <Cake className="w-2.5 h-2.5 text-accent" />
-                                            <span className="text-accent text-[9px] font-semibold">{artist.age} anos</span>
+                                            <Cake className="w-2.5 h-2.5 text-violet" />
+                                            <span className="text-violet text-[9px] font-semibold">{artist.age} anos</span>
                                         </div>
                                     </div>
                                 </div>

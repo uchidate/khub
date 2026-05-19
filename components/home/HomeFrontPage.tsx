@@ -194,17 +194,17 @@ export function HomeFrontPage({
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div className="overflow-hidden rounded-2xl border border-accent bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] flex flex-col">
+                <div className="home-border-pop overflow-hidden rounded-2xl border-violet bg-background shadow-[0_18px_60px_rgba(18,15,21,0.08)] flex flex-col">
                     {/* Trending Artists panel */}
-                    <div className="border-b border-accent/25 flex-1">
-                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-accent/25 bg-accent-soft">
+                    <div className="border-b border-violet/20 flex-1">
+                        <div className="flex items-center justify-between px-4 py-3.5 border-b border-violet/20 bg-surface-media">
                             <div className="flex flex-col gap-0.5">
-                                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
+                                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">
                                     Artistas em alta
                                 </span>
                                 <span className="text-[10px] text-muted hidden sm:block">Ranking semanal da comunidade</span>
                             </div>
-                            <Link href="/artists" className="text-[9px] font-semibold text-accent hover:text-foreground transition-colors">
+                            <Link href="/artists" className="text-[9px] font-semibold text-violet hover:text-foreground transition-colors">
                                 Ver todos →
                             </Link>
                         </div>
@@ -234,7 +234,7 @@ export function HomeFrontPage({
                                                     return display ? <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded ${display.className}`}>{display.label}</span> : null
                                                 })()}
                                             </div>
-                                            <p className="truncate text-[16px] font-black tracking-[-0.03em] text-foreground group-hover:text-accent transition-colors">
+                                            <p className="truncate text-[16px] font-black tracking-[-0.03em] text-foreground group-hover:text-violet transition-colors">
                                                 {safeArtists[0].nameRomanized || safeArtists[0].nameHangul || '—'}
                                             </p>
                                             <p className="mt-0.5 truncate text-[10px] text-muted">
@@ -310,7 +310,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={artist.id}
                                     href={`/artists/${artist.slug ?? artist.id}`}
-                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-surface transition-colors border-b border-r border-border last:border-r-0 [&:nth-child(4n)]:border-r-0"
+                                    className="flex flex-col items-center gap-1.5 py-3 px-1 hover:bg-surface-media/45 transition-colors border-b border-r border-violet/15 last:border-r-0 [&:nth-child(4n)]:border-r-0"
                                 >
                                     <span className="text-[8px] font-bold text-muted/55 leading-none">{String(idx + 1).padStart(2, '0')}</span>
                                     <div className="relative w-11 h-11 rounded-full overflow-hidden bg-surface border border-border flex-shrink-0">
@@ -335,7 +335,7 @@ export function HomeFrontPage({
                         <div className="p-4 bg-white text-foreground flex flex-col gap-3">
                             {/* Label */}
                             <div className="flex items-center justify-between">
-                                <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-accent">
+                                <p className="text-[8.5px] font-bold uppercase tracking-[0.12em] text-violet">
                                     Destaque da semana
                                 </p>
                                 <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
@@ -425,9 +425,9 @@ export function HomeFrontPage({
                 </div>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-2xl border border-accent bg-background shadow-sm transition-[border-width,border-color] hover:border-2">
-                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2.5 border-b border-accent/20 bg-accent-soft">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Descubra o HallyuHub</span>
+                <div className="home-border-pop mt-4 overflow-hidden rounded-2xl border-violet bg-background shadow-sm">
+                    <div className="flex items-center justify-between px-3.5 sm:px-5 py-2.5 border-b border-violet/20 bg-surface-media">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet">Descubra o HallyuHub</span>
                         <span className="text-[9px] text-muted">Explore por interesse</span>
                     </div>
                     <div className="grid grid-cols-2 bg-white lg:grid-cols-4 dark:bg-background">
@@ -435,13 +435,13 @@ export function HomeFrontPage({
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3 transition-colors hover:bg-accent/5
-                                    ${idx % 2 === 0 ? 'border-r border-accent/15' : ''}
-                                    ${idx < 2 ? 'border-b border-accent/15 lg:border-b-0' : ''}
-                                    ${idx < 3 ? 'lg:border-r lg:border-accent/15' : ''}
+                                className={`group flex min-h-[78px] flex-col justify-center gap-1.5 px-4 py-3 transition-colors hover:bg-surface-media/45
+                                    ${idx % 2 === 0 ? 'border-r border-violet/15' : ''}
+                                    ${idx < 2 ? 'border-b border-violet/15 lg:border-b-0' : ''}
+                                    ${idx < 3 ? 'lg:border-r lg:border-violet/15' : ''}
                                 `}
                             >
-                                <Icon className="h-4 w-4 text-muted group-hover:text-accent transition-colors" />
+                                <Icon className="h-4 w-4 text-muted group-hover:text-violet transition-colors" />
                                 <span className="text-[12px] font-bold text-foreground">{label}</span>
                                 <span className="text-[10px] text-muted leading-tight">{detail}</span>
                             </Link>
