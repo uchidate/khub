@@ -48,6 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 where: {
                     flaggedAsNonKorean: false,
                     isHidden: false,
+                    slug: { not: null },
                     OR: [
                         { bio: { not: null } },
                         { primaryImageUrl: { not: null } },
@@ -60,6 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 where: {
                     flaggedAsNonKorean: false,
                     isHidden: false,
+                    slug: { not: null },
                     // Excluir conteúdo adulto: ageRating='18' ou isAdultContent=true
                     // AND+OR explícito para não excluir NULL (NOT(NULL)=NULL em SQL)
                     AND: [
@@ -88,20 +90,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         return [
             ...primaryRoutes,
-            ...artists.map(a => ({
-                url: `${BASE_URL}/artists/${a.slug ?? a.id}`,
+            ...artists.filter(a => a.slug).map(a => ({
+                url: `${BASE_URL}/artists/${a.slug}`,
                 lastModified: a.updatedAt,
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,
             })),
-            ...groups.map(g => ({
-                url: `${BASE_URL}/groups/${g.slug ?? g.id}`,
+            ...groups.filter(g => g.slug).map(g => ({
+                url: `${BASE_URL}/groups/${g.slug}`,
                 lastModified: g.updatedAt,
                 changeFrequency: 'weekly' as const,
                 priority: 0.75,
             })),
-            ...productions.map(p => ({
-                url: `${BASE_URL}/productions/${p.slug ?? p.id}`,
+            ...productions.filter(p => p.slug).map(p => ({
+                url: `${BASE_URL}/productions/${p.slug}`,
                 lastModified: p.updatedAt,
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,
