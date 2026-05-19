@@ -254,10 +254,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         "embedUrl": production.trailerUrl,
                         "thumbnailUrl": production.imageUrl ?? undefined,
                         "uploadDate": production.releaseDate
-                            ? new Date(production.releaseDate).toISOString().split('T')[0]
+                            ? new Date(production.releaseDate).toISOString()
                             : production.year
-                                ? `${production.year}-01-01`
-                                : new Date().toISOString().split('T')[0],
+                                ? `${production.year}-01-01T00:00:00+00:00`
+                                : new Date().toISOString(),
                         "description": `Trailer oficial de ${production.titlePt}`,
                     }
                 } : {}),
