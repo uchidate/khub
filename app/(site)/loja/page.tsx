@@ -26,7 +26,7 @@ async function getData() {
         where: { isActive: true },
         orderBy: [{ category: 'asc' }, { position: 'asc' }, { createdAt: 'desc' }],
         select: {
-            id: true, name: true, price: true, originalPrice: true,
+            id: true, name: true, description: true, price: true, originalPrice: true,
             imageUrl: true, affiliateUrl: true, store: true, category: true,
             badge: true, rating: true, soldCount: true, tags: true,
             featured: true, position: true, createdAt: true,
@@ -53,13 +53,27 @@ export default async function LojaPage() {
                 '@type': 'Product',
                 name: p.name,
                 image: p.imageUrl,
+                ...(p.description ? { description: p.description } : {}),
                 offers: {
                     '@type': 'Offer',
                     ...(p.price ? { price: p.price.replace(/[^0-9,.]/g, '').replace(',', '.'), priceCurrency: 'BRL' } : {}),
                     availability: 'https://schema.org/InStock',
                     url: p.affiliateUrl,
+                    shippingDetails: {
+                        '@type': 'OfferShippingDetails',
+                        shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'BRL' },
+                        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'BR' },
+                        deliveryTime: { '@type': 'ShippingDeliveryTime', businessDays: { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday','Tuesday','Wednesday','Thursday','Friday'] }, cutoffTime: '17:00-03:00', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 15, unitCode: 'DAY' } },
+                    },
+                    hasMerchantReturnPolicy: {
+                        '@type': 'MerchantReturnPolicy',
+                        applicableCountry: 'BR',
+                        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                        merchantReturnDays: 7,
+                        returnMethod: 'https://schema.org/ReturnByMail',
+                        returnFees: 'https://schema.org/FreeReturn',
+                    },
                 },
-                ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, bestRating: 5 } } : {}),
             },
         })),
     } : null
