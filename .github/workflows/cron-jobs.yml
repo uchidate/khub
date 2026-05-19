@@ -13,6 +13,7 @@ on:
     - cron: '0 * * * *'     # Horário      → sync-discography, sync-cast
     - cron: '0 2 * * *'     # 02:00 UTC    → sync-social-links, artist-visibility, digest
     - cron: '0 3 * * *'     # 03:00 UTC    → fetch-streaming-shows
+    - cron: '0 6 * * 0'     # 06:00 UTC dom → sync-groups-discography (= 03:00 BRT)
 
   workflow_dispatch:
     inputs:
@@ -32,6 +33,7 @@ on:
           - sync-social-links
           - artist-visibility
           - digest
+          - sync-groups-discography
 
 env:
   BASE_URL: https://www.hallyuhub.com.br
@@ -253,6 +255,27 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 300 \
             --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
             -X POST "$BASE_URL/api/cron/digest" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP $HTTP_CODE — $BODY"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+  # ─── Semanal domingo 06:00 UTC (03:00 BRT) ────────────────────────────────
+
+  sync-groups-discography:
+    name: 🎵 Sincronizar discografia de grupos (Spotify)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-groups-discography')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 6 * * 0')
+    steps:
+      - name: POST /api/cron/sync-groups-discography
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 \
+            --resolve "www.hallyuhub.com.br:443:${{ secrets.SERVER_IP }}" \
+            -X POST "$BASE_URL/api/cron/sync-groups-discography" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
