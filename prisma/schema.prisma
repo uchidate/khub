@@ -1400,6 +1400,25 @@ model StoreProduct {
   @@index([featured, isActive])
 }
 
+model QuizQuestion {
+  id           String   @id @default(cuid())
+  question     String
+  options      Json     // string[]
+  correct      Int      // index da opção correta (0-3)
+  explanation  String
+  category     String   // 'k-pop' | 'k-drama' | 'cultura' | 'história'
+  difficulty   String   @default("medium") // 'easy' | 'medium' | 'hard'
+  relatedHref  String?
+  relatedLabel String?
+  isActive     Boolean  @default(true)
+  position     Int?     // ordem opcional para curadoria
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category, difficulty, isActive])
+  @@index([isActive])
+}
+
 model StoreCoupon {
   id          String   @id @default(cuid())
   code        String
