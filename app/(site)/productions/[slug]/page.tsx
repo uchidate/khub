@@ -70,6 +70,13 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     }
     if (production.isHidden) return { title: 'Produção não encontrada', robots: { index: false, follow: false } }
 
+    // URL com ID puro não deve ser indexada (redirect já redireciona quando há slug)
+    // Página renderiza normalmente para AdSense, mas noindex evita validação no Search Console
+    if (!production.slug || (isCuid(params.slug) && production.slug !== params.slug)) return {
+        title: production.titlePt,
+        robots: { index: false, follow: false },
+    }
+
     // Conteúdo adulto não deve ser indexado: ageRating='18' ou flagrado pela IA como adulto
     if (production.ageRating === '18' || production.isAdultContent === true) {
         return {

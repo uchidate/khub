@@ -133,6 +133,13 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     }
     if (artist.isHidden) return { title: 'Artista não encontrado', robots: { index: false, follow: false } }
 
+    // URL com ID puro não deve ser indexada (redirect já redireciona quando há slug)
+    // Página renderiza normalmente para AdSense, mas noindex evita validação no Search Console
+    if (!artist.slug || (isCuid(params.slug) && artist.slug !== params.slug)) return {
+        title: artist.nameRomanized,
+        robots: { index: false, follow: false },
+    }
+
     const roles = artist.roles || []
     const GENERIC_BIO = /conhecido\(a\) na ind[uú]stria|talentoso\(a\).*ind[uú]stria|de destaque na ind[uú]stria/i
     const cleanBio = artist.bio && !GENERIC_BIO.test(artist.bio) ? artist.bio : null
