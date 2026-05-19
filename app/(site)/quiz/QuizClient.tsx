@@ -211,7 +211,7 @@ function StartScreen({ onStart, bestScore }: {
                                     <p className="text-[10px] text-muted">por questão</p>
                                 </div>
                                 <div>
-                                    <p className="text-xl font-black text-foreground tabular-nums">{(DIFFICULTY_CONFIG[difficulty].pts * QUIZ_SIZE).toLocaleString()}</p>
+                                    <p className="text-xl font-black text-foreground tabular-nums">{DIFFICULTY_CONFIG[difficulty].pts * QUIZ_SIZE}</p>
                                     <p className="text-[10px] text-muted">pts máx</p>
                                 </div>
                             </div>
