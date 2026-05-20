@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
-import { BrandMark } from '@/components/ui/BrandMark'
+import { Lock, AlertCircle, CheckCircle, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -76,17 +75,20 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <div className="px-4 py-16 flex items-center justify-center">
         <div className="w-full max-w-sm">
-          <div className="border border-border rounded-2xl p-8 text-center bg-background">
+          <div className="border border-border rounded-2xl p-8 bg-surface text-center">
             <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="text-green-500" size={28} />
+              <CheckCircle className="text-green-500" size={26} />
             </div>
-            <h2 className="text-2xl font-black text-foreground mb-2">Senha Alterada!</h2>
-            <p className="text-muted text-sm mb-4">
-              Sua senha foi alterada com sucesso. Redirecionando para login...
+            <h2 className="text-xl font-black text-foreground mb-1">Senha alterada!</h2>
+            <p className="text-muted text-sm mb-5">
+              Sua senha foi redefinida com sucesso. Redirecionando para login...
             </p>
-            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-3.5 h-3.5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+              <span className="text-xs text-muted">Redirecionando</span>
+            </div>
           </div>
         </div>
       </div>
@@ -94,103 +96,96 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="px-4 py-16 flex items-center justify-center">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
-            <BrandMark size={30} />
-            <span className="text-xl font-black tracking-[-0.02em] text-foreground">
-              Hallyu<span className="text-[#ff2d78]">Hub</span>
-            </span>
-          </Link>
-        </div>
-
         {/* Card */}
-        <div className="border border-border rounded-2xl p-8 bg-background">
-          <div className="mb-6">
-            <h2 className="text-2xl font-black text-foreground">Nova Senha</h2>
-            <p className="text-muted mt-1 text-sm">Digite sua nova senha abaixo</p>
+        <div className="border border-border rounded-2xl p-6 bg-surface">
+          {/* Ícone decorativo */}
+          <div className="w-11 h-11 bg-[#ff2d78]/10 border border-[#ff2d78]/20 rounded-xl flex items-center justify-center mb-5">
+            <ShieldCheck className="text-[#ff2d78]" size={20} />
+          </div>
+
+          <div className="mb-5">
+            <h1 className="text-[1.25rem] font-black text-foreground leading-tight">Nova senha</h1>
+            <p className="text-muted text-xs mt-1">
+              Digite e confirme sua nova senha abaixo.
+            </p>
           </div>
 
           {error && (
-            <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
-              <AlertCircle size={16} className="shrink-0" />
-              <p className="text-sm">{error}</p>
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-2.5 text-red-400">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <p className="text-xs">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="password" className="block text-[13px] font-semibold text-foreground mb-1.5">
-                Nova Senha
+              <label htmlFor="password" className="block text-[11.5px] font-semibold text-foreground mb-1 uppercase tracking-wide">
+                Nova senha
               </label>
               <div className="relative">
-                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" size={16} />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={14} />
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={!token}
-                  className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
+                  disabled={!token || isLoading}
+                  className="w-full pl-3.5 pr-9 py-2.5 text-[13px] border border-border rounded-lg text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-[13px] font-semibold text-foreground mb-1.5">
-                Confirmar Nova Senha
+              <label htmlFor="confirmPassword" className="block text-[11.5px] font-semibold text-foreground mb-1 uppercase tracking-wide">
+                Confirmar senha
               </label>
               <div className="relative">
-                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" size={16} />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={14} />
                 <input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  disabled={!token}
-                  className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
+                  disabled={!token || isLoading}
+                  className="w-full pl-3.5 pr-9 py-2.5 text-[13px] border border-border rounded-lg text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
                   placeholder="Digite a senha novamente"
                 />
               </div>
             </div>
 
-            <div className="text-xs text-muted space-y-1 py-1">
-              <ul className="space-y-1">
-                <li className={`flex items-center gap-1.5 ${password.length >= 6 ? 'text-green-500' : ''}`}>
-                  <span>{password.length >= 6 ? '✓' : '○'}</span> Pelo menos 6 caracteres
-                </li>
-                <li className={`flex items-center gap-1.5 ${password === confirmPassword && password ? 'text-green-500' : ''}`}>
-                  <span>{password === confirmPassword && password ? '✓' : '○'}</span> Senhas coincidem
-                </li>
-              </ul>
+            {/* Indicadores */}
+            <div className="text-[11px] text-muted space-y-1 py-0.5">
+              <div className={`flex items-center gap-1.5 transition-colors ${password.length >= 6 ? 'text-green-500' : ''}`}>
+                <span>{password.length >= 6 ? '✓' : '○'}</span> Pelo menos 6 caracteres
+              </div>
+              <div className={`flex items-center gap-1.5 transition-colors ${password && password === confirmPassword ? 'text-green-500' : ''}`}>
+                <span>{password && password === confirmPassword ? '✓' : '○'}</span> Senhas coincidem
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading || !token}
-              className="w-full py-3 bg-foreground text-background text-sm font-semibold rounded-full hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
+              className="w-full py-2.5 bg-foreground text-background text-sm font-semibold rounded-full hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
               ) : (
-                <>
-                  <Lock size={16} />
-                  Redefinir Senha
-                </>
+                'Redefinir senha'
               )}
             </button>
           </form>
 
           <Link
             href="/auth/login"
-            className="mt-6 flex items-center justify-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+            className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={13} />
             Voltar para login
           </Link>
         </div>

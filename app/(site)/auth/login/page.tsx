@@ -5,7 +5,6 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
-import { BrandMark } from '@/components/ui/BrandMark'
 
 function GoogleIcon() {
   return (
@@ -60,20 +59,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
-            <BrandMark size={30} />
-            <span className="text-xl font-black tracking-[-0.02em] text-foreground">
-              Hallyu<span className="text-[#ff2d78]">Hub</span>
-            </span>
-          </Link>
-        </div>
-
-        {/* Card */}
-        <div className="border border-border rounded-2xl p-8 bg-background">
+        <div className="border border-border rounded-2xl p-8 bg-surface">
           <div className="mb-6">
             <h2 className="text-2xl font-black text-foreground">Bem-vindo de volta</h2>
             <p className="text-muted mt-1 text-sm">Entre na sua conta para continuar</p>

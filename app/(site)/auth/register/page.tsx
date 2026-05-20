@@ -5,7 +5,6 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
-import { BrandMark } from '@/components/ui/BrandMark'
 
 function GoogleIcon() {
   return (
@@ -105,7 +104,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="flex items-center justify-center px-4">
         <div className="w-full max-w-[360px] text-center">
           <div className="border border-border rounded-2xl p-8 bg-background">
             <div className="w-12 h-12 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -124,19 +123,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+    <div className="flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-[360px]">
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity text-foreground">
-          <BrandMark size={26} />
-          <span className="text-[15px] font-black tracking-[-0.02em]">
-            Hallyu<span className="text-[#ff2d78]">Hub</span>
-          </span>
-        </Link>
-
-        {/* Card */}
-        <div className="border border-border rounded-2xl p-6 bg-background">
+        <div className="border border-border rounded-2xl p-6 bg-surface">
 
           <div className="mb-5">
             <h2 className="text-[1.25rem] font-black text-foreground leading-tight">Criar conta</h2>
