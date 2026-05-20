@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 function GoogleIcon() {
   return (
@@ -17,6 +18,37 @@ function GoogleIcon() {
   )
 }
 
+function BrandPanel() {
+  return (
+    <div className="hidden lg:flex w-[340px] shrink-0 flex-col justify-between bg-surface p-10 relative overflow-hidden">
+      <div className="absolute -top-20 -left-20 w-80 h-80 bg-[#ff2d78]/15 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-10 right-0 w-60 h-60 bg-accent/10 rounded-full blur-[60px] pointer-events-none" />
+
+      <Link href="/" className="flex items-center gap-2.5 relative z-10 hover:opacity-80 transition-opacity">
+        <BrandMark size={30} />
+        <span className="text-lg font-black tracking-[-0.02em] text-foreground">
+          Hallyu<span className="text-[#ff2d78]">Hub</span>
+        </span>
+      </Link>
+
+      <div className="relative z-10 space-y-3">
+        <p className="text-2xl font-black text-foreground leading-tight">
+          O portal do <span className="text-[#ff2d78]">K-Pop</span> e <br />
+          da cultura coreana.
+        </p>
+        <p className="text-sm text-muted">
+          Perfis de artistas, grupos, doramas e filmes — tudo em português.
+        </p>
+      </div>
+
+      <div className="relative z-10 flex items-center gap-2 text-xs text-muted">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+        hallyuhub.com.br
+      </div>
+    </div>
+  )
+}
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -25,7 +57,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [values, setValues] = useState({ email: '', password: '' })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
@@ -60,98 +92,83 @@ function LoginForm() {
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="border border-border rounded-2xl p-8 bg-surface">
-          <div className="mb-6">
-            <h2 className="text-2xl font-black text-foreground">Bem-vindo de volta</h2>
-            <p className="text-muted mt-1 text-sm">Entre na sua conta para continuar</p>
-          </div>
+      <div className="w-full max-w-3xl border border-border rounded-2xl overflow-hidden flex">
+        <BrandPanel />
 
-          {error && (
-            <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
-              <AlertCircle size={16} className="shrink-0" />
-              <p className="text-sm">{error}</p>
+        <div className="flex-1 flex items-center justify-center p-8 lg:p-10 bg-background">
+          <div className="w-full max-w-sm">
+            <Link href="/" className="lg:hidden flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
+              <BrandMark size={24} />
+              <span className="text-[15px] font-black tracking-[-0.02em]">Hallyu<span className="text-[#ff2d78]">Hub</span></span>
+            </Link>
+
+            <div className="mb-6">
+              <h1 className="text-2xl font-black text-foreground">Bem-vindo de volta</h1>
+              <p className="text-muted mt-1 text-sm">Entre na sua conta para continuar</p>
             </div>
-          )}
 
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="w-full mb-5 py-3 bg-background border border-border text-foreground text-sm font-semibold rounded-xl hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2.5"
-          >
-            <GoogleIcon />
-            Continuar com Google
-          </button>
-
-          <div className="relative mb-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 bg-background text-muted text-xs">ou entre com email</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-[13px] font-semibold text-foreground mb-1.5">Email</label>
-              <div className="relative">
-                <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" size={16} />
-                <input
-                  type="email"
-                  value={values.email}
-                  onChange={e => setValues(v => ({ ...v, email: e.target.value }))}
-                  required
-                  disabled={isLoading}
-                  className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
-                  placeholder="seu@email.com"
-                />
+            {error && (
+              <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 text-red-400">
+                <AlertCircle size={16} className="shrink-0" />
+                <p className="text-sm">{error}</p>
               </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[13px] font-semibold text-foreground">Senha</label>
-                <Link href="/auth/forgot-password" className="text-xs text-[#ff2d78] hover:underline transition-colors">
-                  Esqueceu?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" size={16} />
-                <input
-                  type="password"
-                  value={values.password}
-                  onChange={e => setValues(v => ({ ...v, password: e.target.value }))}
-                  required
-                  disabled={isLoading}
-                  className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+            )}
 
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 bg-foreground text-background text-sm font-semibold rounded-full hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
+              onClick={handleGoogleSignIn} disabled={isLoading}
+              className="w-full mb-5 py-3 bg-background border border-border text-foreground text-sm font-semibold rounded-xl hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2.5"
             >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-              ) : (
-                'Entrar'
-              )}
+              <GoogleIcon />
+              Continuar com Google
             </button>
-          </form>
 
-          <p className="mt-6 text-center text-sm text-muted">
-            Não tem uma conta?{' '}
-            <Link
-              href={`/auth/register${callbackUrl !== '/' ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`}
-              className="text-[#ff2d78] hover:underline font-medium transition-colors"
-            >
-              Criar conta grátis
-            </Link>
-          </p>
+            <div className="relative mb-5">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center">
+                <span className="px-3 bg-background text-muted text-xs">ou entre com email</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-semibold text-foreground mb-1.5">Email</label>
+                <div className="relative">
+                  <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={16} />
+                  <input type="email" value={values.email} onChange={e => setValues(v => ({ ...v, email: e.target.value }))}
+                    required disabled={isLoading}
+                    className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
+                    placeholder="seu@email.com" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[13px] font-semibold text-foreground">Senha</label>
+                  <Link href="/auth/forgot-password" className="text-xs text-[#ff2d78] hover:underline transition-colors">Esqueceu?</Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" size={16} />
+                  <input type="password" value={values.password} onChange={e => setValues(v => ({ ...v, password: e.target.value }))}
+                    required disabled={isLoading}
+                    className="w-full pl-4 pr-10 py-3 text-[14px] border border-border rounded-xl text-foreground bg-background focus:border-accent outline-none transition-colors disabled:opacity-50"
+                    placeholder="••••••••" />
+                </div>
+              </div>
+
+              <button type="submit" disabled={isLoading}
+                className="w-full py-3 bg-foreground text-background text-sm font-semibold rounded-full hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 mt-1"
+              >
+                {isLoading ? <div className="w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" /> : 'Entrar'}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-muted">
+              Não tem uma conta?{' '}
+              <Link href={`/auth/register${callbackUrl !== '/' ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`} className="text-[#ff2d78] hover:underline font-medium transition-colors">
+                Criar conta grátis
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
