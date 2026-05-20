@@ -187,7 +187,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             },
             take: 6,
             orderBy: { trendingScore: 'desc' },
-            select: { id: true, name: true, profileImageUrl: true, disbandDate: true },
+            select: { id: true, slug: true, name: true, profileImageUrl: true, disbandDate: true },
         }).catch(() => []),
         prisma.blogPost.findMany({
             where: {
@@ -833,7 +833,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                 <SectionHeader icon={<Users className="w-5 h-5" />} title={group.agencyId ? 'Mesma Agência' : 'Mesma Geração'} count={relatedGroups.length} accent={accent} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {relatedGroups.map(rg => (
-                                        <Link key={rg.id} href={`/groups/${rg.id}`}
+                                        <Link key={rg.id} href={`/groups/${rg.slug ?? rg.id}`}
                                             className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-[#d0d0d0] hover:bg-surface transition-all group/rg">
                                             <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                                 {rg.profileImageUrl ? (
