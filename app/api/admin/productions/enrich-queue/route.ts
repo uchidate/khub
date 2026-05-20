@@ -50,7 +50,7 @@ export async function GET(req: Request) {
         prisma.production.count({ where }),
         prisma.production.findMany({
             where,
-            orderBy: { voteAverage: 'desc' },
+            orderBy: { releaseDate: 'desc' },
             skip: (page - 1) * PAGE_SIZE,
             take: PAGE_SIZE,
             select: {
