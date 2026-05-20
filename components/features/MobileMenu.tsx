@@ -7,6 +7,7 @@ import { createPortal } from "react-dom"
 import { useSession, signOut } from "next-auth/react"
 import { Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
+import { accountNavGroups } from "@/lib/config/account-navigation"
 
 interface MobileMenuProps {
   links: Array<{ label: string; href: string }>
@@ -139,28 +140,33 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
             </div>
 
             {/* Section: Conta */}
-            <div className="px-4 pt-4 pb-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted mb-1 px-1">Conta</p>
-            </div>
-            <div className="px-3">
+            <div className="px-3 pt-4">
               {session ? (
                 <>
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-foreground hover:bg-surface transition-colors mb-0.5"
-                  >
-                    <User className="w-[18px] h-[18px] flex-shrink-0 text-muted" />
-                    Meu Perfil
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-foreground hover:bg-surface transition-colors mb-0.5"
-                  >
-                    <Settings className="w-[18px] h-[18px] flex-shrink-0 text-muted" />
-                    Configurações
-                  </Link>
+                  {accountNavGroups.map(group => (
+                    <section key={group.label} className="mb-3 rounded-2xl border border-border bg-surface p-2">
+                      <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{group.label}</p>
+                      {group.items.map(({ href, label, icon: Icon }) => {
+                        const active = pathname === href || pathname?.startsWith(href + '/')
+                        return (
+                          <Link
+                            key={href}
+                            href={href}
+                            onClick={() => setIsOpen(false)}
+                            className={`mb-0.5 flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-semibold transition-colors ${
+                              active
+                                ? 'bg-foreground text-background'
+                                : 'text-foreground hover:bg-background'
+                            }`}
+                          >
+                            <Icon className={`h-[18px] w-[18px] flex-shrink-0 ${active ? 'text-background' : 'text-muted'}`} />
+                            {label}
+                            {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent" />}
+                          </Link>
+                        )
+                      })}
+                    </section>
+                  ))}
                   {isAdmin && (
                     <Link
                       href="/admin"

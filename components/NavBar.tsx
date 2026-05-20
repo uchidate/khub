@@ -42,13 +42,18 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
 
     const navLinks = [
         { label: "Descobrir", href: "/" },
+        { label: "Artigos", href: "/blog" },
+        { label: "Dramas & Filmes", href: "/productions" },
         { label: "Artistas", href: "/artists" },
         { label: "Grupos", href: "/groups" },
-        { label: "Dramas & Filmes", href: "/productions" },
         { label: "Agenda", href: "/calendario" },
-        { label: "Artigos", href: "/blog" },
         { label: "Loja", href: "/loja" },
     ]
+
+    const isActiveLink = (href: string) => {
+        if (href === '/') return pathname === '/'
+        return pathname === href || pathname?.startsWith(`${href}/`)
+    }
 
     const navBorder = tickerPosts.length > 0 ? '' : 'border-b border-border'
     const navBg = isScrolled
@@ -83,8 +88,9 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                                 <Link
                                     key={link.href}
                                     href={link.href}
+                                    aria-current={isActiveLink(link.href) ? 'page' : undefined}
                                     className={`text-[12.5px] lg:text-[13px] font-semibold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
-                                        pathname === link.href
+                                        isActiveLink(link.href)
                                             ? 'text-accent border-accent/30 bg-accent/8'
                                             : 'text-foreground border-border bg-background hover:border-border-strong hover:bg-surface'
                                     }`}

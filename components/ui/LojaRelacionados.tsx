@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ShoppingBag, ArrowRight } from 'lucide-react'
+import { ArrowRight, ShoppingBag, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { HomeVitrineTicker } from '@/components/home/HomeVitrineTicker'
 
@@ -51,18 +51,21 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
     if (compact) {
         return (
             <section className="w-full overflow-hidden">
-                <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.03] px-2 py-2.5 sm:px-3 sm:py-3">
+                <div className="rounded-3xl border border-border bg-surface px-3 py-3 shadow-sm">
                     <div className="mb-2 flex items-center justify-between gap-2 px-1">
                         <div className="flex min-w-0 items-center gap-2">
-                            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-orange-500 text-white">
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
                                 <ShoppingBag className="h-3.5 w-3.5" />
                             </span>
                             <div className="min-w-0">
-                                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">Shopping</p>
-                                <p className="truncate text-xs font-semibold text-muted">{title}</p>
+                                <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.14em] text-accent">
+                                    <Sparkles className="h-3 w-3" />
+                                    Shopping
+                                </p>
+                                <p className="truncate text-xs font-bold text-foreground">{title}</p>
                             </div>
                         </div>
-                        <Link href="/loja" className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-400">
+                        <Link href="/loja" className="flex flex-shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent">
                             Ver tudo <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                     </div>
@@ -72,17 +75,17 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
                                 const STORE_LABELS: Record<string, string> = { shopee: 'Shopee', amazon: 'Amazon', mercadolivre: 'Mercado Livre', magalu: 'Magalu', shein: 'Shein' }
                                 return (
                                     <a key={`${p.id}-${idx}`} href={p.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored"
-                                        className="flex-shrink-0 flex flex-col gap-1 group w-[72px]">
-                                        <div className="relative w-[72px] h-[72px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-orange-400/60 transition-all">
+                                        className="flex w-[76px] flex-shrink-0 flex-col gap-1 group">
+                                        <div className="relative h-[76px] w-[76px] overflow-hidden rounded-2xl border border-border bg-background transition-all group-hover:border-accent/60">
                                             <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                                            <div className="absolute bottom-0 inset-x-0 h-[14px] flex items-center justify-center bg-orange-500">
+                                            <div className="absolute bottom-0 inset-x-0 h-[15px] flex items-center justify-center bg-accent">
                                                 <span className="text-[7px] font-bold text-white tracking-wide">{STORE_LABELS[p.store] ?? p.store}</span>
                                             </div>
                                             {p.badge && (
-                                                <div className="absolute top-1 left-1 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none">{p.badge}</div>
+                                                <div className="absolute top-1 left-1 bg-accent text-white text-[7px] font-black px-1.5 py-0.5 rounded-full leading-none">{p.badge}</div>
                                             )}
                                         </div>
-                                        <p className="text-[9px] text-gray-500 dark:text-gray-400 leading-snug line-clamp-2">{p.name}</p>
+                                        <p className="text-[9px] text-muted leading-snug line-clamp-2 group-hover:text-foreground">{p.name}</p>
                                     </a>
                                 )
                             })}
@@ -95,30 +98,28 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
 
     return (
         <section className="mt-6 overflow-hidden">
-            <div className="flex items-stretch rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                {/* Label esquerda — vertical */}
-                <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 bg-orange-500 self-stretch">
-                    <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        Shopping
-                    </span>
+            <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
+                            <ShoppingBag className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="text-xs font-black uppercase tracking-[0.14em] text-accent">Shopping</p>
+                            <p className="truncate text-sm font-bold text-foreground">{title}</p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/loja"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                    >
+                        Ver loja
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
-
-                {/* Ticker */}
-                <div className="flex-1 min-w-0 py-3 px-2">
+                <div className="px-3 py-3">
                     <HomeVitrineTicker products={products} />
                 </div>
-
-                {/* CTA direita — vertical */}
-                <Link
-                    href="/loja"
-                    className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-                >
-                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 group-hover:text-orange-500 transition-colors" style={{ writingMode: 'vertical-rl' }}>
-                        Ver tudo
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                </Link>
             </div>
         </section>
     )

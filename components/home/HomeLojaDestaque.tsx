@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ShoppingBag, ArrowRight } from 'lucide-react'
+import { ArrowRight, ShoppingBag, Sparkles } from 'lucide-react'
 import { HomeVitrineTicker } from '@/components/home/HomeVitrineTicker'
 
 interface Product {
@@ -18,31 +18,32 @@ export function HomeLojaDestaque({ products }: { products: Product[] }) {
     if (products.length === 0) return null
 
     return (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-            <div className="flex items-stretch rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                {/* Label esquerda — vertical */}
-                <div className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 bg-orange-500 self-stretch">
-                    <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                        Shopping
-                    </span>
+        <section className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+            <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
+                <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
+                            <ShoppingBag className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.14em] text-accent">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Vitrine
+                            </p>
+                            <p className="truncate text-sm font-bold text-foreground">Achados K-pop selecionados</p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/loja"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                    >
+                        Ver loja
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
-
-                {/* Ticker */}
-                <div className="flex-1 min-w-0 py-3 px-2">
+                <div className="px-3 py-3">
                     <HomeVitrineTicker products={products} />
                 </div>
-
-                {/* CTA direita — vertical */}
-                <Link
-                    href="/loja"
-                    className="flex-shrink-0 flex flex-col items-center justify-center gap-2 px-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-                >
-                    <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 group-hover:text-orange-500 transition-colors" style={{ writingMode: 'vertical-rl' }}>
-                        Ver tudo
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                </Link>
             </div>
         </section>
     )

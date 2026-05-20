@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Star } from 'lucide-react'
 
 export const STORE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     shopee:        { label: 'Shopee',         color: 'text-orange-500', bg: 'bg-orange-500' },
@@ -49,6 +49,9 @@ function StoreLogo({ store, className = 'w-4 h-4' }: { store: string; className?
 interface ShopeeCardProps {
     id?: string
     name: string
+    description?: string | null
+    price?: string | null
+    originalPrice?: string | null
     rating?: number
     soldCount?: string
     sold?: string
@@ -67,11 +70,15 @@ function trackClick(id?: string) {
 export function ShopeeCard({
     id,
     name,
+    description,
+    price,
+    originalPrice,
     rating = 4.8,
     sold,
     soldCount,
     imageUrl,
     affiliateUrl,
+    badge,
     compact = false,
     store = 'shopee',
 }: ShopeeCardProps) {
@@ -92,6 +99,7 @@ export function ShopeeCard({
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{name}</p>
+                    {price && <p className="mt-1 text-sm font-black text-foreground">{price}</p>}
                     {vendidos && <p className="text-[10px] text-muted">{vendidos} vendidos</p>}
                 </div>
                 <div className="flex-shrink-0 self-center">
@@ -110,27 +118,52 @@ export function ShopeeCard({
             rel="noopener noreferrer sponsored"
             onClick={() => trackClick(id)}
             title={`Ver no ${cfg.label} (link externo)`}
-            className="flex flex-col rounded-2xl bg-surface border border-border/40 hover:border-orange-400/40 hover:shadow-lg hover:shadow-orange-500/5 transition-all group overflow-hidden"
+            className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-xl hover:shadow-black/5 group"
         >
             <div className="relative aspect-square bg-muted/10">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                {badge && (
+                    <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] rounded-full bg-accent px-2.5 py-1 text-[10px] font-black leading-none text-white shadow-sm">
+                        {badge}
+                    </span>
+                )}
                 {/* Indicador de link externo */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-1">
                     <ExternalLink className="w-3 h-3 text-white" />
                     <span className="text-[9px] text-white font-semibold">{cfg.label}</span>
                 </div>
             </div>
-            <div className="p-3 flex flex-col gap-1.5 flex-1">
-                <p className="text-xs text-foreground line-clamp-2 leading-snug font-medium flex-1">{name}</p>
-                <div className="flex items-center justify-between gap-1 mt-auto">
+            <div className="flex flex-1 flex-col gap-2 p-3">
+                <div className="flex items-center justify-between gap-2">
                     <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-1 rounded-full transition-opacity group-hover:opacity-80`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
                     </span>
-                    <span className="flex items-center gap-0.5 text-[9px] text-muted group-hover:text-orange-400 transition-colors">
-                        <ExternalLink className="w-3 h-3" />
-                        abre em nova aba
-                    </span>
+                    {rating > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-foreground">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            {rating.toFixed(1)}
+                        </span>
+                    )}
+                </div>
+                <p className="min-h-[2.25rem] text-sm font-bold leading-tight text-foreground line-clamp-2">{name}</p>
+                {description && <p className="hidden text-xs leading-snug text-muted line-clamp-2 sm:block">{description}</p>}
+                <div className="mt-auto space-y-2 pt-1">
+                    {(price || originalPrice) && (
+                        <div>
+                            {price && <p className="text-base font-black leading-none text-foreground">{price}</p>}
+                            {originalPrice && <p className="mt-1 text-[11px] text-muted line-through">{originalPrice}</p>}
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+                        <span className="min-w-0 truncate text-[10px] font-semibold text-muted">
+                            {vendidos ? `${vendidos} vendidos` : 'Selecionado pela curadoria'}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1 text-[10px] font-black text-accent transition-colors">
+                            Ver
+                            <ExternalLink className="h-3 w-3" />
+                        </span>
+                    </div>
                 </div>
             </div>
         </a>
