@@ -4,7 +4,8 @@ import { checkRateLimit, RateLimitPresets } from '@/lib/utils/api-rate-limiter'
 import { createLogger } from '@/lib/utils/logger'
 import { getErrorMessage } from '@/lib/utils/error'
 import { applyAgeRatingFilter } from '@/lib/utils/age-rating-filter'
-import { searchBlogPostsUnaccent } from '@/lib/utils/search-unaccent'
+import { searchShortcuts } from '@/lib/config/search-shortcuts'
+import { searchBlogPostsUnaccent, searchStoreProductsUnaccent } from '@/lib/utils/search-unaccent'
 
 const log = createLogger('SEARCH-FULL')
 
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('q')
 
     if (!query || query.trim().length < 2) {
-        return NextResponse.json({ artists: [], groups: [], news: [], productions: [] })
+        return NextResponse.json({ shortcuts: [], artists: [], groups: [], articles: [], productions: [], storeProducts: [] })
     }
 
     const searchTerm = query.trim()
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     try {
         const ageRatingFilter = await applyAgeRatingFilter()
 
-        const [artists, groups, productions, articles] = await Promise.all([
+        const [artists, groups, productions, articles, storeProducts] = await Promise.all([
             prisma.artist.findMany({
                 where: {
                     flaggedAsNonKorean: false,
@@ -97,9 +98,11 @@ export async function GET(request: NextRequest) {
             }),
 
             searchBlogPostsUnaccent(searchTerm, 20),
+            searchStoreProductsUnaccent(searchTerm, 20),
         ])
+        const shortcuts = searchShortcuts(searchTerm, 8)
 
-        return NextResponse.json({ artists, groups, articles, productions })
+        return NextResponse.json({ shortcuts, artists, groups, articles, productions, storeProducts })
     } catch (error: unknown) {
         log.error('Full search error', { error: getErrorMessage(error) })
         return NextResponse.json({ error: 'Search failed' }, { status: 500 })

@@ -40,8 +40,8 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
         <section className="bg-background py-7 sm:py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-4 flex items-end justify-between">
-                    <div className="border-l-[4px] border-violet pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Artigos</p>
+                    <div className="border-l-[4px] border-accent pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Artigos</p>
                         <h2 className="mt-1 text-[19px] font-black tracking-[-0.025em] text-foreground sm:text-[21px]">
                             Mais recentes
                         </h2>
@@ -59,7 +59,7 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className={`group grid overflow-hidden rounded-2xl border border-foreground shadow-[0_10px_28px_rgba(18,15,21,0.06)] transition-all hover:-translate-y-1 hover:border-foreground hover:shadow-[0_16px_38px_rgba(18,15,21,0.12)] ${
+                                className={`group grid overflow-hidden rounded-2xl border border-border shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/40 ${
                                     isLead
                                         ? "grid-cols-1 sm:col-span-2 lg:col-span-1"
                                         : "grid-cols-[88px_minmax(0,1fr)] sm:block"
@@ -67,7 +67,7 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                                     post.category?.slug === "cultura"
                                         ? "bg-surface-editorial/35"
                                         : post.category?.slug === "k-drama" || post.category?.slug === "filmes"
-                                            ? "bg-surface-media/35"
+                                            ? "bg-surface"
                                             : isLead
                                                 ? "bg-surface-tint/65"
                                                 : "bg-background"

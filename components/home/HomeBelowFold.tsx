@@ -33,12 +33,12 @@ export function HomeBelowFold({ watchProductions = [], feedPosts, showsByPlatfor
 
     const radarSection = (hasStreaming || trendingGroups.length > 0) ? (
         <section key="radar" className="bg-background pt-6 sm:pt-7">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 border-l-[4px] border-violet pl-3">
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Radar</p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 border-l-[4px] border-accent pl-3">
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Radar</p>
                 <h2 className="mt-1 text-[19px] sm:text-[21px] font-black tracking-[-0.025em] text-foreground">{radarTitle}</h2>
             </div>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="home-border-pop overflow-hidden rounded-2xl border-violet bg-background shadow-sm grid lg:grid-cols-[1fr_360px]">
+                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm grid lg:grid-cols-[1fr_360px]">
                     {hasStreaming && (
                         <div className="border-b lg:border-b-0 lg:border-r border-border">
                             <StreamingTopShows showsByPlatform={showsByPlatform} />

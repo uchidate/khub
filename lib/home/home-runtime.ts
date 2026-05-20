@@ -76,7 +76,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
                 createdAt: true,
                 agency: { select: { name: true } },
             },
-        }),
+        }).catch(() => []),
         prisma.streamingShow.findMany({
             where: { expiresAt: { gt: now } },
             take: 100,

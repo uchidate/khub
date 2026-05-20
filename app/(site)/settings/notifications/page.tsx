@@ -9,8 +9,8 @@ import { NotificationSettings } from '@/components/features/NotificationSettings
 import { Loader2 } from 'lucide-react'
 
 export const metadata = {
-    title: 'Configurações de Notificações',
-    description: 'Gerencie suas preferências de notificações por email',
+    title: 'Alertas',
+    description: 'Gerencie seus alertas do HallyuHub',
 }
 
 function LoadingSkeleton() {
@@ -60,10 +60,10 @@ async function NotificationSettingsContent() {
 
 export default async function NotificationSettingsPage() {
     return (
-        <PageTransition className="pt-24 md:pt-32 pb-20 px-4 sm:px-12 md:px-20 max-w-4xl mx-auto">
+        <PageTransition className="mx-auto max-w-5xl px-4 py-5 pb-12 sm:px-6 lg:px-8">
             <SectionHeader
-                title="Configurações de Notificações"
-                subtitle="Gerencie como e quando você quer receber notificações de novos artigos do blog"
+                title="Alertas"
+                subtitle="Controle o que chega no sininho e nos emails do HallyuHub."
             />
 
             <Suspense fallback={<LoadingSkeleton />}>

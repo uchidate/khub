@@ -110,14 +110,14 @@ export function HomeNowStrip({
     return (
         <section className="bg-background pb-6 sm:pb-7">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="home-border-pop overflow-hidden rounded-2xl border-violet bg-background shadow-sm">
-                    <div className="border-b border-violet/20 bg-surface-media px-4 py-3.5 sm:px-6">
-                        <div className="border-l-[3px] border-violet pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">Em movimento</p>
+                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+                    <div className="border-b border-border bg-surface px-4 py-3.5 sm:px-6">
+                        <div className="border-l-[3px] border-accent pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Em movimento</p>
                         <p className="mt-0.5 text-[15px] sm:text-[17px] font-bold text-foreground">{heading}</p>
                         </div>
                     </div>
-                    <div className="grid divide-y divide-violet/15 sm:grid-cols-2 sm:divide-y-0 sm:[&>*:nth-child(n+3)]:border-t sm:[&>*:nth-child(n+3)]:border-violet/15 lg:grid-cols-4 lg:divide-x lg:[&>*:nth-child(n+3)]:border-t-0">
+                    <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:[&>*:nth-child(n+3)]:border-t sm:[&>*:nth-child(n+3)]:border-border lg:grid-cols-4 lg:divide-x lg:[&>*:nth-child(n+3)]:border-t-0">
                         {artist && (
                             <NowCard
                                 href={`/artists/${artist.slug ?? artist.id}`}

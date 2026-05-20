@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
+import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { NotificationBell } from "@/components/features/NotificationBell"
@@ -103,15 +103,17 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
                         {/* Right: search + theme toggle + auth */}
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                             {/* Search bar (tablet+) */}
-                            <div className="hidden sm:flex items-center gap-2 bg-surface border border-border rounded-full px-3 py-[7px] text-[11.5px] text-muted cursor-text min-w-[110px] md:min-w-[150px] lg:min-w-[200px]"
+                            <button
+                                type="button"
+                                className="hidden min-w-[132px] items-center gap-2 rounded-full border border-border bg-surface px-3 py-[7px] text-left text-[11.5px] text-muted transition-colors hover:border-accent/35 hover:text-foreground md:min-w-[180px] lg:flex lg:min-w-[230px]"
                                 onClick={() => openSearch()}
                             >
-                                <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 opacity-50">
-                                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-                                    <path d="M10 10l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>
-                                Buscar artistas, dramas…
-                            </div>
+                                <Search className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
+                                <span className="min-w-0 flex-1 truncate">Buscar artistas, artigos, dramas...</span>
+                                <span className="hidden items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-black text-muted xl:inline-flex">
+                                    <Command className="h-2.5 w-2.5" /> K
+                                </span>
+                            </button>
 
                             {/* Mobile search icon */}
                             <button

@@ -132,6 +132,17 @@ type BlogPostSearchResult = {
     publishedAt: Date
 }
 
+type StoreProductSearchResult = {
+    id: string
+    name: string
+    description: string | null
+    price: string | null
+    imageUrl: string
+    store: string
+    category: string
+    badge: string | null
+}
+
 /**
  * Busca artigos de blog com suporte a acentos no título
  */
@@ -151,6 +162,34 @@ export async function searchBlogPostsUnaccent(
             OR unaccent(b.excerpt) ILIKE unaccent(${pattern})
           )
         ORDER BY b."publishedAt" DESC
+        LIMIT ${limit}
+    `
+    return rows
+}
+
+/**
+ * Busca produtos ativos da loja com suporte a acentos no nome, descrição e tags.
+ */
+export async function searchStoreProductsUnaccent(
+    searchTerm: string,
+    limit = 5
+): Promise<StoreProductSearchResult[]> {
+    const pattern = `%${searchTerm}%`
+
+    const rows = await prisma.$queryRaw<StoreProductSearchResult[]>`
+        SELECT p.id, p.name, p.description, p.price, p."imageUrl", p.store, p.category, p.badge
+        FROM "StoreProduct" p
+        WHERE p."isActive" = true
+          AND (
+            unaccent(p.name) ILIKE unaccent(${pattern})
+            OR unaccent(COALESCE(p.description, '')) ILIKE unaccent(${pattern})
+            OR unaccent(p.category) ILIKE unaccent(${pattern})
+            OR EXISTS (
+              SELECT 1 FROM unnest(p.tags) tag
+              WHERE unaccent(tag) ILIKE unaccent(${pattern})
+            )
+          )
+        ORDER BY p.featured DESC, p.position ASC, p."createdAt" DESC
         LIMIT ${limit}
     `
     return rows

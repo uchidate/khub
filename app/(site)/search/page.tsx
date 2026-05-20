@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
-import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star, BookOpen } from 'lucide-react'
+import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star, BookOpen, Compass, ShoppingBag } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { nameToGradient } from '@/lib/utils'
 
@@ -47,14 +47,35 @@ interface Article {
     publishedAt: string
 }
 
+interface SearchShortcut {
+    id: string
+    title: string
+    description: string
+    href: string
+    kind: 'section' | 'feature'
+}
+
+interface StoreProduct {
+    id: string
+    name: string
+    description: string | null
+    price: string | null
+    imageUrl: string
+    store: string
+    category: string
+    badge: string | null
+}
+
 interface SearchData {
+    shortcuts: SearchShortcut[]
     artists: Artist[]
     groups: Group[]
     productions: Production[]
     articles: Article[]
+    storeProducts: StoreProduct[]
 }
 
-type FilterType = 'all' | 'artists' | 'groups' | 'productions' | 'articles'
+type FilterType = 'all' | 'shortcuts' | 'artists' | 'groups' | 'productions' | 'articles' | 'storeProducts'
 
 function SectionHeader({ icon, title, count }: { icon: React.ReactNode; title: string; count: number }) {
     return (
@@ -104,24 +125,30 @@ function SearchContent() {
         router.replace(`/search?${params.toString()}`, { scroll: false })
     }
 
+    const shortcuts = deferredData?.shortcuts ?? []
     const artists = deferredData?.artists ?? []
     const groups = deferredData?.groups ?? []
     const productions = deferredData?.productions ?? []
     const articles = deferredData?.articles ?? []
-    const total = artists.length + groups.length + productions.length + articles.length
+    const storeProducts = deferredData?.storeProducts ?? []
+    const total = shortcuts.length + artists.length + groups.length + productions.length + articles.length + storeProducts.length
 
     const tabs: { key: FilterType; label: string; count: number; icon: React.ReactNode }[] = [
         { key: 'all', label: 'Todos', count: total, icon: <Search size={13} /> },
+        { key: 'shortcuts', label: 'Áreas', count: shortcuts.length, icon: <Compass size={13} /> },
         { key: 'artists', label: 'Artistas', count: artists.length, icon: <User size={13} /> },
         { key: 'groups', label: 'Grupos', count: groups.length, icon: <Users size={13} /> },
         { key: 'productions', label: 'Produções', count: productions.length, icon: <Film size={13} /> },
         { key: 'articles', label: 'Artigos', count: articles.length, icon: <BookOpen size={13} /> },
+        { key: 'storeProducts', label: 'Loja', count: storeProducts.length, icon: <ShoppingBag size={13} /> },
     ]
 
+    const showShortcuts = activeFilter === 'all' || activeFilter === 'shortcuts'
     const showArtists = activeFilter === 'all' || activeFilter === 'artists'
     const showGroups = activeFilter === 'all' || activeFilter === 'groups'
     const showProductions = activeFilter === 'all' || activeFilter === 'productions'
     const showArticles = activeFilter === 'all' || activeFilter === 'articles'
+    const showStoreProducts = activeFilter === 'all' || activeFilter === 'storeProducts'
 
     return (
         <>
@@ -158,7 +185,7 @@ function SearchContent() {
                         <Search className="w-7 h-7 text-muted/40" />
                     </div>
                     <p className="text-muted text-base font-medium mb-1">Buscar no HallyuHub</p>
-                    <p className="text-muted/60 text-sm">Artistas, grupos, dramas e filmes coreanos</p>
+                    <p className="text-muted/60 text-sm">Artistas, grupos, dramas, filmes, artigos, loja e agenda</p>
                 </div>
             ) : loading && !deferredData ? (
                 <div className="space-y-10">
@@ -187,6 +214,22 @@ function SearchContent() {
                         resultado{total !== 1 ? 's' : ''} para{' '}
                         <span className="text-accent font-semibold">&quot;{query}&quot;</span>
                     </p>
+
+                    {/* Atalhos */}
+                    {showShortcuts && shortcuts.length > 0 && (
+                        <section>
+                            <SectionHeader icon={<Compass size={14} />} title="Áreas do site" count={shortcuts.length} />
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {shortcuts.map(shortcut => (
+                                    <Link key={shortcut.id} href={shortcut.href}
+                                        className="group rounded-2xl border border-border bg-surface/70 p-4 transition-colors hover:border-accent/40 hover:bg-accent-soft/30">
+                                        <p className="text-sm font-black text-foreground group-hover:text-accent transition-colors">{shortcut.title}</p>
+                                        <p className="mt-2 line-clamp-3 text-xs leading-5 text-muted">{shortcut.description}</p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* Artistas */}
                     {showArtists && artists.length > 0 && (
@@ -313,6 +356,39 @@ function SearchContent() {
                                         </div>
                                     </Link>
                                 ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Loja */}
+                    {showStoreProducts && storeProducts.length > 0 && (
+                        <section>
+                            <SectionHeader icon={<ShoppingBag size={14} />} title="Loja" count={storeProducts.length} />
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                {storeProducts.map(product => (
+                                    <Link key={product.id} href="/loja"
+                                        className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
+                                        <div className="relative aspect-square rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
+                                            <Image src={product.imageUrl} alt={product.name} fill
+                                                sizes="(max-width: 640px) 50vw, 20vw"
+                                                className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                                                unoptimized />
+                                            {product.badge && (
+                                                <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[10px] font-black text-white">
+                                                    {product.badge}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{product.name}</p>
+                                        <p className="text-[10px] text-muted mt-0.5">{product.price ? `${product.price} · ` : ''}{product.store}</p>
+                                    </Link>
+                                ))}
+                            </div>
+                            <div className="mt-4">
+                                <Link href="/loja"
+                                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-semibold">
+                                    Ver vitrine completa <ChevronRight size={12} />
+                                </Link>
                             </div>
                         </section>
                     )}

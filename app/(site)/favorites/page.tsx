@@ -200,9 +200,9 @@ function StatsBar({ counts }: { counts: Record<TabKey, number> }) {
     ] as const
 
     return (
-        <div className="grid grid-cols-4 gap-3 mb-8">
+        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {stats.map(({ key, label, icon: Icon, color }) => (
-                <div key={key} className="bg-surface rounded-xl p-3 text-center border border-border">
+                <div key={key} className="rounded-2xl border border-border bg-surface p-3 text-center shadow-sm">
                     <Icon className={`w-4 h-4 mx-auto mb-1 ${color}`} />
                     <p className="text-xl font-black text-foreground">{counts[key]}</p>
                     <p className="text-[10px] text-muted font-medium">{label}</p>
@@ -264,21 +264,24 @@ export default function FavoritesPage() {
     }
 
     return (
-        <div className="py-8 md:py-12 pb-20 px-4 sm:px-12 md:px-20 min-h-screen bg-background">
+        <div className="mx-auto min-h-screen max-w-7xl bg-background px-4 py-5 pb-12 sm:px-6 lg:px-8">
 
             {/* Header */}
-            <header className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    <Heart className="w-8 h-8 text-red-500 fill-red-500" />
-                    <h1 className="text-4xl md:text-6xl font-black hallyu-gradient-text uppercase tracking-tighter italic">
+            <header className="mb-5 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+                <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
+                    <Heart className="h-3 w-3 fill-current" />
+                    Biblioteca pessoal
+                </p>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
                         Meus Favoritos
                     </h1>
+                    <p className="text-sm leading-5 text-muted">
+                        {status === 'authenticated'
+                            ? `${counts.all} ${counts.all === 1 ? 'item favoritado' : 'itens favoritados'}`
+                            : 'Faça login para sincronizar seus favoritos entre dispositivos'}
+                    </p>
                 </div>
-                <p className="text-muted text-sm font-medium">
-                    {status === 'authenticated'
-                        ? `${counts.all} ${counts.all === 1 ? 'item favoritado' : 'itens favoritados'}`
-                        : 'Faça login para sincronizar seus favoritos entre dispositivos'}
-                </p>
             </header>
 
             {/* Unauthenticated */}
@@ -341,7 +344,7 @@ export default function FavoritesPage() {
                             <StatsBar counts={counts} />
 
                             {/* Tabs */}
-                            <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+                            <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
                                 {TABS.map(tab => {
                                     const count   = counts[tab.key]
                                     if (tab.key !== 'all' && count === 0) return null
