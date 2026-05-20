@@ -59,7 +59,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex items-center justify-center px-4 py-16">
+    <div className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="border border-border rounded-2xl p-8 bg-surface">
           <div className="mb-6">

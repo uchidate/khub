@@ -104,7 +104,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="flex items-center justify-center px-4">
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[360px] text-center">
           <div className="border border-border rounded-2xl p-8 bg-background">
             <div className="w-12 h-12 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -123,7 +123,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex items-center justify-center px-4 py-16">
+    <div className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-[360px]">
 
         <div className="border border-border rounded-2xl p-6 bg-surface">
