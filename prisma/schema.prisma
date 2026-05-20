@@ -895,6 +895,11 @@ model SystemSettings {
   homeAffinityArtistWeight  Int      @default(3) // peso de afinidade para artista em alta
   homeAffinityGroupWeight   Int      @default(3) // peso de afinidade para grupo em alta
   homeAffinityProductionWeight Int   @default(2) // peso de afinidade para produção no radar
+  // Mercado Livre OAuth token (renovado automaticamente pelo cron sync-ml)
+  mlAccessToken             String?
+  mlRefreshToken            String?
+  mlTokenExpiresAt          DateTime?
+  mlUserId                  String?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
@@ -1387,7 +1392,10 @@ model StoreProduct {
   badge         String?            // "-30%" | "Top vendas" | "Novo" | null
   rating        Float?
   soldCount     String?            // "2.3k" — texto livre vindo da loja
+  reviewCount   Int?               // número de avaliações (ML)
+  externalId    String?  @unique   // ID do produto na loja externa (MLB123...)
   isActive      Boolean  @default(true)
+  isHidden      Boolean  @default(false) // oculto pelo sync (produto sumiu do ML)
   featured      Boolean  @default(false)
   position      Int      @default(0)  // ordem de exibição (menor = primeiro)
   tags          String[]
@@ -1398,6 +1406,7 @@ model StoreProduct {
   @@index([category, isActive, position])
   @@index([store, isActive])
   @@index([featured, isActive])
+  @@index([externalId])
 }
 
 model QuizQuestion {
