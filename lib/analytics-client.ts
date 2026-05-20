@@ -121,6 +121,11 @@ export async function getTopArtists(days = 30, limit = 10) {
     return pages.filter(p => p.path.startsWith('/artists/') && p.path !== '/artists/').slice(0, limit)
 }
 
+export async function getTopGroups(days = 30, limit = 10) {
+    const pages = await getTopPages(days, 150)
+    return pages.filter(p => p.path.startsWith('/groups/') && p.path !== '/groups/').slice(0, limit)
+}
+
 export async function getTopCountries(days = 30, limit = 8) {
     const client = getClient()
     const [response] = await client.runReport({
