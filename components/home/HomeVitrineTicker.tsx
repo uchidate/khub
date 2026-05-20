@@ -29,8 +29,8 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
 
     return (
         <div className="relative">
-            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute left-0 top-0 bottom-0 z-10 bg-gradient-to-r from-white dark:from-gray-900 to-transparent`} />
-            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute right-0 top-0 bottom-0 z-10 bg-gradient-to-l from-white dark:from-gray-900 to-transparent`} />
+            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 left-0 top-0 z-10 bg-gradient-to-r from-surface to-transparent`} />
+            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 right-0 top-0 z-10 bg-gradient-to-l from-surface to-transparent`} />
 
             <div className="overflow-hidden">
                 <div
@@ -47,29 +47,29 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
                                 rel="noopener noreferrer sponsored"
                                 onClick={() => trackClick(p.id)}
                                 title={p.name}
-                                className={`${compact ? 'w-[66px] sm:w-[88px]' : 'w-[88px]'} flex-shrink-0 flex flex-col gap-1.5 group`}
+                                className={`${compact ? 'w-[66px] sm:w-[88px]' : 'w-[96px]'} flex-shrink-0 flex flex-col gap-1.5 group`}
                             >
                                 {/* Imagem */}
-                                <div className={`${compact ? 'w-[66px] h-[66px] min-w-[66px] min-h-[66px] rounded-lg sm:w-[88px] sm:h-[88px] sm:min-w-[88px] sm:min-h-[88px] sm:rounded-xl' : 'w-[88px] h-[88px] min-w-[88px] min-h-[88px] rounded-xl'} relative overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-orange-400/60 group-hover:shadow-md group-hover:shadow-orange-500/10 transition-all duration-200`}>
+                                <div className={`${compact ? 'w-[66px] h-[66px] min-w-[66px] min-h-[66px] rounded-xl sm:w-[88px] sm:h-[88px] sm:min-w-[88px] sm:min-h-[88px] sm:rounded-2xl' : 'h-[96px] w-[96px] min-h-[96px] min-w-[96px] rounded-2xl'} relative overflow-hidden border border-border bg-background transition-all duration-200 group-hover:border-accent/60 group-hover:shadow-md group-hover:shadow-black/5`}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={p.imageUrl}
                                         alt={p.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     />
-                                    <div className={`${compact ? 'h-[13px] sm:h-[15px]' : 'h-[15px]'} absolute bottom-0 inset-x-0 flex items-center justify-center ${cfg.bg}`}>
+                                    <div className={`${compact ? 'h-[13px] sm:h-[15px]' : 'h-[17px]'} absolute inset-x-0 bottom-0 flex items-center justify-center ${cfg.bg}`}>
                                         <span className={`${compact ? 'text-[6.5px] sm:text-[7px]' : 'text-[7px]'} font-bold tracking-wide ${cfg.dark ? 'text-[#333]' : 'text-white'}`}>
                                             {cfg.label}
                                         </span>
                                     </div>
                                     {p.badge && (
-                                        <div className="absolute top-1 left-1 bg-red-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-full leading-none">
+                                        <div className="absolute left-1 top-1 rounded-full bg-accent px-1.5 py-0.5 text-[7px] font-black leading-none text-white">
                                             {p.badge}
                                         </div>
                                     )}
                                 </div>
                                 {/* Nome */}
-                                <p className={`${compact ? 'text-[9px] sm:text-[10px]' : 'text-[10px]'} text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100 leading-snug line-clamp-2 transition-colors duration-200 w-full`}>
+                                <p className={`${compact ? 'text-[9px] sm:text-[10px]' : 'text-[10px]'} w-full text-muted transition-colors duration-200 line-clamp-2 group-hover:text-foreground leading-snug`}>
                                     {p.name}
                                 </p>
                             </a>

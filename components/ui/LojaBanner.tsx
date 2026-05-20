@@ -1,20 +1,29 @@
-import { Heart } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Heart, ShoppingBag } from 'lucide-react'
 
 export function LojaBanner() {
     return (
-        <div className="relative overflow-hidden rounded-2xl bg-orange-500/8 border border-orange-500/20 p-5">
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-orange-500/5 rounded-full" />
-
-            <div className="relative flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full bg-orange-500/10 flex items-center justify-center">
-                    <Heart className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-4 shadow-sm">
+            <div className="relative flex items-center gap-3">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
+                    <ShoppingBag className="h-4 w-4" />
                 </div>
-                <div>
-                    <p className="text-sm font-bold text-foreground">
-                        Apoie o HallyuHub comprando pelo nosso link
+                <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 text-sm font-black text-foreground">
+                        Apoie o HallyuHub comprando pela vitrine
+                        <Heart className="hidden h-3.5 w-3.5 fill-accent text-accent sm:block" />
                     </p>
-                    <p className="text-xs text-muted mt-0.5">Mesmo produto, mesmo preço — a gente recebe uma comissão da loja.</p>
+                    <p className="mt-0.5 text-xs leading-5 text-muted">
+                        Mesmo produto, mesmo preço. A comissão ajuda a manter o site.
+                    </p>
                 </div>
+                <Link
+                    href="/loja"
+                    className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent sm:inline-flex"
+                >
+                    Ver loja
+                    <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
             </div>
         </div>
     )

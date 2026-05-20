@@ -1,35 +1,37 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { ShopeeCard, ShopeeSectionHeader, STORE_CONFIG } from '@/components/ui/ShopeeCard'
-import { Search, X, SlidersHorizontal } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import type { ComponentType } from 'react'
+import { ShopeeCard, STORE_CONFIG } from '@/components/ui/ShopeeCard'
+import { ArrowDownAZ, Flame, Grid2X2, Search, SlidersHorizontal, Sparkles, Star, Store, X } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
-    kpop_album:  'Álbuns K-Pop',
-    lightstick:  'Lightsticks',
-    kbeauty:     'K-Beauty',
-    kdrama:      'K-Drama',
-    clothing:    'Roupas',
-    acessorios:  'Acessórios',
-    photocard:   'Photocards',
-    alimenta:    'Alimentação',
-    outros:      'Outros',
+    kpop_album: 'Álbuns K-Pop',
+    lightstick: 'Lightsticks',
+    kbeauty: 'K-Beauty',
+    kdrama: 'K-Drama',
+    clothing: 'Moda',
+    acessorios: 'Acessórios',
+    photocard: 'Photocards',
+    alimenta: 'Snacks',
+    outros: 'Outros',
 }
 
 const PLATFORM_FILTERS = [
-    { value: '',             label: 'Todas as lojas' },
-    { value: 'shopee',       label: 'Shopee' },
+    { value: '', label: 'Todas' },
+    { value: 'shopee', label: 'Shopee' },
     { value: 'mercadolivre', label: 'Mercado Livre' },
-    { value: 'amazon',       label: 'Amazon' },
-    { value: 'magalu',       label: 'Magalu' },
-    { value: 'shein',        label: 'Shein' },
+    { value: 'amazon', label: 'Amazon' },
+    { value: 'magalu', label: 'Magalu' },
+    { value: 'shein', label: 'Shein' },
 ]
 
-type SortOption = 'default' | 'rating' | 'featured'
+type SortOption = 'curated' | 'rating' | 'featured' | 'newest' | 'name'
 
 interface Product {
     id: string
     name: string
+    description?: string | null
     price?: string | null
     originalPrice?: string | null
     imageUrl: string
@@ -42,195 +44,259 @@ interface Product {
     featured?: boolean
     position?: number
     tags: string[]
+    createdAt?: Date | string
+}
+
+const SORT_OPTIONS: Array<{ value: SortOption; label: string; icon: ComponentType<{ className?: string }> }> = [
+    { value: 'curated', label: 'Curadoria', icon: Sparkles },
+    { value: 'featured', label: 'Destaques', icon: Flame },
+    { value: 'rating', label: 'Avaliação', icon: Star },
+    { value: 'newest', label: 'Novos', icon: Grid2X2 },
+    { value: 'name', label: 'A-Z', icon: ArrowDownAZ },
+]
+
+function categoryLabel(category: string) {
+    return CATEGORY_LABELS[category] ?? category.replace(/_/g, ' ')
 }
 
 export function LojaClient({ products }: { products: Product[] }) {
     const [activeCategory, setActiveCategory] = useState('')
     const [activePlatform, setActivePlatform] = useState('')
     const [search, setSearch] = useState('')
-    const [sort, setSort] = useState<SortOption>('default')
+    const [sort, setSort] = useState<SortOption>('curated')
     const [showFilters, setShowFilters] = useState(false)
 
-    // Só mostra plataformas que têm produtos
     const availablePlatforms = useMemo(() => {
         const stores = new Set(products.map(p => p.store))
         return PLATFORM_FILTERS.filter(f => f.value === '' || stores.has(f.value))
     }, [products])
 
     const categories = useMemo(() => {
-        const seen = new Set<string>()
-        return products
+        const counts = products
             .filter(p => !activePlatform || p.store === activePlatform)
-            .map(p => p.category)
-            .filter(c => !seen.has(c) && seen.add(c))
+            .reduce<Record<string, number>>((acc, product) => {
+                acc[product.category] = (acc[product.category] ?? 0) + 1
+                return acc
+            }, {})
+
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1] || categoryLabel(a[0]).localeCompare(categoryLabel(b[0]), 'pt-BR'))
+            .map(([value, count]) => ({ value, count, label: categoryLabel(value) }))
     }, [products, activePlatform])
 
     const filtered = useMemo(() => {
-        let list = [...products]
+        const query = search.trim().toLowerCase()
+        const list = products.filter(product => {
+            if (activePlatform && product.store !== activePlatform) return false
+            if (activeCategory && product.category !== activeCategory) return false
+            if (!query) return true
 
-        if (activePlatform) list = list.filter(p => p.store === activePlatform)
-        if (activeCategory) list = list.filter(p => p.category === activeCategory)
-
-        if (search.trim()) {
-            const q = search.toLowerCase()
-            list = list.filter(p =>
-                p.name.toLowerCase().includes(q) ||
-                p.tags.some(t => t.toLowerCase().includes(q))
+            return (
+                product.name.toLowerCase().includes(query) ||
+                product.description?.toLowerCase().includes(query) ||
+                product.tags.some(tag => tag.toLowerCase().includes(query)) ||
+                categoryLabel(product.category).toLowerCase().includes(query)
             )
-        }
+        })
 
-        switch (sort) {
-            case 'rating':   list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break
-            case 'featured': list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
-            default:         list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)); break
-        }
-
-        return list
+        return list.sort((a, b) => {
+            if (sort === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
+            if (sort === 'featured') return Number(b.featured) - Number(a.featured)
+            if (sort === 'newest') return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+            if (sort === 'name') return a.name.localeCompare(b.name, 'pt-BR')
+            return (Number(b.featured) - Number(a.featured)) || ((a.position ?? 999) - (b.position ?? 999)) || a.name.localeCompare(b.name, 'pt-BR')
+        })
     }, [products, activePlatform, activeCategory, search, sort])
 
-    const useFlat = sort !== 'default'
-
     const grouped = useMemo(() => {
-        if (useFlat) return null
-        return filtered.reduce<Record<string, Product[]>>((acc, p) => {
-            if (!acc[p.category]) acc[p.category] = []
-            acc[p.category].push(p)
+        return filtered.reduce<Record<string, Product[]>>((acc, product) => {
+            if (!acc[product.category]) acc[product.category] = []
+            acc[product.category].push(product)
             return acc
         }, {})
-    }, [filtered, useFlat])
+    }, [filtered])
 
+    const groupedEntries = Object.entries(grouped)
     const hasResults = filtered.length > 0
-    const hasFilters = search || activeCategory || activePlatform || sort !== 'default'
-    const clearAll = () => { setSearch(''); setActiveCategory(''); setActivePlatform(''); setSort('default') }
+    const hasFilters = Boolean(search || activeCategory || activePlatform || sort !== 'curated')
+    const clearAll = () => {
+        setSearch('')
+        setActiveCategory('')
+        setActivePlatform('')
+        setSort('curated')
+    }
 
     return (
-        <div className="space-y-5">
-            {/* Busca + botão filtros */}
-            <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
-                    <input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Buscar produtos..."
-                        className="w-full text-sm bg-surface border border-border rounded-xl pl-9 pr-8 py-2.5 text-foreground focus:outline-none focus:border-orange-400/50 focus:ring-1 focus:ring-orange-400/20 transition-colors"
-                    />
-                    {search && (
-                        <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
-                            <X className="w-3.5 h-3.5" />
-                        </button>
-                    )}
-                </div>
-                <button
-                    onClick={() => setShowFilters(v => !v)}
-                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl border transition-colors ${showFilters || sort !== 'default' ? 'bg-orange-500 text-white border-orange-500' : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
-                >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    Filtros
-                </button>
-                {hasFilters && (
-                    <button onClick={clearAll} className="text-xs text-muted hover:text-orange-500 transition-colors flex items-center gap-1">
-                        <X className="w-3 h-3" />Limpar
-                    </button>
-                )}
-            </div>
-
-            {/* Painel de filtros */}
-            {showFilters && (
-                <div className="flex flex-wrap gap-3 p-4 bg-surface/50 rounded-xl border border-border/40">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted font-medium">Ordenar:</span>
-                        <select
-                            value={sort}
-                            onChange={e => setSort(e.target.value as SortOption)}
-                            className="text-xs bg-surface border border-border rounded-lg px-2.5 py-1.5 text-foreground focus:outline-none focus:border-orange-400/50"
-                        >
-                            <option value="default">Padrão</option>
-                            <option value="rating">Melhor avaliação</option>
-                            <option value="featured">Destaque</option>
-                        </select>
-                    </div>
-                </div>
-            )}
-
-            {/* Filtro de plataforma — pills horizontais */}
-            {availablePlatforms.length > 2 && (
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-                    {availablePlatforms.map(p => {
-                        const cfg = p.value ? STORE_CONFIG[p.value] : null
-                        const isActive = activePlatform === p.value
-                        return (
-                            <button
-                                key={p.value}
-                                onClick={() => { setActivePlatform(p.value); setActiveCategory('') }}
-                                className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors border ${
-                                    isActive
-                                        ? `${cfg?.bg ?? 'bg-orange-500'} text-white border-transparent shadow-sm`
-                                        : 'bg-surface border-border text-muted hover:text-foreground hover:border-orange-400/40'
-                                }`}
-                            >
-                                {p.label}
-                            </button>
-                        )
-                    })}
-                </div>
-            )}
-
-            {/* Tabs de categoria */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-                <button
-                    onClick={() => setActiveCategory('')}
-                    className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors ${!activeCategory ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
-                >
-                    Todos
-                </button>
-                {categories.map(cat => (
-                    <button
-                        key={cat}
-                        onClick={() => setActiveCategory(c => c === cat ? '' : cat)}
-                        className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-colors ${activeCategory === cat ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30' : 'bg-surface border border-border text-muted hover:text-foreground hover:border-orange-400/40'}`}
-                    >
-                        {CATEGORY_LABELS[cat] ?? cat}
-                    </button>
-                ))}
-            </div>
-
-            {/* Resultados */}
-            {!hasResults ? (
-                <div className="flex flex-col items-center justify-center py-16 text-muted gap-2">
-                    <Search className="w-8 h-8 opacity-20" />
-                    <p className="text-sm">Nenhum produto encontrado</p>
-                    <button onClick={clearAll} className="text-xs text-orange-500 hover:underline mt-1">Limpar filtros</button>
-                </div>
-            ) : useFlat ? (
+        <section className="scroll-mt-28" id="catalogo">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-xs text-muted mb-4">{filtered.length} produto{filtered.length !== 1 ? 's' : ''}</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {filtered.map(p => (
-                            <ShopeeCard key={p.id} {...p}
-                                rating={p.rating ?? undefined}
-                                badge={p.badge ?? undefined}
-                                soldCount={p.soldCount ?? undefined}
-                            />
-                        ))}
-                    </div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-accent">Catálogo completo</p>
+                    <h2 className="mt-1 text-2xl font-black tracking-tight text-foreground">Encontre por fandom, loja ou categoria</h2>
                 </div>
-            ) : (
-                Object.entries(grouped!).map(([category, items]) => (
-                    <section key={category}>
-                        <ShopeeSectionHeader title={CATEGORY_LABELS[category] ?? category} store={items[0]?.store} />
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            {items.map(p => (
-                                <ShopeeCard key={p.id} {...p}
-                                    rating={p.rating ?? undefined}
-                                    badge={p.badge ?? undefined}
-                                    soldCount={p.soldCount ?? undefined}
+                <p className="text-sm text-muted">
+                    {filtered.length} de {products.length} produto{products.length !== 1 ? 's' : ''}
+                </p>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+                <aside className="lg:sticky lg:top-[calc(var(--site-sticky-top)+1rem)] lg:self-start">
+                    <div className="space-y-4 rounded-3xl border border-border bg-surface p-4">
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                            <input
+                                value={search}
+                                onChange={event => setSearch(event.target.value)}
+                                placeholder="Buscar produto, grupo..."
+                                className="w-full rounded-2xl border-border bg-background py-3 pl-9 pr-9 text-sm text-foreground transition-colors focus:border-accent"
+                            />
+                            {search && (
+                                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground" aria-label="Limpar busca">
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => setShowFilters(value => !value)}
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-foreground transition-colors hover:border-accent/40 lg:hidden"
+                        >
+                            <SlidersHorizontal className="h-4 w-4" />
+                            Filtros
+                        </button>
+
+                        <div className={`${showFilters ? 'block' : 'hidden'} space-y-5 lg:block`}>
+                            <div>
+                                <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
+                                    <Store className="h-3.5 w-3.5" />
+                                    Lojas
+                                </div>
+                                <div className="flex flex-wrap gap-2 lg:flex-col">
+                                    {availablePlatforms.map(platform => {
+                                        const cfg = platform.value ? STORE_CONFIG[platform.value] : null
+                                        const isActive = activePlatform === platform.value
+                                        return (
+                                            <button
+                                                key={platform.value}
+                                                onClick={() => { setActivePlatform(platform.value); setActiveCategory('') }}
+                                                className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                                    isActive
+                                                        ? 'border-accent bg-accent text-white'
+                                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
+                                                }`}
+                                            >
+                                                <span>{platform.label}</span>
+                                                {cfg && <span className={`h-2 w-2 rounded-full ${cfg.bg}`} />}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
+                                    <Grid2X2 className="h-3.5 w-3.5" />
+                                    Categorias
+                                </div>
+                                <div className="flex max-h-72 flex-wrap gap-2 overflow-y-auto overflow-x-hidden pr-1 scrollbar-none lg:flex-col">
+                                    <button
+                                        onClick={() => setActiveCategory('')}
+                                        className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                            !activeCategory
+                                                ? 'border-accent bg-accent text-white'
+                                                : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
+                                        }`}
+                                    >
+                                        <span>Todas</span>
+                                        <span>{products.filter(p => !activePlatform || p.store === activePlatform).length}</span>
+                                    </button>
+                                    {categories.map(category => (
+                                        <button
+                                            key={category.value}
+                                            onClick={() => setActiveCategory(value => value === category.value ? '' : category.value)}
+                                            className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                                activeCategory === category.value
+                                                    ? 'border-accent bg-accent text-white'
+                                                    : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
+                                            }`}
+                                        >
+                                            <span className="truncate">{category.label}</span>
+                                            <span>{category.count}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {hasFilters && (
+                            <button onClick={clearAll} className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-2.5 text-xs font-bold text-muted transition-colors hover:border-accent/40 hover:text-accent">
+                                <X className="h-3.5 w-3.5" />
+                                Limpar filtros
+                            </button>
+                        )}
+                    </div>
+                </aside>
+
+                <div className="min-w-0 space-y-6">
+                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                        {SORT_OPTIONS.map(option => {
+                            const Icon = option.icon
+                            const isActive = sort === option.value
+                            return (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setSort(option.value)}
+                                    className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-black transition-colors ${
+                                        isActive
+                                            ? 'border-foreground bg-foreground text-background'
+                                            : 'border-border bg-surface text-muted hover:border-accent/40 hover:text-foreground'
+                                    }`}
+                                >
+                                    <Icon className="h-3.5 w-3.5" />
+                                    {option.label}
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    {!hasResults ? (
+                        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-surface py-16 text-muted">
+                            <Search className="h-8 w-8 opacity-25" />
+                            <p className="text-sm">Nenhum produto encontrado</p>
+                            <button onClick={clearAll} className="text-xs font-bold text-accent hover:underline">Limpar filtros</button>
+                        </div>
+                    ) : sort === 'curated' && !search && !activeCategory ? (
+                        groupedEntries.map(([category, items]) => (
+                            <section key={category} id={`categoria-${category}`} className="scroll-mt-28">
+                                <div className="mb-3 flex items-end justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-xl font-black tracking-tight text-foreground">{categoryLabel(category)}</h3>
+                                        <p className="text-xs text-muted">{items.length} produto{items.length !== 1 ? 's' : ''} selecionado{items.length !== 1 ? 's' : ''}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                                    {items.map(product => (
+                                        <ShopeeCard key={product.id} {...product}
+                                            rating={product.rating ?? undefined}
+                                            badge={product.badge ?? undefined}
+                                            soldCount={product.soldCount ?? undefined}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        ))
+                    ) : (
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                            {filtered.map(product => (
+                                <ShopeeCard key={product.id} {...product}
+                                    rating={product.rating ?? undefined}
+                                    badge={product.badge ?? undefined}
+                                    soldCount={product.soldCount ?? undefined}
                                 />
                             ))}
                         </div>
-                    </section>
-                ))
-            )}
-        </div>
+                    )}
+                </div>
+            </div>
+        </section>
     )
 }
