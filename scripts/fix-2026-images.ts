@@ -1,9 +1,11 @@
 /**
- * Busca filmes/produções de 2026 sem imageUrl ou com galleryUrls vazio,
- * consulta TMDB e preenche imageUrl (poster) + até 2 backdrops em galleryUrls.
+ * Busca filmes/produções de 2026 sem imageUrl, backdropUrl ou galleryUrls,
+ * consulta TMDB e preenche:
+ *   - imageUrl    → melhor poster (retrato, w500) — fundo mobile e card
+ *   - backdropUrl → melhor backdrop (paisagem, original) — fundo desktop
+ *   - galleryUrls → até 2 backdrops extras para a galeria
  *
- * Uso: npx ts-node --project tsconfig.scripts.json scripts/fix-2026-images.ts
- * Ou:  npx tsx scripts/fix-2026-images.ts
+ * Uso: npx tsx scripts/fix-2026-images.ts
  */
 
 import prisma from '../lib/prisma'
@@ -27,7 +29,7 @@ async function tmdbFetch(path: string) {
 async function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 async function main() {
-    // Produções de 2026 sem poster OU com galleryUrls vazio, que têm tmdbId
+    // Produções de 2026 sem poster, backdrop ou gallery, que têm tmdbId
     const productions = await prisma.production.findMany({
         where: {
             year: 2026,
@@ -35,6 +37,7 @@ async function main() {
             tmdbId: { not: null },
             OR: [
                 { imageUrl: null },
+                { backdropUrl: null },
                 { galleryUrls: { isEmpty: true } },
             ],
         },
@@ -45,6 +48,7 @@ async function main() {
             type: true,
             tmdbId: true,
             imageUrl: true,
+            backdropUrl: true,
             galleryUrls: true,
         },
         orderBy: { titlePt: 'asc' },
@@ -86,14 +90,22 @@ async function main() {
                 }
             }
 
-            // galleryUrls: até 2 backdrops (ou posters se não tiver backdrop)
+            // backdropUrl: melhor backdrop (paisagem) para fundo desktop
+            if (!prod.backdropUrl) {
+                const bestBackdrop = backdrops[0]
+                if (bestBackdrop) {
+                    updateData.backdropUrl = `${BACKDROP_BASE}${bestBackdrop.file_path}`
+                }
+            }
+
+            // galleryUrls: backdrops 2+ (o primeiro vai para backdropUrl)
             if (!prod.galleryUrls.length) {
                 const gallery: string[] = []
-                const top2backdrops = backdrops.slice(0, 2)
-                for (const b of top2backdrops) {
+                const extraBackdrops = backdrops.slice(1, 3)
+                for (const b of extraBackdrops) {
                     gallery.push(`${BACKDROP_BASE}${b.file_path}`)
                 }
-                // Se não chegou a 2 backdrops, completa com posters extras
+                // Se não chegou a 2, completa com posters extras
                 if (gallery.length < 2) {
                     const extraPosters = posters.slice(gallery.length > 0 ? 1 : 0, 2 - gallery.length + 1)
                     for (const p of extraPosters) {
@@ -118,6 +130,7 @@ async function main() {
             const fields = Object.keys(updateData).join(', ')
             console.log(`✨  ${label} — atualizado: ${fields}`)
             if (updateData.imageUrl) console.log(`    🖼  poster: ${updateData.imageUrl}`)
+            if (updateData.backdropUrl) console.log(`    🖼  backdrop: ${updateData.backdropUrl}`)
             if (updateData.galleryUrls) console.log(`    🖼  gallery: ${(updateData.galleryUrls as string[]).join('\n           ')}`)
             updated++
 
