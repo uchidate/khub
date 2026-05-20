@@ -15,7 +15,7 @@ const getTrendingArtistIds = unstable_cache(
                 id: true, slug: true, nameRomanized: true, nameHangul: true,
                 primaryImageUrl: true, roles: true, gender: true, agency: { select: { name: true } },
             },
-        })
+        }).catch(() => [])
         return artists
     },
     ['home-trending-artists'],
@@ -30,11 +30,11 @@ export async function GET() {
     }
 
     const [trendingArtists, favRows] = await Promise.all([
-        getTrendingArtistIds(),
+        getTrendingArtistIds().catch(() => []),
         prisma.favorite.findMany({
             where: { userId: (session.user as { id: string }).id, artistId: { not: null } },
             select: { artistId: true },
-        }),
+        }).catch(() => []),
     ])
 
     const hasFavorites = favRows.length > 0

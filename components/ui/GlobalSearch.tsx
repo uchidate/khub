@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, X, Loader2, User, BookOpen, Film, TrendingUp, Users } from 'lucide-react'
+import { Search, X, Loader2, User, BookOpen, Film, TrendingUp, Users, Compass, ShoppingBag } from 'lucide-react'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 
@@ -110,6 +110,29 @@ export function GlobalSearch() {
                     {/* Results */}
                     {!isLoading && hasResults && (
                         <div className="max-h-[500px] overflow-y-auto">
+                            {/* Shortcuts */}
+                            {results.shortcuts.length > 0 && (
+                                <div className="p-3 border-b border-border">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff2d78]">
+                                        <Compass className="w-3.5 h-3.5" />
+                                        Ir para ({results.shortcuts.length})
+                                    </div>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {results.shortcuts.map((shortcut) => (
+                                            <Link
+                                                key={shortcut.id}
+                                                href={shortcut.href}
+                                                onClick={() => setIsOpen(false)}
+                                                className="rounded-xl border border-border bg-surface/50 p-3 transition-colors hover:border-accent/40 hover:bg-accent-soft/40"
+                                            >
+                                                <p className="text-[13px] font-black text-foreground">{shortcut.title}</p>
+                                                <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">{shortcut.description}</p>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Artists */}
                             {results.artists.length > 0 && (
                                 <div className="p-3 border-b border-border">
@@ -264,6 +287,38 @@ export function GlobalSearch() {
                                 </div>
                             )}
 
+                            {/* Loja */}
+                            {results.storeProducts.length > 0 && (
+                                <div className="p-3 border-b border-border">
+                                    <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff2d78]">
+                                        <ShoppingBag className="w-3.5 h-3.5" />
+                                        Loja ({results.storeProducts.length})
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        {results.storeProducts.map((item) => (
+                                            <Link
+                                                key={item.id}
+                                                href="/loja"
+                                                onClick={() => setIsOpen(false)}
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
+                                            >
+                                                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+                                                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="36px" unoptimized />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-foreground text-[13px] group-hover:text-[#ff2d78] transition-colors truncate">
+                                                        {item.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted truncate">
+                                                        {item.price ? `${item.price} · ` : ''}{item.store}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Ver todos */}
                             <div className="p-3 border-t border-border">
                                 <Link
@@ -285,7 +340,7 @@ export function GlobalSearch() {
                                 Nenhum resultado para &quot;{query}&quot;
                             </p>
                             <p className="text-muted text-xs mt-1">
-                                Tente buscar por artistas, notícias ou produções
+                                Tente buscar por artistas, grupos, produções, artigos, loja ou agenda
                             </p>
                         </div>
                     )}

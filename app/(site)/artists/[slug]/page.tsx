@@ -17,7 +17,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3 } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3, CalendarDays, Star, ArrowRight } from "lucide-react"
 import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
 import { ExternalMusicEntityType } from "@prisma/client"
@@ -350,6 +350,39 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const hasPerfilInAnalise = profileSections.some(s => s.title.toLowerCase() === 'perfil')
     if (bioText && !hasPerfilInAnalise) profileSections.unshift({ title: 'Perfil', content: bioText })
 
+    const primaryBio = profileSections[0]?.content ?? bioText ?? null
+    const latestRelease = discographyReleases[0] ?? null
+    const latestProduction = artist.productions[0]?.production ?? null
+    const bestProduction = artist.productions
+        .map(({ production }) => production)
+        .filter(production => production.voteAverage != null && production.voteAverage > 0)
+        .sort((a, b) => (b.voteAverage ?? 0) - (a.voteAverage ?? 0))[0] ?? latestProduction
+    const latestReleaseYear = latestRelease?.releaseDate ? new Date(latestRelease.releaseDate).getUTCFullYear() : null
+    const latestProductionYear = latestProduction?.releaseDate
+        ? new Date(latestProduction.releaseDate).getUTCFullYear()
+        : latestProduction?.year ?? null
+    const activeGroupMembership = artist.memberships.find(m => m.isActive) ?? null
+    const activeGroupYear = activeGroupMembership?.joinDate ? new Date(activeGroupMembership.joinDate).getUTCFullYear() : null
+    const quickStats = [
+        { label: 'Favoritos', value: artist.favoriteCount.toLocaleString('pt-BR'), detail: 'fãs no HallyuHub', icon: Heart },
+        { label: 'Catálogo musical', value: discographyReleases.length.toString(), detail: discographyReleases.length === 1 ? 'lançamento' : 'lançamentos', icon: Disc3 },
+        { label: 'Telas', value: totalProductions.toString(), detail: totalProductions === 1 ? 'produção' : 'produções', icon: Film },
+        { label: 'Leituras', value: blogArticles.length.toString(), detail: blogArticles.length === 1 ? 'artigo relacionado' : 'artigos relacionados', icon: Newspaper },
+    ]
+    const careerTimeline = [
+        birthDateFormatted ? { label: 'Nascimento', value: birthDateFormatted, href: null as string | null } : null,
+        activeGroup ? { label: activeGroupYear ? `Entrou em ${activeGroupYear}` : 'Grupo atual', value: activeGroup.name, href: `/groups/${activeGroup.slug ?? activeGroup.id}` } : null,
+        latestRelease ? { label: latestReleaseYear ? `Música · ${latestReleaseYear}` : 'Música', value: latestRelease.title, href: latestRelease.spotifyUrl } : null,
+        latestProduction ? { label: latestProductionYear ? `Tela · ${latestProductionYear}` : 'Tela', value: latestProduction.titlePt, href: `/productions/${latestProduction.slug ?? latestProduction.id}` } : null,
+    ].filter(Boolean) as Array<{ label: string; value: string; href: string | null }>
+    const quickAnchors = [
+        profileSections.length > 0 ? { label: 'Perfil', href: '#perfil' } : null,
+        discographyReleases.length > 0 ? { label: 'Discografia', href: '#discografia' } : null,
+        totalProductions > 0 ? { label: 'Filmografia', href: '#filmografia' } : null,
+        blogArticles.length > 0 ? { label: 'Artigos', href: '#artigos' } : null,
+        { label: 'Loja', href: '#loja' },
+    ].filter(Boolean) as Array<{ label: string; href: string }>
+
     return (
         <div className="min-h-screen bg-background">
             <ViewTracker artistId={artist.id} />
@@ -405,7 +438,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             })()}
 
             {/* ── HERO ── */}
-            <div className="relative h-[65vh] md:h-[75vh] overflow-hidden">
+            <div className="relative h-[58vh] min-h-[500px] max-h-[740px] md:h-[68vh] overflow-hidden">
                 <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
                     <div className="relative h-full overflow-hidden">
                         {/* Blurred background */}
@@ -533,7 +566,117 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             </div>
 
             {/* ── CONTEÚDO ── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 lg:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 lg:py-10">
+                <section className="mb-8 overflow-hidden rounded-3xl border border-border bg-surface/75 shadow-sm">
+                    <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                        <div className="p-5 sm:p-6 lg:p-7">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                    Resumo
+                                </span>
+                                {activeGroup && (
+                                    <Link href={`/groups/${activeGroup.slug ?? activeGroup.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-foreground hover:border-accent/40 hover:text-accent">
+                                        <Users className="h-3.5 w-3.5" />
+                                        {activeGroup.name}
+                                    </Link>
+                                )}
+                                {artist.agency && (
+                                    <Link href={`/agencies/${artist.agency.slug ?? artist.agency.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted hover:text-foreground">
+                                        <Globe className="h-3.5 w-3.5" />
+                                        {artist.agency.name}
+                                    </Link>
+                                )}
+                            </div>
+
+                            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+                                <div>
+                                    <h2 className="text-2xl font-black leading-tight text-foreground sm:text-3xl">
+                                        {artist.nameRomanized} em uma visão rápida
+                                    </h2>
+                                    {primaryBio && (
+                                        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted line-clamp-4">
+                                            {primaryBio}
+                                        </p>
+                                    )}
+                                    <div className="mt-5 flex flex-wrap gap-2">
+                                        {quickAnchors.map(anchor => (
+                                            <a
+                                                key={anchor.href}
+                                                href={anchor.href}
+                                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                                            >
+                                                {anchor.label}
+                                                <ArrowRight className="h-3 w-3" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border border-border bg-background p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Linha do tempo</p>
+                                    <div className="mt-3 space-y-2">
+                                        {careerTimeline.map(item => {
+                                            const content = (
+                                                <div className="flex items-start gap-3 rounded-xl border border-border bg-surface/60 p-3 transition-colors hover:border-accent/30">
+                                                    <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-muted">{item.label}</p>
+                                                        <p className="mt-0.5 truncate text-xs font-bold text-foreground">{item.value}</p>
+                                                    </div>
+                                                </div>
+                                            )
+                                            return item.href
+                                                ? <Link key={`${item.label}-${item.value}`} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}>{content}</Link>
+                                                : <div key={`${item.label}-${item.value}`}>{content}</div>
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-border bg-background/70 p-5 sm:p-6 lg:border-l lg:border-t-0">
+                            <div className="grid grid-cols-2 gap-2">
+                                {quickStats.map(stat => {
+                                    const Icon = stat.icon
+                                    return (
+                                        <div key={stat.label} className="rounded-2xl border border-border bg-surface p-4">
+                                            <Icon className="h-4 w-4 text-accent" />
+                                            <p className="mt-3 text-2xl font-black leading-none text-foreground">{stat.value}</p>
+                                            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted">{stat.label}</p>
+                                            <p className="mt-1 text-[11px] text-muted">{stat.detail}</p>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            {bestProduction && (
+                                <Link
+                                    href={`/productions/${bestProduction.slug ?? bestProduction.id}`}
+                                    className="mt-3 flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-accent/40"
+                                >
+                                    <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded-lg bg-background">
+                                        {bestProduction.imageUrl ? (
+                                            <Image src={bestProduction.imageUrl} alt={bestProduction.titlePt} fill sizes="44px" className="object-cover" />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center"><Film className="h-4 w-4 text-muted" /></div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted">Destaque em telas</p>
+                                        <p className="mt-1 line-clamp-2 text-sm font-black leading-snug text-foreground">{bestProduction.titlePt}</p>
+                                        {bestProduction.voteAverage != null && bestProduction.voteAverage > 0 && (
+                                            <p className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-amber-500">
+                                                <Star className="h-3 w-3" fill="currentColor" />
+                                                {bestProduction.voteAverage.toFixed(1)}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 <div className="grid min-w-0 lg:grid-cols-[280px_1fr] gap-8 lg:gap-12">
 
                     {/* ── SIDEBAR ── */}
@@ -686,7 +829,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {profileSections.length >= 1 && (() => {
                             const sectionIcons = [User, Film, Sparkles]
                             return (
-                                <section>
+                                <section id="perfil" className="scroll-mt-28">
                                     <div className="space-y-5">
                                         {profileSections.map((sec, i) => {
                                             const Icon = sectionIcons[i] ?? Sparkles
@@ -852,13 +995,15 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
 
                         {/* Loja: produtos relacionados */}
+                        <div id="loja" className="scroll-mt-28">
                         <LojaRelacionados
                             tags={[artist.nameRomanized.toLowerCase(), ...(activeGroup ? [activeGroup.name.toLowerCase()] : [])]}
                             title={`Produtos ${artist.nameRomanized}`}
                         />
+                        </div>
 
                         {/* Filmography */}
-                        <section>
+                        <section id="filmografia" className="scroll-mt-28">
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="flex items-center gap-2">
                                     <Film className="w-4 h-4 text-accent" />
@@ -988,12 +1133,14 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
                         {/* Discography */}
                         {discographyReleases.length > 0 && (
-                            <DiscographySection albums={discographyReleases} />
+                            <div id="discografia" className="scroll-mt-28">
+                                <DiscographySection albums={discographyReleases} />
+                            </div>
                         )}
 
                         {/* Membros do grupo */}
                         {relatedArtists.length > 0 && activeGroup && (
-                            <section>
+                            <section id="artigos" className="scroll-mt-28">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="flex items-center gap-2">
                                         <Users className="w-4 h-4 text-accent" />

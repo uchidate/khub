@@ -11,7 +11,8 @@ export default async function SettingsPage() {
   const firstName = session.user.name?.split(' ')[0] ?? 'sua conta'
   const isStaff = ['admin', 'editor'].includes(session.user.role?.toLowerCase() ?? '')
 
-  const preferenceRoutes = accountNavGroups.find(group => group.label === 'Preferências')?.items ?? []
+  const preferenceRoutes = (accountNavGroups.find(group => group.label === 'Preferências')?.items ?? [])
+    .filter(item => item.href !== '/settings')
   const accountRoutes = accountNavGroups.filter(group => group.label !== 'Preferências')
   const quickLinks = [
     ...accountRoutes.flatMap(group => group.items),
@@ -21,12 +22,12 @@ export default async function SettingsPage() {
   return (
     <main className="min-h-screen bg-background pb-12">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="mb-5 rounded-3xl border border-border bg-surface p-5 shadow-sm sm:p-6">
-          <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">Central da conta</p>
+        <header className="mb-5 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+          <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">Ajustes</p>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                Configurações de {firstName}
+                Ajustes de {firstName}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-5 text-muted">
                 Um lugar único para ajustar notificações, privacidade, conteúdo, segurança e atalhos da sua experiência no HallyuHub.
@@ -49,7 +50,7 @@ export default async function SettingsPage() {
             <Link
               key={key}
               href={href}
-              className="group rounded-3xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/40 hover:bg-surface-hover"
+              className="group rounded-2xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/40 hover:bg-surface-hover"
             >
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
@@ -68,7 +69,7 @@ export default async function SettingsPage() {
         </section>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <section id="appearance" className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+          <section id="appearance" className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-background text-accent">
                 <Eye className="h-4 w-4" />
@@ -83,7 +84,7 @@ export default async function SettingsPage() {
                 ['Tema', 'Use o botão de tema na barra superior para alternar claro/escuro.'],
                 ['Conteúdo sensível', 'Ajuste na tela de preferências de conteúdo.'],
                 ['Alertas personalizados', 'Gerencie por email em notificações.'],
-                ['Coleções pessoais', 'Favoritos e Minha Lista ficam sincronizados na sua conta.'],
+                ['Coleções pessoais', 'Favoritos e Lista ficam sincronizados na sua conta.'],
               ].map(([label, text]) => (
                 <div key={label} className="rounded-2xl border border-border bg-background p-3">
                   <p className="text-sm font-black text-foreground">{label}</p>
@@ -93,7 +94,7 @@ export default async function SettingsPage() {
             </div>
           </section>
 
-          <aside className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+          <aside className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
             <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-muted">Atalhos</p>
             <div className="space-y-1">
               {quickLinks.map(({ label, href, icon: Icon }) => (
@@ -107,7 +108,7 @@ export default async function SettingsPage() {
           </aside>
         </div>
 
-        <section className="mt-5 rounded-3xl border border-red-500/20 bg-red-500/5 p-5">
+        <section className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
           <h2 className="text-lg font-black text-red-500">Zona sensível</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Exclusão de conta e exportação completa de dados devem ficar atrás de confirmação explícita. Mantive esta área informativa até existir fluxo seguro de backend para essas ações.

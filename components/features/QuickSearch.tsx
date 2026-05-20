@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Search, X, Command, User, Film, BookOpen, Loader2, TrendingUp, Users } from 'lucide-react'
+import { Search, X, Command, User, Film, BookOpen, Loader2, TrendingUp, Users, Sparkles, Compass, ShoppingBag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -77,7 +77,7 @@ export function QuickSearch() {
                             <input
                                 ref={inputRef}
                                 type="text"
-                                placeholder="Buscar artistas, grupos, produções ou notícias..."
+                                placeholder="Buscar artistas, grupos, dramas, filmes ou artigos..."
                                 className="flex-1 bg-transparent text-foreground placeholder-[#6b6b6b] focus:outline-none text-base"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
@@ -101,10 +101,36 @@ export function QuickSearch() {
 
                             {/* Estado inicial */}
                             {!isLoading && !hasResults && query.trim().length < 2 && (
-                                <div className="py-12 text-center">
-                                    <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
-                                    <p className="text-muted text-sm font-medium">Digite para buscar no HallyuHub</p>
-                                    <p className="text-muted text-xs mt-1 opacity-60">Artistas · Grupos · Produções · Notícias</p>
+                                <div className="p-5">
+                                    <div className="rounded-2xl border border-border bg-surface p-4">
+                                        <div className="flex items-start gap-3">
+                                            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+                                                <Sparkles className="h-5 w-5" />
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-black text-foreground">Busca rápida</p>
+                                                <p className="mt-1 text-xs leading-5 text-muted">
+                                                    Encontre artistas, grupos, dramas, filmes e artigos em um só lugar.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                                        {[
+                                            ['Artistas em alta', '/artists'],
+                                            ['Dramas e filmes', '/productions'],
+                                            ['Artigos recentes', '/blog'],
+                                            ['Agenda', '/calendario'],
+                                        ].map(([label, href]) => (
+                                            <button
+                                                key={href}
+                                                onClick={() => handleNavigate(href)}
+                                                className="rounded-xl border border-border bg-background px-3 py-2 text-left text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -113,13 +139,34 @@ export function QuickSearch() {
                                 <div className="py-12 text-center">
                                     <Search className="w-10 h-10 text-[#e8e8e8] mx-auto mb-3" />
                                     <p className="text-muted text-sm">Nenhum resultado para &quot;{query}&quot;</p>
-                                    <p className="text-muted text-xs mt-1 opacity-60">Tente buscar por artistas, notícias ou produções</p>
+                                    <p className="text-muted text-xs mt-1 opacity-60">Tente artista, grupo, drama, artigo, loja ou agenda</p>
                                 </div>
                             )}
 
                             {/* Resultados agrupados */}
                             {hasResults && (
                                 <div className="py-2">
+                                    {/* Atalhos */}
+                                    {results.shortcuts.length > 0 && (
+                                        <div className="p-3 border-b border-border">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
+                                                <Compass className="w-3.5 h-3.5" />
+                                                Ir para ({results.shortcuts.length})
+                                            </div>
+                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                {results.shortcuts.map((shortcut) => (
+                                                    <button
+                                                        key={shortcut.id}
+                                                        onClick={() => handleNavigate(shortcut.href)}
+                                                        className="w-full rounded-xl border border-border bg-surface/50 p-3 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/40"
+                                                    >
+                                                        <p className="text-sm font-black text-foreground">{shortcut.title}</p>
+                                                        <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">{shortcut.description}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Artistas */}
                                     {results.artists.length > 0 && (
@@ -266,6 +313,37 @@ export function QuickSearch() {
                                                             </p>
                                                             <p className="text-xs text-muted mt-0.5">
                                                                 {new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                            </p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Loja */}
+                                    {results.storeProducts.length > 0 && (
+                                        <div className="p-3 border-b border-border">
+                                            <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff2d78] mb-1">
+                                                <ShoppingBag className="w-3.5 h-3.5" />
+                                                Loja ({results.storeProducts.length})
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                {results.storeProducts.map((item) => (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => handleNavigate('/loja')}
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                    >
+                                                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
+                                                            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="40px" unoptimized />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-foreground text-sm group-hover:text-[#ff2d78] transition-colors truncate">
+                                                                {item.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted truncate">
+                                                                {item.price ? `${item.price} · ` : ''}{item.store}
                                                             </p>
                                                         </div>
                                                     </button>

@@ -40,19 +40,19 @@ export const accountNavGroups: AccountNavGroup[] = [
     items: [
       {
         key: 'dashboard',
-        label: 'Dashboard',
+        label: 'Painel',
         shortLabel: 'Painel',
         href: '/dashboard',
         icon: LayoutDashboard,
-        description: 'Resumo, recomendações e atividade recente.',
+        description: 'Resumo da sua atividade e recomendações.',
       },
       {
         key: 'profile',
-        label: 'Perfil público',
+        label: 'Perfil',
         shortLabel: 'Perfil',
         href: '/profile',
         icon: User,
-        description: 'Identidade pública, bio e dados da conta.',
+        description: 'Bio, presença e curadoria.',
       },
     ],
   },
@@ -69,7 +69,7 @@ export const accountNavGroups: AccountNavGroup[] = [
       },
       {
         key: 'watchlist',
-        label: 'Minha Lista',
+        label: 'Lista',
         shortLabel: 'Lista',
         href: '/watchlist',
         icon: BookmarkCheck,
@@ -82,7 +82,7 @@ export const accountNavGroups: AccountNavGroup[] = [
     items: [
       {
         key: 'notifications',
-        label: 'Notificações',
+        label: 'Alertas',
         shortLabel: 'Alertas',
         href: '/settings/notifications',
         icon: Bell,
@@ -98,7 +98,7 @@ export const accountNavGroups: AccountNavGroup[] = [
       },
       {
         key: 'security',
-        label: 'Senha e acesso',
+        label: 'Acesso',
         shortLabel: 'Acesso',
         href: '/auth/forgot-password',
         icon: KeyRound,
@@ -106,7 +106,7 @@ export const accountNavGroups: AccountNavGroup[] = [
       },
       {
         key: 'settings',
-        label: 'Configurações',
+        label: 'Ajustes',
         shortLabel: 'Ajustes',
         href: '/settings',
         icon: Settings,

@@ -78,8 +78,8 @@ export function HomeEditorialSpotlight({
         <section className="bg-background py-7 sm:py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-4 flex items-end justify-between">
-                    <div className="border-l-[4px] border-violet pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-violet">{eyebrow}</p>
+                    <div className="border-l-[4px] border-accent pl-3">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{eyebrow}</p>
                         <h2 className="mt-1 text-[21px] font-black tracking-[-0.025em] text-foreground sm:text-[24px]">
                             {heading}
                         </h2>
@@ -90,7 +90,7 @@ export function HomeEditorialSpotlight({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.42fr_0.58fr]">
-                    <article className="group relative min-h-[280px] overflow-hidden rounded-2xl border border-foreground bg-surface shadow-[0_18px_60px_rgba(18,15,21,0.10)] transition-all hover:border-foreground sm:min-h-[390px]">
+                    <article className="group relative min-h-[280px] overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-all hover:border-accent/40 sm:min-h-[390px]">
                         <Link href={`/blog/${lead.slug}`} aria-label={lead.title} className="absolute inset-0 z-10" />
                         <BlogImage
                             src={lead.coverImageUrl}
@@ -141,7 +141,7 @@ export function HomeEditorialSpotlight({
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className="group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-foreground bg-background shadow-[0_10px_28px_rgba(18,15,21,0.08)] transition-all hover:-translate-y-1 hover:border-foreground hover:shadow-[0_16px_38px_rgba(18,15,21,0.14)] sm:block"
+                                className="group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/40 sm:block"
                             >
                                 <div className="relative min-h-[96px] bg-surface sm:aspect-[16/9] sm:min-h-0 lg:aspect-[2.5/1]">
                                     <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 1024px) 33vw, 28vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />

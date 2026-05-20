@@ -16,7 +16,7 @@ export function HomeQuizBanner() {
                     className="home-border-pop group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-accent-soft border-accent hover:border-accent rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-accent/15"
                 >
                     {/* Glow de fundo */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-purple-500/5 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-accent/8 via-transparent to-accent/5 pointer-events-none" />
 
                     {/* Ícone */}
                     <div className="relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">

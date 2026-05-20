@@ -41,7 +41,7 @@ export function UserMenu() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-3xl border border-border bg-background shadow-2xl shadow-black/10 z-50">
+          <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl shadow-black/10 z-50">
             {/* User info */}
             <div className="border-b border-border bg-surface px-4 py-4">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-accent">Conta HallyuHub</p>

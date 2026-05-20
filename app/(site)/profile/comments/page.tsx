@@ -19,7 +19,7 @@ export default async function ProfileCommentsPage() {
     if (!comments) return null
 
     return (
-        <PageTransition className="py-8 md:py-12 px-4 sm:px-12 md:px-20 max-w-3xl mx-auto">
+        <PageTransition className="mx-auto max-w-4xl px-4 py-5 sm:px-6 lg:px-8">
             <SectionHeader
                 title="Comentários"
                 backHref="/profile"
@@ -27,7 +27,7 @@ export default async function ProfileCommentsPage() {
             />
 
             {comments.length === 0 ? (
-                <div className="glass-card p-12 text-center">
+                <div className="rounded-2xl border border-border bg-surface p-10 text-center shadow-sm">
                     <MessageSquare className="w-12 h-12 text-muted mx-auto mb-4" />
                     <p className="text-muted text-sm">Você ainda não fez nenhum comentário.</p>
                     <Link href="/news" className="btn-primary mt-6 inline-block text-xs uppercase tracking-widest">
@@ -40,7 +40,7 @@ export default async function ProfileCommentsPage() {
                         <Link
                             key={comment.id}
                             href={`/news/${comment.news.id}`}
-                            className="glass-card flex gap-4 p-4 hover:border-[#d0d0d0] transition-all group"
+                            className="group flex gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/40"
                         >
                             {comment.news.imageUrl && (
                                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface">

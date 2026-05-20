@@ -107,15 +107,15 @@ export default function WatchlistPage() {
     for (const e of entries) counts[e.status] = (counts[e.status] ?? 0) + 1
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 pb-16">
+        <div className="mx-auto max-w-7xl px-4 py-5 pb-12 sm:px-6 lg:px-8">
 
             {/* Header */}
-            <div className="mb-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1 flex items-center gap-1.5">
+            <div className="mb-5 rounded-2xl border border-border bg-surface p-5 shadow-sm">
+                <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
                     <LayoutList size={10} />
                     Minha Lista
                 </p>
-                <h1 className="text-3xl md:text-4xl font-display font-black text-foreground tracking-tight leading-none">
+                <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
                     {loading ? 'Carregando...' : entries.length === 0
                         ? 'Nenhuma produção ainda'
                         : `${entries.length} produção${entries.length !== 1 ? 'ões' : ''}`}
@@ -124,12 +124,12 @@ export default function WatchlistPage() {
 
             {/* Stats bar */}
             {entries.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {(Object.keys(WATCH_STATUS_LABELS) as WatchStatus[]).map(s => (
                         <button
                             key={s}
                             onClick={() => setActiveTab(s)}
-                            className={`bg-background p-4 text-left transition-all border rounded-xl ${activeTab === s ? STATUS_ACTIVE[s] : 'border-border hover:border-[#080808]/20'}`}
+                            className={`rounded-2xl border bg-background p-3 text-left transition-all ${activeTab === s ? STATUS_ACTIVE[s] : 'border-border hover:border-[#080808]/20'}`}
                         >
                             <div className={`mb-2 ${activeTab === s ? 'text-white' : STATUS_COLOR[s].split(' ')[0]}`}>
                                 {STATUS_ICON[s]}
@@ -146,7 +146,7 @@ export default function WatchlistPage() {
             )}
 
             {/* Tabs */}
-            <div className="flex gap-2 flex-wrap mb-6">
+            <div className="mb-5 flex flex-wrap gap-2">
                 {STATUS_TABS.map(tab => {
                     const count = tab.key === 'ALL' ? entries.length : (counts[tab.key] ?? 0)
                     const isActive = activeTab === tab.key
@@ -175,7 +175,7 @@ export default function WatchlistPage() {
 
             {/* Grid */}
             {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {Array.from({ length: 10 }).map((_, i) => (
                         <div key={i} className="aspect-[2/3] bg-surface rounded-xl animate-pulse" />
                     ))}
@@ -186,7 +186,7 @@ export default function WatchlistPage() {
                     <p>Nenhuma produção nesta categoria</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {filtered.map(entry => (
                         <WatchCard key={entry.id} entry={entry} />
                     ))}

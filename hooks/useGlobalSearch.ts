@@ -41,16 +41,37 @@ interface Group {
     debutDate: string | null
 }
 
+interface SearchShortcut {
+    id: string
+    title: string
+    description: string
+    href: string
+    kind: 'section' | 'feature'
+}
+
+interface StoreProduct {
+    id: string
+    name: string
+    description: string | null
+    price: string | null
+    imageUrl: string
+    store: string
+    category: string
+    badge: string | null
+}
+
 interface SearchResults {
+    shortcuts: SearchShortcut[]
     artists: Artist[]
     groups: Group[]
     articles: Article[]
     productions: Production[]
+    storeProducts: StoreProduct[]
     total: number
     query: string
 }
 
-const EMPTY: SearchResults = { artists: [], groups: [], articles: [], productions: [], total: 0, query: '' }
+const EMPTY: SearchResults = { shortcuts: [], artists: [], groups: [], articles: [], productions: [], storeProducts: [], total: 0, query: '' }
 
 export function useGlobalSearch() {
     const [query, setQuery] = useState('')
@@ -77,7 +98,7 @@ export function useGlobalSearch() {
 
         try {
             const response = await fetch(
-                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5&types=artists,groups,productions,articles`,
+                `/api/search/global?q=${encodeURIComponent(searchTerm)}&limit=5&types=shortcuts,artists,groups,productions,articles,products`,
                 { signal: abortControllerRef.current.signal }
             )
 

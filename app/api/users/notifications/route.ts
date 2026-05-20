@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/users/notifications
- * Returns last 20 IN_APP notifications with unread count
+ * Returns last 20 IN_APP notifications with unread count and lightweight article suggestions.
  */
 export async function GET() {
     try {
@@ -20,25 +20,40 @@ export async function GET() {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
         }
 
-        const [notifications, unreadCount] = await Promise.all([
+        const [notifications, unreadCount, latestArticles] = await Promise.all([
             prisma.notificationHistory.findMany({
                 where: { userId: session.user.id, type: 'IN_APP' },
                 include: {
-                    news:     { select: { id: true, title: true, imageUrl: true } },
+                    news: { select: { id: true, title: true, imageUrl: true } },
                     blogPost: { select: { id: true, slug: true, title: true, coverImageUrl: true } },
                 },
                 orderBy: { createdAt: 'desc' },
                 take: 20,
-            }),
+            }).catch(() => []),
             prisma.notificationHistory.count({
                 where: { userId: session.user.id, type: 'IN_APP', readAt: null },
-            }),
+            }).catch(() => 0),
+            prisma.blogPost.findMany({
+                where: { status: 'PUBLISHED', isPrivate: false },
+                select: {
+                    id: true,
+                    slug: true,
+                    title: true,
+                    excerpt: true,
+                    coverImageUrl: true,
+                    publishedAt: true,
+                    readingTimeMin: true,
+                    category: { select: { name: true } },
+                },
+                orderBy: { publishedAt: 'desc' },
+                take: 4,
+            }).catch(() => []),
         ])
 
-        return NextResponse.json({ notifications, unreadCount })
+        return NextResponse.json({ notifications, unreadCount, latestArticles })
     } catch (error) {
         log.error('Get notifications error', { error: getErrorMessage(error) })
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json({ notifications: [], unreadCount: 0, latestArticles: [] })
     }
 }
 
@@ -66,12 +81,12 @@ export async function PATCH(request: NextRequest) {
             await prisma.notificationHistory.updateMany({
                 where: { userId: session.user.id, type: 'IN_APP', readAt: null },
                 data: { readAt },
-            })
+            }).catch(() => null)
         } else if (ids && ids.length > 0) {
             await prisma.notificationHistory.updateMany({
                 where: { userId: session.user.id, id: { in: ids }, type: 'IN_APP' },
                 data: { readAt },
-            })
+            }).catch(() => null)
         }
 
         return NextResponse.json({ ok: true })

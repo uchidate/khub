@@ -14,7 +14,7 @@ import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
-import { Film } from "lucide-react"
+import { ArrowRight, BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 
@@ -45,6 +45,7 @@ const getProduction = cache(async (slugOrId: string) => {
     return prisma.production.findFirst({
         where,
         include: {
+            _count: { select: { userFavorites: true, watchEntries: true, blogPosts: true } },
             artists: {
                 where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: { select: {
@@ -208,6 +209,17 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         ? production.artists.length
         : await prisma.artistProduction.count({ where: { productionId: production.id, artist: { flaggedAsNonKorean: false } } }).catch(() => production.artists.length)
 
+    const blogArticles = await prisma.blogPost.findMany({
+        where: {
+            status: 'PUBLISHED',
+            isPrivate: false,
+            relatedProductions: { some: { productionId: production.id } },
+        },
+        select: { slug: true, title: true, excerpt: true, coverImageUrl: true, publishedAt: true, readingTimeMin: true },
+        orderBy: { publishedAt: 'desc' },
+        take: 6,
+    }).catch(() => [])
+
     // Busca sinopse traduzida (PT-BR) — fallback para o campo original
     const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
     const synopsis = synopsisPt ?? production.synopsis
@@ -227,11 +239,38 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
 
     const isMovie = production.type === 'MOVIE' || production.type === 'FILM'
     const schemaType = isMovie ? 'Movie' : 'TVSeries'
+    const typeLabel = isMovie ? 'Filme' : production.type === 'SERIE' || production.type === 'K-Drama' ? 'Série' : production.type
     const castActors = production.artists.slice(0, 10).map(a => ({
         "@type": "Person",
         "name": a.artist.nameRomanized,
         "url": `${BASE_URL}/artists/${a.artist.slug ?? a.artist.id}`,
     }))
+    const runtimeLabel = production.episodeCount
+        ? `${production.episodeCount} ep.${production.episodeRuntime ? ` · ${formatRuntime(production.episodeRuntime)}/ep` : ''}`
+        : formatRuntime(production.runtime)
+    const releaseLabel = production.releaseDate
+        ? new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
+        : production.year ? String(production.year) : null
+    const scoreLabel = (production as any).editorialRating != null
+        ? `${(production as any).editorialRating.toFixed(1)}/10`
+        : production.voteAverage && production.voteAverage > 0
+            ? `${production.voteAverage.toFixed(1)}/10`
+            : null
+    const leadingCast = production.artists.slice(0, 4)
+    const quickAnchors = [
+        synopsis ? { label: 'Sinopse', href: '#sinopse' } : null,
+        production.artists.length > 0 ? { label: 'Elenco', href: '#elenco' } : null,
+        galleryUrls.length > 0 ? { label: 'Galeria', href: '#galeria' } : null,
+        blogArticles.length > 0 ? { label: 'Artigos', href: '#artigos' } : null,
+        relatedProductions.length > 0 ? { label: 'Relacionados', href: '#relacionados' } : null,
+        { label: 'Loja', href: '#loja' },
+    ].filter(Boolean) as Array<{ label: string; href: string }>
+    const overviewStats = [
+        { label: 'Favoritos', value: production._count.userFavorites.toString(), detail: 'salvaram', icon: Heart },
+        { label: 'Lista', value: production._count.watchEntries.toString(), detail: 'na biblioteca', icon: BookmarkCheck },
+        { label: 'Elenco', value: totalCast.toString(), detail: totalCast === 1 ? 'artista' : 'artistas', icon: Users },
+        { label: 'Artigos', value: blogArticles.length.toString(), detail: blogArticles.length === 1 ? 'leitura' : 'leituras', icon: Newspaper },
+    ]
 
     return (
         <div className="min-h-screen bg-background">
@@ -287,7 +326,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 ],
             }} />
             {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[88vh] md:min-h-[65vh] bg-background flex flex-col overflow-hidden">
+            <div className="relative min-h-[620px] md:min-h-[640px] bg-background flex flex-col overflow-hidden">
                 {/* Background image (contained, never clips content) */}
                 <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
                     <div className="relative h-full overflow-hidden">
@@ -408,12 +447,145 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 pb-16 md:py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 pb-16 md:py-10">
+                <section className="mb-8 overflow-hidden rounded-3xl border border-border bg-surface/75 shadow-sm">
+                    <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                        <div className="p-5 sm:p-6 lg:p-7">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                    Visão rápida
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-foreground">
+                                    <Film className="h-3.5 w-3.5" />
+                                    {typeLabel}
+                                </span>
+                                {production.network && (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted">
+                                        <Tv className="h-3.5 w-3.5" />
+                                        {production.network}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+                                <div>
+                                    <h2 className="text-2xl font-black leading-tight text-foreground sm:text-3xl">
+                                        {production.titlePt} sem garimpar a página inteira
+                                    </h2>
+                                    {(production.whyWatch || synopsis) && (
+                                        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted line-clamp-4">
+                                            {production.whyWatch ?? synopsis}
+                                        </p>
+                                    )}
+                                    <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                                        {releaseLabel && (
+                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                                <CalendarDays className="h-4 w-4 text-accent" />
+                                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Estreia</p>
+                                                <p className="mt-1 text-sm font-black text-foreground">{releaseLabel}</p>
+                                            </div>
+                                        )}
+                                        {runtimeLabel && (
+                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                                <Clock className="h-4 w-4 text-accent" />
+                                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Formato</p>
+                                                <p className="mt-1 text-sm font-black text-foreground">{runtimeLabel}</p>
+                                            </div>
+                                        )}
+                                        {scoreLabel && (
+                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                                <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
+                                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Nota</p>
+                                                <p className="mt-1 text-sm font-black text-foreground">{scoreLabel}</p>
+                                            </div>
+                                        )}
+                                        {production.streamingPlatforms.length > 0 && (
+                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                                <PlayCircle className="h-4 w-4 text-accent" />
+                                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Onde entra</p>
+                                                <p className="mt-1 truncate text-sm font-black text-foreground">{production.streamingPlatforms.slice(0, 2).join(', ')}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="mt-5 flex flex-wrap gap-2">
+                                        {quickAnchors.map(anchor => (
+                                            <a
+                                                key={anchor.href}
+                                                href={anchor.href}
+                                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                                            >
+                                                {anchor.label}
+                                                <ArrowRight className="h-3 w-3" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {leadingCast.length > 0 && (
+                                    <div className="rounded-2xl border border-border bg-background p-4">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Elenco principal</p>
+                                        <div className="mt-3 space-y-2">
+                                            {leadingCast.map(({ artist, role }) => (
+                                                <Link
+                                                    key={artist.id}
+                                                    href={`/artists/${artist.slug ?? artist.id}`}
+                                                    className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-2 transition-colors hover:border-accent/40"
+                                                >
+                                                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-background">
+                                                        {artist.primaryImageUrl ? (
+                                                            <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover object-top" />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center text-xs font-black text-muted">{artist.nameRomanized[0]}</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="truncate text-sm font-black text-foreground">{artist.nameRomanized}</p>
+                                                        {role && <p className="truncate text-[11px] font-semibold text-muted">{role}</p>}
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="border-t border-border bg-background/70 p-5 sm:p-6 lg:border-l lg:border-t-0">
+                            <div className="grid grid-cols-2 gap-2">
+                                {overviewStats.map(stat => {
+                                    const Icon = stat.icon
+                                    return (
+                                        <div key={stat.label} className="rounded-2xl border border-border bg-surface p-4">
+                                            <Icon className="h-4 w-4 text-accent" />
+                                            <p className="mt-3 text-2xl font-black leading-none text-foreground">{stat.value}</p>
+                                            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted">{stat.label}</p>
+                                            <p className="mt-1 text-[11px] text-muted">{stat.detail}</p>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            {tags.length > 0 && (
+                                <div className="mt-3 rounded-2xl border border-border bg-surface p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Temas</p>
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
+                                        {tags.slice(0, 8).map(tag => (
+                                            <span key={tag} className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-muted">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 <div className="grid min-w-0 md:grid-cols-3 gap-16">
                     {/* Main column */}
                     <div className="min-w-0 md:col-span-2 space-y-10">
                         {synopsis && (
-                            <div>
+                            <div id="sinopse" className="scroll-mt-28">
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sinopse</h3>
                                 <p className="text-muted leading-relaxed font-medium text-lg break-words text-justify">{synopsis}</p>
                             </div>
@@ -459,7 +631,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
 
                         {/* Curiosidades */}
                         {(production as any).curiosidades?.length > 0 && (
-                            <div>
+                            <div id="elenco" className="scroll-mt-28">
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Curiosidades</h3>
                                 <ul className="space-y-2">
                                     {((production as any).curiosidades as string[]).map((c, i) => (
@@ -473,7 +645,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         )}
 
                         {tags.length > 0 && (
-                            <div>
+                            <div id="galeria" className="scroll-mt-28">
                                 <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {tags.map(tag => (
@@ -593,6 +765,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         />
 
                         {/* Loja: após elenco, usuário já conhece o drama e o elenco */}
+                        <div id="loja" className="scroll-mt-28">
                         <LojaRelacionados
                             tags={[
                                 ...tags,
@@ -601,10 +774,41 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             ]}
                             title={`Produtos — ${production.titlePt}`}
                         />
+                        </div>
+
+                        {/* Blog articles */}
+                        {blogArticles.length > 0 && (
+                            <div id="artigos" className="scroll-mt-28">
+                                <h3 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted">
+                                    <Newspaper className="h-4 w-4 text-accent" />
+                                    Artigos sobre {production.titlePt}
+                                </h3>
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {blogArticles.map(article => (
+                                        <Link
+                                            key={article.slug}
+                                            href={`/blog/${article.slug}`}
+                                            className="group overflow-hidden rounded-xl border border-border bg-surface transition-all hover:border-accent/30 hover:shadow-md"
+                                        >
+                                            {article.coverImageUrl && (
+                                                <div className="relative aspect-video bg-background">
+                                                    <Image src={article.coverImageUrl} alt="" fill sizes="(max-width: 768px) 50vw, 220px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                                                </div>
+                                            )}
+                                            <div className="p-3">
+                                                <p className="line-clamp-2 text-xs font-black leading-snug text-foreground transition-colors group-hover:text-accent">{article.title}</p>
+                                                {article.excerpt && <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-muted">{article.excerpt}</p>}
+                                                <p className="mt-2 text-[10px] font-semibold text-muted">{article.readingTimeMin} min de leitura</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Related productions */}
                         {relatedProductions.length > 0 && (
-                            <div>
+                            <div id="relacionados" className="scroll-mt-28">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xs font-black text-muted uppercase tracking-widest flex items-center gap-2">
                                         <Film className="w-4 h-4" />

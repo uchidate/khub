@@ -97,45 +97,40 @@ function PanelTitle({
   )
 }
 
-function BlogCard({ post, featured = false }: { post: BlogPostItem; featured?: boolean }) {
+function BlogCard({ post }: { post: BlogPostItem }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group overflow-hidden rounded-3xl border border-border bg-surface shadow-sm transition-colors hover:border-accent/35 ${
-        featured ? 'grid min-h-[230px] md:grid-cols-[1fr_0.95fr]' : 'grid grid-cols-[104px_minmax(0,1fr)]'
-      }`}
+      className="group grid min-h-[108px] grid-cols-[104px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-colors hover:border-accent/35"
     >
-      <div className={`relative overflow-hidden bg-background ${featured ? 'min-h-[220px]' : 'h-full min-h-[108px]'}`}>
+      <div className="relative h-full min-h-[108px] overflow-hidden bg-background">
         {post.coverImageUrl ? (
           <SafeImage
             src={post.coverImageUrl}
             alt={post.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes={featured ? '(max-width: 768px) 100vw, 45vw' : '120px'}
+            sizes="120px"
             fallback={
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--color-surface)_0%,var(--color-surface-editorial)_100%)]">
-                <Compass className="h-7 w-7 text-muted/40" />
+              <div className="flex h-full w-full items-center justify-center bg-surface">
+                <Compass className="h-6 w-6 text-muted/45" />
               </div>
             }
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--color-surface)_0%,var(--color-surface-editorial)_100%)]">
-            <Compass className="h-7 w-7 text-muted/40" />
+          <div className="flex h-full w-full items-center justify-center bg-surface">
+            <Compass className="h-6 w-6 text-muted/45" />
           </div>
         )}
       </div>
-      <div className={featured ? 'flex flex-col justify-end p-4' : 'p-3'}>
+      <div className="flex min-w-0 flex-col justify-center p-3">
         <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
           {post.category && <span className="text-accent">{post.category.name}</span>}
           <span>{post.readingTimeMin} min</span>
         </div>
-        <h3 className={`${featured ? 'text-xl' : 'text-sm'} line-clamp-3 font-black leading-tight text-foreground group-hover:text-accent`}>
+        <h3 className="line-clamp-3 text-sm font-black leading-tight text-foreground group-hover:text-accent">
           {post.title}
         </h3>
-        {post.excerpt && featured && (
-          <p className="mt-2 line-clamp-2 text-sm leading-5 text-muted">{post.excerpt}</p>
-        )}
       </div>
     </Link>
   )
@@ -152,8 +147,7 @@ export default async function DashboardPage() {
   const firstName = session.user.name?.split(' ')[0] ?? 'você'
   const isAdmin = session.user.role?.toLowerCase() === 'admin'
   const blogToShow = (hasFollowing && personalizedBlogPosts.length > 0 ? personalizedBlogPosts : latestBlogPosts) as BlogPostItem[]
-  const featuredPost = blogToShow[0]
-  const secondaryPosts = blogToShow.slice(1, 4)
+  const postsForDashboard = blogToShow.slice(0, 6)
   const daysSinceJoin = stats.joinDate
     ? Math.max(0, Math.floor((Date.now() - new Date(stats.joinDate).getTime()) / 86400000))
     : null
@@ -162,23 +156,23 @@ export default async function DashboardPage() {
   const statCards = [
     { label: 'Favoritos', value: stats.favoritesCount, href: '/favorites', icon: Star, tone: 'text-yellow-500 bg-yellow-400/10' },
     { label: 'Minha lista', value: stats.watchlistCount, href: '/watchlist', icon: BookmarkCheck, tone: 'text-teal-500 bg-teal-400/10' },
-    { label: 'Comentarios', value: stats.commentsCount, href: '/profile', icon: MessageCircle, tone: 'text-pink-500 bg-pink-400/10' },
+    { label: 'Comentários', value: stats.commentsCount, href: '/profile', icon: MessageCircle, tone: 'text-pink-500 bg-pink-400/10' },
     ...(daysSinceJoin !== null
       ? [{ label: 'Dias no Hub', value: daysSinceJoin, href: '/profile', icon: CalendarDays, tone: 'text-accent bg-accent-soft' }]
       : []),
   ]
 
   const nextActions = [
-    { label: 'Organizar biblioteca', detail: `${stats.watchlistCount} producao${stats.watchlistCount === 1 ? '' : 'es'} salvas`, href: '/watchlist', icon: BookmarkCheck },
-    { label: 'Revisar preferencias', detail: 'Alertas, conteudo e conta', href: '/settings', icon: Settings },
+    { label: 'Organizar biblioteca', detail: `${stats.watchlistCount} produção${stats.watchlistCount === 1 ? '' : 'ões'} salvas`, href: '/watchlist', icon: BookmarkCheck },
+    { label: 'Revisar preferências', detail: 'Alertas, conteúdo e conta', href: '/settings', icon: Settings },
     { label: 'Explorar novidades', detail: 'Artistas, grupos e artigos', href: '/', icon: Compass },
-    ...(isAdmin ? [{ label: 'Painel admin', detail: 'Gestao do sistema', href: '/admin', icon: Shield }] : []),
+    ...(isAdmin ? [{ label: 'Painel admin', detail: 'Gestão do sistema', href: '/admin', icon: Shield }] : []),
   ]
 
   return (
     <PageTransition>
       <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 lg:px-8">
-        <header className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
+        <header className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
           <div className="grid gap-0 xl:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.8fr)_280px]">
             <section className="p-5 sm:p-6">
                 <div className="mb-4 flex items-center gap-3">
@@ -194,7 +188,7 @@ export default async function DashboardPage() {
                   <div>
                     <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
                       <LayoutDashboard className="h-3 w-3" />
-                      Painel privado
+                      Painel
                     </p>
                     <h1 className="mt-1 text-3xl font-black tracking-tight text-foreground">
                       Olá, {firstName}
@@ -202,7 +196,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <p className="max-w-2xl text-sm leading-5 text-muted">
-                  Um resumo prático do que você acompanha: leitura recomendada, lista de dramas, atividade recente e próximos passos da sua conta.
+                  Resumo da sua atividade, recomendações e próximos passos no HallyuHub.
                 </p>
             </section>
 
@@ -241,7 +235,7 @@ export default async function DashboardPage() {
         </header>
 
         {isNewUser ? (
-          <section className="mt-5 rounded-3xl border border-border bg-surface p-7 text-center shadow-sm sm:p-10">
+          <section className="mt-5 rounded-2xl border border-border bg-surface p-7 text-center shadow-sm sm:p-10">
             <Compass className="mx-auto mb-4 h-10 w-10 text-accent" />
             <h2 className="text-2xl font-black text-foreground">Monte seu HallyuHub</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted">
@@ -256,7 +250,7 @@ export default async function DashboardPage() {
           <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-5">
               {watchingEntries.length > 0 && (
-                <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                   <PanelTitle icon={Play} title="Continue assistindo" subtitle="Sua lista em andamento." href="/watchlist?status=WATCHING" linkLabel="Lista" />
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
                     {watchingEntries.map((entry: any) => (
@@ -287,11 +281,8 @@ export default async function DashboardPage() {
                     href="/blog"
                     linkLabel="Blog"
                   />
-                  <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
-                    {featuredPost && <BlogCard post={featuredPost} featured />}
-                    <div className="space-y-3">
-                      {secondaryPosts.map(post => <BlogCard key={post.id} post={post} />)}
-                    </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {postsForDashboard.map(post => <BlogCard key={post.id} post={post} />)}
                   </div>
                 </section>
               )}
@@ -299,7 +290,7 @@ export default async function DashboardPage() {
 
             <aside className="space-y-5">
               {trendingArtists.length > 0 && (
-                <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                   <PanelTitle icon={TrendingUp} title="Em alta" subtitle="Artistas para explorar." href="/artists" linkLabel="Artistas" />
                   <div className="grid grid-cols-3 gap-3">
                     {trendingArtists.slice(0, 6).map((artist: any) => (
@@ -318,7 +309,7 @@ export default async function DashboardPage() {
                 </section>
               )}
 
-              <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+              <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                 <PanelTitle icon={History} title="Atividade recente" subtitle="Seu histórico mais novo." href="/profile" linkLabel="Perfil" />
                 <div className="space-y-1.5">
                   {activities.length === 0 ? (
@@ -343,7 +334,7 @@ export default async function DashboardPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+              <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
                 <p className="mb-3 text-[10px] font-black uppercase tracking-[0.16em] text-muted">Explorar</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
