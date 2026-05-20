@@ -37,7 +37,7 @@ interface GscData {
 }
 interface Ga4Data {
     metrics: Ga4Metrics; prevMetrics: Ga4Metrics; dailyTrend: Ga4Daily[]
-    activeUsers: number; blogPosts: Ga4Page[]; productions: Ga4Page[]; artists: Ga4Page[]
+    activeUsers: number; blogPosts: Ga4Page[]; productions: Ga4Page[]; artists: Ga4Page[]; groups: Ga4Page[]
     countries: Ga4Country[]; devices: Ga4Device[]; sources: Ga4Source[]
     newVsReturning: Ga4NvR[]; searchTerms: Ga4Search[]; sectionEngagement: Ga4Section[]
     landingPages: Ga4Page[]; gsc: GscData | null; days: number
@@ -89,7 +89,7 @@ function adminEditorLink(pageUrl: string): string | null {
     const path = pageUrl.replace('https://www.hallyuhub.com.br', '')
     const seg  = path.split('/')[1]
     if (!seg) return null
-    const map: Record<string, string> = { artists: '/admin/artists', productions: '/admin/productions', blog: '/admin/blog', groups: '/admin/artists', news: '/admin/news' }
+    const map: Record<string, string> = { artists: '/admin/artists', productions: '/admin/productions', blog: '/admin/blog', groups: '/admin/groups', news: '/admin/news' }
     return map[seg] ?? null
 }
 
@@ -157,9 +157,9 @@ function LineChart({ data, keys, colors, labels, height = 100 }: {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; idx: number } | null>(null)
     if (data.length < 2) return null
 
-    const W = 600; const H = height
+    const PAD_L = 36; const W = 600; const H = height
     const maxVal = Math.max(...data.flatMap(d => keys.map(k => Number(d[k] ?? 0))), 1)
-    const xStep = W / (data.length - 1)
+    const xStep = (W - PAD_L) / (data.length - 1)
     const yScale = (v: number) => H - (v / maxVal) * H * 0.85 - H * 0.05
 
     const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -176,13 +176,21 @@ function LineChart({ data, keys, colors, labels, height = 100 }: {
         <div className="relative select-none">
             <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full overflow-visible"
                 style={{ height }} onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
-                {[0.25, 0.5, 0.75, 1].map(f => (
-                    <line key={f} x1={0} y1={yScale(maxVal * f)} x2={W} y2={yScale(maxVal * f)}
-                        stroke="currentColor" strokeOpacity={0.06} strokeWidth={1} strokeDasharray="4 4" />
-                ))}
+                {[0.25, 0.5, 0.75, 1].map(f => {
+                    const y = yScale(maxVal * f)
+                    return (
+                        <g key={f}>
+                            <line x1={PAD_L} y1={y} x2={W} y2={y}
+                                stroke="currentColor" strokeOpacity={0.06} strokeWidth={1} strokeDasharray="4 4" />
+                            <text x={PAD_L - 4} y={y + 3} textAnchor="end" fontSize={8} fill="currentColor" opacity={0.35} className="font-mono">
+                                {fmt(Math.round(maxVal * f))}
+                            </text>
+                        </g>
+                    )
+                })}
                 {keys.map((k, ki) => {
-                    const pts = data.map((d, i) => `${i * xStep},${yScale(Number(d[k] ?? 0))}`).join(' ')
-                    const fillPts = `0,${H} ${pts} ${(data.length - 1) * xStep},${H}`
+                    const pts = data.map((d, i) => `${PAD_L + i * xStep},${yScale(Number(d[k] ?? 0))}`).join(' ')
+                    const fillPts = `${PAD_L},${H} ${pts} ${PAD_L + (data.length - 1) * xStep},${H}`
                     return (
                         <g key={k}>
                             <polygon points={fillPts} fill={colors[ki]} fillOpacity={0.08} />
@@ -193,10 +201,10 @@ function LineChart({ data, keys, colors, labels, height = 100 }: {
                 })}
                 {tooltip !== null && (
                     <>
-                        <line x1={tooltip.idx * xStep} y1={0} x2={tooltip.idx * xStep} y2={H}
+                        <line x1={PAD_L + tooltip.idx * xStep} y1={0} x2={PAD_L + tooltip.idx * xStep} y2={H}
                             stroke="white" strokeOpacity={0.12} strokeWidth={1} />
                         {keys.map((k, ki) => (
-                            <circle key={ki} cx={tooltip.idx * xStep} cy={yScale(Number(data[tooltip.idx][k] ?? 0))}
+                            <circle key={ki} cx={PAD_L + tooltip.idx * xStep} cy={yScale(Number(data[tooltip.idx][k] ?? 0))}
                                 r={4} fill={colors[ki]} stroke="var(--color-background)" strokeWidth={2} />
                         ))}
                     </>
@@ -316,8 +324,8 @@ function SectionTable({ rows }: { rows: Ga4Section[] }) {
 
 // ─── TopList ─────────────────────────────────────────────────────────────────
 
-function TopList({ items, valueKey, labelKey, href }: {
-    items: Record<string, unknown>[]; valueKey: string; labelKey: string
+function TopList({ items, valueKey, labelKey, titleKey, href }: {
+    items: Record<string, unknown>[]; valueKey: string; labelKey: string; titleKey?: string
     href?: (item: Record<string, unknown>) => string
 }) {
     const max = Math.max(...items.map(i => Number(i[valueKey] ?? 0)), 1)
@@ -325,7 +333,9 @@ function TopList({ items, valueKey, labelKey, href }: {
         <div className="space-y-1.5">
             {items.map((item, i) => {
                 const val = Number(item[valueKey] ?? 0)
-                const label = String(item[labelKey] ?? '')
+                const path = String(item[labelKey] ?? '')
+                const title = titleKey ? String(item[titleKey] ?? '') : ''
+                const displayLabel = title && title !== '(not set)' ? title : shortPath(path)
                 const url = href?.(item)
                 return (
                     <div key={i} className="group flex items-center gap-2">
@@ -337,8 +347,8 @@ function TopList({ items, valueKey, labelKey, href }: {
                                 <span className="absolute inset-y-0 left-2 right-7 flex items-center text-[11px] text-foreground truncate">
                                     {url ? (
                                         <a href={`https://www.hallyuhub.com.br${url}`} target="_blank" rel="noopener"
-                                            className="hover:text-accent transition-colors truncate">{shortPath(label)}</a>
-                                    ) : label}
+                                            className="hover:text-accent transition-colors truncate" title={path}>{displayLabel}</a>
+                                    ) : displayLabel}
                                 </span>
                                 {url && <ExternalLink size={9} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted opacity-0 group-hover:opacity-60 transition-opacity" />}
                             </div>
@@ -710,22 +720,26 @@ export default function Ga4AnalyticsPage() {
                         )}
 
                         {loading && !data ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">{Array.from({length:3}).map((_,i) => <SkeletonBlock key={i} h="h-52" />)}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({length:4}).map((_,i) => <SkeletonBlock key={i} h="h-52" />)}</div>
                         ) : data && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {[{title:'Top Blog', items:data.blogPosts},{title:'Top Artistas',items:data.artists},{title:'Top Produções',items:data.productions}]
-                                    .map(({ title, items }) => (
-                                        <Card key={title}><CardTitle>{title}</CardTitle>
-                                            <TopList items={items as unknown as Record<string, unknown>[]} valueKey="pageviews" labelKey="path" href={item => String(item.path ?? '')} />
-                                        </Card>
-                                    ))}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[
+                                    { title: 'Top Blog', items: data.blogPosts },
+                                    { title: 'Top Artistas', items: data.artists },
+                                    { title: 'Top Produções', items: data.productions },
+                                    { title: 'Top Grupos', items: data.groups },
+                                ].map(({ title, items }) => (
+                                    <Card key={title}><CardTitle>{title}</CardTitle>
+                                        <TopList items={items as unknown as Record<string, unknown>[]} valueKey="pageviews" labelKey="path" titleKey="title" href={item => String(item.path ?? '')} />
+                                    </Card>
+                                ))}
                             </div>
                         )}
 
                         {loading && !data ? <SkeletonBlock h="h-44" /> : data && (
                             <Card>
                                 <CardTitle icon={ArrowUpRight} right="onde usuários chegam">Páginas de Entrada</CardTitle>
-                                <TopList items={data.landingPages as unknown as Record<string, unknown>[]} valueKey="sessions" labelKey="path" href={item => String(item.path ?? '')} />
+                                <TopList items={data.landingPages as unknown as Record<string, unknown>[]} valueKey="sessions" labelKey="path" titleKey="title" href={item => String(item.path ?? '')} />
                             </Card>
                         )}
                     </div>
