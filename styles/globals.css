@@ -18,11 +18,11 @@
     --color-accent-soft:  rgba(255, 36, 110, 0.10);
     --color-accent-strong:#e91562;
     --color-cyan:         #b14cff;
-    --color-violet:       #7c4dff;
+    --color-violet:       var(--color-accent);
     --color-gold:         #ff6bb0;
     --color-ink-panel:    #120f15;
     --color-surface-editorial: #fff3f8;
-    --color-surface-media:     #f8f3ff;
+    --color-surface-media:     var(--color-surface);
     --color-surface-tint:      #fbf7ff;
     --color-shimmer:      rgba(0, 0, 0, 0.04);
     --color-overlay:      rgba(0, 0, 0, 0.4);
@@ -68,11 +68,11 @@
     --color-accent-soft:  rgba(255, 54, 125, 0.18);
     --color-accent-strong:#ff4b8d;
     --color-cyan:         #c084fc;
-    --color-violet:       #9b7bff;
+    --color-violet:       var(--color-accent);
     --color-gold:         #ff7fbd;
     --color-ink-panel:    #0b0910;
     --color-surface-editorial: #2a1821;
-    --color-surface-media:     #201726;
+    --color-surface-media:     var(--color-surface);
     --color-surface-tint:      #221925;
     --color-shimmer:      rgba(255, 255, 255, 0.04);
     --color-overlay:      rgba(0, 0, 0, 0.6);
@@ -469,5 +469,26 @@ ins.adsbygoogle[data-ad-status="unfilled"] {
   .site-shell {
     padding-top: var(--adsense-anchor-top-offset, 0px);
     transition: padding-top 220ms ease;
+  }
+}
+
+/* Contentor padrão do site — alinhado com o NavBar (max-w-[1440px] + px-10) */
+.page-wrap {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;    /* px-4 mobile */
+  padding-right: 1rem;
+}
+@media (min-width: 640px) {
+  .page-wrap {
+    padding-left: 1.5rem;  /* sm:px-6 */
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .page-wrap {
+    padding-left: 2.5rem;  /* lg:px-10 */
+    padding-right: 2.5rem;
   }
 }
