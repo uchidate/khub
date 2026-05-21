@@ -62,7 +62,11 @@ const getGroup = cache(async (slugOrId: string) => {
                             nameRomanized: true,
                             nameHangul: true,
                             primaryImageUrl: true,
-                            roles: true, gender: true,
+                            roles: true,
+                            gender: true,
+                            birthDate: true,
+                            height: true,
+                            birthName: true,
                         },
                     },
                 },
@@ -506,7 +510,10 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             {analiseEditorial && (
                                 <a href="#analise" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Análise</a>
                             )}
-                            {curiosidades.length > 0 && (
+                            {curiosidades.some(c => c.startsWith('HISTÓRICO|')) && (
+                                <a href="#timeline" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Timeline</a>
+                            )}
+                            {curiosidades.some(c => !c.startsWith('HISTÓRICO|')) && (
                                 <a href="#curiosidades" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Recordes</a>
                             )}
                             {formerMembers.length > 0 && (
@@ -685,54 +692,165 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
-                        {/* ── ANÁLISE EDITORIAL ── */}
+                        {/* ── NÚMEROS DE IMPACTO — extraído dinamicamente das curiosidades ── */}
+                        {(() => {
+                            // Regex para capturar padrões numéricos de destaque nas curiosidades
+                            const numRegex = /(\d[\d.,]*\s*[MBKmilhõesbilhão+%]*\s*(?:milhões|bilhões|bilhão|milhão)?)/
+                            const impactFacts = curiosidades
+                                .map(c => {
+                                    const match = c.match(numRegex)
+                                    if (!match) return null
+                                    const numStr = match[1].trim()
+                                    // Extrai o contexto após o número como "label"
+                                    const after = c.slice(c.indexOf(numStr) + numStr.length).trim()
+                                    const label = after.split(/[,;.]/)[0].trim().slice(0, 50) || c.slice(0, 40)
+                                    const sub = c.replace(numStr, '').replace(label, '').replace(/^[\s,–-]+/, '').slice(0, 80)
+                                    return { number: numStr, label, sub: sub || c.slice(0, 80) }
+                                })
+                                .filter(Boolean)
+                                .slice(0, 3)
+
+                            if (impactFacts.length === 0) return null
+                            return (
+                                <section id="numeros">
+                                    <SectionHeader icon={<Eye className="w-5 h-5" />} title="Em Números" accent={accent} />
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        {impactFacts.map((f, i) => (
+                                            <div key={i} className="relative overflow-hidden border border-border bg-background p-5"
+                                                style={{ borderTopColor: accent, borderTopWidth: 2 }}>
+                                                <div className="absolute -bottom-2 -right-1 font-display text-[72px] font-black leading-none opacity-[0.05] select-none pointer-events-none"
+                                                    style={{ color: accent }}>{f!.number}</div>
+                                                <p className="font-display text-4xl font-black leading-none mb-2" style={{ color: accent }}>{f!.number}</p>
+                                                <p className="text-xs font-black text-foreground uppercase tracking-widest leading-snug">{f!.label}</p>
+                                                <p className="text-[10px] text-muted mt-2 leading-relaxed line-clamp-2">{f!.sub}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )
+                        })()}
+
+                        {/* ── ANÁLISE EDITORIAL — parsing de blocos ── */}
                         {analiseEditorial && (
                             <section id="analise">
-                                <div className="border-b border-foreground pb-3 mb-5 flex items-end gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center border border-border bg-background">
-                                            <span style={{ color: accent }}>✦</span>
-                                        </div>
-                                        <div>
-                                            <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Dossiê</p>
-                                            <h2 className="text-xl font-black tracking-[-0.03em]">Análise Editorial</h2>
-                                        </div>
+                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Análise Editorial" accent={accent} />
+                                <div className="space-y-4">
+                                    {analiseEditorial.split('\n\n').map((para, i) => {
+                                        const quoteMatch = para.match(/^\[QUOTE\]([\s\S]*?)\[\/QUOTE\]/)
+                                        const destaqueMatch = para.match(/^\[DESTAQUE\]([\s\S]*?)\[\/DESTAQUE\]/)
+                                        if (quoteMatch) {
+                                            return (
+                                                <blockquote key={i} className="pl-5 py-4 pr-5 italic"
+                                                    style={{ borderLeft: `4px solid ${accent}`, background: toRgba(accent, 0.05) }}>
+                                                    <p className="text-sm leading-relaxed sm:text-base" style={{ color: accent }}>
+                                                        &ldquo;{quoteMatch[1].trim()}&rdquo;
+                                                    </p>
+                                                </blockquote>
+                                            )
+                                        }
+                                        if (destaqueMatch) {
+                                            return (
+                                                <div key={i} className="py-8 px-6 text-center"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${toRgba(accent, 0.07)}, ${toRgba(accent, 0.02)})`,
+                                                        border: `1px solid ${toRgba(accent, 0.2)}`,
+                                                    }}>
+                                                    <p className="text-xl sm:text-2xl font-black leading-snug text-foreground italic">
+                                                        &ldquo;{destaqueMatch[1].trim()}&rdquo;
+                                                    </p>
+                                                </div>
+                                            )
+                                        }
+                                        return (
+                                            <p key={i} className="text-sm leading-[1.9] text-foreground sm:text-[15px]">{para}</p>
+                                        )
+                                    })}
+                                    <div className="flex items-center gap-2 pt-2" style={{ borderTop: `1px solid ${toRgba(accent, 0.15)}` }}>
+                                        <div className="h-0.5 w-6 flex-shrink-0" style={{ background: accent }} />
+                                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted">Editorial HallyuHub — análise independente</p>
                                     </div>
-                                </div>
-                                <div className="relative border border-border bg-background p-6 sm:p-8" style={{ borderLeftColor: accent, borderLeftWidth: 3 }}>
-                                    <div className="absolute top-4 right-4 font-mono text-[60px] font-black leading-none opacity-[0.04] select-none" style={{ color: accent }}>✦</div>
-                                    <p className="text-sm leading-[1.85] text-foreground sm:text-base">{analiseEditorial}</p>
                                 </div>
                             </section>
                         )}
 
-                        {/* ── CURIOSIDADES / RECORDS ── */}
-                        {curiosidades.length > 0 && (
-                            <section id="curiosidades">
-                                <div className="border-b border-foreground pb-3 mb-5 flex items-end gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center border border-border bg-background">
-                                            <span style={{ color: accent }}>★</span>
-                                        </div>
-                                        <div>
-                                            <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Dossiê</p>
-                                            <h2 className="text-xl font-black tracking-[-0.03em]">Recordes & Curiosidades</h2>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {curiosidades.map((fact, i) => (
-                                        <div key={i} className="flex gap-4 border border-border bg-background p-4 transition-colors hover:bg-surface">
-                                            <div className="flex-shrink-0 font-display text-2xl font-black leading-none tabular-nums"
-                                                style={{ color: toRgba(accent, 0.35) }}>
-                                                {String(i + 1).padStart(2, '0')}
+                        {/* ── CURIOSIDADES — timeline + facts ── */}
+                        {curiosidades.length > 0 && (() => {
+                            const timelineItems = curiosidades
+                                .filter(c => c.startsWith('HISTÓRICO|'))
+                                .map(c => {
+                                    const [, year, ...rest] = c.split('|')
+                                    return { year, text: rest.join('|') }
+                                })
+                                .sort((a, b) => a.year.localeCompare(b.year))
+                            const facts = curiosidades.filter(c => !c.startsWith('HISTÓRICO|'))
+
+                            return (
+                                <>
+                                    {/* Timeline de carreira */}
+                                    {timelineItems.length > 0 && (
+                                        <section id="timeline">
+                                            <SectionHeader icon={<Calendar className="w-5 h-5" />} title="Linha do Tempo" count={timelineItems.length} countLabel="marcos" accent={accent} />
+                                            <div className="relative">
+                                                {/* Linha vertical */}
+                                                <div className="absolute top-0 bottom-0 w-px hidden sm:block"
+                                                    style={{ left: '72px', background: `linear-gradient(to bottom, ${accent} 0%, ${toRgba(accent, 0.1)} 85%, transparent 100%)` }} />
+                                                <div className="space-y-0">
+                                                    {timelineItems.map((item, i) => (
+                                                        <div key={i} className="flex gap-0 pb-6 last:pb-0 relative">
+                                                            {/* Ano */}
+                                                            <div className="hidden sm:flex w-[68px] shrink-0 justify-end pr-4 pt-1">
+                                                                <span className="font-display text-sm font-black" style={{ color: accent }}>{item.year}</span>
+                                                            </div>
+                                                            {/* Dot */}
+                                                            <div className="hidden sm:flex w-[8px] shrink-0 flex-col items-center mr-4 mt-1.5">
+                                                                <span className="w-2.5 h-2.5 rounded-full border-2 border-background shadow-[0_0_0_2px_currentColor]"
+                                                                    style={{ background: accent, color: toRgba(accent, 0.4) }} />
+                                                            </div>
+                                                            {/* Texto */}
+                                                            <div className="flex-1 min-w-0 border border-border bg-background p-4 hover:bg-surface transition-colors">
+                                                                <span className="inline sm:hidden font-display text-xs font-black mr-2" style={{ color: accent }}>{item.year}</span>
+                                                                <p className="text-[13px] leading-relaxed text-foreground inline sm:block">{item.text}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <p className="text-sm leading-relaxed text-foreground">{fact}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )}
+                                        </section>
+                                    )}
+
+                                    {/* Recordes & Curiosidades */}
+                                    {facts.length > 0 && (
+                                        <section id="curiosidades">
+                                            <SectionHeader icon={<Heart className="w-5 h-5" />} title="Recordes & Conquistas" count={facts.length} countLabel="recordes" accent={accent} />
+                                            {/* Primeiro: destaque full-width */}
+                                            {facts[0] && (
+                                                <div className="mb-3 flex gap-0 overflow-hidden border border-border bg-background"
+                                                    style={{ borderLeftColor: accent, borderLeftWidth: 3 }}>
+                                                    <div className="flex-1 min-w-0 p-5">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="font-mono text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 text-white"
+                                                                style={{ background: accent }}>Destaque</span>
+                                                        </div>
+                                                        <p className="text-sm sm:text-base font-semibold text-foreground leading-snug">{facts[0]}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* Demais: grid curiosity-style */}
+                                            <div className="grid gap-2.5 sm:grid-cols-2">
+                                                {facts.slice(1).map((fact, i) => (
+                                                    <div key={i} className="pl-4 py-3.5 pr-4 transition-colors hover:bg-surface"
+                                                        style={{ borderLeft: `3px solid ${toRgba(accent, 0.4)}`, background: toRgba(accent, 0.03) }}>
+                                                        <p className="font-mono text-[9px] font-black uppercase tracking-widest mb-1.5"
+                                                            style={{ color: accent }}>Recorde #{String(i + 2).padStart(2, '0')}</p>
+                                                        <p className="text-[13px] leading-relaxed text-foreground">{fact}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </section>
+                                    )}
+                                </>
+                            )
+                        })()}
 
                         <LojaRelacionados
                             tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
@@ -1019,6 +1137,9 @@ function MemberGrid({
             nameHangul: string | null
             primaryImageUrl: string | null
             roles: string[]
+            birthDate?: Date | null
+            height?: string | null
+            birthName?: string | null
         }
     }[]
     faded?: boolean
@@ -1089,12 +1210,22 @@ function MemberGrid({
                                     ))}
                                 </div>
                             )}
-                            {(member.joinDate || member.leaveDate) && (
-                                <p className="text-[10px] text-muted mt-1.5">
-                                    {member.joinDate ? new Date(member.joinDate).getUTCFullYear() : '?'}
-                                    {member.leaveDate ? ` – ${new Date(member.leaveDate).getUTCFullYear()}` : '–'}
-                                </p>
-                            )}
+                            <div className="mt-1.5 space-y-0.5">
+                                {member.artist.birthDate && (
+                                    <p className="text-[10px] text-muted">
+                                        {new Date(member.artist.birthDate).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+                                    </p>
+                                )}
+                                {member.artist.height && (
+                                    <p className="text-[10px] text-muted">{member.artist.height}</p>
+                                )}
+                                {(member.joinDate || member.leaveDate) && (
+                                    <p className="text-[10px] text-muted">
+                                        no grupo: {member.joinDate ? new Date(member.joinDate).getUTCFullYear() : '?'}
+                                        {member.leaveDate ? `–${new Date(member.leaveDate).getUTCFullYear()}` : '–'}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </Link>
                 )
