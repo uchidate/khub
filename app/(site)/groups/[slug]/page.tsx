@@ -26,6 +26,7 @@ import { DiscographySection } from '@/components/features/DiscographySection'
 import { GroupSpotifyEmbed } from '@/components/groups/GroupSpotifyEmbed'
 import { GroupMVPlayer } from '@/components/groups/GroupMVPlayer'
 import { GroupAnimatedStats } from '@/components/groups/GroupAnimatedStats'
+import { GroupSocialPresence } from '@/components/groups/GroupSocialPresence'
 import { ExternalMusicEntityType } from '@prisma/client'
 const BASE_URL = SITE_URL
 
@@ -510,6 +511,9 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             {curiosidades.some(c => !c.startsWith('HISTÓRICO|')) && (
                                 <a href="#curiosidades" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Recordes</a>
                             )}
+                            {(Object.keys(socialLinks).length > 0 || spotifyUrl) && (
+                                <a href="#redes" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Redes</a>
+                            )}
                             {formerMembers.length > 0 && (
                                 <a href="#ex-membros" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Ex-membros</a>
                             )}
@@ -985,6 +989,16 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         {/* MVs — player interativo */}
                         {videos.length > 0 && (
                             <GroupMVPlayer videos={videos} accent={accent} />
+                        )}
+
+                        {/* Presença digital — redes sociais */}
+                        {(Object.keys(socialLinks).length > 0 || spotifyUrl) && (
+                            <GroupSocialPresence
+                                socialLinks={socialLinks}
+                                spotifyUrl={spotifyUrl}
+                                accent={accent}
+                                groupName={group.name}
+                            />
                         )}
 
                         {/* Ex-membros */}
