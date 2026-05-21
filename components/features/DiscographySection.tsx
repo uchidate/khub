@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { CalendarDays, ExternalLink, Music, Play } from 'lucide-react'
+import { CalendarDays, ExternalLink, LayoutGrid, List, Music, Play } from 'lucide-react'
 
 type AlbumType = 'ALBUM' | 'EP' | 'SINGLE'
 
@@ -58,6 +58,7 @@ function formatDuration(durationMs: number | null) {
 export function DiscographySection({ albums }: DiscographySectionProps) {
     const [filter, setFilter] = useState<FilterTab>('all')
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid')
 
     const counts = useMemo(() => ({
         ALBUM: albums.filter(album => album.type === 'ALBUM').length,
@@ -98,28 +99,92 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                         </p>
                     </div>
 
-                    {tabs.length > 1 && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {tabs.map(({ key, label, count }) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setFilter(key)}
-                                    className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${
-                                        filter === key
-                                            ? 'bg-accent/10 text-accent border-accent/30'
-                                            : 'bg-surface text-muted border-border hover:text-foreground'
-                                    }`}
-                                >
-                                    {label}
-                                    {key !== 'all' && <span className="ml-1 opacity-70">({count})</span>}
-                                </button>
-                            ))}
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {tabs.length > 1 && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                {tabs.map(({ key, label, count }) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => setFilter(key)}
+                                        className={`px-3 py-1.5 text-xs font-bold border transition-colors ${
+                                            filter === key
+                                                ? 'bg-accent/10 text-accent border-accent/30'
+                                                : 'bg-surface text-muted border-border hover:text-foreground'
+                                        }`}
+                                    >
+                                        {label}
+                                        {key !== 'all' && <span className="ml-1 opacity-70">({count})</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex items-center border border-border">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-surface text-foreground' : 'text-muted hover:text-foreground'}`}
+                                title="Grade"
+                            >
+                                <LayoutGrid className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-surface text-foreground' : 'text-muted hover:text-foreground'}`}
+                                title="Lista"
+                            >
+                                <List className="w-3.5 h-3.5" />
+                            </button>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            <div className="space-y-3">
+            {viewMode === 'grid' && (
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                    {filtered.map(album => {
+                        const year = formatYear(album.releaseDate)
+                        return (
+                            <div key={album.id} className="album-card group border border-border bg-background transition-all duration-200">
+                                <div className="relative aspect-square bg-surface overflow-hidden">
+                                    {album.coverUrl ? (
+                                        <Image
+                                            src={album.coverUrl}
+                                            alt={album.title}
+                                            fill
+                                            sizes="(max-width: 640px) 33vw, 20vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <Music className="w-6 h-6 text-muted/40" />
+                                        </div>
+                                    )}
+                                    {album.spotifyUrl && (
+                                        <a
+                                            href={album.spotifyUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/40 transition-all duration-200"
+                                        >
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 shadow-lg">
+                                                <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                                            </div>
+                                        </a>
+                                    )}
+                                </div>
+                                <div className="p-2">
+                                    <p className="album-title text-xs font-bold text-foreground line-clamp-1 leading-snug">{album.title}</p>
+                                    <p className="text-[10px] text-muted mt-0.5 font-mono">
+                                        {TYPE_LABEL[album.type] ?? album.type}{year ? ` · ${year}` : ''}
+                                    </p>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+
+            {viewMode === 'list' && <div className="space-y-3">
                 {filtered.map(album => {
                     const tracks = album.tracks ?? []
                     const visibleTracks = expandedIds.has(album.id) ? tracks : tracks.slice(0, 4)
@@ -129,7 +194,7 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                     return (
                         <article
                             key={album.id}
-                            className="overflow-hidden rounded-lg border border-border bg-background"
+                            className="overflow-hidden border border-border bg-background"
                         >
                             <div className="flex flex-col sm:flex-row">
                                 <div className="relative w-full sm:w-32 aspect-square sm:aspect-auto sm:min-h-32 bg-surface flex-shrink-0">
@@ -231,7 +296,7 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                         </article>
                     )
                 })}
-            </div>
+            </div>}
         </section>
     )
 }
