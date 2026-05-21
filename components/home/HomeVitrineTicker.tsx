@@ -29,8 +29,8 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
 
     return (
         <div className="relative">
-            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 left-0 top-0 z-10 bg-gradient-to-r from-surface to-transparent`} />
-            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 right-0 top-0 z-10 bg-gradient-to-l from-surface to-transparent`} />
+            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 left-0 top-0 z-10 bg-gradient-to-r from-background to-transparent`} />
+            <div className={`${compact ? 'w-4 sm:w-8' : 'w-8'} pointer-events-none absolute bottom-0 right-0 top-0 z-10 bg-gradient-to-l from-background to-transparent`} />
 
             <div className="overflow-hidden">
                 <div
@@ -50,7 +50,7 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
                                 className={`${compact ? 'w-[66px] sm:w-[88px]' : 'w-[96px]'} flex-shrink-0 flex flex-col gap-1.5 group`}
                             >
                                 {/* Imagem */}
-                                <div className={`${compact ? 'w-[66px] h-[66px] min-w-[66px] min-h-[66px] rounded-xl sm:w-[88px] sm:h-[88px] sm:min-w-[88px] sm:min-h-[88px] sm:rounded-2xl' : 'h-[96px] w-[96px] min-h-[96px] min-w-[96px] rounded-2xl'} relative overflow-hidden border border-border bg-background transition-all duration-200 group-hover:border-accent/60 group-hover:shadow-md group-hover:shadow-black/5`}>
+                                <div className={`${compact ? 'w-[66px] h-[66px] min-w-[66px] min-h-[66px] rounded-md sm:w-[88px] sm:h-[88px] sm:min-w-[88px] sm:min-h-[88px]' : 'h-[92px] w-[92px] min-h-[92px] min-w-[92px] rounded-md'} relative overflow-hidden border border-border bg-background transition-colors duration-200 group-hover:border-accent/60`}>
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={p.imageUrl}

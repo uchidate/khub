@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { ArrowRight, Clock } from "lucide-react"
+import { Clock } from "lucide-react"
 import { BlogImage } from "@/components/ui/BlogImage"
+import { SectionTitleBar } from "@/components/ui/SectionTitleBar"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 
 interface ArticleItem {
@@ -24,7 +25,7 @@ function CategoryPill({ category }: { category: ArticleItem["category"] }) {
     const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
     return (
         <span
-            className="inline-flex w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em]"
+            className="inline-flex w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]"
             style={{ color: cfg?.color ?? "#374151", backgroundColor: cfg?.bg ?? "#f3f4f6" }}
         >
             {category.name}
@@ -37,21 +38,11 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
     if (visiblePosts.length === 0) return null
 
     return (
-        <section className="bg-background py-7 sm:py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-4 flex items-end justify-between">
-                    <div className="border-l-[4px] border-accent pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Artigos</p>
-                        <h2 className="mt-1 text-[19px] font-black tracking-[-0.025em] text-foreground sm:text-[21px]">
-                            Mais recentes
-                        </h2>
-                    </div>
-                    <Link href="/blog" className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground">
-                        Ver todos <ArrowRight className="h-3 w-3" />
-                    </Link>
-                </div>
+        <section className="bg-background">
+            <div className="page-wrap border-t border-border py-8">
+                <SectionTitleBar eyebrow="Artigos" title="Mais recentes" href="/blog" />
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid border border-foreground sm:grid-cols-2 lg:grid-cols-3">
                     {visiblePosts.map((post, index) => {
                         const categoryConfig = post.category ? BLOG_CATEGORY_BY_SLUG[post.category.slug] : null
                         const isLead = index === 0
@@ -59,18 +50,10 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className={`group grid overflow-hidden rounded-2xl border border-border shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/40 ${
+                                className={`group grid overflow-hidden border-b border-border bg-background transition-colors hover:bg-surface/70 sm:border-r lg:[&:nth-child(3n)]:border-r-0 ${
                                     isLead
                                         ? "grid-cols-1 sm:col-span-2 lg:col-span-1"
                                         : "grid-cols-[88px_minmax(0,1fr)] sm:block"
-                                } ${
-                                    post.category?.slug === "cultura"
-                                        ? "bg-surface-editorial/35"
-                                        : post.category?.slug === "k-drama" || post.category?.slug === "filmes"
-                                            ? "bg-surface"
-                                            : isLead
-                                                ? "bg-surface-tint/65"
-                                                : "bg-background"
                                 }`}
                             >
                                 <div className={`relative overflow-hidden bg-surface ${
@@ -90,7 +73,7 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                                 <div className={isLead ? "p-4" : "p-3"}>
                                     <CategoryPill category={post.category} />
                                     <h3
-                                        className={`${isLead ? "text-[17px] sm:text-[18px]" : "text-[13px] sm:text-[14px]"} mt-2 font-semibold leading-snug text-foreground line-clamp-2 transition-colors`}
+                                        className={`${isLead ? "text-[24px] sm:text-[28px]" : "text-[18px] sm:text-[20px]"} mt-2 font-serif font-medium leading-[1.05] tracking-[-0.04em] text-foreground line-clamp-2 transition-colors`}
                                         style={{ color: categoryConfig?.color }}
                                     >
                                         {post.title}

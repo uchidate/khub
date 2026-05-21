@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { nameToGradient } from "@/lib/utils"
+import { SectionTitleBar } from "@/components/ui/SectionTitleBar"
 
 interface RecommendedArtist {
     id: string
-
     slug?: string | null
     nameRomanized: string
     nameHangul: string | null
@@ -22,7 +22,6 @@ interface PersonalizedData {
     hasFavorites: boolean
     recommendedArtists: RecommendedArtist[]
 }
-
 
 const ROLE_LABELS: Record<string, [string, string]> = {
     'ATOR':      ['Ator',      'Atriz'],
@@ -48,26 +47,19 @@ function getInitials(name: string): string {
 function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedArtist[], hasFavorites: boolean }) {
     if (artists.length < 2) {
         return (
-            <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
-                        <div className="border-b border-border bg-surface px-4 py-4 sm:px-6 sm:py-5 lg:px-12">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Para voce</p>
-                            <h3 className="text-[15px] sm:text-[17px] font-bold text-foreground mt-1">Ainda estamos montando suas recomendacoes</h3>
-                            <p className="text-[12px] text-muted mt-1.5">Enquanto isso, estes caminhos ajudam voce a descobrir mais rapido.</p>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mt-4">
-                                <Link href="/artists" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
-                                    Explore artistas
-                                </Link>
-                                <Link href="/productions" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
-                                    Veja producoes populares
-                                </Link>
-                                <Link href="/profile" className="rounded-xl border border-border bg-surface px-3 py-3 hover:bg-background transition-colors text-[12.5px] font-semibold text-foreground">
-                                    Complete seu perfil de interesses
-                                </Link>
-                            </div>
-                        </div>
+            <section className="bg-background">
+                <div className="page-wrap border-t border-border py-10">
+                    <SectionTitleBar eyebrow="Para você" title="Ainda montando suas recomendações" />
+                    <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+                        {[
+                            { href: "/artists", label: "Explore artistas" },
+                            { href: "/productions", label: "Veja produções populares" },
+                            { href: "/profile", label: "Complete seu perfil" },
+                        ].map(({ href, label }) => (
+                            <Link key={href} href={href} className="py-3 sm:px-5 first:pl-0 last:pr-0 text-[13px] font-semibold text-foreground transition-opacity hover:opacity-60">
+                                {label} →
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -75,46 +67,26 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
     }
 
     return (
-        <section className="bg-background pt-4 pb-2 sm:pt-5 sm:pb-3">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="rounded-2xl border border-border bg-background shadow-sm">
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 sm:px-6 lg:px-12">
-                    <div>
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
-                            Para você
-                        </p>
-                        <p className="text-[11px] text-muted/60 mt-0.5">
-                            {hasFavorites
-                                ? 'Artistas em alta que você ainda não segue'
-                                : 'Artistas para descobrir'}
-                        </p>
-                    </div>
-                    <Link
-                        href="/artists"
-                        className="text-[9px] font-semibold text-muted transition-colors hover:text-foreground"
-                    >
-                        Ver todos →
-                    </Link>
-                </div>
+        <section className="bg-background">
+            <div className="page-wrap border-t border-border py-10">
+                <SectionTitleBar
+                    eyebrow="Para você"
+                    title={hasFavorites ? 'Artistas em alta que você ainda não segue' : 'Artistas para descobrir'}
+                    href="/artists"
+                />
 
-                {/* Horizontal scroll */}
                 <div className="relative">
                     <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
                     <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
-                    <div
-                        className="flex gap-4 px-4 sm:px-6 lg:px-12 py-4 overflow-x-auto scrollbar-hide"
-                        style={{ scrollbarWidth: 'none' }}
-                    >
+                    <div className="flex gap-6 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
                         {artists.map((artist, idx) => (
                             <Link
                                 key={artist.id}
                                 href={`/artists/${artist.slug ?? artist.id}`}
-                                className={`group flex flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0 ${idx >= 6 ? 'hidden sm:flex' : ''}`}
+                                className={`group flex flex-col items-center gap-2 min-w-[64px] flex-shrink-0 transition-opacity hover:opacity-70 ${idx >= 6 ? 'hidden sm:flex' : ''}`}
                             >
-                                {/* Avatar */}
                                 <div
-                                    className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ring-2 ring-transparent group-hover:ring-accent/40 transition-all duration-200"
+                                    className="h-14 w-14 flex-shrink-0 overflow-hidden flex items-center justify-center"
                                     style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || String(idx)) }}
                                 >
                                     {artist.primaryImageUrl ? (
@@ -123,7 +95,7 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
                                             alt={artist.nameRomanized || ''}
                                             width={56}
                                             height={56}
-                                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                            className="object-cover w-full h-full"
                                         />
                                     ) : (
                                         <span className="text-white text-sm font-bold">
@@ -131,13 +103,12 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
                                         </span>
                                     )}
                                 </div>
-                                {/* Name */}
                                 <div className="text-center min-w-0 w-full">
-                                    <p className="text-[11px] font-semibold text-foreground group-hover:text-foreground/80 transition-colors leading-tight line-clamp-2 text-center">
+                                    <p className="text-[11px] font-semibold text-foreground leading-tight line-clamp-2 text-center">
                                         {artist.nameRomanized || artist.nameHangul}
                                     </p>
                                     {artist.roles?.length > 0 && (
-                                        <p className="text-[9px] text-muted mt-0.5 text-center">
+                                        <p className="font-mono text-[9px] text-muted mt-0.5 text-center">
                                             {formatRole(artist.roles[0], artist.gender)}
                                         </p>
                                     )}
@@ -145,20 +116,18 @@ function HomeRecommendedInner({ artists, hasFavorites }: { artists: RecommendedA
                             </Link>
                         ))}
 
-                        {/* CTA card */}
                         <Link
                             href="/artists"
-                            className="hidden sm:flex group flex-col items-center gap-2 min-w-[72px] max-w-[72px] flex-shrink-0"
+                            className="hidden sm:flex group flex-col items-center gap-2 min-w-[64px] flex-shrink-0 transition-opacity hover:opacity-60"
                         >
-                            <div className="w-14 h-14 rounded-full border-2 border-dashed border-border flex items-center justify-center group-hover:border-accent/50 transition-colors">
-                                <span className="text-muted group-hover:text-foreground text-lg font-bold transition-colors">+</span>
+                            <div className="flex h-14 w-14 items-center justify-center border border-dashed border-border/60">
+                                <span className="text-muted text-lg font-bold">+</span>
                             </div>
-                            <p className="text-[10px] text-muted group-hover:text-foreground transition-colors text-center leading-tight">
+                            <p className="font-mono text-[9px] text-muted text-center leading-tight">
                                 Ver mais
                             </p>
                         </Link>
                     </div>
-                </div>
                 </div>
             </div>
         </section>

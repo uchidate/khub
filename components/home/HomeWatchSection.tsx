@@ -1,6 +1,7 @@
 import Link from "next/link"
-import Image from "next/image"
-import { ArrowRight, Star } from "lucide-react"
+import { Star } from "lucide-react"
+import { BlogImage } from "@/components/ui/BlogImage"
+import { SectionTitleBar } from "@/components/ui/SectionTitleBar"
 
 interface WatchProduction {
     id: string
@@ -17,42 +18,43 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
     if (!lead) return null
 
     return (
-        <section className="bg-background py-6 sm:py-7">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
-                    <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3.5 sm:px-6">
-                        <div className="border-l-[3px] border-accent pl-3">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Dramas & Filmes</p>
-                            <h2 className="mt-0.5 text-[15px] font-bold text-foreground sm:text-[17px]">O que assistir agora</h2>
-                        </div>
-                        <Link href="/productions" className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground">
-                            Ver todos <ArrowRight className="h-3 w-3" />
-                        </Link>
-                    </div>
+        <section className="bg-background">
+            <div className="page-wrap border-t border-border py-8">
+                <div className="bg-background">
+                    <SectionTitleBar
+                        eyebrow="Dramas & Filmes"
+                        title="O que assistir agora"
+                        href="/productions"
+                        linkText="Ver todos →"
+                    />
 
-                    <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+                    <div className="grid border-b border-border lg:grid-cols-[0.9fr_1.1fr]">
                         <Link
                             href={`/productions/${lead.slug ?? lead.id}`}
-                            className="group relative min-h-[240px] sm:min-h-[280px] overflow-hidden border-b border-border lg:border-b-0 lg:border-r"
+                            className="group grid grid-cols-[96px_minmax(0,1fr)] gap-4 border-b border-border py-4 transition-colors hover:bg-surface/55 sm:grid-cols-[140px_minmax(0,1fr)] lg:border-b-0 lg:border-r lg:pr-6"
                         >
-                            {lead.imageUrl ? (
-                                <Image src={lead.imageUrl} alt={lead.titlePt} fill sizes="(max-width: 1024px) 100vw, 42vw" className="object-cover group-hover:scale-[1.03] transition-transform duration-500" />
-                            ) : (
-                                <div className="absolute inset-0 bg-surface" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-                            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                                <span className="inline-flex rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm">
+                            <div className="relative aspect-[2/3] overflow-hidden border border-border bg-surface">
+                                <BlogImage
+                                    src={lead.imageUrl}
+                                    alt={lead.titlePt}
+                                    fill
+                                    sizes="(max-width: 768px) 96px, 140px"
+                                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                    fallbackGradient="linear-gradient(135deg,#f7f5f8 0%,#e9e4eb 100%)"
+                                />
+                            </div>
+                            <div className="flex min-w-0 flex-col justify-center">
+                                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-accent">
                                     {lead.type}
                                 </span>
-                                <h3 className="mt-2 max-w-[24ch] text-[18px] sm:text-[20px] font-bold leading-tight text-white">
+                                <h3 className="mt-2 max-w-[18ch] font-serif text-[22px] font-medium leading-[1.02] tracking-[-0.035em] text-foreground transition-colors group-hover:text-accent sm:text-[30px] lg:text-[36px] lg:tracking-[-0.05em]">
                                     {lead.titlePt}
                                 </h3>
-                                <div className="mt-2 flex items-center gap-2 text-[10px] text-white/70">
+                                <div className="mt-3 flex items-center gap-2 text-[11px] text-muted">
                                     {lead.year && <span>{lead.year}</span>}
                                     {lead.voteAverage != null && lead.voteAverage > 0 && (
                                         <span className="inline-flex items-center gap-1">
-                                            <Star className="h-3 w-3 fill-current text-yellow-300" />
+                                            <Star className="h-3 w-3 fill-current text-accent" />
                                             {lead.voteAverage.toFixed(1)}
                                         </span>
                                     )}
@@ -60,23 +62,26 @@ export function HomeWatchSection({ productions }: { productions: WatchProduction
                             </div>
                         </Link>
 
-                        <div className="grid grid-cols-2 divide-x divide-y divide-border bg-background">
+                        <div className="grid sm:grid-cols-2 lg:pl-5">
                             {rest.map((production) => (
                                 <Link
                                     key={production.id}
                                     href={`/productions/${production.slug ?? production.id}`}
-                                    className="group flex gap-3 p-3 sm:p-4 hover:bg-surface transition-colors"
+                                    className="group grid grid-cols-[48px_minmax(0,1fr)] gap-3 border-b border-border py-4 transition-colors last:border-b-0 hover:bg-surface/55 sm:grid-cols-[56px_minmax(0,1fr)] sm:px-3 sm:odd:border-r sm:even:pl-5"
                                 >
-                                    <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-surface">
-                                        {production.imageUrl ? (
-                                            <Image src={production.imageUrl} alt={production.titlePt} fill sizes="64px" className="object-cover group-hover:scale-[1.04] transition-transform duration-300" />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">{production.titlePt[0]}</div>
-                                        )}
+                                    <div className="relative aspect-[2/3] overflow-hidden border border-border/70 bg-surface">
+                                        <BlogImage
+                                            src={production.imageUrl}
+                                            alt={production.titlePt}
+                                            fill
+                                            sizes="56px"
+                                            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                                            fallbackGradient="linear-gradient(135deg,#f7f5f8 0%,#e9e4eb 100%)"
+                                        />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted">{production.type}</p>
-                                        <h3 className="mt-1 text-[12.5px] sm:text-[13px] font-semibold leading-snug text-foreground line-clamp-2 group-hover:text-accent transition-colors">
+                                        <h3 className="mt-1 line-clamp-2 font-serif text-[16px] font-medium leading-[1.08] tracking-[-0.025em] text-foreground transition-colors group-hover:text-accent sm:text-[17px]">
                                             {production.titlePt}
                                         </h3>
                                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted">

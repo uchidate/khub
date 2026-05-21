@@ -51,6 +51,16 @@ function serializePost<T extends { publishedAt: Date | null }>(post: T) {
     return { ...post, publishedAt: post.publishedAt?.toISOString() ?? null }
 }
 
+function hasRenderableCover(post: { coverImageUrl?: string | null }) {
+    const imageUrl = post.coverImageUrl?.trim()
+    if (!imageUrl) return false
+    return /^https?:\/\//i.test(imageUrl) || imageUrl.startsWith("/")
+}
+
+function preferRenderableCovers<T extends { coverImageUrl?: string | null }>(posts: T[]) {
+    return [...posts].sort((a, b) => Number(hasRenderableCover(b)) - Number(hasRenderableCover(a)))
+}
+
 function getDayOfYear(date: Date) {
     const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0))
     const diff = date.getTime() - start.getTime()
@@ -174,7 +184,9 @@ export async function buildHomeRuntimeData(now = new Date()) {
         group: settings?.homeAffinityGroupWeight ?? 3,
         production: settings?.homeAffinityProductionWeight ?? 2,
     }
-    const affinityRankedFallbackPosts = rankPostsByHomeAffinity(fallbackPostsRaw, affinitySignals, affinityWeights)
+    const affinityRankedFallbackPosts = preferRenderableCovers(
+        rankPostsByHomeAffinity(fallbackPostsRaw, affinitySignals, affinityWeights)
+    )
     const carouselSelection = settings?.homeCarouselPostIds?.length
         ? {
             items: settings.homeCarouselPostIds.map((id) => slottedById[id]).filter(Boolean).slice(0, 5),
@@ -189,7 +201,11 @@ export async function buildHomeRuntimeData(now = new Date()) {
     const carouselIds = new Set(carouselPosts.map((post) => post.id))
     const fallback = affinityRankedFallbackPosts.filter((post) => !carouselIds.has(post.id))
     const featuredPost = settings?.homeFeaturedPostId
-        ? (slottedById[settings.homeFeaturedPostId] ?? fallback[0])
+        ? (
+            hasRenderableCover(slottedById[settings.homeFeaturedPostId])
+                ? slottedById[settings.homeFeaturedPostId]
+                : fallback.find(hasRenderableCover) ?? slottedById[settings.homeFeaturedPostId] ?? fallback[0]
+        )
         : fallback[0]
     const featuredContext = await buildFeaturedContext(featuredPost)
     const featuredCluster = buildFeaturedCluster(featuredContext)
