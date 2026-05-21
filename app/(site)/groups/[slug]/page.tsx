@@ -11,7 +11,6 @@ import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ReportButton } from '@/components/ui/ReportButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { ViewTracker } from '@/components/features/ViewTracker'
-import { GroupHeroImage } from '@/components/groups/GroupHeroImage'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
 import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
@@ -24,6 +23,9 @@ import { permanentRedirect } from 'next/navigation'
 import { SITE_URL } from '@/lib/constants/site'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { DiscographySection } from '@/components/features/DiscographySection'
+import { GroupSpotifyEmbed } from '@/components/groups/GroupSpotifyEmbed'
+import { GroupMVPlayer } from '@/components/groups/GroupMVPlayer'
+import { GroupAnimatedStats } from '@/components/groups/GroupAnimatedStats'
 import { ExternalMusicEntityType } from '@prisma/client'
 const BASE_URL = SITE_URL
 
@@ -436,24 +438,16 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 </div>
             </div>
 
-            {/* ── STATS BAR ── */}
-            <div className="border-y border-foreground/10" style={{ background: toRgba(accent, 0.07) }}>
-                <div className="page-wrap">
-                    <div className="grid grid-cols-2 divide-x divide-foreground/10 sm:grid-cols-4">
-                        {[
-                            { label: 'membros ativos', value: activeMembers.length.toLocaleString('pt-BR') },
-                            ...(debutYear ? [{ label: 'ano de debut', value: String(debutYear) }] : []),
-                            ...(yearsActive !== null ? [{ label: 'anos de carreira', value: `${yearsActive}` }] : []),
-                            { label: 'visualizações', value: group.viewCount.toLocaleString('pt-BR') },
-                        ].slice(0, 4).map((stat) => (
-                            <div key={stat.label} className="px-4 py-4 sm:px-6">
-                                <p className="font-display text-2xl font-black leading-none sm:text-3xl" style={{ color: accent }}>{stat.value}</p>
-                                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-muted">{stat.label}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            {/* ── STATS BAR — animado ── */}
+            <GroupAnimatedStats
+                accent={accent}
+                stats={[
+                    { label: 'membros ativos', value: activeMembers.length.toLocaleString('pt-BR') },
+                    ...(debutYear ? [{ label: 'ano de debut', value: String(debutYear) }] : []),
+                    ...(yearsActive !== null ? [{ label: 'anos de carreira', value: `${yearsActive}a` }] : []),
+                    { label: 'visualizações', value: group.viewCount.toLocaleString('pt-BR') },
+                ]}
+            />
 
             {/* ── ACTIONS ── */}
             <div className="border-b border-border/50">
@@ -976,6 +970,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
+                        {/* Spotify embed */}
+                        {spotifyUrl && (
+                            <GroupSpotifyEmbed spotifyUrl={spotifyUrl} groupName={group.name} accent={accent} />
+                        )}
+
                         {/* Discografia Spotify */}
                         {discographyReleases.length > 0 && (
                             <div id="discografia">
@@ -983,41 +982,9 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </div>
                         )}
 
-                        {/* MVs principais */}
+                        {/* MVs — player interativo */}
                         {videos.length > 0 && (
-                            <section id="mvs">
-                                <SectionHeader icon={<Play className="w-5 h-5" />} title="MVs Principais" count={videos.length} accent={accent} />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {videos.map((mv, i) => {
-                                        const videoId = extractYoutubeId(mv.url)
-                                        if (!videoId) return null
-                                        return (
-                                            <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
-                                                className="mv-card group block overflow-hidden border border-border transition-colors">
-                                                <div className="relative aspect-video bg-surface">
-                                                    <Image
-                                                        src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                                                        alt={mv.title}
-                                                        fill
-                                                        sizes="(max-width: 640px) 100vw, 50vw"
-                                                        className="object-cover brightness-75 group-hover:brightness-90 transition-all"
-                                                    />
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <div className="flex h-12 w-12 items-center justify-center transition-transform group-hover:scale-110"
-                                                            style={{ background: toRgba(accent, 0.85) }}>
-                                                            <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="p-3 bg-background" style={{ borderTop: `1px solid ${toRgba(accent, 0.1)}` }}>
-                                                    <p className="text-sm font-bold text-foreground group-hover:opacity-80 transition-opacity line-clamp-1">{mv.title}</p>
-                                                    <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wider font-bold">YouTube</p>
-                                                </div>
-                                            </a>
-                                        )
-                                    })}
-                                </div>
-                            </section>
+                            <GroupMVPlayer videos={videos} accent={accent} />
                         )}
 
                         {/* Ex-membros */}
