@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { Calendar, Cake, Film, Sparkles } from 'lucide-react'
+import { Cake, Film, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
 export const dynamic = 'force-dynamic'
@@ -115,10 +116,7 @@ export default async function CalendarioPage() {
             <section className="border-b border-border bg-[linear-gradient(135deg,var(--color-bg)_0%,var(--color-surface-editorial)_48%,var(--color-surface-media)_100%)]">
                 <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-12 lg:py-12">
                     <div className="max-w-3xl">
-                        <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-accent/20 bg-accent-soft px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-accent">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Agenda Hallyu
-                        </div>
+                        <Breadcrumbs items={[{ label: 'agenda' }, { label: 'calendário' }]} className="mb-1" />
                         <h1 className="text-4xl font-black leading-[0.96] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
                             Datas importantes sem perder o timing.
                         </h1>

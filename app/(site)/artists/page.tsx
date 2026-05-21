@@ -1,21 +1,19 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
 import Link from 'next/link'
-import Image from 'next/image'
-import { ArrowRight, TrendingUp } from 'lucide-react'
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ArtistFilters } from "@/components/features/ArtistFilters"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from '@/lib/constants/site'
-import { nameToGradient } from '@/lib/utils'
-import { getRoleLabels } from '@/lib/utils/role-labels'
 
 const BASE_URL = SITE_URL
-const DEFAULT_PER_PAGE = 50
+const DEFAULT_PER_PAGE = 48
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 export const revalidate = 600
 
@@ -54,6 +52,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
     const agencyId = sp.agencyId || undefined
     const memberType = sp.memberType || undefined
     const sortBy = sp.sortBy || 'trending'
+    const letter = sp.letter?.toUpperCase() || undefined
 
     const where: Record<string, unknown> = { flaggedAsNonKorean: false, isHidden: false }
 
@@ -80,15 +79,16 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
     if (agencyId) where.agencyId = agencyId
     if (memberType === 'group') where.memberships = { some: { isActive: true } }
     else if (memberType === 'solo') where.memberships = { none: { isActive: true } }
+    if (letter) where.nameRomanized = { startsWith: letter, mode: 'insensitive' }
 
     const orderBy =
         sortBy === 'name' ? { nameRomanized: 'asc' as const } :
         sortBy === 'newest' ? { createdAt: 'desc' as const } :
         { trendingScore: 'desc' as const }
 
-    const isFiltered = !!(search || role || groupId || agencyId || memberType)
+    const baseWhere = { flaggedAsNonKorean: false, isHidden: false }
 
-    const [artists, total, heroArtists] = await Promise.all([
+    const [artists, total, letterCountsRaw, totalCount] = await Promise.all([
         prisma.artist.findMany({
             where,
             take: limit,
@@ -99,24 +99,30 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 roles: true, gender: true,
                 memberships: { where: { isActive: true }, select: { group: { select: { id: true, name: true } } }, take: 1 },
                 agency: { select: { name: true } },
+                trendingScore: true,
             },
         }),
         prisma.artist.count({ where }),
-        // Top 5 trending para o hero — só na página 1 sem filtros
-        !isFiltered && page === 1 ? prisma.artist.findMany({
-            where: { flaggedAsNonKorean: false, isHidden: false, primaryImageUrl: { not: null } },
-            orderBy: { trendingScore: 'desc' },
-            take: 5,
-            select: {
-                id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true,
-                roles: true, gender: true,
-                memberships: { where: { isActive: true }, select: { group: { select: { name: true } } }, take: 1 },
-                viewCount: true,
-            },
-        }) : Promise.resolve([]),
+        // Letter counts via raw query for performance
+        prisma.$queryRaw<{ letter: string; count: bigint }[]>`
+            SELECT UPPER(LEFT("nameRomanized", 1)) as letter, COUNT(*) as count
+            FROM "Artist"
+            WHERE "flaggedAsNonKorean" = false AND "isHidden" = false
+              AND "nameRomanized" ~ '^[A-Za-z]'
+            GROUP BY UPPER(LEFT("nameRomanized", 1))
+        `.catch(() => [] as { letter: string; count: bigint }[]),
+        prisma.artist.count({ where: baseWhere }),
     ])
 
-    const [spotlight, ...sidePicks] = heroArtists
+    const letterCounts: Record<string, number> = {}
+    for (const row of letterCountsRaw) {
+        letterCounts[row.letter] = Number(row.count)
+    }
+
+    // Top trending for badge display
+    const trendingIds = new Set(
+        artists.filter(a => (a.trendingScore ?? 0) > 50).map(a => a.id)
+    )
 
     return (
         <>
@@ -129,136 +135,73 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        {heroArtists.length > 0 && (
-            <JsonLd data={{
-                "@context": "https://schema.org",
-                "@type": "ItemList",
-                "name": "Artistas K-Pop em Destaque",
-                "url": `${BASE_URL}/artists`,
-                "numberOfItems": heroArtists.length,
-                "itemListElement": heroArtists.map((a, i) => ({
-                    "@type": "ListItem",
-                    "position": i + 1,
-                    "url": `${BASE_URL}/artists/${a.slug ?? a.id}`,
-                    "name": a.nameRomanized,
-                })),
-            }} />
-        )}
         <PageTransition className="pb-16">
 
-            {/* ── Hero ────────────────────────────────────────────── */}
-            {spotlight && !isFiltered ? (
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative w-full min-h-[360px] md:min-h-[460px] overflow-hidden bg-black rounded-xl">
-                    {/* Mosaico */}
-                    <div className="absolute inset-0 flex">
-                        {heroArtists.map((a, i) => (
-                            <div key={a.id} className="relative flex-1 h-full">
-                                {a.primaryImageUrl ? (
-                                    <Image src={a.primaryImageUrl} alt="" fill priority={i === 0} sizes="20vw" className="object-cover object-top" />
-                                ) : (
-                                    <div className="w-full h-full" style={{ background: nameToGradient(a.nameRomanized) }} />
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/20" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
-
-                    <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[460px] overflow-hidden">
-                        {/* Bottom: destaque + side picks */}
-                        <div className="flex items-end gap-6 mt-auto">
-                            {/* Artista em destaque: portrait + texto juntos */}
-                            <Link href={`/artists/${spotlight.slug ?? spotlight.id}`} className="group flex items-end gap-4 flex-1 min-w-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
-                                {/* Portrait card */}
-                                <div className="block shrink-0">
-                                    <div className="w-20 md:w-32 lg:w-40 aspect-[3/4] relative rounded-xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
-                                        <Image
-                                            src={spotlight.primaryImageUrl!}
-                                            alt={spotlight.nameRomanized}
-                                            fill priority
-                                            sizes="(max-width: 768px) 80px, (max-width: 1024px) 128px, 160px"
-                                            className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    </div>
-                                </div>
-                                {/* Texto */}
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                        <TrendingUp size={10} /> Em alta
-                                    </p>
-                                    <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
-                                        {spotlight.nameRomanized}
-                                    </h1>
-                                    {spotlight.nameHangul && (
-                                        <p className="text-white/50 text-sm mb-3">{spotlight.nameHangul}</p>
-                                    )}
-                                    <div className="flex items-center gap-3">
-                                        {spotlight.roles.length > 0 && (
-                                            <span className="text-white/60 text-xs">
-                                                {getRoleLabels(spotlight.roles, spotlight.gender)[0] ?? spotlight.roles[0]}
-                                            </span>
-                                        )}
-                                        {spotlight.memberships[0]?.group?.name && (
-                                            <>
-                                                <span className="text-white/30">·</span>
-                                                <span className="text-white/60 text-xs">{spotlight.memberships[0].group.name}</span>
-                                            </>
-                                        )}
-                                        <span className="ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
-                                            Ver perfil <ArrowRight size={13} />
-                                        </span>
-                                    </div>
-                                </div>
-                            </Link>
-
-                            {/* Side picks — top 4 restantes */}
-                            {sidePicks.length > 0 && (
-                                <div className="hidden sm:flex flex-col gap-2 w-[200px] shrink-0 bg-black/40 backdrop-blur-sm rounded-2xl px-4 py-3">
-                                    <p className="text-white text-[9px] font-bold uppercase tracking-widest mb-1">Também em alta</p>
-                                    {sidePicks.slice(0, 4).map(a => (
-                                        <Link key={a.id} href={`/artists/${a.slug ?? a.id}`}
-                                            className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-                                            <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-white/15">
-                                                {a.primaryImageUrl ? (
-                                                    <Image src={a.primaryImageUrl} alt={a.nameRomanized} fill sizes="32px" className="object-cover object-top" />
-                                                ) : (
-                                                    <div className="w-full h-full" style={{ background: nameToGradient(a.nameRomanized) }} />
-                                                )}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-white text-xs font-semibold truncate group-hover:text-accent transition-colors">{a.nameRomanized}</p>
-                                                {a.nameHangul && <p className="text-white/40 text-[10px] truncate">{a.nameHangul}</p>}
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                </div>
-            ) : (
-                /* Header simples quando filtrado ou sem hero */
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
-                    <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
-                        <div className="relative">
-                            <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Artistas</h1>
-                            <p className="text-muted text-sm">K-Pop & K-Drama</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Conteúdo principal ──────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
+            {/* ── Editorial header ─────────────────────────────────── */}
+            <section className="page-wrap border-b border-foreground py-4 sm:py-5">
+                <Breadcrumbs items={[{ label: 'diretório' }, { label: 'artistas' }]} className="mb-1" />
+                <h1 className="mb-4 max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
+                    Todos os <span className="text-accent italic">artistas</span> que cobrimos.
+                </h1>
                 <Suspense>
                     <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
                 </Suspense>
+            </section>
+
+            {/* ── Alphabet bar ─────────────────────────────────────── */}
+            <section className="sticky top-[var(--site-header-h,52px)] z-10 bg-background">
+                <div className="page-wrap border-b border-foreground py-3">
+                    <div className="flex flex-wrap gap-1">
+                        {ALPHA.map((L) => {
+                            const count = letterCounts[L] ?? 0
+                            const active = letter === L
+                            const disabled = count === 0
+                            const href = active
+                                ? '/artists'
+                                : `/artists?letter=${L}`
+                            return (
+                                <Link
+                                    key={L}
+                                    href={disabled ? '#' : href}
+                                    aria-disabled={disabled}
+                                    className={`flex flex-col items-center px-2.5 py-2 min-w-[36px] font-mono rounded-sm transition-colors ${
+                                        active
+                                            ? 'bg-accent text-white'
+                                            : disabled
+                                            ? 'text-muted/40 cursor-default'
+                                            : 'text-foreground hover:bg-surface'
+                                    }`}
+                                >
+                                    <span className="text-[16px] font-bold leading-none">{L}</span>
+                                    <span className="text-[9px] opacity-70 mt-0.5">{count}</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Letter section header (when filtered by letter) ───── */}
+            {letter && (
+                <section className="page-wrap pt-9 pb-5">
+                    <div className="flex items-baseline gap-6">
+                        <span className="font-display text-[96px] font-black italic leading-[0.8] tracking-[-0.06em] text-accent">{letter}</span>
+                        <div>
+                            <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-muted">
+                                {letterCounts[letter] ?? 0} artistas começando com {letter}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* ── Grid ─────────────────────────────────────────────── */}
+            <div className="page-wrap pt-6">
                 <ArtistsList
                     artists={artists}
                     pagination={{ page, total, pages: Math.ceil(total / limit), perPage: limit }}
                     initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }}
+                    trendingIds={[...trendingIds]}
                 />
                 <ScrollToTop />
             </div>

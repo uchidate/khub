@@ -11,6 +11,7 @@ import type { BlogBlock } from '@/lib/types/blocks'
 import { Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
@@ -261,10 +262,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* ── Coluna principal ── */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-8">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
-            <ArrowLeft size={14} />
-            Voltar ao Blog
-          </Link>
+          <Breadcrumbs items={[{ label: 'artigos', href: '/blog' }, { label: post.slug }]} />
           <BlogEditButton postId={post.id} />
         </div>
 

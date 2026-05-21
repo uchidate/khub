@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Film, SlidersHorizontal, Star, X } from 'lucide-react'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { Film, Search, Star, X } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { nameToGradient } from '@/lib/utils'
@@ -73,12 +72,10 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
     const [imageFailed, setImageFailed] = useState(false)
     const imageUrl = !imageFailed ? (prod.imageUrl || prod.backdropUrl) : null
     const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
-    const platforms = (prod.streamingPlatforms as string[] || []).slice(0, 2)
 
     return (
-        <Link href={`/productions/${prod.slug ?? prod.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 shadow-sm transition-all hover:border-violet/35 hover:bg-surface-media/35 hover:shadow-md sm:block sm:border-0 sm:bg-transparent sm:p-2 sm:-m-2 sm:shadow-none sm:hover:bg-transparent">
-            {/* Poster 2:3 */}
-            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm group-hover:border-violet/40 group-hover:shadow-md transition-all sm:mb-3">
+        <Link href={`/productions/${prod.slug ?? prod.id}`} className="group flex flex-col">
+            <div className="relative aspect-[2/3] overflow-hidden bg-surface">
                 {imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -90,40 +87,30 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                         onError={() => setImageFailed(true)}
                     />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2"
-                        style={{ background: nameToGradient(prod.titlePt) }}>
-                        <Film className="w-8 h-8 text-white/40" />
-                        <span className="text-white/60 text-[10px] font-bold px-3 text-center line-clamp-2">{prod.titlePt}</span>
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(prod.titlePt) }}>
+                        <span className="font-black text-white/15 text-[56px] leading-none select-none">
+                            {prod.titlePt[0]}
+                        </span>
                     </div>
                 )}
-                {/* Gradient overlay bottom */}
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                {/* Age rating top-left */}
-                {prod.ageRating && (
-                    <div className="absolute top-2 left-2">
-                        <AgeRatingBadge rating={prod.ageRating} />
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    {prod.ageRating && <AgeRatingBadge rating={prod.ageRating} />}
+                    {prod.year && <span className="bg-black/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-white">{prod.year}</span>}
+                </div>
+                {score !== null && (
+                    <div className="absolute bottom-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
+                        ★ {score.toFixed(1)}
                     </div>
                 )}
             </div>
-            <div className="min-w-0 self-center space-y-1 sm:self-auto">
-                <h3 className="text-[0.95rem] font-bold text-foreground group-hover:text-violet transition-colors line-clamp-2 leading-snug sm:text-[0.92rem]">{prod.titlePt}</h3>
-                <div className="flex items-center gap-2 text-xs text-muted min-h-[1rem]">
-                    {prod.year && <span>{prod.year}</span>}
-                    {typeLabel && <span>• {typeLabel}</span>}
-                    {score !== null && <span className="text-amber-500 font-semibold">{score.toFixed(1)}</span>}
+            <div className="pt-2.5 pb-3.5 border-b border-border/50 min-w-0">
+                <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-[14px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{prod.titlePt}</span>
+                    {prod.titleKr && <span className="font-mono text-[10px] text-muted shrink-0">{prod.titleKr}</span>}
                 </div>
-                {prod.titleKr && (
-                    <p className="text-[11px] text-muted mt-0.5 truncate">{prod.titleKr}</p>
-                )}
-                {platforms.length > 0 && (
-                    <div className="pt-1 flex gap-1.5 flex-wrap">
-                        {platforms.map(p => (
-                            <span key={p} className="px-2 py-0.5 text-[10px] font-semibold bg-surface border border-border rounded-full text-muted">
-                                {p}
-                            </span>
-                        ))}
-                    </div>
-                )}
+                <div className="font-mono text-[10px] text-muted mt-1 uppercase tracking-[0.04em] truncate">
+                    {typeLabel}{prod.year ? ` · ${prod.year}` : ''}
+                </div>
             </div>
         </Link>
     )
@@ -255,102 +242,72 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
     return (
         <div id="productions-list">
             {/* Filters */}
-            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 rounded-2xl border border-violet/20 bg-white p-3 shadow-[0_12px_30px_rgba(18,15,21,0.10)] dark:bg-background sm:p-4">
-                <div className="flex items-center gap-2">
-                    <SearchInput
-                        value={searchInput}
-                        onChange={setSearchInput}
-                        onCommit={handleSearch}
-                        placeholder="Buscar por drama, filme ou título em coreano..."
-                        className="flex-1"
-                    />
-                    {(hasActiveFilters || filters.sortBy !== 'popular') && (
-                        <button onClick={clearAll} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-violet/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
-                </div>
-
-                <div id="productions-advanced-filters" className="mt-3 space-y-3">
-                    {activeChips.length > 0 && (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {activeChips.map(chip => (
-                                <button
-                                    key={chip.key}
-                                    onClick={() => removeSingleFilter(chip.key)}
-                                    className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-surface border border-border text-foreground hover:border-accent/40 hover:text-accent transition-colors"
-                                >
-                                    {chip.label} ×
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Type + Sort */}
-                    <div className="flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                        <div className="flex shrink-0 items-center gap-1 rounded-full border border-violet/20 bg-surface-media px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet">
-                            <SlidersHorizontal className="h-3 w-3" />
-                            Filtros
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                            {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => handleType(opt.value)}
-                                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                                        filters.type === opt.value
-                                            ? 'bg-foreground text-background'
-                                            : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
-                                    }`}
-                                >
-                                    {opt.label}
-                                    {opt.value && typeCounts && (
-                                        <span className="ml-1 opacity-50 font-normal">
-                                            {typeCounts[opt.value] ?? 0}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="h-7 w-px shrink-0 bg-border" />
-                        <div className="flex shrink-0 items-center gap-1">
-                            {SORT_OPTIONS.map(opt => (
-                                <button
-                                    key={opt.value}
-                                    onClick={() => handleSort(opt.value)}
-                                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                                        filters.sortBy === opt.value
-                                            ? 'bg-violet text-white'
-                                            : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
-                                    }`}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="h-7 w-px shrink-0 bg-border" />
-                        <div className="flex shrink-0 items-center gap-1">
-                        {AGE_RATING_OPTIONS.map(opt => (
+            {!hideFilter && (
+                <div className="border border-border bg-background mb-6">
+                    {/* Search */}
+                    <div className="flex items-center border-b border-border">
+                        <Search className="h-4 w-4 shrink-0 text-muted mx-3" />
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={e => setSearchInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSearch(searchInput)}
+                            placeholder="Buscar por drama, filme ou título em coreano..."
+                            className="flex-1 py-3 text-[13px] bg-transparent text-foreground placeholder:text-muted focus:outline-none"
+                        />
+                        {(hasActiveFilters || filters.sortBy !== 'popular') && (
+                            <button onClick={clearAll} className="flex items-center gap-1 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.06em] text-muted hover:text-foreground transition-colors border-l border-border" aria-label="Limpar filtros">
+                                <X className="h-3 w-3" /> Limpar
+                            </button>
+                        )}
+                    </div>
+                    {/* Chips */}
+                    <div className="flex items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">Tipo</span>
+                        {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                             <button
                                 key={opt.value}
-                                onClick={() => handleAgeRating(opt.value)}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                                    filters.ageRating === opt.value
-                                        ? 'bg-violet text-white'
-                                        : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
+                                onClick={() => handleType(opt.value)}
+                                className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
+                                    filters.type === opt.value
+                                        ? 'bg-foreground text-background font-bold'
+                                        : 'text-muted hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}{opt.value && typeCounts ? <span className="opacity-40 ml-1">{typeCounts[opt.value] ?? 0}</span> : null}
+                            </button>
+                        ))}
+                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">Ordem</span>
+                        {SORT_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleSort(opt.value)}
+                                className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
+                                    filters.sortBy === opt.value
+                                        ? 'bg-foreground text-background font-bold'
+                                        : 'text-muted hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
                             </button>
                         ))}
-                        {!filters.ageRating && (
-                            <span className="shrink-0 self-center text-[10px] text-muted italic ml-1">18+ ocultos</span>
-                        )}
-                        </div>
+                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">Idade</span>
+                        {AGE_RATING_OPTIONS.map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleAgeRating(opt.value)}
+                                className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
+                                    filters.ageRating === opt.value
+                                        ? 'bg-foreground text-background font-bold'
+                                        : 'text-muted hover:text-foreground'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
-
-            </div>}
+            )}
 
             {/* Loading */}
             {isLoading && <ProductionsSkeleton />}
@@ -368,18 +325,15 @@ export function ProductionsList({ hideFilter = false }: { hideFilter?: boolean }
             {/* Grid */}
             {!isLoading && productions.length > 0 && (
                 <>
-                    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet">Catálogo</p>
-                            <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Dramas & filmes</h2>
-                        </div>
-                        <p className="text-xs text-muted">
-                            {pagination.total > 0 ? `${pagination.total.toLocaleString('pt-BR')} resultados` : 'Refine sua busca'}
+                    <div className="mb-5 flex items-baseline justify-between border-b border-foreground pb-3">
+                        <h2 className="text-[22px] font-black tracking-[-0.03em] text-foreground">Todas as produções</h2>
+                        <p className="font-mono text-[11px] text-muted">
+                            {pagination.total > 0 ? `vendo 1–${Math.min(getPerPage(), productions.length)} de ${pagination.total.toLocaleString('pt-BR')}` : 'Refine sua busca'}
                         </p>
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                         {productions.map((prod, index) => (
-                            <ProductionCard key={prod.id} prod={prod} priority={index < 5} />
+                            <ProductionCard key={prod.id} prod={prod} priority={index < 8} />
                         ))}
                     </div>
 

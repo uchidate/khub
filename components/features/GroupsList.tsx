@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { SlidersHorizontal, Users, X } from 'lucide-react'
+import { Users, X } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -50,14 +50,14 @@ function getGeneration(debutDate: string | null): string | null {
 
 function GroupsSkeleton() {
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
             {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 sm:block sm:border-0 sm:bg-transparent sm:p-0">
-                    <div className="aspect-square rounded-xl bg-skeleton sm:mb-3" />
+                <div key={i} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 border border-border bg-background p-2.5 sm:block">
+                    <div className="aspect-square bg-skeleton sm:mb-3" />
                     <div className="self-center">
-                        <div className="h-3.5 bg-skeleton rounded w-3/4 mb-1.5" />
-                        <div className="h-3 bg-skeleton rounded w-1/2 mb-1" />
-                        <div className="h-2.5 bg-skeleton rounded w-2/3" />
+                        <div className="mb-1.5 h-3.5 w-3/4 bg-skeleton" />
+                        <div className="mb-1 h-3 w-1/2 bg-skeleton" />
+                        <div className="h-2.5 w-2/3 bg-skeleton" />
                     </div>
                 </div>
             ))}
@@ -143,7 +143,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
         <div id="groups-list">
 
             {/* Filtros */}
-            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 rounded-2xl border border-violet/20 bg-white p-3 shadow-[0_12px_30px_rgba(18,15,21,0.10)] dark:bg-background sm:p-4">
+            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 border-y border-foreground bg-background py-3">
                 {/* Busca */}
                 <div className="flex items-center gap-2">
                     <SearchInput
@@ -153,7 +153,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                         className="flex-1"
                     />
                     {hasActiveFilters && (
-                        <button onClick={resetFilters} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted transition-colors hover:border-violet/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
+                        <button onClick={resetFilters} className="flex h-11 w-11 shrink-0 items-center justify-center border border-border text-muted transition-colors hover:border-accent/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
                             <X className="h-4 w-4" />
                         </button>
                     )}
@@ -161,8 +161,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
 
                 {/* Status + Geração */}
                 <div className="mt-3 flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                    <div className="flex shrink-0 items-center gap-1 rounded-full border border-violet/20 bg-surface-media px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-violet">
-                        <SlidersHorizontal className="h-3 w-3" />
+                    <div className="flex shrink-0 items-center gap-1 border border-border bg-surface px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
                         Filtros
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
@@ -174,10 +173,10 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                             <button
                                 key={opt.value}
                                 onClick={() => setStatusFilter(opt.value)}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
                                     statusFilter === opt.value
-                                        ? 'bg-foreground text-background'
-                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                        ? 'border-foreground bg-foreground text-background'
+                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
@@ -193,10 +192,10 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                             <button
                                 key={opt.value}
                                 onClick={() => setGenerationFilter(opt.value)}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
                                     generationFilter === opt.value
-                                        ? 'bg-violet text-white'
-                                        : 'bg-surface text-muted hover:bg-surface-media hover:text-foreground'
+                                        ? 'border-foreground bg-foreground text-background'
+                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
@@ -215,10 +214,10 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                             <button
                                 key={opt.value}
                                 onClick={() => setSortBy(opt.value)}
-                                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
                                     sortBy === opt.value
-                                        ? 'bg-violet text-white'
-                                        : 'bg-surface text-muted hover:bg-surface-hover hover:text-foreground'
+                                        ? 'border-foreground bg-foreground text-background'
+                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                 }`}
                             >
                                 {opt.label}
@@ -233,23 +232,23 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                             {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
                         </p>
                         {search && (
-                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
                                 busca: {search}
                             </span>
                         )}
                         {statusFilter !== 'all' && (
-                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
                                 status: {statusFilter === 'active' ? 'ativos' : 'disbandados'}
                             </span>
                         )}
                         {generationFilter !== 'all' && (
-                            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-surface border border-border text-muted inline-flex items-center gap-1">
+                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
                                 {generationFilter}
                             </span>
                         )}
                         <button
                             onClick={resetFilters}
-                            className="text-xs font-semibold text-violet hover:text-foreground transition-colors"
+                            className="text-xs font-semibold text-accent transition-colors hover:text-foreground"
                         >
                             Limpar filtros
                         </button>
@@ -267,9 +266,9 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                 />
             ) : groups.length > 0 ? (
                 <>
-                <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div className="mb-5 flex flex-col gap-1 border-b border-foreground pb-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet">Catálogo</p>
+                        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Catálogo</p>
                         <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Todos os grupos</h2>
                     </div>
                     <p className="text-xs text-muted">
@@ -282,15 +281,15 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                         const gen = getGeneration(group.debutDate)
                         return (
                             <div key={group.id} className={`group/card relative ${faded ? 'opacity-70 hover:opacity-100 transition-opacity duration-300' : ''}`}>
-                                <Link href={`/groups/${group.slug ?? group.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 shadow-sm transition-all hover:border-violet/35 hover:bg-surface-media/35 hover:shadow-md sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:hover:bg-transparent">
-                                    <div className="aspect-square relative rounded-xl overflow-hidden bg-surface border border-border/80 shadow-sm card-hover group-hover:shadow-md transition-all sm:mb-3">
+                                <Link href={`/groups/${group.slug ?? group.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 border border-border bg-background p-2.5 transition-colors hover:border-accent/40 hover:bg-surface/55 sm:block">
+                                    <div className="relative aspect-square overflow-hidden border border-border/80 bg-surface sm:mb-3">
                                         {group.profileImageUrl ? (
                                             <Image
                                                 src={group.profileImageUrl}
                                                 alt={group.name}
                                                 fill
                                                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                                                 priority={index < 4}
                                             />
                                         ) : (
@@ -304,18 +303,18 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                                             </div>
                                         )}
                                         {group.disbandDate && (
-                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 backdrop-blur-sm rounded text-[10px] font-black text-white/70 uppercase tracking-wider">
+                                            <div className="absolute right-2 top-2 bg-black/70 px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-[0.08em] text-white/70">
                                                 Disbandado
                                             </div>
                                         )}
                                         {group._count.members > 0 && (
-                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 bg-black/60 backdrop-blur-sm rounded text-[10px] font-bold text-white/80">
+                                            <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white/80">
                                                 <Users className="w-3 h-3" />
                                                 {group._count.members}
                                             </div>
                                         )}
                                         {/* Hover overlay */}
-                                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
+                                        <div className="absolute inset-x-0 bottom-0 flex h-1/2 flex-col justify-end gap-0.5 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                                             {group.nameHangul && (
                                                 <p className="text-white text-[12px] font-bold truncate leading-tight">{group.nameHangul}</p>
                                             )}
@@ -327,7 +326,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                                         </div>
                                     </div>
                                     <div className="min-w-0 self-center sm:self-auto">
-                                        <h3 className="font-black text-foreground text-[15px] leading-tight group-hover:text-violet transition-colors sm:text-sm">{group.name}</h3>
+                                        <h3 className="text-[15px] font-black leading-tight text-foreground transition-colors group-hover:text-accent sm:text-sm">{group.name}</h3>
                                         {group.nameHangul && (
                                             <p className="text-xs text-muted font-medium mt-0.5">{group.nameHangul}</p>
                                         )}
@@ -335,13 +334,13 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                                             {gen && (() => {
                                                 const gc = GEN_COLORS[gen]
                                                 return gc ? (
-                                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: gc.bg, color: gc.color }}>{gen}</span>
+                                                    <span className="px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.04em]" style={{ backgroundColor: gc.bg, color: gc.color }}>{gen}</span>
                                                 ) : (
                                                     <span className="text-[10px] font-bold text-muted">{gen}</span>
                                                 )
                                             })()}
                                             {group.agency && (
-                                                <span className="max-w-[140px] truncate rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted sm:max-w-[100px]">{group.agency.name}</span>
+                                                <span className="max-w-[140px] truncate bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted sm:max-w-[100px]">{group.agency.name}</span>
                                             )}
                                         </div>
                                     </div>
