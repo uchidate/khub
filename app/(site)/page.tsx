@@ -149,7 +149,7 @@ export default async function Home() {
     const hasStreaming = Object.keys(showsByPlatform).length > 0
     const compositionMode = composition?.mode ?? 'balanced'
     return (
-        <div className="min-h-screen bg-background font-sora overflow-x-hidden pb-[70px] sm:pb-0" suppressHydrationWarning>
+        <div className="min-h-screen bg-background font-sora pb-[70px] sm:pb-0" suppressHydrationWarning>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
