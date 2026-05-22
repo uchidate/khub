@@ -44,11 +44,12 @@ function AnimatedStat({ value, label, accent }: { value: string; label: string; 
         return () => obs.disconnect()
     }, [])
 
-    // Extrair número e sufixo (ex: "161" → 161 + ""; "10a" → 10 + "a"; "2016" → 2016 + "")
+    // Extrair número e sufixo — anos (1900-2100) não são animados nem formatados como milhar
     const match = value.match(/^([\d,]+)(.*)$/)
     const numericPart = match ? parseInt(match[1].replace(/,/g, '')) : 0
     const suffix = match ? match[2] : ''
-    const isAnimatable = numericPart > 0 && numericPart < 100000
+    const isYear = numericPart >= 1900 && numericPart <= 2100 && suffix === ''
+    const isAnimatable = numericPart > 0 && numericPart < 100000 && !isYear
 
     const animated = useCountUp(numericPart, 1000, visible && isAnimatable)
     const displayValue = isAnimatable && visible

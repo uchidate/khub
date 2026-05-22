@@ -42,7 +42,7 @@ function notifImage(n: Notification) {
 
 function notifKind(n: Notification) {
     if (n.blogPost) return 'Artigo'
-    if (n.news) return 'Legado'
+    if (n.news) return 'Notícia'
     return 'Alerta'
 }
 
@@ -127,30 +127,37 @@ export function NotificationBell() {
                     setOpen(o => !o)
                     setTab(unreadCount > 0 ? 'unread' : 'discover')
                 }}
-                className="relative rounded-xl p-2 text-muted transition-colors hover:bg-surface hover:text-foreground"
+                className={`relative flex h-9 w-9 items-center justify-center rounded-md border transition-colors ${
+                    open
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-transparent text-muted hover:border-border hover:bg-surface hover:text-foreground'
+                }`}
                 aria-label="Alertas"
+                aria-expanded={open}
             >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4" />
                 {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-black text-white">
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded bg-accent px-1 text-[9px] font-black leading-none text-white">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-2 w-[380px] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl shadow-black/10">
-                    <div className="border-b border-border bg-surface px-4 py-3">
+                <div className="fixed left-3 right-3 top-16 z-50 overflow-hidden rounded-lg border border-border bg-background shadow-2xl shadow-black/10 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[420px]">
+                    <div className="border-b border-border px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-accent">Alertas</p>
-                                <p className="mt-0.5 text-sm font-black text-foreground">Artigos e atualizações</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-accent">Sininho</p>
+                                <p className="mt-0.5 text-sm font-black text-foreground">
+                                    {unreadCount > 0 ? `${unreadCount} alerta${unreadCount !== 1 ? 's' : ''} novo${unreadCount !== 1 ? 's' : ''}` : 'Tudo em dia'}
+                                </p>
                             </div>
                             <div className="flex items-center gap-1">
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={markAllRead}
-                                        className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-accent hover:bg-accent-soft"
+                                        className="inline-flex h-8 items-center gap-1 rounded-md bg-surface px-2 text-[10px] font-black uppercase tracking-[0.1em] text-accent hover:bg-accent-soft"
                                     >
                                         <Check className="h-3 w-3" />
                                         Lidas
@@ -159,7 +166,7 @@ export function NotificationBell() {
                                 <Link
                                     href="/settings/notifications"
                                     onClick={() => setOpen(false)}
-                                    className="rounded-lg p-1.5 text-muted transition-colors hover:bg-background hover:text-foreground"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
                                     aria-label="Configurar alertas"
                                 >
                                     <Settings className="h-4 w-4" />
@@ -167,14 +174,14 @@ export function NotificationBell() {
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Fechar alertas"
-                                    className="rounded-lg p-1.5 text-muted transition-colors hover:bg-background hover:text-foreground"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl border border-border bg-background p-1">
+                        <div className="mt-3 grid grid-cols-3 gap-1 rounded-md bg-surface p-1">
                             {[
                                 { key: 'unread' as const, label: `Novos ${unreadCount ? unreadCount : ''}`.trim() },
                                 { key: 'all' as const, label: 'Histórico' },
@@ -183,7 +190,7 @@ export function NotificationBell() {
                                 <button
                                     key={item.key}
                                     onClick={() => setTab(item.key)}
-                                    className={`rounded-lg px-2 py-1.5 text-xs font-black transition-colors ${
+                                    className={`h-8 rounded-md px-2 text-xs font-black transition-colors ${
                                         tab === item.key ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'
                                     }`}
                                 >
@@ -193,12 +200,12 @@ export function NotificationBell() {
                         </div>
                     </div>
 
-                    <div className="max-h-[430px] overflow-y-auto p-2">
+                    <div className="max-h-[min(620px,calc(100vh-148px))] overflow-y-auto p-3">
                         {tab === 'discover' ? (
                             <div className="space-y-2">
-                                <div className="rounded-xl border border-border bg-surface p-3">
+                                <div className="border-b border-border px-2 py-3">
                                     <div className="flex items-start gap-3">
-                                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent-soft text-accent">
                                             <Sparkles className="h-4 w-4" />
                                         </span>
                                         <div>
@@ -214,7 +221,7 @@ export function NotificationBell() {
                                         key={article.id}
                                         href={`/blog/${article.slug}`}
                                         onClick={() => setOpen(false)}
-                                        className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 rounded-xl border border-border bg-surface p-2 transition-colors hover:border-accent/40"
+                                        className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 rounded-md p-2 transition-colors hover:bg-surface"
                                     >
                                         <ArticleThumb src={article.coverImageUrl} />
                                         <span className="min-w-0 py-1">
@@ -237,7 +244,7 @@ export function NotificationBell() {
                                 </p>
                                 <button
                                     onClick={() => setTab('discover')}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-black text-foreground hover:border-accent/40 hover:text-accent"
+                                    className="mt-4 inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-black text-foreground hover:border-accent/40 hover:text-accent"
                                 >
                                     <Compass className="h-3.5 w-3.5" />
                                     Ver artigos recentes
@@ -264,7 +271,7 @@ export function NotificationBell() {
 
 function ArticleThumb({ src }: { src: string | null }) {
     return (
-        <span className="relative h-14 w-14 overflow-hidden rounded-xl bg-background">
+        <span className="relative h-[52px] w-[52px] overflow-hidden rounded-md bg-surface">
             {src ? (
                 <Image src={src} alt="" fill className="object-cover" sizes="56px" />
             ) : (
@@ -286,8 +293,8 @@ function NotificationRow({ notification, onOpen }: { notification: Notification;
         <Link
             href={href}
             onClick={onOpen}
-            className={`grid grid-cols-[48px_minmax(0,1fr)_auto] gap-3 rounded-xl p-2.5 transition-colors hover:bg-surface ${
-                isUnread ? 'bg-accent-soft/70' : ''
+            className={`grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 rounded-md border-l-2 p-2.5 transition-colors hover:bg-surface ${
+                isUnread ? 'border-l-accent bg-accent-soft/45' : 'border-l-transparent'
             }`}
         >
             <ArticleThumb src={image} />

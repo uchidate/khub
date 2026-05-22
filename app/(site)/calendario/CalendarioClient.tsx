@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Cake, CalendarDays, Film, Search, ShoppingBag, Sparkles, X } from 'lucide-react'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { FilterPills } from '@/components/ui/FilterPills'
 
 export interface StoreProductCard {
@@ -91,7 +92,7 @@ function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
     while (cells.length % 7 !== 0) cells.push(null)
 
     return (
-        <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+        <div className="border border-border bg-surface p-4">
             <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-muted">
                 {MONTH_NAMES_FULL[month]} {year}
             </p>
@@ -108,7 +109,7 @@ function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
                     const isToday = day === todayDay
                     const isPast = isCurrentMonth && day < todayDay
                     return (
-                        <div key={i} className={`relative flex min-h-8 flex-col items-center justify-center rounded-xl py-1 ${isToday ? 'bg-accent text-white' : 'hover:bg-surface-hover'} ${isPast ? 'opacity-35' : ''}`}>
+                        <div key={i} className={`relative flex min-h-8 flex-col items-center justify-center py-1 ${isToday ? 'bg-accent text-white' : 'hover:bg-surface-hover'} ${isPast ? 'opacity-35' : ''}`}>
                             <span className={`text-[11px] font-bold leading-none ${isToday ? 'text-white' : 'text-foreground'}`}>{day}</span>
                             {(hasBday || hasRelease) && (
                                 <div className="flex gap-0.5 mt-0.5">
@@ -132,7 +133,7 @@ function CompactEventLink({ event }: { event: CalendarEvent }) {
     if (event.kind === 'birthday') {
         const b = event.data as BirthdayEvent
         return (
-            <Link href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex min-w-0 items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-surface-hover">
+            <Link href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors hover:bg-surface-hover">
                 <div className="relative h-7 w-7 flex-shrink-0 overflow-hidden rounded-full bg-background">
                     {b.primaryImageUrl ? (
                         <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" />
@@ -151,8 +152,8 @@ function CompactEventLink({ event }: { event: CalendarEvent }) {
 
     const r = event.data as ProductionEvent
     return (
-        <Link href={`/productions/${r.slug ?? r.id}`} className="group flex min-w-0 items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-surface-hover">
-            <div className="relative h-8 w-6 flex-shrink-0 overflow-hidden rounded-lg bg-background">
+        <Link href={`/productions/${r.slug ?? r.id}`} className="group flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors hover:bg-surface-hover">
+            <div className="relative h-8 w-6 flex-shrink-0 overflow-hidden bg-background">
                 {r.imageUrl ? (
                     <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" />
                 ) : (
@@ -284,10 +285,38 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
     }
 
     return (
-        <div className="space-y-8">
+        <div>
+            <div className="page-wrap flex h-12 items-center border-b border-border/50">
+                <div className="flex w-full min-w-0 items-center gap-2">
+                    <div className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                        <FilterPills options={filterOptions} value={filter} onChange={setFilter} className="w-max flex-nowrap rounded-md" />
+                    </div>
+                    <div className="relative w-[148px] shrink-0 sm:w-[260px] lg:w-[340px]">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                        <input
+                            type="text"
+                            placeholder="Buscar..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="h-8 w-full !rounded-md !border-border !bg-background !py-0 !pl-8 !pr-8 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:!border-foreground focus:outline-none"
+                        />
+                        {search && (
+                            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground" aria-label="Limpar busca">
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="page-wrap border-b border-border/50 py-2">
+                <Breadcrumbs items={[{ label: 'Calendário' }]} />
+            </div>
+
+        <div className="page-wrap space-y-8 py-8">
             {/* Today section */}
             {hasToday && (
-                <section className="rounded-3xl border border-accent/20 bg-accent-soft p-5">
+                <section className="border border-accent/20 bg-accent-soft p-5">
                     <div className="mb-4 flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-accent" />
                         <h2 className="text-sm font-black uppercase tracking-[0.14em] text-accent">Hoje</h2>
@@ -295,7 +324,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                     <div className="flex flex-wrap gap-3">
                         {todayBirthdays.map(b => (
                             <Link key={b.artistId} href={`/artists/${b.artistSlug ?? b.artistId}`}
-                                className="group flex items-center gap-2.5 rounded-2xl border border-border bg-surface/90 px-3 py-2 transition-all hover:border-accent/40">
+                                className="group flex items-center gap-2.5 border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40">
                                 <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface-hover flex-shrink-0">
                                     {b.primaryImageUrl ? (
                                         <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" />
@@ -311,7 +340,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                         ))}
                         {todayReleases.map(r => (
                             <Link key={r.id} href={`/productions/${r.slug ?? r.id}`}
-                                className="group flex items-center gap-2.5 rounded-2xl border border-border bg-surface/90 px-3 py-2 transition-all hover:border-accent/40">
+                                className="group flex items-center gap-2.5 border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40">
                                 <div className="relative w-8 h-11 rounded-lg overflow-hidden bg-surface-hover flex-shrink-0">
                                     {r.imageUrl ? (
                                         <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" />
@@ -329,36 +358,14 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                 </section>
             )}
 
-            {/* Filters */}
-            <div className="rounded-3xl border border-border bg-surface p-3 shadow-sm">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <FilterPills options={filterOptions} value={filter} onChange={setFilter} />
-                    <div className="relative w-full lg:max-w-sm">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                        <input
-                            type="text"
-                            placeholder="Buscar artista ou drama..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full rounded-2xl border border-border bg-background py-3 pl-9 pr-9 text-sm text-foreground placeholder:text-muted transition-colors focus:border-accent focus:outline-none"
-                        />
-                        {search && (
-                            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground" aria-label="Limpar busca">
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(260px,0.75fr)_minmax(260px,0.75fr)]">
-                <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                <div className="border border-border bg-surface p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-xs font-black uppercase tracking-[0.14em] text-accent">Próximos 7 dias</p>
                             <h2 className="mt-1 text-lg font-black text-foreground">Agenda imediata</h2>
                         </div>
-                        <span className="rounded-full bg-background px-2.5 py-1 text-[10px] font-black text-muted">
+                        <span className="bg-background px-2.5 py-1 text-[10px] font-mono font-black text-muted">
                             {nextSevenDays.length} item{nextSevenDays.length !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -367,8 +374,8 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                             {nextSevenDays.map(event => {
                                 const badge = daysUntilLabel(event.daysUntil)
                                 return (
-                                    <Link key={event.id} href={event.href} className="group flex items-center gap-3 rounded-2xl border border-border bg-background p-2.5 transition-colors hover:border-accent/40">
-                                        <div className={`relative h-11 w-11 flex-shrink-0 overflow-hidden ${event.kind === 'birthday' ? 'rounded-full' : 'rounded-xl'} bg-surface-hover`}>
+                                    <Link key={event.id} href={event.href} className="group flex items-center gap-3 border border-border bg-background p-2.5 transition-colors hover:border-accent/40">
+                                        <div className={`relative h-11 w-11 flex-shrink-0 overflow-hidden bg-surface-hover`}>
                                             {event.imageUrl ? (
                                                 <Image src={event.imageUrl} alt={event.title} fill className="object-cover object-top" />
                                             ) : (
@@ -381,26 +388,26 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                             <p className="truncate text-sm font-bold text-foreground group-hover:text-accent">{event.title}</p>
                                             <p className="text-[11px] text-muted">{shortDateLabel(event.date)} · {event.subtitle}</p>
                                         </div>
-                                        <span className={`flex-shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${badge.cls}`}>{badge.text}</span>
+                                        <span className={`flex-shrink-0 px-2 py-1 text-[9px] font-mono font-black ${badge.cls}`}>{badge.text}</span>
                                     </Link>
                                 )
                             })}
                         </div>
                     ) : (
-                        <div className="rounded-2xl border border-border bg-background p-5 text-sm text-muted">
+                        <div className="border border-border bg-background p-5 text-sm text-muted">
                             Nenhuma data nos próximos 7 dias.
                         </div>
                     )}
                 </div>
 
-                <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                <div className="border border-border bg-surface p-4">
                     <div className="mb-4 flex items-center gap-2">
                         <Cake className="h-4 w-4 text-accent" />
                         <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Próximos aniversários</h2>
                     </div>
                     <div className="space-y-2">
                         {nextBirthdays.map(b => (
-                            <Link key={b.artistId} href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex items-center gap-2.5 rounded-2xl bg-background p-2.5 transition-colors hover:bg-surface-hover">
+                            <Link key={b.artistId} href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex items-center gap-2.5 bg-background p-2.5 transition-colors hover:bg-surface-hover">
                                 <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-surface-hover">
                                     {b.primaryImageUrl ? <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" /> : <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">{b.nameRomanized[0]}</div>}
                                 </div>
@@ -413,15 +420,15 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                     </div>
                 </div>
 
-                <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                <div className="border border-border bg-surface p-4">
                     <div className="mb-4 flex items-center gap-2">
                         <Film className="h-4 w-4 text-accent" />
                         <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Próximas estreias</h2>
                     </div>
                     <div className="space-y-2">
                         {nextReleases.map(r => (
-                            <Link key={r.id} href={`/productions/${r.slug ?? r.id}`} className="group flex items-center gap-2.5 rounded-2xl bg-background p-2.5 transition-colors hover:bg-surface-hover">
-                                <div className="relative h-11 w-8 flex-shrink-0 overflow-hidden rounded-lg bg-surface-hover">
+                            <Link key={r.id} href={`/productions/${r.slug ?? r.id}`} className="group flex items-center gap-2.5 bg-background p-2.5 transition-colors hover:bg-surface-hover">
+                                <div className="relative h-11 w-8 flex-shrink-0 overflow-hidden bg-surface-hover">
                                     {r.imageUrl ? <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" /> : <Film className="absolute inset-0 m-auto h-3.5 w-3.5 text-muted/40" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -449,7 +456,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                             <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 scrollbar-none">
                                 {recentReleases.map(p => (
                                     <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group w-28 flex-shrink-0">
-                                        <div className="relative mb-2 h-40 w-28 overflow-hidden rounded-2xl border border-border bg-surface">
+                                        <div className="relative mb-2 h-40 w-28 overflow-hidden border border-border bg-surface">
                                             {p.imageUrl ? (
                                                 <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
                                             ) : (
@@ -467,7 +474,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
 
                     {/* Timeline by month */}
                     {allEvents.size === 0 ? (
-                        <div className="rounded-3xl border border-border bg-surface py-16 text-center text-muted">
+                        <div className="border border-border bg-surface py-16 text-center text-muted">
                             <p className="font-semibold">Nenhum evento encontrado.</p>
                         </div>
                     ) : (
@@ -503,20 +510,20 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                                 const releaseCount = dayEvents.length - birthdayCount
 
                                                 return (
-                                                    <div key={dayKey} className="rounded-3xl border border-border bg-surface p-3 shadow-sm">
+                                                    <div key={dayKey} className="border border-border bg-surface p-3">
                                                         <div className="mb-2 flex items-center gap-3">
-                                                            <div className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-background">
+                                                            <div className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center border border-border bg-background">
                                                                 <p className="text-lg font-black leading-none text-foreground">{d.getUTCDate()}</p>
                                                                 <p className="text-[10px] font-bold uppercase text-muted">{DAY_NAMES[d.getUTCDay()]}</p>
                                                             </div>
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="text-xs font-black uppercase tracking-[0.12em] text-muted">{shortDateLabel(dayEvents[0].date)}</p>
                                                                 <div className="mt-1 flex flex-wrap gap-1.5">
-                                                                    {birthdayCount > 0 && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[9px] font-black text-accent">{birthdayCount} aniversário{birthdayCount !== 1 ? 's' : ''}</span>}
-                                                                    {releaseCount > 0 && <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[9px] font-black text-muted">{releaseCount} estreia{releaseCount !== 1 ? 's' : ''}</span>}
+                                                                    {birthdayCount > 0 && <span className="bg-accent-soft px-2 py-0.5 text-[9px] font-mono font-black text-accent">{birthdayCount} aniversário{birthdayCount !== 1 ? 's' : ''}</span>}
+                                                                    {releaseCount > 0 && <span className="bg-surface-hover px-2 py-0.5 text-[9px] font-mono font-black text-muted">{releaseCount} estreia{releaseCount !== 1 ? 's' : ''}</span>}
                                                                 </div>
                                                             </div>
-                                                            <span className={`flex-shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${badge.cls}`}>{badge.text}</span>
+                                                            <span className={`flex-shrink-0 px-2 py-1 text-[9px] font-mono font-black ${badge.cls}`}>{badge.text}</span>
                                                         </div>
                                                         <div className="space-y-1">
                                                             {dayEvents.slice(0, 4).map((event, idx) => (
@@ -533,7 +540,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                         {hiddenDays > 0 && (
                                             <button
                                                 onClick={() => toggleMonth(key)}
-                                                className="mt-4 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-xs font-black text-muted transition-colors hover:border-accent/40 hover:text-accent"
+                                                className="mt-4 w-full border border-border bg-surface px-4 py-3 text-xs font-black text-muted transition-colors hover:border-accent/40 hover:text-accent"
                                             >
                                                 {isExpanded ? 'Mostrar menos' : `Mostrar mais ${hiddenDays} dia${hiddenDays !== 1 ? 's' : ''}`}
                                             </button>
@@ -546,18 +553,18 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                 </div>
 
                 <aside className="space-y-5 lg:sticky lg:top-[calc(var(--site-sticky-top)+1rem)] lg:self-start">
-                    <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+                    <div className="border border-border bg-surface p-4">
                         <p className="text-xs font-black uppercase tracking-[0.14em] text-muted">Resumo filtrado</p>
                         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                            <div className="rounded-2xl bg-background p-3">
+                            <div className="bg-background p-3">
                                 <p className="text-xl font-black text-foreground">{totalVisibleEvents}</p>
                                 <p className="mt-1 text-[10px] font-semibold text-muted">total</p>
                             </div>
-                            <div className="rounded-2xl bg-background p-3">
+                            <div className="bg-background p-3">
                                 <p className="text-xl font-black text-foreground">{filteredBirthdays.length}</p>
                                 <p className="mt-1 text-[10px] font-semibold text-muted">idols</p>
                             </div>
-                            <div className="rounded-2xl bg-background p-3">
+                            <div className="bg-background p-3">
                                 <p className="text-xl font-black text-foreground">{filteredReleases.length}</p>
                                 <p className="mt-1 text-[10px] font-semibold text-muted">estreias</p>
                             </div>
@@ -576,10 +583,10 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                     </div>
 
                     {storeProducts.length > 0 && (
-                        <section className="overflow-hidden rounded-3xl border border-border bg-surface shadow-sm">
+                        <section className="overflow-hidden border border-border bg-surface">
                             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
                                 <div className="flex min-w-0 items-center gap-2">
-                                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-2xl bg-accent text-white">
+                                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-accent text-white">
                                         <ShoppingBag className="h-3.5 w-3.5" />
                                     </span>
                                     <div className="min-w-0">
@@ -600,10 +607,10 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                         rel="noopener noreferrer sponsored"
                                         className="group min-w-0"
                                     >
-                                        <div className="relative mb-1.5 aspect-square overflow-hidden rounded-2xl border border-border bg-background transition-colors group-hover:border-accent/40">
+                                        <div className="relative mb-1.5 aspect-square overflow-hidden border border-border bg-background transition-colors group-hover:border-accent/40">
                                             <Image src={p.imageUrl} alt={p.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
                                             {p.badge && (
-                                                <span className="absolute left-1.5 top-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[8px] font-black text-white">{p.badge}</span>
+                                                <span className="absolute left-1.5 top-1.5 bg-accent px-1.5 py-0.5 text-[8px] font-mono font-black text-white">{p.badge}</span>
                                             )}
                                         </div>
                                         <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-foreground">{p.name}</p>
@@ -615,6 +622,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                     )}
                 </aside>
             </div>
+        </div>
         </div>
     )
 }

@@ -16,10 +16,13 @@ interface BreadcrumbsProps {
   className?: string
 }
 
-export function Breadcrumbs({ items, onDark = false, className = '' }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, homeLabel = 'Início', onDark = false, className = '' }: BreadcrumbsProps) {
   const pathname = usePathname()
 
-  const breadcrumbs = items || generateBreadcrumbs(pathname)
+  const generatedItems = items || generateBreadcrumbs(pathname)
+  const breadcrumbs = pathname === '/'
+    ? generatedItems
+    : [{ label: homeLabel, href: '/' }, ...generatedItems]
 
   const separatorColor = onDark ? 'text-white/35' : 'text-muted/45'
   const linkColor = onDark ? 'text-white/65 hover:text-white' : 'text-muted hover:text-foreground'
@@ -27,10 +30,10 @@ export function Breadcrumbs({ items, onDark = false, className = '' }: Breadcrum
 
   return (
     <nav aria-label="Breadcrumb" className={`min-w-0 ${className}`}>
-      <ol className="flex min-w-0 items-center gap-2 overflow-hidden font-mono text-[11px] lowercase tracking-[0.02em]">
+      <ol className="flex min-w-0 items-center gap-2 overflow-hidden font-mono text-[11px] tracking-[0.02em]">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1
-          const label = crumb.label.toLocaleLowerCase('pt-BR')
+          const label = crumb.label
 
           return (
             <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'shrink-0'}`}>

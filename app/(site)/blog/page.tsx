@@ -10,6 +10,7 @@ import { BlogImage } from '@/components/ui/BlogImage'
 import { BlogHeroCarousel } from '@/components/blog/BlogHeroCarousel'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { SectionBar } from '@/components/ui/SectionBar'
 import { Clock, Eye, ArrowRight, Tag, TrendingUp, BookOpen, ChevronRight, Sparkles } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
@@ -322,32 +323,32 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'Blog | HallyuHub', url: `${BASE_URL}/blog`, inLanguage: 'pt-BR' }} />
       <PageTransition className="overflow-x-hidden pb-16">
 
-        {/* ── Editorial header — só na página 1 sem filtro ──────────── */}
-        {!isFiltered && page === 1 && (
-          <section className="page-wrap border-b border-foreground py-4 sm:py-5">
-            <Breadcrumbs items={[{ label: 'artigos' }]} className="mb-1" />
-            <h1 className="mt-1 max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
-              O melhor do <span className="text-accent italic">HallyuHub</span>, sempre fresco.
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
-              <span>{nowLabel}</span>
-              <span className="font-bold">{total.toLocaleString('pt-BR')} matérias</span>
-              {orderedCategories.slice(0, 4).map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/blog?category=${c.slug}`}
-                  className="transition-colors hover:text-accent"
-                >
-                  {c.name} <strong className="text-foreground">{c._count.posts}</strong>
-                </Link>
+        {/* ── Filtros + breadcrumb ─────────────────────────────────── */}
+        <SectionBar>
+          {orderedCategories.length > 0 && (
+            <>
+              <Link href="/blog" className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${!activeCategory ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>Todos</Link>
+              {orderedCategories.map((c) => (
+                <Link key={c.id} href={`/blog?category=${c.slug}`} className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${activeCategory === c.slug ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>{c.name}</Link>
               ))}
-            </div>
-          </section>
-        )}
+            </>
+          )}
+        </SectionBar>
+        <div className="page-wrap flex items-center justify-between gap-4 border-b border-border/50 py-3">
+          <div className="min-w-0">
+            <Breadcrumbs items={[{ label: 'Artigos' }]} className="mb-1" />
+            <p className="truncate text-[13px] font-semibold text-muted">
+              {isFiltered ? 'Artigos filtrados por tema e tags' : `Edição de ${nowLabel}`}
+            </p>
+          </div>
+          <span className="hidden shrink-0 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-muted sm:block">
+            {total} artigos
+          </span>
+        </div>
 
         {/* ── Hero carousel — página 1 sem filtro ──────────────────── */}
         {page === 1 && (
-          <div className="page-wrap pt-5">
+          <div>
             {!isFiltered && heroSlides.length > 0 ? (
               <BlogHeroCarousel
                 slides={heroSlides}

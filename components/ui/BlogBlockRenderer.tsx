@@ -800,6 +800,20 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
         i++
     }
 
+    // Pre-compute which rows should show an ad AFTER them.
+    // Rule: ad is scheduled at position P; find the next row >= P that is
+    // not a heading and whose *next* row is also not a heading.
+    const adAfter = new Set<number>()
+    for (const pos of AD_POSITIONS) {
+        for (let i = pos - 1; i < rows.length; i++) {
+            const cur = rows[i]
+            const next = rows[i + 1]
+            const curIsHeading = !Array.isArray(cur) && (cur as BlogBlock).type === 'blog_heading'
+            const nextIsHeading = next && !Array.isArray(next) && (next as BlogBlock).type === 'blog_heading'
+            if (!curIsHeading && !nextIsHeading) { adAfter.add(i); break }
+        }
+    }
+
     return (
         <div className={className}>
             {rows.map((item, idx) => {
@@ -820,11 +834,11 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                                 ))}
                             </div>
                         )
-                        : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} />
+                        : <BlogBlockItem key={idx} block={item as BlogBlock} resolvedEntities={resolvedEntities} isLead={idx === 0 && (item as BlogBlock).type === 'blog_paragraph'} />
                 return (
                     <Fragment key={idx}>
                         {el}
-                        {AD_POSITIONS.has(idx + 1) && <InArticleAd id={`blog-ad-${idx + 1}`} />}
+                        {adAfter.has(idx) && <InArticleAd id={`blog-ad-${idx}`} />}
                     </Fragment>
                 )
             })}
@@ -832,21 +846,27 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
     )
 }
 
-function BlogBlockItem({ block, resolvedEntities }: { block: BlogBlock; resolvedEntities?: ResolvedEntities }) {
+function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; resolvedEntities?: ResolvedEntities; isLead?: boolean }) {
     switch (block.type) {
 
         case 'blog_heading': {
             const cls = "font-black text-foreground leading-tight tracking-tight"
-            if (block.level === 1) return <h1 className={`text-3xl md:text-4xl mt-10 mb-5 ${cls}`}>{block.text}</h1>
-            if (block.level === 3) return <h3 className={`text-lg mt-7 mb-3 text-[#ff2d78] ${cls}`}>{block.text}</h3>
+            const headingId = block.text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
+            const anchor = (
+                <a href={`#${headingId}`} onClick={e => { e.preventDefault(); navigator.clipboard?.writeText(window.location.origin + window.location.pathname + '#' + headingId) }}
+                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-accent text-base font-normal" aria-label="Copiar link da seção">#</a>
+            )
+            if (block.level === 1) return <h1 id={headingId} className={`group text-3xl md:text-4xl mt-10 mb-5 ${cls}`}>{block.text}{anchor}</h1>
+            if (block.level === 3) return <h3 id={headingId} className={`group text-lg mt-7 mb-3 text-[#ff2d78] ${cls}`}>{block.text}{anchor}</h3>
             return (
-                <h2 className={`text-2xl mt-8 mb-4 pb-2 ${cls}`} style={{ borderBottom: '1px solid rgba(255,45,120,0.15)' }}>
-                    {block.text}
+                <h2 id={headingId} className={`group text-2xl mt-8 mb-4 pb-2 ${cls}`} style={{ borderBottom: '1px solid rgba(255,45,120,0.15)' }}>
+                    {block.text}{anchor}
                 </h2>
             )
         }
 
         case 'blog_paragraph':
+            if (isLead) return <p className="mb-7 text-xl sm:text-2xl leading-relaxed font-medium text-foreground/90 text-justify hyphens-auto">{renderInline(block.text)}</p>
             return <p className="mb-5 leading-relaxed text-foreground text-lg text-justify hyphens-auto">{renderInline(block.text)}</p>
 
         case 'blog_quote':

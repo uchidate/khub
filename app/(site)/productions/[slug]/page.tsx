@@ -325,54 +325,42 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.slug ?? production.id}` },
                 ],
             }} />
-            {/* Cinematic Hero — flexbox layout to prevent overlap on small viewports */}
-            <div className="relative min-h-[620px] md:min-h-[640px] bg-background flex flex-col overflow-hidden">
-                {/* Background image (contained, never clips content) */}
-                <div className="absolute inset-y-0 left-0 right-0 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
-                    <div className="relative h-full overflow-hidden">
-                        {/* Mobile: poster (imageUrl) */}
-                        {heroImageMobile && (
-                            <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover md:hidden" />
-                        )}
-                        {/* Desktop: backdrop (backdropUrl) */}
-                        {heroImageDesktop ? (
-                            <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover hidden md:block" />
-                        ) : !heroImageMobile && (
-                            <>
-                                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d78]/5 rounded-full blur-3xl" />
-                                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#ff2d78]/5 rounded-full blur-3xl" />
-                            </>
-                        )}
-                        <div className="absolute inset-0 hero-gradient" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
-                    </div>
-                </div>
-
-                {/* Breadcrumbs + actions */}
-                <div className="relative z-10 pt-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 xl:px-20 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2">
+            {/* ── BREADCRUMB BAR ── */}
+            <div className="border-b border-border/40">
+                <div className="page-wrap flex items-center gap-3 py-3">
                     <Breadcrumbs
-                        items={[
-                            { label: 'Produções', href: '/productions' },
-                            { label: production.titlePt }
-                        ]}
-                        onDark
-                        className=""
+                        items={[{ label: 'Produções', href: '/productions' }, { label: production.titlePt }]}
+                        onDark={false}
+                        className="min-w-0"
                     />
-                    <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+                    <div className="ml-auto flex items-center gap-2">
                         <AdminQuickEdit href={`/admin/productions/${production.id}?returnTo=${encodeURIComponent(`/productions/${production.id}`)}`} label="Editar" />
-                        <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt}
-                            className="bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-sm" />
-                        <FavoriteButton
-                            id={production.id}
-                            itemName={production.titlePt}
-                            itemType="produção"
-                            className="bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-sm"
-                        />
+                        <ReportButton entityType="production" entityId={production.id} entityName={production.titlePt} />
+                        <FavoriteButton id={production.id} itemName={production.titlePt} itemType="produção" />
                     </div>
                 </div>
+            </div>
+            {/* Cinematic Hero */}
+            <div className="relative min-h-[620px] md:min-h-[680px] bg-background flex flex-col overflow-hidden">
+                {/* Accent stripe */}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 z-20 bg-[#ff2d78]" />
+                {/* Background image — full bleed */}
+                {heroImageMobile && (
+                    <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="100vw" className="object-cover md:hidden" />
+                )}
+                {heroImageDesktop ? (
+                    <Image src={heroImageDesktop} alt={production.titlePt} fill priority sizes="100vw" className="object-cover hidden md:block" />
+                ) : !heroImageMobile && (
+                    <>
+                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d78]/5 rounded-full blur-3xl" />
+                        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#ff2d78]/5 rounded-full blur-3xl" />
+                    </>
+                )}
+                <div className="absolute inset-0 hero-gradient" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
 
                 {/* Hero content */}
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 xl:px-20 pb-10 md:pb-16 mt-auto">
+                <div className="relative z-10 page-wrap pb-10 md:pb-16 mt-auto">
                     <div className="flex items-end gap-6 md:gap-10">
                         {/* Main info — fills remaining space */}
                         <div className="flex-1 min-w-0">
@@ -447,21 +435,21 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-6 pb-16 md:py-10">
-                <section className="mb-8 overflow-hidden rounded-3xl border border-border bg-surface/75 shadow-sm">
+            <div className="page-wrap py-8">
+                <section className="mb-8 overflow-hidden border border-border bg-surface">
                     <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
                         <div className="p-5 sm:p-6 lg:p-7">
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-accent">
+                                <span className="inline-flex items-center gap-1.5 bg-accent-soft px-3 py-1 text-[10px] font-mono font-black uppercase tracking-[0.16em] text-accent">
                                     <Sparkles className="h-3.5 w-3.5" />
                                     Visão rápida
                                 </span>
-                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-foreground">
+                                <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-[10px] font-mono font-black uppercase tracking-[0.12em] text-foreground">
                                     <Film className="h-3.5 w-3.5" />
                                     {typeLabel}
                                 </span>
                                 {production.network && (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-muted">
+                                    <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-[10px] font-mono font-black uppercase tracking-[0.12em] text-muted">
                                         <Tv className="h-3.5 w-3.5" />
                                         {production.network}
                                     </span>
@@ -480,57 +468,56 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                     )}
                                     <div className="mt-5 grid gap-2 sm:grid-cols-2">
                                         {releaseLabel && (
-                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                            <div className="border border-border bg-background p-4">
                                                 <CalendarDays className="h-4 w-4 text-accent" />
                                                 <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Estreia</p>
                                                 <p className="mt-1 text-sm font-black text-foreground">{releaseLabel}</p>
                                             </div>
                                         )}
                                         {runtimeLabel && (
-                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                            <div className="border border-border bg-background p-4">
                                                 <Clock className="h-4 w-4 text-accent" />
                                                 <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Formato</p>
                                                 <p className="mt-1 text-sm font-black text-foreground">{runtimeLabel}</p>
                                             </div>
                                         )}
                                         {scoreLabel && (
-                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                            <div className="border border-border bg-background p-4">
                                                 <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
                                                 <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Nota</p>
                                                 <p className="mt-1 text-sm font-black text-foreground">{scoreLabel}</p>
                                             </div>
                                         )}
                                         {production.streamingPlatforms.length > 0 && (
-                                            <div className="rounded-2xl border border-border bg-background p-4">
+                                            <div className="border border-border bg-background p-4">
                                                 <PlayCircle className="h-4 w-4 text-accent" />
                                                 <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted">Onde entra</p>
                                                 <p className="mt-1 truncate text-sm font-black text-foreground">{production.streamingPlatforms.slice(0, 2).join(', ')}</p>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mt-5 flex flex-wrap gap-2">
+                                                    <div className="mt-5 flex flex-wrap gap-2">
                                         {quickAnchors.map(anchor => (
                                             <a
                                                 key={anchor.href}
                                                 href={anchor.href}
-                                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                                                className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground"
                                             >
                                                 {anchor.label}
-                                                <ArrowRight className="h-3 w-3" />
                                             </a>
                                         ))}
                                     </div>
                                 </div>
 
                                 {leadingCast.length > 0 && (
-                                    <div className="rounded-2xl border border-border bg-background p-4">
+                                    <div className="border border-border bg-background p-4">
                                         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Elenco principal</p>
                                         <div className="mt-3 space-y-2">
                                             {leadingCast.map(({ artist, role }) => (
                                                 <Link
                                                     key={artist.id}
                                                     href={`/artists/${artist.slug ?? artist.id}`}
-                                                    className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-2 transition-colors hover:border-accent/40"
+                                                    className="flex items-center gap-3 border border-border bg-surface p-2 transition-colors hover:border-accent/40"
                                                 >
                                                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-background">
                                                         {artist.primaryImageUrl ? (
@@ -556,7 +543,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 {overviewStats.map(stat => {
                                     const Icon = stat.icon
                                     return (
-                                        <div key={stat.label} className="rounded-2xl border border-border bg-surface p-4">
+                                        <div key={stat.label} className="border border-border bg-surface p-4">
                                             <Icon className="h-4 w-4 text-accent" />
                                             <p className="mt-3 text-2xl font-black leading-none text-foreground">{stat.value}</p>
                                             <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted">{stat.label}</p>
@@ -566,11 +553,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 })}
                             </div>
                             {tags.length > 0 && (
-                                <div className="mt-3 rounded-2xl border border-border bg-surface p-4">
+                                <div className="mt-3 border border-border bg-surface p-4">
                                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">Temas</p>
                                     <div className="mt-3 flex flex-wrap gap-1.5">
                                         {tags.slice(0, 8).map(tag => (
-                                            <span key={tag} className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-muted">
+                                            <span key={tag} className="border border-border bg-background px-2.5 py-1 text-[11px] font-mono font-bold text-muted">
                                                 {tag}
                                             </span>
                                         ))}
@@ -586,7 +573,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     <div className="min-w-0 md:col-span-2 space-y-10">
                         {synopsis && (
                             <div id="sinopse" className="scroll-mt-28">
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sinopse</h3>
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] mb-3">Sinopse</h3>
                                 <p className="text-muted leading-relaxed font-medium text-lg break-words text-justify">{synopsis}</p>
                             </div>
                         )}
@@ -595,7 +582,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         {(production.whyWatch || production.editorialReview) && (
                             <div className="space-y-5 border-t border-border pt-8">
                                 {production.whyWatch && (
-                                    <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-[#ff2d78]/10 via-[#ff2d78]/5 to-transparent border border-[#ff2d78]/25">
+                                    <div className="relative overflow-hidden p-5 bg-gradient-to-br from-[#ff2d78]/10 via-[#ff2d78]/5 to-transparent border border-[#ff2d78]/25">
                                         <div className="flex items-center gap-2 mb-3">
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#ff2d78]" />
                                             <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78]">Por que assistir</p>
@@ -604,7 +591,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                     </div>
                                 )}
                                 {production.editorialReview && (
-                                    <div className="rounded-2xl border border-border overflow-hidden">
+                                    <div className="border border-border overflow-hidden">
                                         <div className="px-5 py-4 bg-gradient-to-r from-surface to-background flex items-center justify-between border-b border-border">
                                             <div className="flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -632,11 +619,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         {/* Curiosidades */}
                         {(production as any).curiosidades?.length > 0 && (
                             <div id="elenco" className="scroll-mt-28">
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Curiosidades</h3>
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] mb-4">Curiosidades</h3>
                                 <ul className="space-y-2">
                                     {((production as any).curiosidades as string[]).map((c, i) => (
-                                        <li key={i} className="group flex items-start gap-4 rounded-2xl border border-border px-5 py-4 bg-surface hover:border-accent/40 hover:bg-accent/[0.03] transition-all">
-                                            <span className="shrink-0 mt-0.5 text-[10px] font-black text-accent/70 group-hover:text-accent bg-accent/8 group-hover:bg-accent/15 w-6 h-6 rounded-full flex items-center justify-center tabular-nums transition-all">{i + 1}</span>
+                                        <li key={i} className="group flex items-start gap-4 border border-border px-5 py-4 bg-surface hover:border-accent/40 hover:bg-accent/[0.03] transition-all">
+                                            <span className="shrink-0 mt-0.5 text-[10px] font-black text-accent/70 group-hover:text-accent bg-accent/8 group-hover:bg-accent/15 w-6 h-6 flex items-center justify-center tabular-nums transition-all">{i + 1}</span>
                                             <span className="text-[15px] text-muted leading-relaxed text-justify">{c}</span>
                                         </li>
                                     ))}
@@ -646,7 +633,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
 
                         {tags.length > 0 && (
                             <div id="galeria" className="scroll-mt-28">
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Tags</h3>
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] mb-3">Tags</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {tags.map(tag => (
                                         <span key={tag} className="text-xs font-bold text-muted bg-surface px-3 py-1.5 rounded-sm border border-border">{tag}</span>
@@ -659,7 +646,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         {/* Cast */}
                         {production.artists.length > 0 && (
                             <div>
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-6">Elenco</h3>
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] pb-3 border-b border-foreground mb-6">Elenco</h3>
                                 {(() => {
                                     const ordered = [...production.artists].sort(
                                         (a, b) => (a.castOrder ?? 999) - (b.castOrder ?? 999)
@@ -671,9 +658,9 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                                         <Link
                                                             key={artist.id}
                                                             href={`/artists/${artist.slug ?? artist.id}`}
-                                                            className="group flex w-full gap-3 rounded-xl border border-border bg-background p-2.5 transition-colors hover:border-[#ff2d78]/30"
+                                                            className="group flex w-full gap-3 border border-border bg-background p-2.5 transition-colors hover:border-[#ff2d78]/30"
                                                         >
-                                                            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface">
+                                                            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden bg-surface">
                                                                 {artist.primaryImageUrl ? (
                                                                     <Image
                                                                         src={artist.primaryImageUrl}
@@ -699,7 +686,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                                                         )}
                                                                     </div>
                                                                     {castOrder != null && castOrder < 20 && (
-                                                                        <span className="flex-shrink-0 rounded-full bg-surface px-2 py-0.5 text-[10px] font-black text-muted">
+                                                                        <span className="flex-shrink-0 bg-surface px-2 py-0.5 text-[10px] font-mono font-black text-muted">
                                                                             #{castOrder + 1}
                                                                         </span>
                                                                     )}
@@ -717,7 +704,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                             <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 gap-4">
                                                 {ordered.map(({ artist, role }) => (
                                                     <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group">
-                                                        <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
+                                                        <div className="aspect-[3/4] relative overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-colors">
                                                             {artist.primaryImageUrl ? (
                                                                 <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.75] group-hover:brightness-90" />
                                                             ) : (
@@ -741,10 +728,10 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         {/* Gallery */}
                         {galleryUrls.length > 0 && (
                             <div>
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-6">Galeria</h3>
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] pb-3 border-b border-foreground mb-6">Galeria</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {galleryUrls.map((url, i) => (
-                                        <div key={i} className="aspect-video relative rounded-lg overflow-hidden border border-border">
+                                        <div key={i} className="aspect-video relative overflow-hidden border border-border">
                                             <Image
                                                 src={url}
                                                 alt={`${production.titlePt} - imagem ${i + 1}`}
@@ -788,7 +775,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                         <Link
                                             key={article.slug}
                                             href={`/blog/${article.slug}`}
-                                            className="group overflow-hidden rounded-xl border border-border bg-surface transition-all hover:border-accent/30 hover:shadow-md"
+                                            className="group overflow-hidden border border-border bg-surface transition-all hover:border-accent/30"
                                         >
                                             {article.coverImageUrl && (
                                                 <div className="relative aspect-video bg-background">
@@ -821,7 +808,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {relatedProductions.map((rel) => (
                                         <Link key={rel.id} href={`/productions/${rel.slug ?? rel.id}`} className="group block">
-                                            <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
+                                            <div className="aspect-[2/3] relative overflow-hidden bg-surface border border-border hover:border-[#ff2d78]/30 transition-all mb-2">
                                                 {rel.imageUrl || rel.backdropUrl ? (
                                                     <Image
                                                         src={rel.imageUrl || rel.backdropUrl!}
@@ -863,9 +850,12 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     {/* Sidebar */}
                     <div className="min-w-0">
                         <div className="sticky top-24 flex flex-col gap-4">
-                        <div className="bg-background rounded-2xl border border-border p-6">
+                        <div className="border border-border bg-background divide-y divide-border">
+                            <div className="px-4 py-2">
+                                <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Informações</p>
+                            </div>
                             {(production as any).editorialRating != null && (
-                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Nossa Nota</span>
                                     <span className={`text-sm font-black ${
                                         (production as any).editorialRating >= 7 ? 'text-accent' :
@@ -875,7 +865,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             )}
                             {production.voteAverage && production.voteAverage > 0 && (production.voteCount ?? 0) >= 50 && (
-                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Nota TMDB</span>
                                     <span className={`text-sm font-black ${
                                         production.voteAverage >= 7 ? 'text-green-600' :
@@ -885,7 +875,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             )}
                             {production.releaseDate && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Estreia</span>
                                     <span className="text-sm font-bold text-foreground">
                                         {new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
@@ -893,47 +883,47 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             )}
                             {!production.releaseDate && production.year && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Ano</span>
                                     <span className="text-sm font-bold text-foreground">{production.year}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between py-3 border-b border-border">
+                            <div className="flex justify-between px-4 py-3">
                                 <span className="text-xs font-black text-muted uppercase tracking-widest">Tipo</span>
                                 <span className="text-sm font-bold text-foreground uppercase">{production.type}</span>
                             </div>
                             {production.runtime && production.runtime > 0 && !production.episodeCount && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Duração</span>
                                     <span className="text-sm font-bold text-foreground">{formatRuntime(production.runtime)}</span>
                                 </div>
                             )}
                             {production.episodeCount && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Episódios</span>
                                     <span className="text-sm font-bold text-foreground">{production.episodeCount} ep.</span>
                                 </div>
                             )}
                             {production.seasonCount && production.seasonCount > 1 && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Temporadas</span>
                                     <span className="text-sm font-bold text-foreground">{production.seasonCount}</span>
                                 </div>
                             )}
                             {production.episodeRuntime && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Ep. Duração</span>
                                     <span className="text-sm font-bold text-foreground">{formatRuntime(production.episodeRuntime)}</span>
                                 </div>
                             )}
                             {production.network && (
-                                <div className="flex justify-between py-3 border-b border-border">
+                                <div className="flex justify-between px-4 py-3">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Canal</span>
                                     <span className="text-sm font-bold text-foreground">{production.network}</span>
                                 </div>
                             )}
                             {production.productionStatus && (
-                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Status</span>
                                     <span className={`text-xs font-black px-2 py-0.5 rounded-sm ${
                                         production.productionStatus === 'Returning Series'
@@ -953,7 +943,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             )}
                             {production.ageRating && (
-                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Classificação</span>
                                     <span className={`text-xs font-black px-2.5 py-1 rounded ${
                                         production.ageRating === 'L'  ? 'bg-green-600 text-white' :
@@ -968,7 +958,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 </div>
                             )}
                             {production.streamingPlatforms && production.streamingPlatforms.length > 0 && (
-                                <div className="flex justify-between py-3 border-b border-border items-center">
+                                <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Streaming</span>
                                     <div className="flex flex-wrap gap-1.5 justify-end">
                                         {production.streamingPlatforms.map(p => (
@@ -977,7 +967,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                     </div>
                                 </div>
                             )}
-                            <div className="flex justify-between py-3">
+                            <div className="flex justify-between px-4 py-3">
                                 <span className="text-xs font-black text-muted uppercase tracking-widest">Elenco</span>
                                 <span className="text-sm font-bold text-foreground">{totalCast} artistas</span>
                             </div>

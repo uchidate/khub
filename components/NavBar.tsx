@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import type { MouseEvent } from "react"
 import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
@@ -11,6 +12,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 import { BrandMark } from "@/components/ui/BrandMark"
+import { QuickSearch } from "@/components/features/QuickSearch"
 
 interface TickerItem {
     type: 'article' | 'artist'
@@ -46,6 +48,12 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     const openSearch = useQuickSearch((state) => state.open)
     const editionDate = useMemo(() => formatEditionDate(), [])
 
+    const handleOpenSearch = (event?: MouseEvent) => {
+        event?.preventDefault()
+        openSearch()
+        window.dispatchEvent(new Event("quick-search:open"))
+    }
+
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 0)
         window.addEventListener("scroll", handleScroll)
@@ -54,7 +62,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
 
     useEffect(() => {
         const root = document.documentElement
-        root.style.setProperty("--site-header-h", tickerItems.length > 0 ? "220px" : "192px")
+        root.style.setProperty("--site-header-h", "192px")
         return () => { root.style.removeProperty("--site-header-h") }
     }, [tickerItems.length])
 
@@ -81,13 +89,14 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         </Link>
                     </div>
                     <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => openSearch()}
-                            className="flex h-10 w-10 items-center justify-center text-muted transition-colors hover:bg-surface"
+                        <Link
+                            href="/search"
+                            onClick={handleOpenSearch}
+                            className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-muted transition-colors hover:border-border hover:bg-surface hover:text-foreground"
                             aria-label="Buscar"
                         >
                             <Search className="h-[18px] w-[18px]" />
-                        </button>
+                        </Link>
                         <ThemeToggle />
                     </div>
                 </div>
@@ -112,17 +121,17 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                     </Link>
 
                     <div className="flex items-center gap-2 pb-2">
-                        <button
-                            type="button"
-                            className="flex min-w-[260px] items-center gap-2 border border-border bg-background px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-muted transition-colors hover:border-foreground hover:text-foreground"
-                            onClick={() => openSearch()}
+                        <Link
+                            href="/search"
+                            className="flex h-9 min-w-[320px] items-center gap-2 rounded-md border border-border bg-background px-3 text-left text-[12px] font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground"
+                            onClick={handleOpenSearch}
                         >
-                            <Search className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                            <span className="min-w-0 flex-1 truncate">Buscar artistas, artigos, dramas...</span>
-                            <span className="inline-flex items-center gap-1 border-l border-border pl-2 text-[10px] font-black">
+                            <Search className="h-4 w-4 shrink-0 opacity-70" />
+                            <span className="min-w-0 flex-1 truncate">Buscar em artistas, grupos, produções, loja...</span>
+                            <span className="inline-flex items-center gap-1 border-l border-border pl-2 font-mono text-[10px] font-black uppercase">
                                 <Command className="h-2.5 w-2.5" /> K
                             </span>
-                        </button>
+                        </Link>
                         <ThemeToggle />
                         {!session ? (
                             <>
@@ -148,43 +157,15 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                     </div>
                 </div>
 
-                {/* Ticker */}
-                {tickerItems.length > 0 && (() => {
-                    const items = [...tickerItems, ...tickerItems]
-                    return (
-                        <div className="flex h-[28px] items-center overflow-hidden border-b border-border/40">
-                            <div className="flex shrink-0 items-center self-stretch bg-foreground px-3.5">
-                                <span className="whitespace-nowrap font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-background">Em alta</span>
-                            </div>
-                            <div className="min-w-0 flex-1 overflow-hidden">
-                                <div className="flex w-max items-center whitespace-nowrap animate-home-ticker">
-                                    {items.map((item, index) => (
-                                        <Link
-                                            key={`ticker-${item.href}-${index}`}
-                                            href={item.href}
-                                            className="inline-flex h-[28px] shrink-0 items-center gap-2 border-r border-border/40 px-5 transition-opacity hover:opacity-70"
-                                        >
-                                            <span className={`font-mono text-[9px] font-bold uppercase tracking-[0.12em] ${item.type === 'artist' ? 'text-accent' : 'text-muted'}`}>
-                                                {item.label}
-                                            </span>
-                                            <span className="text-[12px] font-medium text-foreground">{item.title}</span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })()}
-
                 {/* Nav links */}
-                <div className="flex h-11 items-center border-b border-border px-10">
+                <div className="flex h-12 items-center border-b-2 border-foreground px-10">
                     <div className="flex h-full flex-1 items-center gap-8 overflow-x-auto">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
                                 aria-current={isActiveLink(link.href) ? "page" : undefined}
-                                className={`relative flex h-full shrink-0 items-center text-[14px] font-semibold tracking-[-0.01em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:origin-left after:transition-transform ${
+                                className={`relative flex h-full shrink-0 items-center text-[15px] font-bold tracking-[-0.02em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
                                     isActiveLink(link.href)
                                         ? "text-foreground after:scale-x-100 after:bg-accent"
                                         : "text-muted after:scale-x-0 after:bg-accent hover:text-foreground hover:after:scale-x-100"
@@ -196,6 +177,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                     </div>
                 </div>
             </div>
+            <QuickSearch />
         </nav>
     )
 }

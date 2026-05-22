@@ -125,6 +125,14 @@ function SearchContent() {
         router.replace(`/search?${params.toString()}`, { scroll: false })
     }
 
+    const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const form = new FormData(event.currentTarget)
+        const nextQuery = String(form.get('q') ?? '').trim()
+        if (nextQuery) router.push(`/search?q=${encodeURIComponent(nextQuery)}`)
+        else router.push('/search')
+    }
+
     const shortcuts = deferredData?.shortcuts ?? []
     const artists = deferredData?.artists ?? []
     const groups = deferredData?.groups ?? []
@@ -152,6 +160,40 @@ function SearchContent() {
 
     return (
         <>
+            <form onSubmit={submitSearch} className="mb-4 flex h-12 items-center gap-2 border-b border-border/50">
+                <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground">
+                    <Search className="h-4 w-4 shrink-0 text-muted" />
+                    <input
+                        key={query}
+                        name="q"
+                        defaultValue={query}
+                        placeholder="Buscar no HallyuHub..."
+                        className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:outline-none"
+                    />
+                </div>
+                <button type="submit" className="h-8 shrink-0 rounded-md bg-foreground px-3 text-[12px] font-bold text-background transition-opacity hover:opacity-85">
+                    Buscar
+                </button>
+            </form>
+
+            <div className="mb-8 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                {[
+                    { label: 'Artistas', href: query ? `/artists?search=${encodeURIComponent(query)}` : '/artists', icon: <User size={13} /> },
+                    { label: 'Grupos', href: query ? `/groups?search=${encodeURIComponent(query)}` : '/groups', icon: <Users size={13} /> },
+                    { label: 'Produções', href: query ? `/productions?search=${encodeURIComponent(query)}` : '/productions', icon: <Film size={13} /> },
+                    { label: 'Loja', href: query ? `/loja?search=${encodeURIComponent(query)}` : '/loja', icon: <ShoppingBag size={13} /> },
+                ].map(item => (
+                    <Link
+                        key={item.label}
+                        href={item.href}
+                        className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-surface px-3 text-[12px] font-bold text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                    >
+                        {item.icon}
+                        {item.label}
+                    </Link>
+                ))}
+            </div>
+
             {/* Filter tabs */}
             {deferredData && total > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-8">
@@ -366,7 +408,7 @@ function SearchContent() {
                             <SectionHeader icon={<ShoppingBag size={14} />} title="Loja" count={storeProducts.length} />
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                                 {storeProducts.map(product => (
-                                    <Link key={product.id} href="/loja"
+                                    <Link key={product.id} href={`/loja?search=${encodeURIComponent(product.name)}`}
                                         className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
                                         <div className="relative aspect-square rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             <Image src={product.imageUrl} alt={product.name} fill
@@ -385,7 +427,7 @@ function SearchContent() {
                                 ))}
                             </div>
                             <div className="mt-4">
-                                <Link href="/loja"
+                                <Link href={query ? `/loja?search=${encodeURIComponent(query)}` : '/loja'}
                                     className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline font-semibold">
                                     Ver vitrine completa <ChevronRight size={12} />
                                 </Link>

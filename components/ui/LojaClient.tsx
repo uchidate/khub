@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { ComponentType } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ShopeeCard, STORE_CONFIG } from '@/components/ui/ShopeeCard'
 import { ArrowDownAZ, Flame, Grid2X2, Search, SlidersHorizontal, Sparkles, Star, Store, X } from 'lucide-react'
 
@@ -60,10 +61,14 @@ function categoryLabel(category: string) {
 }
 
 export function LojaClient({ products }: { products: Product[] }) {
-    const [activeCategory, setActiveCategory] = useState('')
-    const [activePlatform, setActivePlatform] = useState('')
-    const [search, setSearch] = useState('')
-    const [sort, setSort] = useState<SortOption>('curated')
+    const searchParams = useSearchParams()
+    const initialSort = searchParams.get('sort') as SortOption | null
+    const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '')
+    const [activePlatform, setActivePlatform] = useState(searchParams.get('store') || '')
+    const [search, setSearch] = useState(searchParams.get('search') || '')
+    const [sort, setSort] = useState<SortOption>(
+        initialSort && SORT_OPTIONS.some(option => option.value === initialSort) ? initialSort : 'curated'
+    )
     const [showFilters, setShowFilters] = useState(false)
 
     const availablePlatforms = useMemo(() => {

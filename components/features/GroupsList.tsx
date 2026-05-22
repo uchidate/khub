@@ -4,9 +4,9 @@ import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Users, X } from 'lucide-react'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { Search, Users, X } from 'lucide-react'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { nameToGradient } from '@/lib/utils'
 
@@ -139,123 +139,96 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
         setSortBy('popular')
     }
 
+    const chipClass = (active: boolean) =>
+        `h-8 shrink-0 rounded-md px-3 text-[12px] font-bold transition-colors ${
+            active ? 'bg-foreground text-background' : 'text-muted hover:bg-surface hover:text-foreground'
+        }`
+    const selectClass = 'h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground'
+    const renderFilterControls = () => (
+        <>
+            <div className="flex shrink-0 items-center gap-1 rounded-md bg-surface p-1">
+                {([
+                    { value: 'all', label: 'Todos' },
+                    { value: 'active', label: 'Ativos' },
+                    { value: 'disbanded', label: 'Disbandados' },
+                ] as const).map(opt => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setStatusFilter(opt.value)}
+                        className={chipClass(statusFilter === opt.value)}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+
+            <label className="flex shrink-0 items-center gap-1.5">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Geração</span>
+                <select value={generationFilter} onChange={e => setGenerationFilter(e.target.value)} className={selectClass} aria-label="Filtrar por geração">
+                    <option value="all">Todas</option>
+                    {GENERATIONS.map(g => <option key={g.label} value={g.label}>{g.label}</option>)}
+                </select>
+            </label>
+
+            <label className="flex shrink-0 items-center gap-1.5">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Ordenar</span>
+                <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} className={selectClass} aria-label="Ordenar grupos">
+                    {([
+                        { value: 'popular', label: 'Populares' },
+                        { value: 'name', label: 'A-Z' },
+                        { value: 'debut', label: 'Estreia' },
+                        { value: 'recent', label: 'Mais novos' },
+                        { value: 'members', label: 'Membros' },
+                    ] as const).map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+            </label>
+        </>
+    )
+
     return (
         <div id="groups-list">
 
             {/* Filtros */}
-            {!hideFilter && <div className="sticky top-[calc(var(--site-sticky-top)+0.75rem)] z-20 mb-6 border-y border-foreground bg-background py-3">
-                {/* Busca */}
-                <div className="flex items-center gap-2">
-                    <SearchInput
-                        value={search}
-                        onChange={setSearch}
-                        placeholder="Buscar por grupo, hangul ou agência..."
-                        className="flex-1"
-                    />
+            {!hideFilter && <div className="page-wrap flex h-12 items-center border-b border-border/50">
+                <div className="flex w-full items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                    <div className="flex shrink-0 items-center gap-2">
+                        {renderFilterControls()}
+                    </div>
+
+                    <div className="flex h-8 w-[220px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[360px]">
+                        <Search className="h-4 w-4 shrink-0 text-muted" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Buscar grupo, hangul ou agência..."
+                            className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:outline-none"
+                        />
+                    </div>
                     {hasActiveFilters && (
-                        <button onClick={resetFilters} className="flex h-11 w-11 shrink-0 items-center justify-center border border-border text-muted transition-colors hover:border-accent/40 hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
+                        <button onClick={resetFilters} className="flex h-8 shrink-0 items-center justify-center rounded-md bg-surface px-2 text-muted transition-colors hover:bg-surface-hover hover:text-foreground" title="Limpar filtros" aria-label="Limpar filtros">
                             <X className="h-4 w-4" />
                         </button>
                     )}
-                </div>
 
-                {/* Status + Geração */}
-                <div className="mt-3 flex items-start gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                    <div className="flex shrink-0 items-center gap-1 border border-border bg-surface px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
-                        Filtros
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                        {([
-                            { value: 'all', label: 'Todos' },
-                            { value: 'active', label: 'Ativos' },
-                            { value: 'disbanded', label: 'Disbandados' },
-                        ] as const).map(opt => (
-                            <button
-                                key={opt.value}
-                                onClick={() => setStatusFilter(opt.value)}
-                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    statusFilter === opt.value
-                                        ? 'border-foreground bg-foreground text-background'
-                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="h-7 w-px shrink-0 bg-border" />
-                    <div className="flex shrink-0 items-center gap-1">
-                        {([
-                            { value: 'all', label: 'Gerações' },
-                            ...GENERATIONS.map(g => ({ value: g.label, label: g.label })),
-                        ]).map(opt => (
-                            <button
-                                key={opt.value}
-                                onClick={() => setGenerationFilter(opt.value)}
-                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    generationFilter === opt.value
-                                        ? 'border-foreground bg-foreground text-background'
-                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="h-7 w-px shrink-0 bg-border" />
-                    <div className="flex shrink-0 items-center gap-1">
-                        {([
-                            { value: 'popular', label: 'Populares' },
-                            { value: 'name', label: 'A–Z' },
-                            { value: 'debut', label: 'Estreia' },
-                            { value: 'recent', label: 'Mais novos' },
-                            { value: 'members', label: 'Membros' },
-                        ] as const).map(opt => (
-                            <button
-                                key={opt.value}
-                                onClick={() => setSortBy(opt.value)}
-                                className={`whitespace-nowrap border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                    sortBy === opt.value
-                                        ? 'border-foreground bg-foreground text-background'
-                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
-                                }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {hasActiveFilters && (
-                    <div className="mt-2 flex items-center gap-3 flex-wrap">
+                    {hasActiveFilters && (
+                    <div className="hidden items-center gap-3 lg:flex">
                         <p className="text-xs text-muted">
                             {filtered.length} grupo{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
                         </p>
-                        {search && (
-                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
-                                busca: {search}
-                            </span>
-                        )}
-                        {statusFilter !== 'all' && (
-                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
-                                status: {statusFilter === 'active' ? 'ativos' : 'disbandados'}
-                            </span>
-                        )}
-                        {generationFilter !== 'all' && (
-                            <span className="inline-flex items-center gap-1 border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-muted">
-                                {generationFilter}
-                            </span>
-                        )}
-                        <button
-                            onClick={resetFilters}
-                            className="text-xs font-semibold text-accent transition-colors hover:text-foreground"
-                        >
-                            Limpar filtros
-                        </button>
                     </div>
-                )}
+                    )}
+                </div>
             </div>}
 
+            {!hideFilter && (
+                <div className="page-wrap border-b border-border/50 py-2">
+                    <Breadcrumbs items={[{ label: 'Grupos' }]} />
+                </div>
+            )}
+
+            <div className={hideFilter ? '' : 'page-wrap pt-6'}>
             {groups.length === 0 && <GroupsSkeleton />}
 
             {/* Grid */}
@@ -354,6 +327,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                 </div>
                 </>
             ) : null}
+            </div>
         </div>
     )
 }

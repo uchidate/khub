@@ -1,11 +1,9 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
-import Link from 'next/link'
 import { PageTransition } from "@/components/features/PageTransition"
 import { GroupsList } from "@/components/features/GroupsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 
@@ -40,8 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function GroupsPage() {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return <Suspense><GroupsList /></Suspense>
-    const [total, heroGroups, listGroups] = await Promise.all([
-        prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0),
+    const [heroGroups, listGroups] = await Promise.all([
         prisma.musicalGroup.findMany({
             where: { isHidden: false, profileImageUrl: { not: null } },
             orderBy: { trendingScore: 'desc' },
@@ -76,8 +73,6 @@ export default async function GroupsPage() {
         disbandDate: group.disbandDate ? group.disbandDate.toISOString() : null,
     }))
 
-    const [spotlight, ...sidePicks] = heroGroups
-
     return (
         <>
         <JsonLd data={{
@@ -105,43 +100,10 @@ export default async function GroupsPage() {
             }} />
         )}
         <PageTransition className="pb-16">
-
-            {/* ── Editorial header ───────────────────────────────── */}
-            {spotlight ? (
-                <div className="page-wrap border-b border-foreground py-5">
-                    <Breadcrumbs items={[{ label: 'catálogo' }, { label: 'grupos' }]} className="mb-1" />
-                    <h1 className="mt-1 max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
-                        Grupos, formações e histórias para explorar.
-                    </h1>
-                    <p className="mt-3 max-w-[620px] text-sm leading-relaxed text-muted">
-                        {total.toLocaleString('pt-BR')} perfis com integrantes, agências, fandoms, trajetória e links relacionados.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
-                        <Link href={`/groups/${spotlight.slug ?? spotlight.id}`} className="font-bold text-foreground transition-colors hover:text-accent">
-                            Em alta: {spotlight.name}
-                        </Link>
-                        {sidePicks.slice(0, 4).map((g) => (
-                            <Link key={g.id} href={`/groups/${g.slug ?? g.id}`} className="transition-colors hover:text-accent">
-                                {g.name}
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            ) : (
-                <div className="page-wrap border-b border-foreground py-5">
-                    <Breadcrumbs items={[{ label: 'catálogo' }, { label: 'grupos' }]} className="mb-1" />
-                    <h1 className="mt-1 font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">Grupos</h1>
-                </div>
-            )}
-
-
-            {/* ── Conteúdo principal ──────────────────────────────── */}
-            <div className="page-wrap pt-6">
-                <Suspense>
-                    <GroupsList initialGroups={initialGroups} />
-                </Suspense>
-                <ScrollToTop />
-            </div>
+            <Suspense>
+                <GroupsList initialGroups={initialGroups} />
+            </Suspense>
+            <ScrollToTop />
         </PageTransition>
         </>
     )

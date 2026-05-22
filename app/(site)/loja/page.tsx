@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { ExternalLink, ShieldCheck, ShoppingBag, Sparkles, Store, Tag, Truck } from 'lucide-react'
+import { ArrowDownAZ, ExternalLink, Search, ShieldCheck, ShoppingBag, Sparkles, Store, Tag, Truck } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
@@ -75,7 +75,8 @@ function buildStats(products: Awaited<ReturnType<typeof getData>>['products']) {
     ]
 }
 
-export default async function LojaPage() {
+export default async function LojaPage({ searchParams }: { searchParams: Promise<{ search?: string; store?: string; category?: string; sort?: string }> }) {
+    const sp = await searchParams
     const { products } = await getData()
     const hasProducts = products.length > 0
     const featuredProducts = products.filter(p => p.featured).slice(0, 5)
@@ -87,6 +88,18 @@ export default async function LojaPage() {
         }, {})
     ).sort((a, b) => b[1] - a[1]).slice(0, 5)
     const stats = buildStats(products)
+    const categoryOptions = Object.entries(
+        products.reduce<Record<string, number>>((acc, product) => {
+            acc[product.category] = (acc[product.category] ?? 0) + 1
+            return acc
+        }, {})
+    ).sort((a, b) => formatCategory(a[0]).localeCompare(formatCategory(b[0]), 'pt-BR'))
+    const storeOptions = Object.entries(
+        products.reduce<Record<string, number>>((acc, product) => {
+            acc[product.store] = (acc[product.store] ?? 0) + 1
+            return acc
+        }, {})
+    ).sort((a, b) => (STORE_LABELS[a[0]] ?? a[0]).localeCompare(STORE_LABELS[b[0]] ?? b[0], 'pt-BR'))
 
     const jsonLd = hasProducts ? {
         '@context': 'https://schema.org',
@@ -113,20 +126,78 @@ export default async function LojaPage() {
     return (
         <>
             {jsonLd && <JsonLd data={jsonLd} />}
-            <PageTransition className="pb-20">
+            <main className="min-h-screen bg-background pb-20">
+                <form action="/loja" className="page-wrap flex h-12 items-center border-b border-border/50">
+                    <div className="flex w-full min-w-0 items-center gap-2">
+                        <div className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                            <div className="flex w-max items-center gap-2">
+                                <label className="flex shrink-0 items-center gap-1.5">
+                                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Loja</span>
+                                    <select name="store" defaultValue={sp.store ?? ''} className="h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground" aria-label="Filtrar loja por plataforma">
+                                        <option value="">Todas</option>
+                                        {storeOptions.map(([store, count]) => (
+                                            <option key={store} value={store}>{STORE_LABELS[store] ?? store} {count}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className="flex shrink-0 items-center gap-1.5">
+                                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Categoria</span>
+                                    <select name="category" defaultValue={sp.category ?? ''} className="h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground" aria-label="Filtrar loja por categoria">
+                                        <option value="">Todas</option>
+                                        {categoryOptions.map(([category, count]) => (
+                                            <option key={category} value={category}>{formatCategory(category)} {count}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className="flex shrink-0 items-center gap-1.5">
+                                    <span className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
+                                        <ArrowDownAZ className="h-3 w-3" />
+                                        Ordem
+                                    </span>
+                                    <select name="sort" defaultValue={sp.sort ?? 'curated'} className="h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground" aria-label="Ordenar loja">
+                                        <option value="curated">Curadoria</option>
+                                        <option value="featured">Destaques</option>
+                                        <option value="rating">Avaliação</option>
+                                        <option value="newest">Novos</option>
+                                        <option value="name">A-Z</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+
+                        <label className="flex h-8 w-[138px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[280px]">
+                            <Search className="h-4 w-4 shrink-0 text-muted" />
+                            <input
+                                name="search"
+                                type="text"
+                                defaultValue={sp.search ?? ''}
+                                placeholder="Buscar..."
+                                className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:outline-none"
+                            />
+                        </label>
+
+                        <button className="h-8 shrink-0 rounded-md bg-foreground px-3 text-[12px] font-bold text-background transition-opacity hover:opacity-85" type="submit">
+                            OK
+                        </button>
+                    </div>
+                </form>
+
+                <div className="page-wrap border-b border-border/50 py-2">
+                    <Breadcrumbs items={[{ label: 'Loja' }]} />
+                </div>
 
                 {/* ── Hero: texto + mosaico de produtos ────────────────── */}
-                <section className="border-b border-border bg-background">
-                    <div className="page-wrap py-5 lg:py-6">
-                        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_460px]">
+                <div className="page-wrap border-b border-foreground py-5">
+                        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
 
                             {/* Texto */}
-                            <div className="flex min-w-0 flex-col justify-center">
-                                <Breadcrumbs items={[{ label: 'vitrine' }, { label: 'loja' }]} className="mb-1" />
-                                <h1 className="max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
+                            <div className="flex min-w-0 flex-col justify-start">
+                                <h1 className="mt-1 max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
                                     Achados K-pop organizados para comprar sem garimpo infinito.
                                 </h1>
-                                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+                                <p className="mt-3 max-w-[620px] text-sm leading-relaxed text-muted">
                                     Uma vitrine editorial de álbuns, lightsticks, photocards, K-beauty, moda e itens de K-drama com filtros por loja, categoria e curadoria.
                                 </p>
 
@@ -190,8 +261,7 @@ export default async function LojaPage() {
                                 )}
                             </div>
                         </div>
-                    </div>
-                </section>
+                </div>
 
                 {/* ── Conteúdo principal ───────────────────────────────── */}
                 <div className="page-wrap py-8 space-y-10">
@@ -261,7 +331,7 @@ export default async function LojaPage() {
                 </div>
 
                 <ScrollToTop />
-            </PageTransition>
+            </main>
         </>
     )
 }

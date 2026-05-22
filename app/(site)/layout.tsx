@@ -10,7 +10,6 @@ import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
-import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
@@ -223,13 +222,12 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto">
+                    <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto border-x-2 border-x-accent/30">
                         <NavBar tickerItems={tickerItems} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
                         <AdSenseLoader />
-                        <QuickSearch />
                         <ToastContainer />
                         <AuthGateModal />
                         <PWAInstaller />

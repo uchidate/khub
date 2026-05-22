@@ -4,6 +4,20 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Play, X, ExternalLink } from 'lucide-react'
 
+function YTThumb({ videoId, title, sizes, className }: { videoId: string; title: string; sizes: string; className?: string }) {
+    const [src, setSrc] = useState(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`)
+    return (
+        <Image
+            src={src}
+            alt={title}
+            fill
+            sizes={sizes}
+            className={className}
+            onError={() => setSrc(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`)}
+        />
+    )
+}
+
 interface MV {
     title: string
     url: string
@@ -85,10 +99,9 @@ export function GroupMVPlayer({ videos, accent }: GroupMVPlayerProps) {
                             onClick={() => setActiveId(mvs[0].videoId!)}
                             className="group relative block w-full aspect-video text-left"
                         >
-                            <Image
-                                src={`https://img.youtube.com/vi/${mvs[0].videoId}/maxresdefault.jpg`}
-                                alt={mvs[0].title}
-                                fill
+                            <YTThumb
+                                videoId={mvs[0].videoId!}
+                                title={mvs[0].title}
                                 sizes="100vw"
                                 className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300"
                             />
@@ -137,10 +150,9 @@ export function GroupMVPlayer({ videos, accent }: GroupMVPlayerProps) {
                                     onClick={() => setActiveId(mv.videoId!)}
                                     className="relative block w-full aspect-video"
                                 >
-                                    <Image
-                                        src={`https://img.youtube.com/vi/${mv.videoId}/hqdefault.jpg`}
-                                        alt={mv.title}
-                                        fill
+                                    <YTThumb
+                                        videoId={mv.videoId!}
+                                        title={mv.title}
                                         sizes="(max-width: 640px) 50vw, 33vw"
                                         className="object-cover brightness-70 group-hover:brightness-90 transition-all duration-300"
                                     />

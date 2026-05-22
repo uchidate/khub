@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { ArrowUpDown, Search, UserRound, UsersRound, X } from 'lucide-react'
 
 export interface ArtistFilterValues {
     search?: string
@@ -90,71 +90,84 @@ export function ArtistFilters({ initialFilters = {} }: ArtistFiltersProps) {
     const clear = () => { setSearch(''); setSortBy('trending'); setRole(''); setMemberType('') }
     const hasActive = !!(search || sortBy !== 'trending' || role || memberType)
 
+    const chipClass = (active: boolean) =>
+        `h-8 shrink-0 rounded-md px-3 text-[12px] font-bold transition-colors ${
+            active
+                ? 'bg-foreground text-background'
+                : 'text-muted hover:bg-surface hover:text-foreground'
+        }`
+
+    const selectClass = 'h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground'
+    const renderFilterControls = () => (
+        <>
+            <div className="flex shrink-0 items-center gap-1.5">
+                <span className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
+                    <ArrowUpDown className="h-3 w-3" />
+                    Ordem
+                </span>
+                <div className="flex items-center gap-1 rounded-md bg-surface p-1">
+                    {SORT_OPTIONS.map(opt => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setSortBy(opt.value)}
+                            className={chipClass(sortBy === opt.value)}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <label className="flex shrink-0 items-center gap-1.5">
+                <span className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
+                    <UserRound className="h-3 w-3" />
+                    Atuação
+                </span>
+                <select value={role} onChange={e => setRole(e.target.value)} className={selectClass} aria-label="Filtrar por atuação">
+                    <option value="">Todas</option>
+                    {ROLE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+            </label>
+
+            <label className="flex shrink-0 items-center gap-1.5">
+                <span className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
+                    <UsersRound className="h-3 w-3" />
+                    Vínculo
+                </span>
+                <select value={memberType} onChange={e => setMemberType(e.target.value)} className={selectClass} aria-label="Filtrar por vínculo">
+                    <option value="">Todos</option>
+                    {MEMBER_TYPE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+            </label>
+        </>
+    )
+
     return (
-        <div className="border border-border bg-background mb-6">
-            {/* Search row */}
-            <div className="flex items-center border-b border-border">
-                <Search className="h-4 w-4 shrink-0 text-muted mx-3" />
+        <div className="flex w-full items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex shrink-0 items-center gap-2">
+                {renderFilterControls()}
+            </div>
+
+            <div className="flex h-8 w-[220px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[340px]">
+                <Search className="h-4 w-4 shrink-0 text-muted" />
                 <input
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Buscar por nome, hangul ou stage name..."
-                    className="flex-1 py-3 text-[13px] bg-transparent text-foreground placeholder:text-muted focus:outline-none"
+                    placeholder="Buscar artista, hangul ou stage name..."
+                    className="min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:outline-none"
                 />
                 {hasActive && (
-                    <button onClick={clear} className="flex items-center gap-1 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.06em] text-muted hover:text-foreground transition-colors border-l border-border" aria-label="Limpar filtros">
-                        <X className="h-3 w-3" /> Limpar
+                    <button
+                        onClick={clear}
+                        className="flex h-7 shrink-0 items-center justify-center rounded-md bg-surface px-2 text-[11px] font-bold text-muted hover:bg-surface-hover hover:text-foreground"
+                        aria-label="Limpar filtros"
+                    >
+                        <X className="h-3 w-3" />
+                        <span className="hidden sm:inline">Limpar</span>
                     </button>
                 )}
-            </div>
-
-            {/* Filter chips row */}
-            <div className="flex items-center gap-0 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                {/* Sort */}
-                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">Ordem</span>
-                {SORT_OPTIONS.map(opt => (
-                    <button
-                        key={opt.value}
-                        onClick={() => setSortBy(opt.value)}
-                        className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                            sortBy === opt.value
-                                ? 'bg-foreground text-background font-bold'
-                                : 'text-muted hover:text-foreground'
-                        }`}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
-
-                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">Tipo</span>
-                {ROLE_OPTIONS.map(opt => (
-                    <button
-                        key={opt.value}
-                        onClick={() => setRole(role === opt.value ? '' : opt.value)}
-                        className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                            role === opt.value
-                                ? 'bg-foreground text-background font-bold'
-                                : 'text-muted hover:text-foreground'
-                        }`}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
-
-                {MEMBER_TYPE_OPTIONS.map(opt => (
-                    <button
-                        key={opt.value}
-                        onClick={() => setMemberType(memberType === opt.value ? '' : opt.value)}
-                        className={`px-3 py-2.5 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                            memberType === opt.value
-                                ? 'bg-foreground text-background font-bold'
-                                : 'text-muted hover:text-foreground'
-                        }`}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
             </div>
         </div>
     )

@@ -442,7 +442,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             {/* ── BREADCRUMB ── */}
             <div className="border-b border-border/40">
                 <div className="page-wrap flex items-center gap-3 py-3">
-                    <Breadcrumbs items={[{ label: 'artistas', href: '/artists' }, { label: artist.slug ?? artist.id }]} className="min-w-0" />
+                    <Breadcrumbs items={[{ label: 'Artistas', href: '/artists' }, { label: artist.nameRomanized }]} className="min-w-0" />
                     <AdminQuickEdit href={`/admin/artists/${artist.id}?returnTo=${encodeURIComponent(`/artists/${artist.id}`)}`} label="Editar" />
                     <span className="ml-auto hidden sm:block text-muted/50">
                         {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}

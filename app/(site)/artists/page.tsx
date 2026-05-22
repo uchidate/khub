@@ -137,19 +137,16 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         }} />
         <PageTransition className="pb-16">
 
-            {/* ── Editorial header ─────────────────────────────────── */}
-            <section className="page-wrap border-b border-foreground py-4 sm:py-5">
-                <Breadcrumbs items={[{ label: 'diretório' }, { label: 'artistas' }]} className="mb-1" />
-                <h1 className="mb-4 max-w-[760px] font-display text-[28px] font-black leading-[0.96] tracking-[-0.04em] sm:text-[32px] lg:text-[36px]">
-                    Todos os <span className="text-accent italic">artistas</span> que cobrimos.
-                </h1>
+            <div className="page-wrap flex h-12 items-center border-b border-border/50">
                 <Suspense>
                     <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
                 </Suspense>
-            </section>
-
-            {/* ── Alphabet bar ─────────────────────────────────────── */}
+            </div>
+            {/* ── Contexto + alfabeto sticky ───────────────────────── */}
             <section className="sticky top-[var(--site-header-h,52px)] z-10 bg-background">
+                <div className="page-wrap border-b border-border/50 py-2">
+                    <Breadcrumbs items={[{ label: 'Artistas' }]} />
+                </div>
                 <div className="page-wrap border-b border-foreground py-3">
                     <div className="flex flex-wrap gap-1">
                         {ALPHA.map((L) => {
