@@ -31,14 +31,16 @@ const navLinks = [
     { label: "Loja", href: "/loja" },
 ]
 
-function formatEditionDate() {
+function formatEditionDate(now = new Date()) {
     const date = new Intl.DateTimeFormat("pt-BR", {
         weekday: "long",
         day: "2-digit",
         month: "long",
         year: "numeric",
-    }).format(new Date())
-    return `${date} · seul 23:41 · são paulo 11:41`
+    }).format(now)
+    const seul = now.toLocaleTimeString("pt-BR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false })
+    const sp = now.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false })
+    return `${date} · seul ${seul} · são paulo ${sp}`
 }
 
 const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
@@ -46,7 +48,14 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
     const openSearch = useQuickSearch((state) => state.open)
-    const editionDate = useMemo(() => formatEditionDate(), [])
+    const [editionDate, setEditionDate] = useState(() => formatEditionDate())
+    useEffect(() => {
+        const tick = () => setEditionDate(formatEditionDate())
+        const now = new Date()
+        const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds()
+        const t = setTimeout(() => { tick(); const iv = setInterval(tick, 60_000); return () => clearInterval(iv) }, msToNextMinute)
+        return () => clearTimeout(t)
+    }, [])
 
     const handleOpenSearch = (event?: MouseEvent) => {
         event?.preventDefault()
