@@ -106,8 +106,8 @@ export default async function CalendarioPage() {
             network: p.network,
             daysUntil: daysBetween(today, p.releaseDate!),
         }))
-    const todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
-    const todayReleases = releases.filter(r => r.daysUntil === 0)
+    const _todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
+    const _todayReleases = releases.filter(r => r.daysUntil === 0)
 
     return (
         <main className="min-h-screen bg-background pb-16">

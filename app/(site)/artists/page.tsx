@@ -88,7 +88,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
 
     const baseWhere = { flaggedAsNonKorean: false, isHidden: false }
 
-    const [artists, total, letterCountsRaw, totalCount] = await Promise.all([
+    const [artists, total, letterCountsRaw, _totalCount] = await Promise.all([
         prisma.artist.findMany({
             where,
             take: limit,

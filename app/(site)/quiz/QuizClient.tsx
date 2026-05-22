@@ -3,10 +3,10 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
-    Trophy, RefreshCw, ChevronRight, CheckCircle2, XCircle,
+    Trophy, ChevronRight, CheckCircle2, XCircle,
     Share2, Flame, Zap, BookOpen, ChevronDown, ChevronUp, Medal,
     ArrowRight, RotateCcw, Music, Tv, Globe, Clock, Layers,
-    Target, Star, TrendingUp, Sparkles, Play, BarChart3,
+    Target, TrendingUp, Sparkles, Play, BarChart3,
 } from 'lucide-react'
 import { useUmami } from '@/hooks/useUmami'
 

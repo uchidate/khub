@@ -6,7 +6,6 @@ import {
   Calendar,
   ChevronRight,
   Film,
-  Heart,
   LayoutDashboard,
   MessageSquare,
   Newspaper,
@@ -15,7 +14,6 @@ import {
   Sparkles,
   Star,
   Trophy,
-  User,
   type LucideIcon,
 } from 'lucide-react'
 import { PageTransition } from '@/components/features/PageTransition'

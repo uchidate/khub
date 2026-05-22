@@ -14,7 +14,7 @@ import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
-import { ArrowRight, BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
+import { BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 

@@ -17,7 +17,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
-import { Instagram, Twitter, Youtube, Music, Globe, User, Ruler, Sparkles, ExternalLink, Newspaper, Eye, Heart, Users, MapPin, Film, Disc3, CalendarDays, Star, ArrowRight } from "lucide-react"
+import { Instagram, Twitter, Youtube, Music, Globe } from "lucide-react"
 import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
 import { ExternalMusicEntityType } from "@prisma/client"
@@ -216,7 +216,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             ],
         },
     }
-    const [newsCount, bioPt, productionTranslations, relatedArtists, blogArticles, totalProductions, catalogReleases] = await Promise.all([
+    const [_newsCount, bioPt, _productionTranslations, relatedArtists, blogArticles, totalProductions, catalogReleases] = await Promise.all([
         prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: artist.id } } } }).catch(() => 0),
         getTranslation('artist', artist.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
@@ -325,7 +325,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
     const deathDate = (artist as any).deathDate ? new Date((artist as any).deathDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
-    const deathDateFormatted = deathDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+    const _deathDateFormatted = deathDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
     const ageRef = deathDate ?? new Date()
     const age = birthDate ? Math.floor((ageRef.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
 
