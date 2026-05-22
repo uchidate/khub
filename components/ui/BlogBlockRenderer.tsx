@@ -35,7 +35,7 @@ function InArticleAd({ id }: { id: string }) {
                     }
                 }
             },
-            { rootMargin: '300px' }
+            { rootMargin: '800px' }
         )
         observer.observe(containerRef.current)
         return () => observer.disconnect()
