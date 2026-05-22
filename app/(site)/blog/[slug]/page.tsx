@@ -25,7 +25,6 @@ const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRendere
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
 const BlogViewTracker = dynamic(() => import('@/components/blog/BlogViewTracker').then(m => ({ default: m.BlogViewTracker })))
 const BlogReadingProgress = dynamic(() => import('@/components/blog/BlogReadingProgress').then(m => ({ default: m.BlogReadingProgress })))
-const BlogNavLink = dynamic(() => import('@/components/blog/BlogNavLink').then(m => ({ default: m.BlogNavLink })))
 const BlogTableOfContents = dynamic(() => import('@/components/blog/BlogTableOfContents').then(m => ({ default: m.BlogTableOfContents })))
 const BlogShareButtons = dynamic(() => import('@/components/blog/BlogShareButtons').then(m => ({ default: m.BlogShareButtons })))
 const BlogStickyNav = dynamic(() => import('@/components/blog/BlogStickyNav').then(m => ({ default: m.BlogStickyNav })))
