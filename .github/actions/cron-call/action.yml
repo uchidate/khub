@@ -3,7 +3,7 @@ description: POST para um endpoint de cron com retry, logging estruturado e Step
 
 inputs:
   endpoint:
-    description: Caminho do endpoint (ex: /api/cron/fetch-news)
+    description: "Caminho do endpoint (ex: /api/cron/fetch-news)"
     required: true
   max_time:
     description: Timeout do curl em segundos
