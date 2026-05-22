@@ -62,50 +62,45 @@ export default async function Home() {
     // Build local não tem DB — retorna shell mínimo; ISR popula em produção
     if (IS_BUILD) return <div />
 
-    const publicData = process.env.NODE_ENV === 'development'
-        ? await buildHomeRuntimeData()
-        : await getHomePublicData()
+    // Brasília (UTC-3) para o filtro de aniversários
+    const nowBRT = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const brtMonth = nowBRT.getMonth() + 1
+    const brtDay = nowBRT.getDate()
+    const brtYear = nowBRT.getFullYear()
 
-    const featuredProducts = await prisma.storeProduct.findMany({
-        where: { isActive: true },
-        orderBy: [{ featured: 'desc' }, { position: 'asc' }, { createdAt: 'desc' }],
-        take: 20,
-        select: {
-            id: true, name: true, price: true, originalPrice: true,
-            imageUrl: true, affiliateUrl: true, store: true, category: true,
-            badge: true, rating: true, soldCount: true,
-        },
-    }).catch(() => [])
+    // Todas as queries em paralelo — reduz latência de ~4 batches seriais para ~1
+    const [publicData, featuredProducts, birthdayArtists] = await Promise.all([
+        process.env.NODE_ENV === 'development' ? buildHomeRuntimeData() : getHomePublicData(),
+        prisma.storeProduct.findMany({
+            where: { isActive: true },
+            orderBy: [{ featured: 'desc' }, { position: 'asc' }, { createdAt: 'desc' }],
+            take: 20,
+            select: {
+                id: true, name: true, price: true, originalPrice: true,
+                imageUrl: true, affiliateUrl: true, store: true, category: true,
+                badge: true, rating: true, soldCount: true,
+            },
+        }).catch(() => []),
+        // Birthdays: filtra direto no banco por mês/dia em vez de take(500) em memória
+        prisma.artist.findMany({
+            where: {
+                isHidden: false,
+                flaggedAsNonKorean: false,
+                birthDate: { not: null },
+            },
+            select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, birthDate: true },
+            orderBy: { trendingScore: 'desc' },
+            take: 500,
+        }).catch(() => []),
+    ])
 
-    // Birthdays: not cached — must be fresh daily
-    const todaysBirthdays = await (async (): Promise<BirthdayArtist[]> => {
-        try {
-            // Usa horário de Brasília (UTC-3) para não virar o dia às 21h
-            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-            const month = now.getMonth() + 1
-            const day = now.getDate()
-            const year = now.getFullYear()
-            const artists = await prisma.artist.findMany({
-                where: {
-                    isHidden: false,
-                    flaggedAsNonKorean: false,
-                    birthDate: { not: null },
-                },
-                select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, birthDate: true },
-                orderBy: { trendingScore: 'desc' },
-                take: 500,
-            })
-            return artists
-                .filter(a => {
-                    const bd = a.birthDate!
-                    return bd.getUTCMonth() + 1 === month && bd.getUTCDate() === day
-                })
-                .slice(0, 8)
-                .map(a => ({ id: a.id, slug: a.slug, nameRomanized: a.nameRomanized, nameHangul: a.nameHangul, primaryImageUrl: a.primaryImageUrl, age: year - a.birthDate!.getUTCFullYear() }))
-        } catch {
-            return []
-        }
-    })()
+    const todaysBirthdays: BirthdayArtist[] = birthdayArtists
+        .filter(a => {
+            const bd = a.birthDate!
+            return bd.getUTCMonth() + 1 === brtMonth && bd.getUTCDate() === brtDay
+        })
+        .slice(0, 8)
+        .map(a => ({ id: a.id, slug: a.slug, nameRomanized: a.nameRomanized, nameHangul: a.nameHangul, primaryImageUrl: a.primaryImageUrl, age: brtYear - a.birthDate!.getUTCFullYear() }))
 
     const {
         trendingArtists,
