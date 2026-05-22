@@ -207,9 +207,6 @@ export async function buildHomeRuntimeData(now = new Date()) {
                 : fallback.find(hasRenderableCover) ?? slottedById[settings.homeFeaturedPostId] ?? fallback[0]
         )
         : fallback[0]
-    const featuredContext = await buildFeaturedContext(featuredPost)
-    const featuredCluster = buildFeaturedCluster(featuredContext)
-
     const featuredId = featuredPost?.id
     const secondarySelection = settings?.homeSecondaryPostIds?.length
         ? {
@@ -248,23 +245,6 @@ export async function buildHomeRuntimeData(now = new Date()) {
     const spotlightArtist = spotlightCandidates.length > 0
         ? spotlightCandidates[(getWeekOfYear(now) - 1) % spotlightCandidates.length]
         : null
-    const spotlightProduction = spotlightArtist
-        ? await prisma.production.findFirst({
-            where: {
-                isHidden: false,
-                isTakenDown: false,
-                flaggedAsNonKorean: false,
-                year: { not: null },
-                artists: { some: { artistId: spotlightArtist.id } },
-            },
-            orderBy: [
-                { releaseDate: { sort: "desc", nulls: "last" } },
-                { year: "desc" },
-                { createdAt: "desc" },
-            ],
-            select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-        }).catch(() => null)
-        : null
 
     const allowAdult = settings?.allowAdultContent ?? false
     const ageFilter = allowAdult ? {} : {
@@ -273,12 +253,36 @@ export async function buildHomeRuntimeData(now = new Date()) {
             { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
         ],
     }
-    const latestProductions = await prisma.production.findMany({
-        where: { isHidden: false, flaggedAsNonKorean: false, ...ageFilter },
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
-    }).catch(() => [])
+
+    // Batch 3: featuredContext, spotlightProduction e latestProductions em paralelo
+    const [featuredContext, spotlightProduction, latestProductions] = await Promise.all([
+        buildFeaturedContext(featuredPost),
+        spotlightArtist
+            ? prisma.production.findFirst({
+                where: {
+                    isHidden: false,
+                    isTakenDown: false,
+                    flaggedAsNonKorean: false,
+                    year: { not: null },
+                    artists: { some: { artistId: spotlightArtist.id } },
+                },
+                orderBy: [
+                    { releaseDate: { sort: "desc", nulls: "last" } },
+                    { year: "desc" },
+                    { createdAt: "desc" },
+                ],
+                select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+            }).catch(() => null)
+            : Promise.resolve(null),
+        prisma.production.findMany({
+            where: { isHidden: false, flaggedAsNonKorean: false, ...ageFilter },
+            take: 5,
+            orderBy: { createdAt: "desc" },
+            select: { id: true, slug: true, titlePt: true, type: true, year: true, imageUrl: true, voteAverage: true },
+        }).catch(() => []),
+    ])
+
+    const featuredCluster = buildFeaturedCluster(featuredContext)
 
     const topStreamingShowRaw = streamingShowsRaw
         .filter((show) => show.productionId)

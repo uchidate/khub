@@ -403,6 +403,43 @@ jobs:
           echo "❌ Production não respondeu após 180s"
           exit 1
 
+      - name: 🔥 Cache Warm-up
+        run: |
+          # 1. Aquece conexões Prisma via /api/health (SELECT 1 no pool)
+          # 2. Renderiza páginas-chave para popular o ISR cache antes do primeiro usuário
+          RESOLVE="--resolve www.hallyuhub.com.br:443:31.97.255.107"
+          BASE="https://www.hallyuhub.com.br"
+
+          echo "Aquecendo pool de conexões Prisma..."
+          for i in 1 2 3; do
+            curl -sf -o /dev/null --max-time 10 $RESOLVE "$BASE/api/health" 2>/dev/null && break
+            sleep 2
+          done
+
+          echo "| Página | HTTP | Tempo |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+
+          # Homepage primeiro (mais pesada) — depois as demais em paralelo
+          START=$(date +%s%3N)
+          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 45 $RESOLVE "$BASE/" 2>/dev/null || echo "000")
+          MS=$(( $(date +%s%3N) - START ))
+          ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
+          echo "$ICON  / → HTTP $HTTP (${MS}ms)"
+          echo "| $ICON \`/\` | \`$HTTP\` | ${MS}ms |" >> "$GITHUB_STEP_SUMMARY"
+
+          # Demais páginas em paralelo
+          for PAGE in /blog /artists /productions /calendario; do
+            (
+              START=$(date +%s%3N)
+              HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 $RESOLVE "$BASE$PAGE" 2>/dev/null || echo "000")
+              MS=$(( $(date +%s%3N) - START ))
+              ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
+              echo "$ICON  $PAGE → HTTP $HTTP (${MS}ms)"
+            ) &
+          done
+          wait
+          echo "Cache warm-up concluído."
+
       - name: 🔧 Atualizar container nas Scheduled Tasks
         run: |
           # Após deploy, o container recebe um novo nome — atualizar todas as tasks
