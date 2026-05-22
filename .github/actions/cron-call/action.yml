@@ -1,0 +1,84 @@
+name: Call Cron Endpoint
+description: POST para um endpoint de cron com retry, logging estruturado e Step Summary
+
+inputs:
+  endpoint:
+    description: Caminho do endpoint (ex: /api/cron/fetch-news)
+    required: true
+  max_time:
+    description: Timeout do curl em segundos
+    default: '120'
+  cron_secret:
+    required: true
+  server_ip:
+    required: true
+  base_url:
+    default: 'https://www.hallyuhub.com.br'
+
+runs:
+  using: composite
+  steps:
+    - name: POST ${{ inputs.endpoint }}
+      shell: bash
+      env:
+        ENDPOINT: ${{ inputs.endpoint }}
+        MAX_TIME: ${{ inputs.max_time }}
+        CRON_SECRET: ${{ inputs.cron_secret }}
+        SERVER_IP: ${{ inputs.server_ip }}
+        BASE_URL: ${{ inputs.base_url }}
+      run: |
+        parse_json() {
+          python3 -c "
+        import sys, json
+        try:
+            d = json.load(sys.stdin)
+            msg = d.get('message') or d.get('error') or d.get('status') or ''
+            count = d.get('count') or d.get('processed') or ''
+            print(f'{msg}' + (f' ({count} itens)' if count else ''))
+        except:
+            print(sys.argv[1] if len(sys.argv) > 1 else '')
+        " 2>/dev/null
+        }
+
+        HOST=$(echo "$BASE_URL" | sed 's|https://||')
+        SUCCESS=0
+
+        for attempt in 1 2 3; do
+          echo "▶ Tentativa $attempt/3 — $ENDPOINT"
+
+          RESPONSE=$(curl -sf -w "\n%{http_code}" \
+            --max-time "$MAX_TIME" \
+            --connect-timeout 15 \
+            --resolve "${HOST}:443:${SERVER_IP}" \
+            -X POST "${BASE_URL}${ENDPOINT}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Accept: application/json" \
+            2>/dev/null || echo $'\n000')
+
+          HTTP_CODE=$(printf '%s' "$RESPONSE" | tail -n1)
+          BODY=$(printf '%s' "$RESPONSE" | sed '$d')
+          MESSAGE=$(echo "$BODY" | parse_json)
+
+          echo "  HTTP $HTTP_CODE${MESSAGE:+ — $MESSAGE}"
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "| ✅ \`${ENDPOINT}\` | \`${HTTP_CODE}\` | ${MESSAGE:-ok} |" >> "$GITHUB_STEP_SUMMARY"
+            SUCCESS=1
+            break
+          fi
+
+          # Retry apenas em 5xx ou sem resposta (000)
+          if [ "$attempt" -lt 3 ] && { [ "$HTTP_CODE" -ge 500 ] || [ "$HTTP_CODE" = "000" ]; }; then
+            WAIT=$(( attempt * 30 ))
+            echo "  ⏳ Retry em ${WAIT}s (HTTP $HTTP_CODE)..."
+            sleep "$WAIT"
+          else
+            break
+          fi
+        done
+
+        if [ "$SUCCESS" != "1" ]; then
+          echo "| ❌ \`${ENDPOINT}\` | \`${HTTP_CODE}\` | ${MESSAGE:-sem resposta} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::${ENDPOINT} falhou: HTTP ${HTTP_CODE}${MESSAGE:+ — $MESSAGE}"
+          exit 1
+        fi
