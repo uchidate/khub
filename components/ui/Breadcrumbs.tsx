@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronRight, Home } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 export interface Breadcrumb {
@@ -17,47 +16,38 @@ interface BreadcrumbsProps {
   className?: string
 }
 
-export function Breadcrumbs({ items, homeLabel = 'Início', onDark = false, className = 'mb-6' }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, homeLabel = 'Início', onDark = false, className = '' }: BreadcrumbsProps) {
   const pathname = usePathname()
 
-  const breadcrumbs = items || generateBreadcrumbs(pathname)
+  const generatedItems = items || generateBreadcrumbs(pathname)
+  const breadcrumbs = pathname === '/'
+    ? generatedItems
+    : [{ label: homeLabel, href: '/' }, ...generatedItems]
 
-  const chevronColor = onDark ? 'text-white/25' : 'text-border'
-  const linkColor    = onDark ? 'text-white/60 hover:text-white' : 'text-muted hover:text-foreground'
-  const currentColor = onDark ? 'text-white'   : 'text-foreground'
+  const separatorColor = onDark ? 'text-white/35' : 'text-muted/45'
+  const linkColor = onDark ? 'text-white/65 hover:text-white' : 'text-muted hover:text-foreground'
+  const currentColor = onDark ? 'text-white' : 'text-foreground'
 
   return (
     <nav aria-label="Breadcrumb" className={`min-w-0 ${className}`}>
-      <ol className="flex items-center gap-2 text-sm overflow-hidden">
-        {/* Home */}
-        <li className="flex-shrink-0">
-          <Link
-            href="/"
-            className={`flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 ${linkColor}`}
-          >
-            <Home size={16} />
-            <span className="sr-only sm:not-sr-only">{homeLabel}</span>
-          </Link>
-        </li>
-
-        {/* Breadcrumb items */}
+      <ol className="flex min-w-0 items-center gap-2 overflow-hidden font-mono text-[11px] tracking-[0.02em]">
         {breadcrumbs.map((crumb, index) => {
           const isLast = index === breadcrumbs.length - 1
+          const label = crumb.label
 
           return (
-            <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}>
-              <ChevronRight size={16} className={`flex-shrink-0 ${chevronColor}`} aria-hidden="true" />
-
+            <li key={index} className={`flex items-center gap-2 ${isLast ? 'min-w-0' : 'shrink-0'}`}>
+              {index > 0 && <span className={`shrink-0 ${separatorColor}`} aria-hidden="true">/</span>}
               {isLast || !crumb.href ? (
-                <span className={`font-medium truncate ${currentColor}`} aria-current="page">
-                  {crumb.label}
+                <span className={`truncate ${currentColor}`} aria-current="page">
+                  {label}
                 </span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className={`transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 ${linkColor}`}
+                  className={`shrink-0 transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-4 ${linkColor}`}
                 >
-                  {crumb.label}
+                  {label}
                 </Link>
               )}
             </li>

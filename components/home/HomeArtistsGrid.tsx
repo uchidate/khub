@@ -40,7 +40,7 @@ export function HomeArtistsGrid({ artists }: HomeArtistsGridProps) {
 
     return (
         <section className="border-b border-border bg-background">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 md:py-8 lg:py-12">
+            <div className="page-wrap border-b border-border py-6 md:py-8 lg:py-12">
                 {/* Header */}
                 <SectionTitleBar
                     title={<>Artistas em <span className="text-accent">destaque</span></>}

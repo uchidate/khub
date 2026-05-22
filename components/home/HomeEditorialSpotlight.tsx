@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { ArrowRight, Clock } from "lucide-react"
+import { Clock } from "lucide-react"
 import { BlogImage } from "@/components/ui/BlogImage"
+import { SectionTitleBar } from "@/components/ui/SectionTitleBar"
 import { BLOG_CATEGORY_BY_SLUG } from "@/lib/config/categories"
 import type { HomeCompositionMode } from "@/lib/home/home-composition"
 
@@ -28,7 +29,7 @@ function CategoryPill({ category }: { category: EditorialPost["category"] }) {
     const cfg = BLOG_CATEGORY_BY_SLUG[category.slug]
     return (
         <span
-            className="inline-flex w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em]"
+            className="inline-flex w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]"
             style={{ color: cfg?.color ?? "#374151", backgroundColor: cfg?.bg ?? "#f3f4f6" }}
         >
             {category.name}
@@ -75,22 +76,12 @@ export function HomeEditorialSpotlight({
     const leadRelatedEntities = getRelatedEntities(lead)
 
     return (
-        <section className="bg-background py-7 sm:py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-4 flex items-end justify-between">
-                    <div className="border-l-[4px] border-accent pl-3">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{eyebrow}</p>
-                        <h2 className="mt-1 text-[21px] font-black tracking-[-0.025em] text-foreground sm:text-[24px]">
-                            {heading}
-                        </h2>
-                    </div>
-                    <Link href="/blog" className="hidden items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground sm:inline-flex">
-                        Ver todos <ArrowRight className="h-3 w-3" />
-                    </Link>
-                </div>
+        <section className="bg-background">
+            <div className="page-wrap border-t border-border py-8">
+                <SectionTitleBar eyebrow={eyebrow} title={heading} href="/blog" />
 
-                <div className="grid gap-4 lg:grid-cols-[1.42fr_0.58fr]">
-                    <article className="group relative min-h-[280px] overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-all hover:border-accent/40 sm:min-h-[390px]">
+                <div className="grid border border-foreground lg:grid-cols-[1.42fr_0.58fr]">
+                    <article className="group relative min-h-[280px] overflow-hidden border-b border-foreground bg-surface transition-all sm:min-h-[390px] lg:border-b-0 lg:border-r">
                         <Link href={`/blog/${lead.slug}`} aria-label={lead.title} className="absolute inset-0 z-10" />
                         <BlogImage
                             src={lead.coverImageUrl}
@@ -125,7 +116,7 @@ export function HomeEditorialSpotlight({
                                         <Link
                                             key={entity.key}
                                             href={entity.href}
-                                            className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-white/20 bg-black/25 px-2.5 py-1 text-[10px] text-white/80 backdrop-blur-sm"
+                                    className="inline-flex max-w-full items-center gap-1.5 border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] text-white/80"
                                         >
                                             <span className="font-semibold text-white/60">{entity.label}</span>
                                             <span className="truncate">{entity.title}</span>
@@ -136,20 +127,20 @@ export function HomeEditorialSpotlight({
                         </div>
                     </article>
 
-                    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                    <div className="grid sm:grid-cols-3 lg:grid-cols-1">
                         {rest.map((post) => (
                             <Link
                                 key={post.id}
                                 href={`/blog/${post.slug}`}
-                                className="group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/40 sm:block"
+                                className="group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden border-b border-border bg-background transition-colors last:border-b-0 hover:bg-surface/70 sm:block sm:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b lg:border-r-0"
                             >
-                                <div className="relative min-h-[96px] bg-surface sm:aspect-[16/9] sm:min-h-0 lg:aspect-[2.5/1]">
+                                <div className="relative h-24 bg-surface sm:h-auto sm:aspect-[16/9] lg:aspect-[2.5/1]">
                                     <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 1024px) 33vw, 28vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
                                 </div>
                                 <div className="p-3">
                                     <CategoryPill category={post.category} />
                                     <h3
-                                        className="mt-2 text-[13px] font-bold leading-snug text-foreground line-clamp-2"
+                                        className="mt-2 font-serif text-[18px] font-medium leading-[1.05] tracking-[-0.035em] text-foreground line-clamp-2"
                                         style={{ color: BLOG_CATEGORY_BY_SLUG[post.category?.slug ?? ""]?.color }}
                                     >
                                         {post.title}
@@ -168,13 +159,6 @@ export function HomeEditorialSpotlight({
                         ))}
                     </div>
                 </div>
-
-                <Link
-                    href="/blog"
-                    className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-muted transition-colors hover:text-foreground sm:hidden"
-                >
-                    Ver todos <ArrowRight className="h-3 w-3" />
-                </Link>
             </div>
         </section>
     )

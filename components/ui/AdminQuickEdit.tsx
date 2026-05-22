@@ -18,7 +18,7 @@ export function AdminQuickEdit({ href, label = 'Editar no Admin' }: AdminQuickEd
     return (
         <button
             onClick={() => router.push(href)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-400 hover:bg-amber-500/25 hover:border-amber-500/70 transition-all text-xs font-bold backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-surface text-muted hover:border-foreground hover:text-foreground transition-colors text-xs font-mono font-bold"
             title={label}
             type="button"
         >

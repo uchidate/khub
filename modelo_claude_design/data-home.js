@@ -1,0 +1,82 @@
+// Real content drawn from HallyuHub.com.br matérias.
+window.HOME = {
+  hero: {
+    kicker: "Capa · K-Drama",
+    title: "Queen of Tears: por que o drama quebrou todos os recordes",
+    dek: "O drama sobre um casal prestes a se divorciar se tornou o k-drama mais assistido da Netflix em 2024. Entenda por quê — e o que isso revela sobre a maturidade da indústria coreana.",
+    author: "HallyuHub Redação",
+    date: "27 de mar. de 2026",
+    readTime: "12 min",
+    category: "K-Drama",
+    tags: ["Netflix", "Kim Soo-hyun", "Kim Ji-won"],
+  },
+  features: [
+    {
+      category: "K-Pop", title: "Jennie: A Rainha do K-Pop que Conquistou o Mundo",
+      dek: "De Seoul à Nova Zelândia e de volta ao topo: conheça a trajetória de Kim Jennie, a artista multifacetada que redefiniu o k-pop.",
+      author: "HallyuHub Redação", date: "25 de mar. de 2026", readTime: "9 min",
+    },
+    {
+      category: "K-Pop", title: "NewJeans: Do debut ao estrelato global",
+      dek: "Entenda como o NewJeans quebrou recordes em tempo recorde e o que esperar dos próximos passos do grupo que revolucionou a 4ª geração do K-pop.",
+      author: "HallyuHub Redação", date: "25 de mar. de 2026", readTime: "8 min",
+    },
+    {
+      category: "K-Film", title: "Guerreiras do K-Pop: o filme que conquistou o mundo",
+      dek: "Como Guerreiras do K-Pop se tornou o maior original animado da Netflix, ganhou o Globo de Ouro e o Oscar histórico, e levou o xamanismo coreano para o mainstream global.",
+      author: "HallyuHub Redação", date: "27 de mar. de 2026", readTime: "11 min",
+    },
+    {
+      category: "Artistas", title: "Kim Soo-hyun: o ator que virou indústria",
+      dek: "35 marcas simultâneas, 4 Baeksangs, Queen of Tears no topo da Netflix. Como Kim Soo-hyun construiu o maior cachet do k-drama.",
+      author: "HallyuHub Redação", date: "20 de mar. de 2026", readTime: "14 min",
+    },
+  ],
+  trending: [
+    { rank: 1, label: "Queen of Tears", kind: "K-drama", delta: "+312%" },
+    { rank: 2, label: "Kim Soo-hyun", kind: "Artista", delta: "+128%" },
+    { rank: 3, label: "BLACKPINK", kind: "K-pop", delta: "+96%" },
+    { rank: 4, label: "Park Bo-young", kind: "Artista", delta: "+74%" },
+    { rank: 5, label: "NewJeans", kind: "K-pop", delta: "+62%" },
+    { rank: 6, label: "Squid Game S3", kind: "K-drama", delta: "+58%" },
+    { rank: 7, label: "Jennie", kind: "Artista", delta: "+44%" },
+    { rank: 8, label: "Glass skin", kind: "Beleza", delta: "+38%" },
+  ],
+  latest: [
+    { category: "K-Drama", title: "Lee Hyo-je em Se Desejos Matassem...: o ator que cresceu nos seus olhos sem você perceber", date: "15 mai 2026" },
+    { category: "K-Drama", title: "Na Sua Melhor Fase: o drama coreano de 2026 que ninguém esperava e todo mundo ficou", date: "14 mai 2026" },
+    { category: "K-Drama", title: "Kang Seok-woo em Na Sua Melhor Fase: o ator que ninguém esperava e todo mundo amou", date: "13 mai 2026" },
+    { category: "Cultura", title: "Skincare coreana para homens: por que os coreanos cuidam da pele e o que o Brasil pode aprender", date: "12 mai 2026" },
+    { category: "Cultura", title: "Maquiagem coreana vs. maquiagem ocidental: por que são filosofias completamente opostas", date: "11 mai 2026" },
+    { category: "Cultura", title: "Glass skin, honey skin, cloudless skin: o que cada tendência coreana de pele realmente significa", date: "10 mai 2026" },
+    { category: "Cultura", title: "Sunscreen coreano: por que o mundo inteiro trocou o protetor solar por versões coreanas", date: "09 mai 2026" },
+    { category: "Cultura", title: "Centella Asiatica, Snail Mucin e Niacinamida: os ingredientes do K-Beauty explicados", date: "08 mai 2026" },
+  ],
+  longreads: [
+    { category: "K-Drama", title: "Squid Game e o que mudou no mundo com dois botões", dek: "Squid Game não foi só uma série. Foi o momento em que o mundo parou de tratar conteúdo coreano como nicho.", date: "10 mar 2026" },
+    { category: "Artistas", title: "Lee Jong-suk: do desfile em Milão ao Big Mouth", dek: "Modelo aos 20 anos, ator revelação aos 23, ícone do k-drama. A carreira de Lee Jong-suk não seguiu nenhum roteiro convencional.", date: "07 mar 2026" },
+    { category: "Artistas", title: "Gong Yoo: do café ao apocalipse zumbi", dek: "De Coffee Prince a Train to Busan, o ator que recusou ser galã e virou âncora do cinema coreano contemporâneo.", date: "03 mar 2026" },
+    { category: "Artistas", title: "Jinyoung: do GOT7 ao Baeksang como ator", dek: "Quando o GOT7 saiu da JYP em 2021, Jinyoung ficou. E trocou o palco pela tela com um Baeksang no bolso.", date: "28 fev 2026" },
+  ],
+  categories: [
+    { id: "k-drama", label: "K-Drama", hangul: "케이드라마", count: 412, color: "#ee2244" },
+    { id: "k-pop", label: "K-Pop", hangul: "케이팝", count: 287, color: "#000000" },
+    { id: "artistas", label: "Artistas", hangul: "아티스트", count: 1240, color: "#ee2244" },
+    { id: "k-film", label: "Cinema", hangul: "영화", count: 96, color: "#000000" },
+    { id: "cultura", label: "Cultura", hangul: "문화", count: 156, color: "#ee2244" },
+    { id: "beauty", label: "K-Beauty", hangul: "케이뷰티", count: 84, color: "#000000" },
+  ],
+  calendar: [
+    { date: "20 mai", day: "TER", title: "Comeback · aespa", kind: "K-pop", detail: "5º mini-álbum 'Synk Out'" },
+    { date: "22 mai", day: "QUI", title: "Estreia · Na Sua Melhor Fase", kind: "K-drama", detail: "tvN · 16 episódios" },
+    { date: "24 mai", day: "SÁB", title: "Final · Queen Mantis", kind: "K-drama", detail: "JTBC · final de temporada" },
+    { date: "28 mai", day: "QUA", title: "Comeback · NCT WISH", kind: "K-pop", detail: "Single 'COLOR'" },
+    { date: "31 mai", day: "SÁB", title: "Baeksang Arts Awards", kind: "Evento", detail: "60ª edição · ao vivo" },
+    { date: "05 jun", day: "QUI", title: "Lançamento · BLACKPINK", kind: "K-pop", detail: "novo álbum confirmado" },
+  ],
+  picks: [
+    { user: "Júlia, 24", city: "São Paulo", quote: "Comecei pelo Queen of Tears e não saí mais. Hoje tenho watchlist de 38 dramas e sigo a coluna de K-Beauty toda semana." },
+    { user: "Lucas, 19", city: "Belo Horizonte", quote: "O guia 'K-pop para iniciantes' me salvou. Hoje explico a diferença entre Daesang e Bonsang pros meus amigos." },
+    { user: "Carla, 31", city: "Recife", quote: "A página do Gong Yoo é a melhor biografia que já li de qualquer ator. Em português, então." },
+  ],
+};

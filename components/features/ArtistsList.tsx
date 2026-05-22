@@ -19,6 +19,7 @@ export interface Artist {
     gender?: number | null
     memberships: { group: { id: string; name: string } }[]
     agency?: { name: string } | null
+    trendingScore?: number | null
 }
 
 export interface ArtistsPagination {
@@ -28,7 +29,7 @@ export interface ArtistsPagination {
     perPage: number
 }
 
-function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }) {
+function ArtistCard({ artist, priority, trending }: { artist: Artist; priority?: boolean; trending?: boolean }) {
     const group = artist.memberships?.[0]?.group
     const roleLabels = getRoleLabels(artist.roles || [], artist.gender)
     const roleLabel = roleLabels[0] ?? ''
@@ -36,15 +37,15 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
     const imageSrc = artist.primaryImageUrl && !imageFailed ? artist.primaryImageUrl : null
 
     return (
-        <Link href={`/artists/${artist.slug ?? artist.id}`} className="group grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-2xl border border-border bg-background p-2.5 shadow-sm transition-all hover:border-violet/35 hover:bg-surface-media/35 hover:shadow-md sm:block sm:border-0 sm:bg-transparent sm:p-2 sm:-m-2 sm:shadow-none sm:hover:bg-transparent">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-border/80 bg-surface shadow-sm transition-all group-hover:border-violet/30 sm:mb-2.5">
+        <Link href={`/artists/${artist.slug ?? artist.id}`} className="group flex flex-col">
+            <div className="relative aspect-[4/5] overflow-hidden bg-surface">
                 {imageSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={imageSrc}
                         alt={artist.nameRomanized}
                         width={240}
-                        height={320}
+                        height={300}
                         loading={priority ? 'eager' : 'lazy'}
                         decoding={priority ? 'sync' : 'async'}
                         className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
@@ -52,31 +53,22 @@ function ArtistCard({ artist, priority }: { artist: Artist; priority?: boolean }
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(artist.nameRomanized) }}>
-                        <span className="text-2xl font-black text-white/80 drop-shadow select-none sm:text-3xl">
-                            {artist.nameRomanized[0]?.toUpperCase() ?? '?'}
+                        <span className="font-black text-white/15 select-none text-[64px] leading-none">
+                            {artist.nameHangul?.slice(0, 2) ?? artist.nameRomanized[0]?.toUpperCase() ?? '?'}
                         </span>
                     </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2.5 gap-0.5">
-                    {artist.nameHangul && <p className="text-white text-[12px] font-bold truncate leading-tight">{artist.nameHangul}</p>}
-                    {group && <p className="text-white/65 text-[10px] truncate leading-tight">{group.name}</p>}
-                </div>
+                {trending && (
+                    <span className="absolute top-2 left-2 bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● top</span>
+                )}
             </div>
-            <div className="min-w-0 self-center sm:self-auto">
-                {roleLabel && <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet mb-1 truncate sm:text-[10px]">{roleLabel}</p>}
-                <p className="text-[14px] font-bold text-foreground group-hover:text-violet transition-colors truncate leading-tight sm:text-[13px]">{artist.nameRomanized}</p>
-                {artist.nameHangul && <p className="text-[11px] text-muted truncate leading-tight mt-0.5">{artist.nameHangul}</p>}
-                <div className="mt-2 flex flex-wrap gap-1.5 sm:mt-1">
-                    {group && (
-                        <span className="max-w-full truncate rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted">
-                            {group.name}
-                        </span>
-                    )}
-                    {artist.agency?.name && (
-                        <span className="max-w-full truncate rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-muted">
-                            {artist.agency.name}
-                        </span>
-                    )}
+            <div className="pt-2.5 pb-3.5 border-b border-border/50 min-w-0">
+                <div className="flex items-baseline justify-between gap-1">
+                    <span className="text-[14px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{artist.nameRomanized}</span>
+                    {artist.nameHangul && <span className="font-mono text-[11px] text-muted shrink-0">{artist.nameHangul}</span>}
+                </div>
+                <div className="font-mono text-[10px] text-muted mt-1 uppercase tracking-[0.04em] truncate">
+                    {roleLabel}{group ? ` · ${group.name}` : ''}
                 </div>
             </div>
         </Link>
@@ -87,9 +79,10 @@ interface ArtistsListProps {
     artists: Artist[]
     pagination: ArtistsPagination
     initialFilters: ArtistFilterValues
+    trendingIds?: string[]
 }
 
-export function ArtistsList({ artists, pagination, initialFilters }: ArtistsListProps) {
+export function ArtistsList({ artists, pagination, initialFilters, trendingIds = [] }: ArtistsListProps) {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -134,19 +127,15 @@ export function ArtistsList({ artists, pagination, initialFilters }: ArtistsList
 
             {artists.length > 0 && (
                 <>
-                    <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet">Catálogo</p>
-                            <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Todos os artistas</h2>
-                        </div>
-                        <p className="text-xs text-muted">
-                            {start.toLocaleString('pt-BR')}-{end.toLocaleString('pt-BR')} de {total.toLocaleString('pt-BR')}
+                    <div className="mb-6 flex items-end justify-between">
+                        <p className="font-mono text-[11px] text-muted uppercase tracking-[0.06em]">
+                            {start.toLocaleString('pt-BR')}–{end.toLocaleString('pt-BR')} de {total.toLocaleString('pt-BR')} artistas
                             {totalPages > 1 && ` · pág. ${currentPage} de ${totalPages}`}
                         </p>
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 md:gap-5">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0 sm:grid-cols-4 lg:grid-cols-6">
                         {artists.map((artist, i) => (
-                            <ArtistCard key={artist.id} artist={artist} priority={i < 6} />
+                            <ArtistCard key={artist.id} artist={artist} priority={i < 12} trending={trendingIds.includes(artist.id)} />
                         ))}
                     </div>
                     <PaginationControls

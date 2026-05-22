@@ -92,10 +92,10 @@ export function ShopeeCard({
                 target="_blank"
                 rel="noopener noreferrer sponsored"
                 onClick={() => trackClick(id)}
-                className="flex gap-3 p-3 rounded-xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-orange-400/40 transition-all group"
+                className="flex gap-3 p-3 bg-background hover:bg-surface/55 border border-border hover:border-accent/40 transition-colors group"
             >
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-muted/10">
-                    <Image src={imageUrl} alt={name} fill className="object-cover" unoptimized />
+                <div className="relative w-16 h-16 overflow-hidden flex-shrink-0 bg-muted/10">
+                    <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-[1.03] transition-transform duration-300" unoptimized />
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{name}</p>
@@ -103,7 +103,7 @@ export function ShopeeCard({
                     {vendidos && <p className="text-[10px] text-muted">{vendidos} vendidos</p>}
                 </div>
                 <div className="flex-shrink-0 self-center">
-                    <span className={`flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-1 rounded-full`}>
+                    <span className={`flex items-center gap-1 font-mono text-[9px] font-bold uppercase ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                     </span>
                 </div>
@@ -118,24 +118,23 @@ export function ShopeeCard({
             rel="noopener noreferrer sponsored"
             onClick={() => trackClick(id)}
             title={`Ver no ${cfg.label} (link externo)`}
-            className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-xl hover:shadow-black/5 group"
+            className="flex h-full flex-col overflow-hidden border border-border bg-background transition-colors hover:border-accent/40 group"
         >
-            <div className="relative aspect-square bg-muted/10">
-                <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+            <div className="relative aspect-square bg-muted/10 overflow-hidden">
+                <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-[1.03] transition-transform duration-500" unoptimized />
                 {badge && (
-                    <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] rounded-full bg-accent px-2.5 py-1 text-[10px] font-black leading-none text-white shadow-sm">
+                    <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">
                         {badge}
                     </span>
                 )}
-                {/* Indicador de link externo */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-1">
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 px-1.5 py-0.5 flex items-center gap-1">
                     <ExternalLink className="w-3 h-3 text-white" />
-                    <span className="text-[9px] text-white font-semibold">{cfg.label}</span>
+                    <span className="font-mono text-[9px] text-white">{cfg.label}</span>
                 </div>
             </div>
             <div className="flex flex-1 flex-col gap-2 p-3">
                 <div className="flex items-center justify-between gap-2">
-                    <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-1 rounded-full transition-opacity group-hover:opacity-80`}>
+                    <span className={`flex-shrink-0 flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.05em] ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
                     </span>
@@ -177,7 +176,7 @@ export function ShopeeSectionHeader({ title, seeAllUrl, store }: { title: string
             <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-foreground">{title}</h2>
                 {cfg && store && (
-                    <span className={`flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-0.5 rounded-full`}>
+                    <span className={`flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
                     </span>

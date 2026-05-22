@@ -75,7 +75,7 @@ export function BlogHeroCarousel({ slides, authorName, authorInitial }: Props) {
 
   return (
     <div
-      className="relative w-full h-[400px] md:h-[520px] overflow-hidden rounded-xl select-none"
+      className="relative h-[400px] w-full select-none overflow-hidden border border-border md:h-[520px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={onTouchStart}
@@ -113,16 +113,16 @@ export function BlogHeroCarousel({ slides, authorName, authorInitial }: Props) {
           {/* Badges */}
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {cfg && (
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+              <span className="px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em]"
                 style={{ backgroundColor: cfg.color, color: '#fff' }}>
                 {post.category!.name}
               </span>
             )}
             {isRecent(post.publishedAt) && (
-              <span className="px-2.5 py-1 bg-accent text-white rounded-full text-[11px] font-bold uppercase tracking-wider">Novo</span>
+              <span className="bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white">Novo</span>
             )}
             {post.featured && (
-              <span className="px-2.5 py-1 bg-yellow-400/90 text-yellow-900 rounded-full text-[11px] font-bold uppercase tracking-wider">Destaque</span>
+              <span className="bg-yellow-400/90 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-yellow-900">Destaque</span>
             )}
           </div>
 
@@ -138,7 +138,7 @@ export function BlogHeroCarousel({ slides, authorName, authorInitial }: Props) {
 
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 text-white/45 text-xs">
-              <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold text-white/80">
+              <div className="flex h-5 w-5 items-center justify-center bg-white/15 text-[9px] font-bold text-white/80">
                 {authorInitial}
               </div>
               <span>{authorName}</span>
@@ -163,14 +163,14 @@ export function BlogHeroCarousel({ slides, authorName, authorInitial }: Props) {
         <>
           <button
             onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex items-center justify-center w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white/70 hover:text-white hover:bg-black/60 transition-all"
+            className="absolute left-3 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center border border-white/15 bg-black/40 text-white/70 transition-colors hover:bg-black/60 hover:text-white sm:flex"
             aria-label="Anterior"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex items-center justify-center w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white/70 hover:text-white hover:bg-black/60 transition-all"
+            className="absolute right-3 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 items-center justify-center border border-white/15 bg-black/40 text-white/70 transition-colors hover:bg-black/60 hover:text-white sm:flex"
             aria-label="Próximo"
           >
             <ChevronRight size={18} />
@@ -180,13 +180,13 @@ export function BlogHeroCarousel({ slides, authorName, authorInitial }: Props) {
 
       {/* Dots */}
       {slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+        <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5">
           {slides.map((_, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
               aria-label={`Slide ${i + 1}`}
-              className="transition-all duration-300 rounded-full"
+              className="transition-all duration-300"
               style={{
                 width: i === active ? 20 : 6,
                 height: 6,

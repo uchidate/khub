@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { ComponentType } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ShopeeCard, STORE_CONFIG } from '@/components/ui/ShopeeCard'
 import { ArrowDownAZ, Flame, Grid2X2, Search, SlidersHorizontal, Sparkles, Star, Store, X } from 'lucide-react'
 
@@ -60,10 +61,14 @@ function categoryLabel(category: string) {
 }
 
 export function LojaClient({ products }: { products: Product[] }) {
-    const [activeCategory, setActiveCategory] = useState('')
-    const [activePlatform, setActivePlatform] = useState('')
-    const [search, setSearch] = useState('')
-    const [sort, setSort] = useState<SortOption>('curated')
+    const searchParams = useSearchParams()
+    const initialSort = searchParams.get('sort') as SortOption | null
+    const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '')
+    const [activePlatform, setActivePlatform] = useState(searchParams.get('store') || '')
+    const [search, setSearch] = useState(searchParams.get('search') || '')
+    const [sort, setSort] = useState<SortOption>(
+        initialSort && SORT_OPTIONS.some(option => option.value === initialSort) ? initialSort : 'curated'
+    )
     const [showFilters, setShowFilters] = useState(false)
 
     const availablePlatforms = useMemo(() => {
@@ -130,45 +135,50 @@ export function LojaClient({ products }: { products: Product[] }) {
         <section className="scroll-mt-28" id="catalogo">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-accent">Catálogo completo</p>
-                    <h2 className="mt-1 text-2xl font-black tracking-tight text-foreground">Encontre por fandom, loja ou categoria</h2>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent font-bold">Catálogo completo</p>
+                    <h2 className="mt-1 font-display text-[26px] font-black tracking-[-0.03em]">Encontre por fandom, loja ou categoria</h2>
                 </div>
-                <p className="text-sm text-muted">
+                <p className="font-mono text-[11px] text-muted">
                     {filtered.length} de {products.length} produto{products.length !== 1 ? 's' : ''}
                 </p>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+            <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+
+                {/* Sidebar */}
                 <aside className="lg:sticky lg:top-[calc(var(--site-sticky-top)+1rem)] lg:self-start">
-                    <div className="space-y-4 rounded-3xl border border-border bg-surface p-4">
+                    <div className="space-y-4 border-y border-border bg-background py-4">
+
+                        {/* Busca */}
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                             <input
                                 value={search}
-                                onChange={event => setSearch(event.target.value)}
+                                onChange={e => setSearch(e.target.value)}
                                 placeholder="Buscar produto, grupo..."
-                                className="w-full rounded-2xl border-border bg-background py-3 pl-9 pr-9 text-sm text-foreground transition-colors focus:border-accent"
+                                className="w-full rounded-none border-border bg-background py-3 pl-9 pr-9 text-sm text-foreground transition-colors focus:border-accent"
                             />
                             {search && (
-                                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground" aria-label="Limpar busca">
+                                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors" aria-label="Limpar busca">
                                     <X className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
 
+                        {/* Mostrar/ocultar filtros no mobile */}
                         <button
-                            onClick={() => setShowFilters(value => !value)}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-foreground transition-colors hover:border-accent/40 lg:hidden"
+                            onClick={() => setShowFilters(v => !v)}
+                            className="flex w-full items-center justify-center gap-2 border border-border bg-background px-3 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-foreground hover:border-accent/40 transition-colors lg:hidden"
                         >
                             <SlidersHorizontal className="h-4 w-4" />
                             Filtros
                         </button>
 
                         <div className={`${showFilters ? 'block' : 'hidden'} space-y-5 lg:block`}>
+                            {/* Lojas */}
                             <div>
                                 <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
-                                    <Store className="h-3.5 w-3.5" />
-                                    Lojas
+                                    <Store className="h-3.5 w-3.5" /> Lojas
                                 </div>
                                 <div className="flex flex-wrap gap-2 lg:flex-col">
                                     {availablePlatforms.map(platform => {
@@ -178,88 +188,94 @@ export function LojaClient({ products }: { products: Product[] }) {
                                             <button
                                                 key={platform.value}
                                                 onClick={() => { setActivePlatform(platform.value); setActiveCategory('') }}
-                                                className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                                className={`flex items-center justify-between gap-2 border px-3 py-2 text-left text-xs font-bold transition-colors ${
                                                     isActive
                                                         ? 'border-accent bg-accent text-white'
                                                         : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                                 }`}
                                             >
                                                 <span>{platform.label}</span>
-                                                {cfg && <span className={`h-2 w-2 rounded-full ${cfg.bg}`} />}
+                                                {cfg && <span className={`h-2 w-2 ${cfg.bg}`} />}
                                             </button>
                                         )
                                     })}
                                 </div>
                             </div>
 
+                            {/* Categorias */}
                             <div>
                                 <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
-                                    <Grid2X2 className="h-3.5 w-3.5" />
-                                    Categorias
+                                    <Grid2X2 className="h-3.5 w-3.5" /> Categorias
                                 </div>
                                 <div className="flex max-h-72 flex-wrap gap-2 overflow-y-auto overflow-x-hidden pr-1 scrollbar-none lg:flex-col">
                                     <button
                                         onClick={() => setActiveCategory('')}
-                                        className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                        className={`flex items-center justify-between border px-3 py-2 text-left text-xs font-bold transition-colors ${
                                             !activeCategory
                                                 ? 'border-accent bg-accent text-white'
                                                 : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                         }`}
                                     >
                                         <span>Todas</span>
-                                        <span>{products.filter(p => !activePlatform || p.store === activePlatform).length}</span>
+                                        <span className="ml-2 opacity-60">{products.filter(p => !activePlatform || p.store === activePlatform).length}</span>
                                     </button>
-                                    {categories.map(category => (
+                                    {categories.map(cat => (
                                         <button
-                                            key={category.value}
-                                            onClick={() => setActiveCategory(value => value === category.value ? '' : category.value)}
-                                            className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-left text-xs font-bold transition-colors ${
-                                                activeCategory === category.value
+                                            key={cat.value}
+                                            onClick={() => setActiveCategory(v => v === cat.value ? '' : cat.value)}
+                                            className={`flex items-center justify-between gap-3 border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                                activeCategory === cat.value
                                                     ? 'border-accent bg-accent text-white'
                                                     : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
                                             }`}
                                         >
-                                            <span className="truncate">{category.label}</span>
-                                            <span>{category.count}</span>
+                                            <span className="truncate">{cat.label}</span>
+                                            <span className="opacity-60">{cat.count}</span>
                                         </button>
                                     ))}
+                                </div>
+                            </div>
+
+                            {/* Ordenação */}
+                            <div>
+                                <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
+                                    Ordenar por
+                                </div>
+                                <div className="flex flex-wrap gap-2 lg:flex-col">
+                                    {SORT_OPTIONS.map(option => {
+                                        const Icon = option.icon
+                                        const isActive = sort === option.value
+                                        return (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => setSort(option.value)}
+                                                className={`flex items-center gap-2 border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                                                    isActive
+                                                        ? 'border-foreground bg-foreground text-background'
+                                                        : 'border-border bg-background text-muted hover:border-accent/40 hover:text-foreground'
+                                                }`}
+                                            >
+                                                <Icon className="h-3.5 w-3.5 shrink-0" />
+                                                {option.label}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         </div>
 
                         {hasFilters && (
-                            <button onClick={clearAll} className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-2.5 text-xs font-bold text-muted transition-colors hover:border-accent/40 hover:text-accent">
-                                <X className="h-3.5 w-3.5" />
-                                Limpar filtros
+                            <button onClick={clearAll} className="flex w-full items-center justify-center gap-1.5 border border-border bg-background px-3 py-2.5 text-xs font-bold text-muted hover:border-accent/40 hover:text-accent transition-colors">
+                                <X className="h-3.5 w-3.5" /> Limpar filtros
                             </button>
                         )}
                     </div>
                 </aside>
 
-                <div className="min-w-0 space-y-6">
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                        {SORT_OPTIONS.map(option => {
-                            const Icon = option.icon
-                            const isActive = sort === option.value
-                            return (
-                                <button
-                                    key={option.value}
-                                    onClick={() => setSort(option.value)}
-                                    className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-black transition-colors ${
-                                        isActive
-                                            ? 'border-foreground bg-foreground text-background'
-                                            : 'border-border bg-surface text-muted hover:border-accent/40 hover:text-foreground'
-                                    }`}
-                                >
-                                    <Icon className="h-3.5 w-3.5" />
-                                    {option.label}
-                                </button>
-                            )
-                        })}
-                    </div>
-
+                {/* Grid de produtos */}
+                <div className="min-w-0 space-y-8">
                     {!hasResults ? (
-                        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-surface py-16 text-muted">
+                        <div className="flex flex-col items-center justify-center gap-3 border border-dashed border-border py-16 text-muted">
                             <Search className="h-8 w-8 opacity-25" />
                             <p className="text-sm">Nenhum produto encontrado</p>
                             <button onClick={clearAll} className="text-xs font-bold text-accent hover:underline">Limpar filtros</button>
@@ -267,11 +283,9 @@ export function LojaClient({ products }: { products: Product[] }) {
                     ) : sort === 'curated' && !search && !activeCategory ? (
                         groupedEntries.map(([category, items]) => (
                             <section key={category} id={`categoria-${category}`} className="scroll-mt-28">
-                                <div className="mb-3 flex items-end justify-between gap-3">
-                                    <div>
-                                        <h3 className="text-xl font-black tracking-tight text-foreground">{categoryLabel(category)}</h3>
-                                        <p className="text-xs text-muted">{items.length} produto{items.length !== 1 ? 's' : ''} selecionado{items.length !== 1 ? 's' : ''}</p>
-                                    </div>
+                                <div className="flex items-baseline justify-between border-b border-border pb-2.5 mb-4">
+                                    <h3 className="text-[16px] font-black tracking-tight">{categoryLabel(category)}</h3>
+                                    <span className="font-mono text-[10px] text-muted">{items.length} produto{items.length !== 1 ? 's' : ''}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                                     {items.map(product => (

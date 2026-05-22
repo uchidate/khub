@@ -13,7 +13,6 @@ import { HomeNowStrip } from "@/components/home/HomeNowStrip"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { buildHomeRuntimeData } from "@/lib/home/home-runtime"
 import { HomeDiscoverySection } from "@/components/home/HomeDiscoverySection"
-import { HomeEditorialSpotlight } from "@/components/home/HomeEditorialSpotlight"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
 // Revalidação antecipada via revalidateTag(HOME_CACHE_TAG) nos crons de publish e trending.
@@ -26,7 +25,7 @@ const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 
 const getHomePublicData = unstable_cache(
     () => buildHomeRuntimeData(),
-    ['home-page-public-data-v25'],
+    ['home-page-public-data-v26'],
     { revalidate: 600, tags: [HOME_CACHE_TAG] },
 )
 
@@ -63,7 +62,9 @@ export default async function Home() {
     // Build local não tem DB — retorna shell mínimo; ISR popula em produção
     if (IS_BUILD) return <div />
 
-    const publicData = await getHomePublicData()
+    const publicData = process.env.NODE_ENV === 'development'
+        ? await buildHomeRuntimeData()
+        : await getHomePublicData()
 
     const featuredProducts = await prisma.storeProduct.findMany({
         where: { isActive: true },
@@ -174,11 +175,12 @@ export default async function Home() {
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
                 carouselPosts={carouselPosts}
+                spotlightPosts={editorialSpotlightPosts}
                 trendingArtists={trendingArtists.slice(0, 8)}
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
+                latestPosts={feedPosts.slice(0, 10)}
             />
-            <HomeEditorialSpotlight posts={editorialSpotlightPosts} mode={compositionMode} />
             <HomeDiscoverySection
                 cluster={featuredCluster ?? trendingCluster}
                 artist={randomArtist ? { id: randomArtist.id, slug: randomArtist.slug, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Calendar, Cake, Film, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
 
@@ -107,62 +106,24 @@ export default async function CalendarioPage() {
             network: p.network,
             daysUntil: daysBetween(today, p.releaseDate!),
         }))
-    const todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
-    const todayReleases = releases.filter(r => r.daysUntil === 0)
+    const _todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
+    const _todayReleases = releases.filter(r => r.daysUntil === 0)
 
     return (
         <main className="min-h-screen bg-background pb-16">
-            <section className="border-b border-border bg-[linear-gradient(135deg,var(--color-bg)_0%,var(--color-surface-editorial)_48%,var(--color-surface-media)_100%)]">
-                <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-12 lg:py-12">
-                    <div className="max-w-3xl">
-                        <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-accent/20 bg-accent-soft px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-accent">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Agenda Hallyu
-                        </div>
-                        <h1 className="text-4xl font-black leading-[0.96] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                            Datas importantes sem perder o timing.
-                        </h1>
-                        <p className="mt-5 max-w-2xl text-sm leading-6 text-foreground-subtle sm:text-base">
-                            Aniversários de ídolos, estreias de K-dramas e filmes coreanos organizados para os próximos 90 dias.
-                        </p>
-                    </div>
-
-                    <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-3xl border border-border bg-background/70 p-4">
-                            <Cake className="mb-3 h-4 w-4 text-accent" />
-                            <p className="text-3xl font-black text-foreground">{birthdays.length}</p>
-                            <p className="mt-1 text-xs font-semibold text-muted">aniversários próximos</p>
-                        </div>
-                        <div className="rounded-3xl border border-border bg-background/70 p-4">
-                            <Film className="mb-3 h-4 w-4 text-accent" />
-                            <p className="text-3xl font-black text-foreground">{releases.length}</p>
-                            <p className="mt-1 text-xs font-semibold text-muted">estreias futuras</p>
-                        </div>
-                        <div className="rounded-3xl border border-border bg-background/70 p-4">
-                            <Sparkles className="mb-3 h-4 w-4 text-accent" />
-                            <p className="text-3xl font-black text-foreground">{todayBirthdays.length + todayReleases.length}</p>
-                            <p className="mt-1 text-xs font-semibold text-muted">eventos hoje</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-12">
-                <CalendarioClient
-                    birthdays={birthdays}
-                    releases={releases}
-                    recentReleases={recentReleases}
-                    todayStr={todayStr}
-                    storeProducts={storePool.map(p => ({
-                        ...p,
-                        rating: p.rating ?? undefined,
-                        originalPrice: p.originalPrice ?? undefined,
-                        badge: p.badge ?? undefined,
-                        soldCount: p.soldCount ?? undefined,
-                    }))}
-                />
-
-            </div>
+            <CalendarioClient
+                birthdays={birthdays}
+                releases={releases}
+                recentReleases={recentReleases}
+                todayStr={todayStr}
+                storeProducts={storePool.map(p => ({
+                    ...p,
+                    rating: p.rating ?? undefined,
+                    originalPrice: p.originalPrice ?? undefined,
+                    badge: p.badge ?? undefined,
+                    soldCount: p.soldCount ?? undefined,
+                }))}
+            />
         </main>
     )
 }

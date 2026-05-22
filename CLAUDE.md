@@ -37,28 +37,14 @@ scripts/             → scripts de manutenção e cron
 
 ## Deploy — REGRA DE OURO
 
-**NUNCA modificar via SSH.** Fluxo único:
-
-```bash
-git checkout -b feat/nome
-git add . && git commit -m "mensagem"
-git push origin feat/nome
-gh pr create --title "..." --body "..."
-# GitHub Actions faz TUDO: build, push registry, deploy
-```
-
-- Branch `main` protegida → só via PR
-- Pre-push hook valida TypeScript + ESLint antes de permitir push
-- SSH apenas para consulta (logs, health check)
+**NUNCA via SSH.** `feat/*` branch → commit → push → PR → GitHub Actions faz tudo.
+Branch `main` protegida. Pre-push valida TS + ESLint. SSH só para consulta.
+Skills: `/deploy` `/deploy-pr` `/merge-pr`
 
 ## Servidores
 
-- **IP:** `31.97.255.107` (root)
-- **Produção:** https://www.hallyuhub.com.br | DB: `hallyuhub_production`
-- **Staging:** https://staging.hallyuhub.com.br | DB: `hallyuhub_staging`
-- **Postgres prod:** container `nv2l757xetlkuyg65k7zib9h`, IP interno `10.0.1.5:5432`
-- **Postgres staging:** container `xhja77fygkk15upqztd3la1t`, IP interno `10.0.1.7:5432`
-- **MCP Postgres disponível:** `hallyuhub-postgres-production` (porta 5433) e `hallyuhub-postgres-staging` (porta 5434) via SSH tunnel
+- **root@31.97.255.107** · Produção: hallyuhub_production (porta 5433) · Staging: hallyuhub_staging (porta 5434)
+- App prod: `e6h2xvvpu8i2jmzcb3tpzmxo-*` · App staging: `lssyh30tgd0qf2ba38p2f7ex-*`
 
 ## Blog — formato de blocos
 
@@ -92,7 +78,7 @@ gh pr create --title "..." --body "..."
 | `blog_timeline` | `events: {date,text}[]` | — |
 | `blog_divider` | — | — |
 
-**Inserção no banco:** escrever SQL em arquivo local → `scp` para servidor → `cat arquivo.sql | docker exec -i <container> psql -U hallyuhub hallyuhub_production`
+**Inserção no banco:** usar skill `/db-insert` (escreve SQL em /tmp → docker cp → psql -f).
 
 ## Padrões de código
 
@@ -107,3 +93,63 @@ gh pr create --title "..." --body "..."
 
 Usar placeholders (`YOUR_VALUE_HERE`) e substituir antes de qualquer `git add`.
 Pre-commit hook bloqueia staging/main — feature branches obrigatórias.
+
+<!-- claude-token-saver:harness:begin -->
+## 🅷 Harness Rules (claude-token-saver)
+
+이 섹션은 `claude-token-saver harness init`이 생성합니다. 5가지 원칙 모두를
+지키면 statusline에 `🅷 5/5`로 표시되고, 빠진 게 있으면 `🅷 3/5` 식으로
+경고합니다. 수정해도 무방하지만, 섹션 헤더(### 1. ~ ### 5.)는 검출용이므로
+지우지 마세요.
+
+### 1. Ratchet — 같은 실수는 두 번 안 한다
+- 같은 에러·오해·반복 작업이 한 번 더 발생하면 즉시 `.claude/ratchet.md`에
+  "조건 → 행동" 한 줄로 룰 추가.
+- claude-token-saver가 후보를 감지하면 statusline에 `🅷⚠ ratchet?`로 알림.
+  `claude-token-saver harness promote "<rule>" --project|--global`로 승인.
+- **scope는 항상 사용자에게 먼저 물어볼 것** — 프로젝트 한정이면 `--project`,
+  도구·환경 일반 룰이면 `--global`(`~/.claude/ratchet.md`). Bash 환경은
+  non-TTY라 CLI의 readline 프롬프트가 안 뜨므로, 호출자(LLM)가 직접 묻고
+  플래그를 명시해야 함. 묻지 않고 기본값으로 등록하지 말 것.
+- 승인된 룰은 다음 세션부터 자동 적용.
+
+### 2. Evidence — "다 됐어요" 금지
+완료 보고("다 됐어요", "테스트 통과") 시 다음 중 1개 이상을 항상 첨부:
+- 테스트 실행 결과 (실제 stdout)
+- 변경 파일 diff (file:line)
+- UI 작업이면 스크린샷
+- 명령 실행 출력
+
+증거 없는 완료 보고는 거짓일 확률이 매우 높음. 토큰 낭비의 주범.
+
+### 3. PEV — Plan → Execute → Verify
+3단계 이상 작업은 다음 사이클을 강제:
+1. **Plan** — 텍스트로 단계 명시 (TodoWrite 권장)
+2. **Execute** — 한 단계씩 실행, 결과 확인
+3. **Verify** — 테스트·실행·grep 등으로 결과 검증
+
+Verify를 건너뛰면 statusline에 `🅷⚠ PEV-skip` 표시.
+0.85의 10제곱 ≈ 0.20 — 단계당 85%만 맞아도 10단계면 80% 실패.
+
+### 4. Structured Task — 입력 구조화
+새 작업 시작 시 다음 4줄을 먼저 채울 것 (입력이 구조화돼야 출력도 구조화됨):
+- **목표:** 한 문장으로
+- **제약:** 시간·범위·금지사항
+- **검증 방법:** 어떻게 "됐다"고 판정할지
+- **완료 기준:** 무엇이 통과하면 완료인지
+
+### 5. Default Safe Path — 파괴적 명령 항상 확인
+다음 작업은 **항상** 사용자 확인 후 실행:
+- 파괴적 명령: `rm -rf`, force push, drop table, kill process
+- 외부 시스템: deploy, slack 발송, 댓글 작성, PR merge
+- 비가역적: amend pushed commit, branch -D
+
+단순 read·local edit·테스트 실행은 묻지 말고 즉시 진행 (마찰 최소화).
+
+---
+
+📌 운영:
+- `claude-token-saver harness check` — 현재 셋업 점수
+- `claude-token-saver harness promote "<룰>" --project|--global` — ratchet에 룰 추가 (scope는 사용자에게 먼저 물어볼 것)
+- `claude-token-saver harness off` — statusline 표시 끄기
+<!-- claude-token-saver:harness:end -->

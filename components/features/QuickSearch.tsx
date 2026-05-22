@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Search, X, Command, User, Film, BookOpen, Loader2, TrendingUp, Users, Sparkles, Compass, ShoppingBag } from 'lucide-react'
+import { Search, X, Command, User, Film, BookOpen, Loader2, TrendingUp, Users, Sparkles, Compass, ShoppingBag, CalendarDays } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -38,6 +38,12 @@ export function QuickSearch() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [modalOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    useEffect(() => {
+        const handleOpen = () => openModal()
+        window.addEventListener('quick-search:open', handleOpen)
+        return () => window.removeEventListener('quick-search:open', handleOpen)
+    }, [openModal])
+
     // Focar + travar scroll
     useEffect(() => {
         if (modalOpen) {
@@ -55,6 +61,18 @@ export function QuickSearch() {
         router.push(href)
     }
 
+    const scopedHref = (base: string) => {
+        const q = query.trim()
+        return q ? `${base}?search=${encodeURIComponent(q)}` : base
+    }
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const q = query.trim()
+        if (!q) return
+        handleNavigate(`/search?q=${encodeURIComponent(q)}`)
+    }
+
     const hasResults = results.total > 0
 
     return (
@@ -69,31 +87,54 @@ export function QuickSearch() {
 
                     {/* Palette */}
                     <div
-                        className="relative w-full max-w-2xl bg-background border border-border rounded-2xl overflow-hidden shadow-2xl shadow-black/10 animate-scale-in"
+                        className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-border bg-background shadow-2xl shadow-black/10 animate-scale-in"
                     >
                         {/* Input */}
-                        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+                        <form onSubmit={handleSubmit} className="flex items-center gap-3 border-b border-border px-4 py-3">
                             <Search className="text-muted flex-shrink-0" size={18} />
                             <input
                                 ref={inputRef}
                                 type="text"
-                                placeholder="Buscar artistas, grupos, dramas, filmes ou artigos..."
+                                placeholder="Buscar artistas, grupos, produções, artigos ou loja..."
                                 className="flex-1 bg-transparent text-foreground placeholder-[#6b6b6b] focus:outline-none text-base"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                             />
                             {isLoading && <Loader2 className="text-muted animate-spin flex-shrink-0" size={16} />}
                             {query && !isLoading && (
-                                <button onClick={() => setQuery('')} className="text-muted hover:text-foreground transition-colors flex-shrink-0">
+                                <button type="button" onClick={() => setQuery('')} className="text-muted hover:text-foreground transition-colors flex-shrink-0">
                                     <X size={16} />
                                 </button>
                             )}
                             <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-surface rounded text-[10px] font-bold text-muted border border-border flex-shrink-0">
                                 <Command size={10} /> K
                             </div>
-                            <button onClick={closeModal} className="text-muted hover:text-foreground transition-colors flex-shrink-0 ml-1">
+                            <button type="button" onClick={closeModal} className="text-muted hover:text-foreground transition-colors flex-shrink-0 ml-1">
                                 <X size={18} />
                             </button>
+                        </form>
+
+                        <div className="flex h-12 items-center gap-2 overflow-x-auto border-b border-border px-4" style={{ scrollbarWidth: 'none' }}>
+                            {[
+                                { label: 'Artistas', href: scopedHref('/artists'), icon: User },
+                                { label: 'Grupos', href: scopedHref('/groups'), icon: Users },
+                                { label: 'Produções', href: scopedHref('/productions'), icon: Film },
+                                { label: 'Loja', href: scopedHref('/loja'), icon: ShoppingBag },
+                                { label: 'Calendário', href: '/calendario', icon: CalendarDays },
+                            ].map(item => {
+                                const Icon = item.icon
+                                return (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={() => handleNavigate(item.href)}
+                                        className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-surface px-3 text-[12px] font-bold text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                                    >
+                                        <Icon className="h-3.5 w-3.5" />
+                                        {item.label}
+                                    </button>
+                                )
+                            })}
                         </div>
 
                         {/* Resultados */}
@@ -102,15 +143,15 @@ export function QuickSearch() {
                             {/* Estado inicial */}
                             {!isLoading && !hasResults && query.trim().length < 2 && (
                                 <div className="p-5">
-                                    <div className="rounded-2xl border border-border bg-surface p-4">
+                                    <div className="rounded-md border border-border bg-surface p-4">
                                         <div className="flex items-start gap-3">
-                                            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+                                            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-accent-soft text-accent">
                                                 <Sparkles className="h-5 w-5" />
                                             </span>
                                             <div>
-                                                <p className="text-sm font-black text-foreground">Busca rápida</p>
+                                                <p className="text-sm font-black text-foreground">Busca global</p>
                                                 <p className="mt-1 text-xs leading-5 text-muted">
-                                                    Encontre artistas, grupos, dramas, filmes e artigos em um só lugar.
+                                                    Pesquise tudo ou pule direto para uma seção usando a faixa acima.
                                                 </p>
                                             </div>
                                         </div>
@@ -118,14 +159,14 @@ export function QuickSearch() {
                                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                                         {[
                                             ['Artistas em alta', '/artists'],
+                                            ['Grupos ativos', '/groups'],
                                             ['Dramas e filmes', '/productions'],
-                                            ['Artigos recentes', '/blog'],
-                                            ['Agenda', '/calendario'],
+                                            ['Achados da loja', '/loja'],
                                         ].map(([label, href]) => (
                                             <button
                                                 key={href}
                                                 onClick={() => handleNavigate(href)}
-                                                className="rounded-xl border border-border bg-background px-3 py-2 text-left text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                                                className="rounded-md border border-border bg-background px-3 py-2 text-left text-xs font-black text-foreground transition-colors hover:border-accent/40 hover:text-accent"
                                             >
                                                 {label}
                                             </button>
@@ -158,7 +199,7 @@ export function QuickSearch() {
                                                     <button
                                                         key={shortcut.id}
                                                         onClick={() => handleNavigate(shortcut.href)}
-                                                        className="w-full rounded-xl border border-border bg-surface/50 p-3 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/40"
+                                                        className="w-full rounded-md border border-border bg-surface/50 p-3 text-left transition-colors hover:border-accent/40 hover:bg-accent-soft/40"
                                                     >
                                                         <p className="text-sm font-black text-foreground">{shortcut.title}</p>
                                                         <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">{shortcut.description}</p>
@@ -180,7 +221,7 @@ export function QuickSearch() {
                                                     <button
                                                         key={artist.id}
                                                         onClick={() => handleNavigate(`/artists/${artist.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                             {artist.primaryImageUrl ? (
@@ -222,7 +263,7 @@ export function QuickSearch() {
                                                     <button
                                                         key={group.id}
                                                         onClick={() => handleNavigate(`/groups/${group.slug ?? group.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
                                                             {group.profileImageUrl ? (
@@ -259,7 +300,7 @@ export function QuickSearch() {
                                                     <button
                                                         key={production.id}
                                                         onClick={() => handleNavigate(`/productions/${production.slug ?? production.id}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-9 h-[52px] rounded-lg overflow-hidden bg-surface flex-shrink-0">
                                                             {production.imageUrl ? (
@@ -296,7 +337,7 @@ export function QuickSearch() {
                                                     <button
                                                         key={item.id}
                                                         onClick={() => handleNavigate(`/blog/${item.slug}`)}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
                                                             {item.coverImageUrl ? (
@@ -332,8 +373,8 @@ export function QuickSearch() {
                                                 {results.storeProducts.map((item) => (
                                                     <button
                                                         key={item.id}
-                                                        onClick={() => handleNavigate('/loja')}
-                                                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface transition-colors group text-left"
+                                                        onClick={() => handleNavigate(`/loja?search=${encodeURIComponent(item.name)}`)}
+                                                        className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
                                                             <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="40px" unoptimized />

@@ -8,21 +8,28 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
+import { BookOpen, Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
 import { SITE_URL } from '@/lib/constants/site'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { SectionBar } from '@/components/ui/SectionBar'
+import { BLOG_CATEGORIES } from '@/lib/config/categories'
 
 const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
 const BlogViewTracker = dynamic(() => import('@/components/blog/BlogViewTracker').then(m => ({ default: m.BlogViewTracker })))
 const BlogReadingProgress = dynamic(() => import('@/components/blog/BlogReadingProgress').then(m => ({ default: m.BlogReadingProgress })))
-const BlogNavLink = dynamic(() => import('@/components/blog/BlogNavLink').then(m => ({ default: m.BlogNavLink })))
+const BlogTableOfContents = dynamic(() => import('@/components/blog/BlogTableOfContents').then(m => ({ default: m.BlogTableOfContents })))
+const BlogShareButtons = dynamic(() => import('@/components/blog/BlogShareButtons').then(m => ({ default: m.BlogShareButtons })))
+const BlogStickyNav = dynamic(() => import('@/components/blog/BlogStickyNav').then(m => ({ default: m.BlogStickyNav })))
+const BlogBackToTop = dynamic(() => import('@/components/blog/BlogBackToTop').then(m => ({ default: m.BlogBackToTop })))
+const BlogTextShare = dynamic(() => import('@/components/blog/BlogTextShare').then(m => ({ default: m.BlogTextShare })))
 const BASE_URL = SITE_URL
 
 function MarkdownWithAds({ content }: { content: string }) {
@@ -126,8 +133,8 @@ type RelatedPost = Awaited<ReturnType<typeof fetchRelatedPosts>>[number]
 
 function RelatedPostCard({ post }: { post: RelatedPost }) {
   return (
-    <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-2xl border border-border bg-surface hover:border-[#ff2d78]/30 transition-all">
-      <div className="relative aspect-video rounded-t-2xl overflow-hidden bg-[#ff2d78]/5">
+    <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3 rounded-md border border-border bg-surface transition-all hover:border-accent/40">
+      <div className="relative aspect-video overflow-hidden rounded-t-md bg-accent/5">
         {post.coverImageUrl ? (
           <SafeImage
             src={post.coverImageUrl}
@@ -142,7 +149,7 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
         )}
       </div>
       <div className="px-4 pb-4 flex flex-col gap-2">
-        <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-[#ff2d78] transition-colors line-clamp-2">
+        <h3 className="font-bold text-foreground text-sm leading-snug group-hover:text-accent transition-colors line-clamp-2">
           {post.title}
         </h3>
         {post.excerpt && (
@@ -159,24 +166,27 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
 
 function SidebarRelatedCard({ post }: { post: RelatedPost }) {
   return (
-    <Link href={`/blog/${post.slug}`} className="group block border-b border-border/50 last:border-b-0 py-3">
+    <Link href={`/blog/${post.slug}`} className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-surface-hover">
       {post.coverImageUrl && (
-        <div className="relative aspect-video w-full rounded-md overflow-hidden mb-2 bg-muted/20">
+        <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-surface-hover">
           <SafeImage
             src={post.coverImageUrl}
             alt={post.title}
             fill
-            sizes="(min-width: 1280px) 200px, 0px"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="64px"
+            className="object-cover"
+            fallback={<span className="absolute inset-0 flex items-center justify-center text-muted"><BookOpen className="h-4 w-4" /></span>}
           />
         </div>
       )}
-      <p className="text-[11px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:text-[#ff2d78] transition-colors">
-        {post.title}
-      </p>
-      <p className="text-[10px] text-muted mt-1 flex items-center gap-1">
-        <Clock size={9} />{post.readingTimeMin} min de leitura
-      </p>
+      <span className="min-w-0 flex-1">
+        <span className="line-clamp-2 text-[12px] font-semibold leading-snug text-foreground transition-colors group-hover:text-accent">
+          {post.title}
+        </span>
+        <span className="mt-1 flex items-center gap-1 text-[10px] text-muted">
+          <Clock size={9} />{post.readingTimeMin} min
+        </span>
+      </span>
     </Link>
   )
 }
@@ -227,9 +237,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <PageTransition className="pt-6 pb-20 px-4 sm:px-6">
+    <PageTransition className="pb-10">
       <BlogReadingProgress />
       <BlogViewTracker slug={slug} />
+      <BlogStickyNav
+        title={post.title}
+        readingTimeMin={post.readingTimeMin}
+        shareUrl={`${BASE_URL}/blog/${post.slug}`}
+        shareTitle={post.title}
+        categoryName={post.category?.name}
+        categorySlug={post.category?.slug}
+      />
+      <BlogBackToTop />
+      <BlogTextShare shareUrl={`${BASE_URL}/blog/${post.slug}`} />
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BlogPosting",
@@ -256,62 +276,76 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <div className="max-w-6xl mx-auto">
-      <div className="flex gap-6 xl:gap-8 items-start">
-      {/* ── Coluna principal ── */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
-            <ArrowLeft size={14} />
-            Voltar ao Blog
+      <SectionBar>
+        <Link href="/blog" className="flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors border-border text-muted hover:border-border hover:text-foreground">
+          Todos
+        </Link>
+        {BLOG_CATEGORIES.map(c => (
+          <Link
+            key={c.slug}
+            href={`/blog?category=${c.slug}`}
+            className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${post.category?.slug === c.slug ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border hover:text-foreground'}`}
+          >
+            {c.name}
           </Link>
-          <BlogEditButton postId={post.id} />
-        </div>
+        ))}
+      </SectionBar>
+
+      <div className="page-wrap border-b border-border/50 py-2">
+        <Breadcrumbs items={[{ label: 'Artigos', href: '/blog' }, { label: post.title }]} />
+      </div>
+
+      <div className="page-wrap pt-8">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-10 xl:gap-12 items-start">
+
+      {/* ── Coluna principal ── */}
+      <div className="min-w-0">
 
         {/* Header */}
-        <header className="mb-8 space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {post.category && (
-              <Link href={`/blog?category=${post.category.slug}`} className="px-2.5 py-1 bg-[#ff2d78]/10 text-[#ff2d78] rounded text-xs font-semibold uppercase tracking-wider hover:bg-[#ff2d78]/20 transition-colors">
-                {post.category.name}
-              </Link>
-            )}
-            {post.featured && (
-              <span className="px-2.5 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-semibold uppercase tracking-wider">
-                Destaque
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-3xl md:text-4xl font-black text-foreground leading-tight">{post.title}</h1>
+        <header className="mb-7">
+          <h1 className="font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}</h1>
 
           {post.excerpt && (
-            <p className="text-xl text-muted leading-relaxed italic border-l-2 border-[#ff2d78]/30 pl-4">{post.excerpt}</p>
+            <p className="text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>
           )}
 
-          <div className="flex items-center gap-4 flex-wrap text-sm text-muted pt-2 border-t border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
-                {BLOG_AUTHOR_AVATAR_INITIAL}
+          <div className="flex flex-wrap items-center justify-between gap-y-3 border-t border-border pt-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent shrink-0">
+                  {BLOG_AUTHOR_AVATAR_INITIAL}
+                </div>
+                <span className="font-semibold text-foreground">{BLOG_AUTHOR_DISPLAY_NAME}</span>
               </div>
-              <span className="font-medium text-foreground">{BLOG_AUTHOR_DISPLAY_NAME}</span>
+              <span className="h-1 w-1 rounded-full bg-border/60" />
+              <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()} className="flex items-center gap-1.5"><Calendar size={12} />{formatDate(post.publishedAt ?? post.createdAt)}</time>
+              <span className="flex items-center gap-1.5"><Clock size={12} />{post.readingTimeMin} min</span>
+              <span className="flex items-center gap-1.5"><Eye size={12} />{(post.viewCount + 1).toLocaleString('pt-BR')} views</span>
             </div>
-            <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()} className="flex items-center gap-1.5"><Calendar size={13} />{formatDate(post.publishedAt ?? post.createdAt)}</time>
-            <span className="flex items-center gap-1.5"><Clock size={13} />{post.readingTimeMin} min de leitura</span>
-            <span className="flex items-center gap-1.5 ml-auto"><Eye size={13} />{post.viewCount + 1} views</span>
+            <div className="flex items-center gap-2">
+              <BlogShareButtons title={post.title} url={`${BASE_URL}/blog/${post.slug}`} compact />
+              <BlogEditButton postId={post.id} />
+            </div>
           </div>
         </header>
 
-        {/* Cover image */}
+        {/* Cover image — ocupa toda a coluna principal */}
         {post.coverImageUrl && (
-          <div className="relative aspect-video rounded-2xl overflow-hidden mb-10 border border-border bg-muted/10">
-            <SafeImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" priority />
-          </div>
+          <figure className="relative mb-8 w-full overflow-hidden rounded-xl border border-border/40 bg-surface aspect-video">
+            <SafeImage
+              src={post.coverImageUrl}
+              alt={post.title}
+              fill
+              sizes="(max-width: 768px) 100vw, calc(100vw - 360px)"
+              className="object-cover object-center"
+              priority
+              fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
+            />
+          </figure>
         )}
 
-
         {/* Content */}
-        <article>
+        <article className="w-full">
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
             ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
             : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
@@ -328,7 +362,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <Link
                   key={tag}
                   href={`/blog?tag=${encodeURIComponent(tag)}`}
-                  className="px-2.5 py-1 rounded-full text-xs font-semibold transition-all hover:brightness-95"
+                  className="rounded-md px-2.5 py-1 text-xs font-semibold transition-all hover:brightness-95"
                   style={{ color: ts.color, backgroundColor: ts.bg }}
                 >
                   {tag}
@@ -338,10 +372,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Share */}
+        <div className="mt-8 pt-6 border-t border-border">
+          <BlogShareButtons
+            title={post.title}
+            url={`${BASE_URL}/blog/${post.slug}`}
+          />
+        </div>
+
         {/* Author bio */}
         {(post as unknown as { author?: { bio?: string } }).author?.bio && (
-          <div className="mt-10 p-5 rounded-2xl border border-border bg-surface flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#ff2d78]/10 flex items-center justify-center text-sm font-bold text-[#ff2d78] shrink-0">
+          <div className="mt-10 flex gap-4 rounded-md border border-border bg-surface p-5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-accent-soft text-sm font-bold text-accent">
               {BLOG_AUTHOR_AVATAR_INITIAL}
             </div>
             <div>
@@ -372,9 +414,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <Link
                   key={artist.id}
                   href={`/artists/${artist.id}`}
-                  className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
+                  className="group flex items-center gap-2.5 rounded-md border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40 hover:bg-surface-hover"
                 >
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface-hover flex-shrink-0">
+                  <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md bg-surface-hover">
                     {artist.primaryImageUrl ? (
                       <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover object-top" sizes="32px" />
                     ) : (
@@ -391,9 +433,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Banner Quiz */}
         <Link
           href="/quiz"
-          className="group mt-10 flex items-center gap-4 p-4 rounded-2xl border border-border bg-surface hover:border-accent/40 hover:bg-surface-hover transition-all"
+          className="group mt-10 flex items-center gap-4 rounded-md border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover"
         >
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-accent/10 transition-transform group-hover:scale-105">
             <Trophy className="w-5 h-5 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
@@ -405,13 +447,33 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Navegação anterior / próximo */}
         {(prevPost || nextPost) && (
-          <div className="mt-8 pt-8 border-t border-border grid grid-cols-2 gap-3">
-            <div>
-              {prevPost && <BlogNavLink slug={prevPost.slug} title={prevPost.title} direction="prev" currentSlug={slug} />}
-            </div>
-            <div>
-              {nextPost && <BlogNavLink slug={nextPost.slug} title={nextPost.title} direction="next" currentSlug={slug} />}
-            </div>
+          <div className="mt-8 pt-8 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {prevPost ? (
+              <Link href={`/blog/${prevPost.slug}`} className="group relative flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover overflow-hidden">
+                {prevPost.coverImageUrl && (
+                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
+                    <SafeImage src={prevPost.coverImageUrl} alt={prevPost.title} fill sizes="80px" className="object-cover" fallback={<span />} />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 flex items-center gap-1"><ArrowLeft size={10} /> Anterior</p>
+                  <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prevPost.title}</p>
+                </div>
+              </Link>
+            ) : <div />}
+            {nextPost ? (
+              <Link href={`/blog/${nextPost.slug}`} className="group relative flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover overflow-hidden sm:flex-row-reverse sm:text-right">
+                {nextPost.coverImageUrl && (
+                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
+                    <SafeImage src={nextPost.coverImageUrl} alt={nextPost.title} fill sizes="80px" className="object-cover" fallback={<span />} />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 flex items-center gap-1 sm:justify-end">Próximo <ArrowRight size={10} /></p>
+                  <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{nextPost.title}</p>
+                </div>
+              </Link>
+            ) : <div />}
           </div>
         )}
 
@@ -430,15 +492,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>{/* fim coluna principal */}
 
       {/* ── Sidebar sticky (xl+) ── */}
-      <aside className="hidden xl:block w-[300px] shrink-0">
-        <div className="sticky top-6 flex flex-col gap-4">
+      <aside className="hidden xl:flex flex-col gap-4">
+        <div className="sticky top-[72px] flex flex-col gap-4 max-h-[calc(100vh-88px)] overflow-y-auto pr-0.5">
+          <BlogTableOfContents />
           {relatedPosts.length > 0 && (
-            <div className="border border-border rounded-lg overflow-hidden">
-              <div className="px-3 py-2 bg-surface border-b border-border">
-                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-muted">Artigos sugeridos</p>
+            <div className="rounded-xl border border-border overflow-hidden">
+              <div className="px-4 py-3 bg-surface border-b border-border">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-muted">Leia também</p>
               </div>
-              <div className="px-3">
-                {relatedPosts.map(related => (
+              <div className="divide-y divide-border/50">
+                {relatedPosts.slice(0, 5).map(related => (
                   <SidebarRelatedCard key={related.slug} post={related} />
                 ))}
               </div>
@@ -448,7 +511,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </aside>
 
       </div>{/* fim flex */}
-      </div>{/* fim max-w */}
+      </div>{/* fim page-wrap */}
     </PageTransition>
   )
 }

@@ -1,16 +1,12 @@
 import { Suspense } from 'react'
 import type { Metadata } from "next"
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
-import Link from 'next/link'
-import Image from 'next/image'
-import { ArrowRight, Star, TrendingUp } from 'lucide-react'
 import { PageTransition } from "@/components/features/PageTransition"
 import { ProductionsList } from "@/components/features/ProductionsList"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { applyAgeRatingFilter } from "@/lib/utils/age-rating-filter"
-import { nameToGradient } from '@/lib/utils'
 
 export const revalidate = 600
 
@@ -29,11 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
         description: desc,
         keywords: 'dorama, dorama coreano, K-Drama, série coreana, filme coreano, K-Pop, Hallyu, assistir dorama, HallyuHub',
         alternates: { canonical: `${BASE_URL}/productions`, languages: { 'pt-BR': `${BASE_URL}/productions`, 'x-default': `${BASE_URL}/productions` } },
-        openGraph: {
-            title: 'Dramas & Filmes Coreanos | HallyuHub',
-            description: desc,
-            url: `${BASE_URL}/productions`,
-        },
+        openGraph: { title: 'Dramas & Filmes Coreanos | HallyuHub', description: desc, url: `${BASE_URL}/productions` },
     }
 }
 
@@ -42,26 +34,17 @@ export default async function ProductionsPage() {
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const baseWhere = { flaggedAsNonKorean: false, isHidden: false, ...ageFilter }
 
-    const [_total, heroProductions] = await Promise.all([
-        prisma.production.count({ where: baseWhere }).catch(() => 0),
+    const [featuredProductions] = await Promise.all([
         prisma.production.findMany({
-            where: { ...baseWhere, OR: [{ backdropUrl: { not: null } }, { imageUrl: { not: null } }], voteAverage: { gte: 7 }, voteCount: { not: null } },
+            where: { ...baseWhere, voteAverage: { gte: 7 }, voteCount: { not: null } },
             orderBy: [{ voteCount: 'desc' }, { voteAverage: 'desc' }],
-            take: 5,
+            take: 3,
             select: {
                 id: true, slug: true, titlePt: true, titleKr: true, type: true, year: true,
-                imageUrl: true, backdropUrl: true, voteAverage: true, synopsis: true,
+                imageUrl: true, voteAverage: true,
             },
         }).catch(() => []),
     ])
-
-    const [spotlight, ...sidePicks] = heroProductions
-
-    const TYPE_LABEL: Record<string, string> = {
-        MOVIE: 'Filme', Filme: 'Filme', FILME: 'Filme',
-        SERIES: 'Série', SERIE: 'Série', 'K-Drama': 'K-Drama',
-        SPECIAL: 'Especial', DOCUMENTARY: 'Documentário',
-    }
 
     return (
         <>
@@ -74,113 +57,11 @@ export default async function ProductionsPage() {
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
-        {heroProductions.length > 0 && (
-            <JsonLd data={{
-                "@context": "https://schema.org",
-                "@type": "ItemList",
-                "name": "Doramas e Filmes Coreanos em Destaque",
-                "url": `${BASE_URL}/productions`,
-                "numberOfItems": heroProductions.length,
-                "itemListElement": heroProductions.map((p, i) => ({
-                    "@type": "ListItem",
-                    "position": i + 1,
-                    "url": `${BASE_URL}/productions/${p.slug ?? p.id}`,
-                    "name": p.titlePt,
-                })),
-            }} />
-        )}
         <PageTransition className="pb-16">
-
-            {/* ── Hero ────────────────────────────────────────────── */}
-            {spotlight ? (
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative w-full min-h-[360px] md:min-h-[440px] overflow-hidden bg-black rounded-xl">
-                    <Image
-                        src={spotlight.backdropUrl ?? spotlight.imageUrl ?? ''}
-                        alt={spotlight.titlePt}
-                        fill priority sizes="(max-width: 1280px) 100vw, 1280px"
-                        className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-black/15" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
-
-                    <div className="relative z-10 h-full flex flex-col justify-end w-full mx-auto px-4 sm:px-6 lg:px-12 pb-6 md:pb-10 min-h-[360px] md:min-h-[440px] overflow-hidden">
-                        {/* Bottom: destaque + side picks */}
-                        <div className="flex items-end gap-6 mt-auto min-w-0">
-                            <Link href={`/productions/${spotlight.slug ?? spotlight.id}`} className="group block w-full max-w-[min(100%,760px)] min-w-0">
-                                <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                    <TrendingUp size={10} /> Em destaque
-                                </p>
-                                <h1 className="text-2xl sm:text-3xl md:text-[2.4rem] font-black text-white leading-tight line-clamp-1 group-hover:text-accent transition-colors mb-1">
-                                    {spotlight.titlePt}
-                                </h1>
-                                {spotlight.titleKr && (
-                                    <p className="text-white/50 text-sm mb-3">{spotlight.titleKr}</p>
-                                )}
-                                <div className="flex items-center gap-3 flex-wrap min-w-0">
-                                    {spotlight.type && <span className="text-white/60 text-xs">{TYPE_LABEL[spotlight.type] ?? spotlight.type}</span>}
-                                    {spotlight.year && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-white/60 text-xs">{spotlight.year}</span>
-                                        </>
-                                    )}
-                                    {spotlight.voteAverage && (
-                                        <>
-                                            <span className="text-white/30">·</span>
-                                            <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
-                                                <Star size={10} fill="currentColor" />{spotlight.voteAverage.toFixed(1)}
-                                            </span>
-                                        </>
-                                    )}
-                                    <span className="sm:ml-auto flex items-center gap-1.5 text-[13px] font-bold text-accent group-hover:gap-3 transition-all">
-                                        Ver produção <ArrowRight size={13} />
-                                    </span>
-                                </div>
-                            </Link>
-
-                            {sidePicks.length > 0 && (
-                                <div className="hidden lg:flex flex-col gap-2 w-[200px] shrink-0">
-                                    <p className="text-white/35 text-[9px] font-bold uppercase tracking-widest mb-1">Também populares</p>
-                                    {sidePicks.slice(0, 4).map(p => (
-                                        <Link key={p.id} href={`/productions/${p.slug ?? p.id}`}
-                                            className="group flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-                                            <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/15">
-                                                {p.imageUrl ? (
-                                                    <Image src={p.imageUrl} alt={p.titlePt} fill sizes="32px" className="object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full" style={{ background: nameToGradient(p.titlePt) }} />
-                                                )}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-white text-xs font-semibold truncate group-hover:text-accent transition-colors">{p.titlePt}</p>
-                                                <p className="text-white/40 text-[10px]">{p.year ?? ''}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                </div>
-            ) : (
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
-                    <div className="relative mb-6 overflow-hidden rounded-3xl border border-border/80 bg-surface px-5 py-6 sm:px-7 md:py-7">
-                        <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight mb-2">Dramas & Filmes</h1>
-                        <p className="text-muted text-sm">K-Drama, K-Film</p>
-                    </div>
-                </div>
-            )}
-
-
-            {/* ── Conteúdo principal ──────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pt-8">
-                <Suspense>
-                    <ProductionsList />
-                </Suspense>
-                <ScrollToTop />
-            </div>
+            <Suspense>
+                <ProductionsList featuredProductions={featuredProductions} />
+            </Suspense>
+            <ScrollToTop />
         </PageTransition>
         </>
     )

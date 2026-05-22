@@ -10,7 +10,6 @@ import { AnalyticsProvider } from "@/components/features/AnalyticsProvider"
 import { WebVitalsReporter } from "@/components/features/WebVitalsReporter"
 import NavBar from "@/components/NavBar"
 import { PWAInstaller } from "@/components/features/PWAInstaller"
-import { QuickSearch } from "@/components/features/QuickSearch"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
@@ -20,22 +19,51 @@ import { CookieBanner } from "@/components/features/CookieBanner"
 import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
 
-const getTickerPosts = unstable_cache(
-    async () => {
+type TickerItem = { type: 'article' | 'artist'; href: string; label: string; title: string }
+
+const getTickerData = unstable_cache(
+    async (): Promise<TickerItem[]> => {
         if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
         try {
-            const posts = await prisma.blogPost.findMany({
-                where: { status: 'PUBLISHED' },
-                take: 8,
-                orderBy: { publishedAt: 'desc' },
-                select: { slug: true, title: true, category: { select: { name: true } } },
-            })
-            return posts
+            const [posts, artists] = await Promise.all([
+                prisma.blogPost.findMany({
+                    where: { status: 'PUBLISHED' },
+                    take: 5,
+                    orderBy: { publishedAt: 'desc' },
+                    select: { slug: true, title: true, category: { select: { name: true } } },
+                }),
+                prisma.artist.findMany({
+                    where: { isHidden: false, flaggedAsNonKorean: false, trendingScore: { gt: 0 } },
+                    take: 8,
+                    orderBy: { trendingScore: 'desc' },
+                    select: { id: true, slug: true, nameRomanized: true, roles: true },
+                }),
+            ])
+            const artistItems: TickerItem[] = artists.map(a => ({
+                type: 'artist',
+                href: `/artists/${a.slug ?? a.id}`,
+                label: '● em alta',
+                title: a.nameRomanized,
+            }))
+            const postItems: TickerItem[] = posts.map(p => ({
+                type: 'article',
+                href: `/blog/${p.slug}`,
+                label: p.category?.name ?? 'Blog',
+                title: p.title,
+            }))
+            // Interleave: artist, article, artist, article...
+            const result: TickerItem[] = []
+            const maxLen = Math.max(artistItems.length, postItems.length)
+            for (let i = 0; i < maxLen; i++) {
+                if (artistItems[i]) result.push(artistItems[i])
+                if (postItems[i]) result.push(postItems[i])
+            }
+            return result
         } catch {
             return []
         }
     },
-    ['layout-ticker-posts-v1'],
+    ['layout-ticker-v2'],
     { revalidate: 600 }
 )
 
@@ -106,7 +134,7 @@ export default async function RootLayout({
 }: {
     children: React.ReactNode
 }) {
-    const tickerPosts = await getTickerPosts().catch(() => [])
+    const tickerItems = await getTickerData().catch(() => [])
 
     return (
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
@@ -194,13 +222,12 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <div className="site-shell min-h-screen flex flex-col">
-                        <NavBar tickerPosts={tickerPosts} />
+                    <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto border-x-2 border-x-accent/30">
+                        <NavBar tickerItems={tickerItems} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>
                         </ErrorBoundary>
                         <AdSenseLoader />
-                        <QuickSearch />
                         <ToastContainer />
                         <AuthGateModal />
                         <PWAInstaller />

@@ -12,9 +12,8 @@ import { ReportButton } from '@/components/ui/ReportButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
 import { ViewTracker } from '@/components/features/ViewTracker'
 import { fetchGroupThemeColor, buildGroupThemeVars, toRgba } from '@/lib/fetch-group-theme'
-import { Globe, Users, Calendar, Building2, Eye, Heart, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
+import { Globe, Users, Calendar, Eye, Music, Instagram, Twitter, Youtube, ExternalLink, Play } from 'lucide-react'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
-import { nameToGradient } from '@/lib/utils'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
@@ -23,6 +22,15 @@ import { permanentRedirect } from 'next/navigation'
 import { SITE_URL } from '@/lib/constants/site'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { DiscographySection } from '@/components/features/DiscographySection'
+import { GroupSpotifyEmbed } from '@/components/groups/GroupSpotifyEmbed'
+import { GroupMVPlayer } from '@/components/groups/GroupMVPlayer'
+import { GroupAnimatedStats } from '@/components/groups/GroupAnimatedStats'
+import { GroupSocialPresence } from '@/components/groups/GroupSocialPresence'
+import { GroupTrophyWall } from '@/components/groups/GroupTrophyWall'
+import { GroupColorIdentity } from '@/components/groups/GroupColorIdentity'
+import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
+import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
+import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
 import { ExternalMusicEntityType } from '@prisma/client'
 const BASE_URL = SITE_URL
 
@@ -61,7 +69,11 @@ const getGroup = cache(async (slugOrId: string) => {
                             nameRomanized: true,
                             nameHangul: true,
                             primaryImageUrl: true,
-                            roles: true, gender: true,
+                            roles: true,
+                            gender: true,
+                            birthDate: true,
+                            height: true,
+                            birthName: true,
                         },
                     },
                 },
@@ -138,6 +150,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
     const activeMembers = group.members.filter(m => m.isActive)
     const formerMembers = group.members.filter(m => !m.isActive)
+    const curiosidades = group.curiosidades ?? []
+    const analiseEditorial = group.analiseEditorial ?? null
     const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
     const disbandYear = group.disbandDate ? new Date(group.disbandDate).getUTCFullYear() : null
     const currentYear = new Date().getFullYear()
@@ -359,292 +373,274 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.slug ?? group.id}` },
                 ],
             }} />
-            {/* ── HERO ── */}
-            <div className="relative h-[60vh] md:h-[75vh] overflow-hidden">
-                {/* Background image com blur */}
-                {group.profileImageUrl && (
-                    <div className="absolute inset-0 scale-110">
-                        <Image
-                            src={group.profileImageUrl}
-                            alt=""
-                            fill
-                            priority
-                            sizes="100vw"
-                            className="object-cover blur-sm brightness-40"
-                        />
-                    </div>
+            {/* ── BREADCRUMB ── */}
+            <div className="border-b border-border/40">
+                <div className="page-wrap flex items-center gap-3 py-3">
+                    <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} className="min-w-0" />
+                    <AdminQuickEdit href={`/admin/groups/${group.id}?returnTo=${encodeURIComponent(`/groups/${group.id}`)}`} label="Editar" />
+                </div>
+            </div>
+
+            {/* ── HERO FULL-BLEED ── */}
+            <div className="relative w-full overflow-hidden" style={{ minHeight: '480px', maxHeight: '600px', height: '60vh' }}>
+                {group.profileImageUrl ? (
+                    <Image
+                        src={group.profileImageUrl}
+                        alt={group.name}
+                        fill
+                        priority
+                        sizes="100vw"
+                        className="object-cover object-top"
+                    />
+                ) : (
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.3)}, ${toRgba(accent, 0.05)})` }} />
                 )}
-                {/* Imagem principal */}
-                <div className="absolute inset-0">
-                    {group.profileImageUrl ? (
-                        <Image
-                            src={group.profileImageUrl}
-                            alt={group.name}
-                            fill
-                            priority
-                            sizes="100vw"
-                            className="object-cover object-top"
-                        />
-                    ) : (
-                        <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.3)} 0%, #18181b 60%, #000 100%)` }} />
-                    )}
-                </div>
-                {/* Gradientes */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
-                {/* Glow colorido da marca no rodapé do hero */}
-                <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-                    style={{ background: `linear-gradient(to top, ${toRgba(accent, 0.15)}, transparent)` }} />
-
-                {/* Breadcrumbs */}
-                <div className="absolute top-24 md:top-28 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-                    <div>
-                        <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: group.name }]} onDark className="" />
-                    </div>
-                </div>
-
-                {/* Hero content */}
-                <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 md:pb-14">
-                    <div>
-                    <div className="flex flex-col gap-3 max-w-3xl">
-                        {/* Status badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {disbandYear ? (
-                                <span className="text-xs font-black uppercase px-3 py-1 bg-black/60 backdrop-blur-sm text-white/70 rounded-full border border-white/20">
-                                    Disbandado em {disbandYear}
-                                </span>
-                            ) : (
-                                <span className="text-xs font-black uppercase px-3 py-1 backdrop-blur-sm rounded-full border"
-                                    style={{ background: toRgba(accent, 0.2), color: accent, borderColor: toRgba(accent, 0.4) }}>
-                                    Ativo
-                                </span>
-                            )}
+                {/* Multi-layer gradient overlay */}
+                <div className="absolute inset-0" style={{
+                    background: `linear-gradient(to bottom, ${toRgba(accent, 0.15)} 0%, transparent 25%, rgba(0,0,0,0.15) 55%, var(--color-background, #0a0a0a) 100%)`
+                }} />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+                {/* Left accent stripe */}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ background: accent }} />
+                {/* Content overlay */}
+                <div className="absolute inset-0 flex flex-col justify-end">
+                    <div className="page-wrap pb-8 sm:pb-10">
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                            <span className="border border-white/25 bg-black/50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/80 backdrop-blur-sm">
+                                {disbandYear ? `disbandado · ${disbandYear}` : 'ativo'}
+                            </span>
                             {debutYear && (() => {
                                 const genLabel =
-                                    debutYear <= 2002 ? '1ª Geração' :
-                                    debutYear <= 2011 ? '2ª Geração' :
-                                    debutYear <= 2017 ? '3ª Geração' :
-                                    debutYear <= 2022 ? '4ª Geração' : '5ª Geração'
+                                    debutYear <= 2002 ? '1ª geração' :
+                                    debutYear <= 2011 ? '2ª geração' :
+                                    debutYear <= 2017 ? '3ª geração' :
+                                    debutYear <= 2022 ? '4ª geração' : '5ª geração'
                                 return (
-                                    <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-white/70 rounded-full border border-white/10">
+                                    <span className="border border-white/25 bg-black/50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/80 backdrop-blur-sm">
                                         {genLabel}
                                     </span>
                                 )
                             })()}
-                            {fanClubName && (
-                                <span className="text-xs font-black px-3 py-1 backdrop-blur-sm rounded-full border inline-flex items-center gap-1.5"
-                                    style={{ background: toRgba(accent, 0.15), color: accent, borderColor: toRgba(accent, 0.3) }}>
-                                    <Heart className="w-3 h-3 fill-current" />
-                                    {fanClubName}
-                                </span>
-                            )}
-                            {debutYear && (
-                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-[#999] rounded-full border border-white/10">
-                                    Desde {debutYear}
-                                </span>
-                            )}
                             {group.agency && (
-                                <span className="text-xs font-bold px-3 py-1 bg-black/40 backdrop-blur-sm text-[#999] rounded-full border border-white/10">
+                                <span className="border border-white/25 bg-black/50 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/80 backdrop-blur-sm">
                                     {group.agency.name}
                                 </span>
                             )}
-                            {group.debutDate && !disbandYear && (
-                                <AnniversaryCountdown
-                                    date={group.debutDate.toISOString()}
-                                    label="aniversário de debut"
-                                    groupName={group.name}
-                                />
-                            )}
                         </div>
-
-                        {/* Nome */}
-                        <div className="flex items-end gap-4">
-                            <div>
-                                <h1 className="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter drop-shadow-2xl">
-                                    {group.name}
-                                </h1>
-                                {group.nameHangul && (
-                                    <p className="text-xl md:text-3xl font-bold mt-1 drop-shadow-lg" style={{ color: accent }}>{group.nameHangul}</p>
-                                )}
-                                {/* Accent bar — identidade visual do grupo */}
-                                <div className="mt-3" style={{ width: '56px', height: '3px', background: accent, borderRadius: '99px', opacity: 0.9 }} />
-                            </div>
-                            <div className="mb-2 flex items-center gap-2">
-                                <AdminQuickEdit href={`/admin/groups/${group.id}?returnTo=${encodeURIComponent(`/groups/${group.id}`)}`} label="Editar" />
-                                <ReportButton entityType="group" entityId={group.id} entityName={group.name}
-                                    className="bg-black/40 border border-white/10 backdrop-blur-sm" />
-                                <FavoriteButton
-                                    id={group.id}
-                                    itemName={group.name}
-                                    itemType="grupo"
-                                    className="bg-black/40 border border-white/10 backdrop-blur-sm"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Stats rápidas */}
-                        <div className="flex items-center gap-4 flex-wrap mt-1">
-                            {[
-                                { icon: <Users className="w-3.5 h-3.5" />, text: `${activeMembers.length} membros` },
-                                ...(yearsActive !== null ? [{ icon: <Calendar className="w-3.5 h-3.5" />, text: `${yearsActive} ${yearsActive === 1 ? 'ano' : 'anos'} de carreira` }] : []),
-                                { icon: <Eye className="w-3.5 h-3.5" />, text: `${group.viewCount.toLocaleString('pt-BR')} views` },
-                                { icon: <Heart className="w-3.5 h-3.5" />, text: `${group.favoriteCount.toLocaleString('pt-BR')} fãs` },
-                            ].map((stat, i) => (
-                                <div key={i} className="flex items-center gap-1.5" style={{ color: toRgba(accent, 0.8) }}>
-                                    {stat.icon}
-                                    <span className="text-sm font-bold">{stat.text}</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Botão site oficial */}
-                        {websiteUrl && (
-                            <div className="mt-2">
-                                <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-black backdrop-blur-sm border transition-all hover:opacity-90"
-                                    style={{
-                                        background: toRgba(accent, 0.2),
-                                        borderColor: toRgba(accent, 0.5),
-                                        color: '#fff',
-                                    }}>
-                                    <Globe className="w-3.5 h-3.5" style={{ color: accent }} />
-                                    Site Oficial
-                                    <ExternalLink className="w-3 h-3 opacity-60" />
-                                </a>
-                            </div>
+                        <h1 className="font-display font-black leading-[0.82] tracking-[-0.06em] text-white drop-shadow-2xl"
+                            style={{ fontSize: 'clamp(52px, 10vw, 140px)' }}>
+                            {group.name}.
+                        </h1>
+                        {group.nameHangul && (
+                            <p className="mt-2 text-xl font-semibold sm:text-2xl drop-shadow" style={{ color: accent }}>{group.nameHangul}</p>
                         )}
-                    </div>
+                        {fanClubName && (
+                            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-white/60">
+                                fandom: <strong className="text-white/90">{fanClubName}</strong>
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* ── STATS BAR — animado ── */}
+            <GroupAnimatedStats
+                accent={accent}
+                stats={[
+                    { label: 'membros ativos', value: activeMembers.length.toLocaleString('pt-BR') },
+                    ...(debutYear ? [{ label: 'ano de debut', value: String(debutYear) }] : []),
+                    ...(yearsActive !== null ? [{ label: 'anos de carreira', value: `${yearsActive}a` }] : []),
+                    ...(group.viewCount > 0 ? [{ label: 'visualizações', value: group.viewCount.toLocaleString('pt-BR') }] : []),
+                    ...(group.favoriteCount > 0 ? [{ label: 'fãs', value: group.favoriteCount.toLocaleString('pt-BR') }] : []),
+                ]}
+            />
+
+            {/* ── ACTIONS ── */}
+            <div className="border-b border-border/50">
+                <div className="page-wrap py-3 flex flex-wrap items-center gap-2">
+                    <ReportButton entityType="group" entityId={group.id} entityName={group.name} />
+                    <FavoriteButton id={group.id} itemName={group.name} itemType="grupo" />
+                    {websiteUrl && (
+                        <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 border border-border bg-background px-3 py-2 text-xs font-bold text-muted transition-colors hover:border-foreground hover:text-foreground">
+                            <Globe className="h-3.5 w-3.5" />
+                            Site oficial
+                            <ExternalLink className="h-3 w-3" />
+                        </a>
+                    )}
+                    {spotifyUrl && (
+                        <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-bold text-green-400 transition-colors hover:bg-green-500/20">
+                            <Music className="h-3.5 w-3.5" />
+                            Spotify
+                        </a>
+                    )}
+                    {group.debutDate && !disbandYear && (
+                        <div className="ml-auto">
+                            <AnniversaryCountdown
+                                date={group.debutDate.toISOString()}
+                                label="aniversário de debut"
+                                groupName={group.name}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
             {/* ── CONTEÚDO ── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10">
                 <div className="mb-8">
-                    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+                    <div className="border-y border-foreground bg-background py-3">
                         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted mb-3">Navegação rápida</p>
                         <div className="flex items-center gap-2 flex-wrap">
                             {activeMembers.length > 0 && (
-                                <a href="#membros" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Membros</a>
+                                <a href="#membros" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Membros</a>
+                            )}
+                            {activeMembers.length >= 2 && (
+                                <a href="#poll" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Votação</a>
                             )}
                             {relatedGroups.length > 0 && (
-                                <a href="#relacionados" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Relacionados</a>
+                                <a href="#relacionados" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Relacionados</a>
                             )}
                             {discographyReleases.length > 0 && (
-                                <a href="#discografia" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Discografia</a>
+                                <a href="#discografia" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Discografia</a>
                             )}
                             {relatedPosts.length > 0 && (
-                                <a href="#artigos" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Artigos</a>
+                                <a href="#artigos" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Artigos</a>
                             )}
                             {videos.length > 0 && (
-                                <a href="#mvs" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">MVs</a>
+                                <a href="#mvs" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">MVs</a>
+                            )}
+                            {curiosidades.length > 0 && (
+                                <a href="#conquistas" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Hall da Fama</a>
+                            )}
+                            {analiseEditorial && (
+                                <a href="#analise" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Análise</a>
+                            )}
+                            {officialColorRaw && (
+                                <a href="#identidade" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Identidade</a>
+                            )}
+                            {curiosidades.some(c => c.startsWith('HISTÓRICO|')) && (
+                                <a href="#timeline" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Timeline</a>
+                            )}
+                            {(Object.keys(socialLinks).length > 0 || spotifyUrl) && (
+                                <a href="#redes" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Redes</a>
                             )}
                             {formerMembers.length > 0 && (
-                                <a href="#ex-membros" className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors">Ex-membros</a>
+                                <a href="#ex-membros" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Ex-membros</a>
                             )}
                         </div>
                     </div>
                 </div>
-                <div className="grid gap-8 lg:grid-cols-3 lg:gap-12">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
 
                     {/* ── SIDEBAR ── */}
-                    <div className="space-y-8 lg:col-span-1">
-                        {/* Bio */}
-                        {(bioPt ?? group.bio) && (
-                            <div className="p-6 rounded-2xl bg-background relative overflow-hidden"
-                                style={{ border: `1px solid ${toRgba(accent, 0.2)}`, borderLeft: `3px solid ${accent}` }}>
-                                {/* Decorative quote mark */}
-                                <div className="absolute top-1 right-4 text-8xl font-black leading-none pointer-events-none select-none"
-                                    style={{ color: toRgba(accent, 0.1), fontFamily: 'Georgia, serif' }}>❝</div>
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-3">Sobre</h3>
-                                <p className="text-foreground leading-relaxed text-sm relative z-10">{bioPt ?? group.bio}</p>
+                    <div className="order-2 space-y-5 lg:order-2">
+
+                        {/* Identidade visual — cor oficial + fandom */}
+                        {(officialColorRaw || fanClubName) && (
+                            <div className="border border-border overflow-hidden">
+                                {officialColorRaw && (
+                                    <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${officialColorRaw}, ${toRgba(officialColorRaw, 0.4)})` }} />
+                                )}
+                                <div className="p-4 flex items-center gap-4 bg-background">
+                                    {officialColorRaw && (
+                                        <div className="h-12 w-12 flex-shrink-0 border border-border/50"
+                                            style={{ background: officialColorRaw }} />
+                                    )}
+                                    <div className="min-w-0">
+                                        {officialColorRaw && (
+                                            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-muted">Cor oficial</p>
+                                        )}
+                                        {officialColorRaw && (
+                                            <p className="text-sm font-black text-foreground font-mono">{officialColorRaw}</p>
+                                        )}
+                                        {fanClubName && (
+                                            <p className="text-xs text-muted mt-0.5">Fandom: <strong className="text-foreground">{fanClubName}</strong></p>
+                                        )}
+                                    </div>
+                                    {group.agency && (
+                                        <div className="ml-auto text-right shrink-0">
+                                            <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-muted">Agência</p>
+                                            <Link href={`/agencies/${group.agency.slug ?? group.agency.id}`}
+                                                className="text-sm font-black transition-colors hover:opacity-80"
+                                                style={{ color: accent }}>
+                                                {group.agency.name}
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
-                        {/* Info */}
-                        <div className="p-6 rounded-2xl bg-background border border-border">
-                            <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Informações</h3>
-                            <div className="space-y-0">
-                                {debutYear && (
-                                    <InfoRow
-                                        icon={<Calendar className="w-3.5 h-3.5" />}
-                                        label="Debut"
-                                        value={group.debutDate ? new Date(group.debutDate).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : String(debutYear)}
-                                    />
-                                )}
-                                {disbandYear && (
-                                    <InfoRow
-                                        icon={<Calendar className="w-3.5 h-3.5" />}
-                                        label="Disbandado"
-                                        value={String(disbandYear)}
-                                    />
-                                )}
-                                {yearsActive !== null && (
-                                    <InfoRow
-                                        icon={<Music className="w-3.5 h-3.5" />}
-                                        label="Carreira"
-                                        value={`${yearsActive} ${yearsActive === 1 ? 'ano' : 'anos'}`}
-                                    />
-                                )}
-                                {group.agency && (
-                                    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
-                                        <div className="flex items-center gap-2 text-muted">
-                                            <Building2 className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-black uppercase tracking-widest">Agência</span>
-                                        </div>
-                                        <Link href={`/agencies/${group.agency.slug ?? group.agency.id}`} className="text-sm font-bold transition-colors hover:opacity-80"
-                                            style={{ color: accent }}>
-                                            {group.agency.name}
-                                        </Link>
-                                    </div>
-                                )}
-                                <InfoRow
-                                    icon={<Users className="w-3.5 h-3.5" />}
-                                    label="Membros ativos"
-                                    value={String(activeMembers.length)}
-                                />
-                                {formerMembers.length > 0 && (
-                                    <InfoRow
-                                        icon={<Users className="w-3.5 h-3.5" />}
-                                        label="Ex-membros"
-                                        value={String(formerMembers.length)}
-                                    />
-                                )}
-                                {officialColorRaw && (
-                                    <div className="flex justify-between items-center py-3 border-b border-border last:border-0">
-                                        <div className="flex items-center gap-2 text-muted">
-                                            <div className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0"
-                                                style={{ background: officialColorRaw }} />
-                                            <span className="text-xs font-black uppercase tracking-widest">Cor Oficial</span>
-                                        </div>
-                                        <span className="text-xs font-bold text-muted font-mono">{officialColorRaw}</span>
-                                    </div>
-                                )}
-                                {fanClubName && (
-                                    <div className="flex justify-between items-center py-3 last:border-0">
-                                        <div className="flex items-center gap-2 text-muted">
-                                            <Heart className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-black uppercase tracking-widest">Fandom</span>
-                                        </div>
-                                        <span className="text-sm font-bold" style={{ color: accent }}>{fanClubName}</span>
-                                    </div>
-                                )}
+                        {/* Bio */}
+                        {(bioPt ?? group.bio) && (
+                            <div className="relative border border-border bg-background p-5" style={{ borderTopColor: accent, borderTopWidth: 2 }}>
+                                <h3 className="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-muted">Sobre o grupo</h3>
+                                <p className="text-sm leading-relaxed text-foreground">{bioPt ?? group.bio}</p>
                             </div>
+                        )}
+
+                        {/* Info compacta */}
+                        <div className="border border-border bg-background divide-y divide-border">
+                            <div className="px-4 py-2">
+                                <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Informações</p>
+                            </div>
+                            {debutYear && (
+                                <InfoRow
+                                    icon={<Calendar className="w-3.5 h-3.5" />}
+                                    label="Debut"
+                                    value={group.debutDate ? new Date(group.debutDate).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : String(debutYear)}
+                                />
+                            )}
+                            {disbandYear && (
+                                <InfoRow
+                                    icon={<Calendar className="w-3.5 h-3.5" />}
+                                    label="Disbandado"
+                                    value={String(disbandYear)}
+                                />
+                            )}
+                            {yearsActive !== null && (
+                                <InfoRow
+                                    icon={<Music className="w-3.5 h-3.5" />}
+                                    label="Carreira"
+                                    value={`${yearsActive} ${yearsActive === 1 ? 'ano' : 'anos'} de atividade`}
+                                />
+                            )}
+                            <InfoRow
+                                icon={<Users className="w-3.5 h-3.5" />}
+                                label="Membros"
+                                value={`${activeMembers.length} ativo${activeMembers.length !== 1 ? 's' : ''}${formerMembers.length > 0 ? ` · ${formerMembers.length} ex` : ''}`}
+                            />
+                            {(group.viewCount > 0 || group.favoriteCount > 0) && (
+                                <div className="flex items-center justify-between px-4 py-3">
+                                    <div className="flex items-center gap-2 text-muted">
+                                        <Eye className="w-3.5 h-3.5" />
+                                        <span className="text-xs font-black uppercase tracking-widest">Engajamento</span>
+                                    </div>
+                                    <div className="text-right">
+                                        {group.viewCount > 0 && <span className="text-xs font-bold text-foreground">{group.viewCount.toLocaleString('pt-BR')} views</span>}
+                                        {group.viewCount > 0 && group.favoriteCount > 0 && <span className="mx-1.5 text-muted">·</span>}
+                                        {group.favoriteCount > 0 && <span className="text-xs font-bold text-foreground">{group.favoriteCount.toLocaleString('pt-BR')} fãs</span>}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
+                        {/* Formação — role breakdown */}
                         {roleBreakdown.length > 0 && (
-                            <div className="p-6 rounded-2xl bg-background border border-border">
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Formação atual</h3>
-                                <div className="space-y-2.5">
+                            <div className="border border-border bg-background p-4">
+                                <h3 className="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-muted">Composição atual</h3>
+                                <div className="space-y-2">
                                     {roleBreakdown.map(([role, count]) => {
                                         const pct = Math.max(8, Math.round((count / activeMembers.length) * 100))
                                         return (
                                             <div key={role}>
                                                 <div className="flex items-center justify-between text-xs mb-1">
                                                     <span className="font-semibold text-foreground">{role}</span>
-                                                    <span className="text-muted font-bold">{count}</span>
+                                                    <span className="text-muted font-mono">{count}</span>
                                                 </div>
-                                                <div className="h-1.5 rounded-full bg-surface overflow-hidden">
-                                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: accent }} />
+                                                <div className="h-1 overflow-hidden bg-surface">
+                                                    <div className="h-full transition-all" style={{ width: `${pct}%`, background: accent }} />
                                                 </div>
                                             </div>
                                         )
@@ -653,84 +649,180 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </div>
                         )}
 
-                        {/* Site Oficial — card destacado com cor do tema */}
-                        {websiteUrl && (
-                            <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
-                                className="block p-5 rounded-2xl border transition-all hover:opacity-90 group/site"
-                                style={{
-                                    background: `linear-gradient(135deg, ${toRgba(accent, 0.12)}, ${toRgba(accent, 0.05)})`,
-                                    borderColor: toRgba(accent, 0.3),
-                                }}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Site Oficial</span>
-                                    <ExternalLink className="w-3.5 h-3.5 text-muted group-hover/site:text-foreground transition-colors" />
+                        {/* Links externos — compacto */}
+                        {(websiteUrl || spotifyUrl || visibleSocialLinks.length > 0) && (
+                            <div className="border border-border bg-background divide-y divide-border">
+                                <div className="px-4 py-2">
+                                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Links</p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    {/* Swatch da cor extraída */}
-                                    <div className="w-8 h-8 rounded-lg flex-shrink-0 border border-border"
-                                        style={{ background: accent }} />
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-bold text-foreground truncate">
-                                            {new URL(websiteUrl).hostname.replace(/^www\./, '')}
-                                        </p>
-                                        {themeColor && (
-                                            <p className="text-[10px] text-muted mt-0.5 font-mono">{themeColor} · cor extraída</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </a>
-                        )}
-
-                        {/* Spotify oficial vindo do catálogo musical */}
-                        {spotifyUrl && (
-                            <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
-                                className="block p-5 rounded-2xl border border-green-500/25 bg-green-500/5 hover:bg-green-500/10 transition-all group/spotify">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-black text-muted uppercase tracking-widest">Spotify</span>
-                                    <ExternalLink className="w-3.5 h-3.5 text-muted group-hover/spotify:text-green-400 transition-colors" />
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-green-500/15 border border-green-500/20">
-                                        <Music className="w-4 h-4 text-green-500" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-bold text-foreground">Ouvir no Spotify</p>
-                                        <p className="text-[10px] text-muted mt-0.5 truncate">Perfil oficial do grupo</p>
-                                    </div>
-                                </div>
-                            </a>
-                        )}
-
-                        {/* Redes Sociais (sem website e sem Spotify — já mostrados acima) */}
-                        {visibleSocialLinks.length > 0 && (
-                            <div className="p-6 rounded-2xl bg-background border border-border">
-                                <h3 className="text-xs font-black text-muted uppercase tracking-widest mb-4">Redes Sociais</h3>
-                                <div className="flex flex-col gap-2">
-                                    {visibleSocialLinks.map(([platform, url]) => (
-                                        <SocialLink key={platform} platform={platform} url={url} />
-                                    ))}
-                                </div>
+                                {websiteUrl && (
+                                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="h-4 w-4 flex-shrink-0 border border-border" style={{ background: accent }} />
+                                            <span className="text-sm font-bold text-foreground">
+                                                {(() => { try { return new URL(websiteUrl).hostname.replace(/^www\./, '') } catch { return 'Site oficial' } })()}
+                                            </span>
+                                        </div>
+                                        <ExternalLink className="w-3.5 h-3.5 text-muted" />
+                                    </a>
+                                )}
+                                {spotifyUrl && (
+                                    <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface">
+                                        <div className="flex items-center gap-2.5">
+                                            <Music className="w-4 h-4 text-green-500" />
+                                            <span className="text-sm font-bold text-foreground">Spotify</span>
+                                        </div>
+                                        <ExternalLink className="w-3.5 h-3.5 text-muted" />
+                                    </a>
+                                )}
+                                {visibleSocialLinks.map(([platform, url]) => (
+                                    <a key={platform} href={url} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-surface">
+                                        <div className="flex items-center gap-2.5">
+                                            <SocialIcon platform={platform} />
+                                            <span className="text-sm font-bold text-foreground">{PLATFORM_LABEL[platform.toLowerCase()] ?? platform}</span>
+                                        </div>
+                                        <ExternalLink className="w-3.5 h-3.5 text-muted" />
+                                    </a>
+                                ))}
                             </div>
                         )}
-
-                        {/* Stats */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <StatCard icon={<Eye className="w-5 h-5" />} label="Visualizações" value={group.viewCount.toLocaleString('pt-BR')} color="text-cyan-400" accent={accent} />
-                            <StatCard icon={<Heart className="w-5 h-5" />} label="Fãs" value={group.favoriteCount.toLocaleString('pt-BR')} color="text-pink-400" accent={accent} />
-                        </div>
 
                     </div>
 
                     {/* ── MAIN ── */}
-                    <div className="min-w-0 space-y-10 lg:col-span-2 lg:space-y-14">
+                    <div className="order-1 min-w-0 space-y-10 lg:order-1 lg:space-y-14">
 
                         {/* Membros atuais */}
                         {activeMembers.length > 0 && (
                             <section id="membros">
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} accent={accent} />
-                                <MemberGrid members={activeMembers} accent={accent} />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} countLabel={activeMembers.length === 1 ? 'membro' : 'membros'} accent={accent} />
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                                    {activeMembers.map(member => (
+                                        <GroupMemberCard
+                                            key={member.id}
+                                            member={member}
+                                            accent={accent}
+                                            isLeader={member.role?.toLowerCase().includes('leader') || member.role?.toLowerCase().includes('líder')}
+                                        />
+                                    ))}
+                                </div>
                             </section>
                         )}
+
+                        {/* ── POLL — membro favorito ── */}
+                        {activeMembers.length >= 2 && (
+                            <GroupMemberPoll
+                                members={activeMembers.map(m => ({
+                                    id: m.artist.id,
+                                    slug: m.artist.slug,
+                                    nameRomanized: m.artist.nameRomanized,
+                                    nameHangul: m.artist.nameHangul,
+                                    primaryImageUrl: m.artist.primaryImageUrl,
+                                    role: m.role,
+                                }))}
+                                accent={accent}
+                                groupName={group.name}
+                            />
+                        )}
+
+                        {/* ── NÚMEROS DE IMPACTO — extraído dos facts (não HISTÓRICO) ── */}
+                        {(() => {
+                            const allNumRegex = /(\d[\d.,]*\s*(?:bilhões|bilhão|milhões|milhão|bi|mi)?(?:h(?=\s|$))?)/g
+                            const isYear = (n: string) => /^\d{4}$/.test(n.trim()) && parseInt(n) <= 2100
+                            const factsOnly = curiosidades.filter(c => !c.startsWith('HISTÓRICO|'))
+                            const impactFacts = factsOnly
+                                .map(c => {
+                                    // Encontrar o primeiro número que NÃO seja um ano
+                                    const matches = [...c.matchAll(allNumRegex)]
+                                    const hit = matches.find(m => !isYear(m[1]))
+                                    if (!hit) return null
+                                    const numStr = hit[1].trim()
+                                    const idx = hit.index ?? c.indexOf(numStr)
+                                    const after = c.slice(idx + numStr.length).trim()
+                                    const label = after.split(/[,;.]/)[0].trim().slice(0, 55) || c.slice(0, 45)
+                                    const sub = c.slice(0, 90)
+                                    return { number: numStr, label, sub }
+                                })
+                                .filter(Boolean)
+                                .slice(0, 3)
+
+                            if (impactFacts.length === 0) return null
+                            return (
+                                <section id="numeros">
+                                    <SectionHeader icon={<Eye className="w-5 h-5" />} title="Em Números" accent={accent} />
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        {impactFacts.map((f, i) => (
+                                            <div key={i} className="relative overflow-hidden border border-border bg-background p-5"
+                                                style={{ borderTopColor: accent, borderTopWidth: 2 }}>
+                                                <div className="absolute -bottom-2 -right-1 font-display text-[72px] font-black leading-none opacity-[0.05] select-none pointer-events-none"
+                                                    style={{ color: accent }}>{f!.number}</div>
+                                                <p className="font-display text-4xl font-black leading-none mb-2" style={{ color: accent }}>{f!.number}</p>
+                                                <p className="text-xs font-black text-foreground uppercase tracking-widest leading-snug">{f!.label}</p>
+                                                <p className="text-[10px] text-muted mt-2 leading-relaxed line-clamp-2">{f!.sub}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )
+                        })()}
+
+                        {/* ── TROPHY WALL ── */}
+                        {curiosidades.length > 0 && (
+                            <GroupTrophyWall curiosidades={curiosidades} accent={accent} groupName={group.name} />
+                        )}
+
+                        {/* ── ANÁLISE EDITORIAL — parsing de blocos ── */}
+                        {analiseEditorial && (
+                            <section id="analise">
+                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Análise Editorial" accent={accent} />
+                                <div className="space-y-4">
+                                    {analiseEditorial.split('\n\n').map((para, i) => {
+                                        const quoteMatch = para.match(/^\[QUOTE\]([\s\S]*?)\[\/QUOTE\]/)
+                                        const destaqueMatch = para.match(/^\[DESTAQUE\]([\s\S]*?)\[\/DESTAQUE\]/)
+                                        if (quoteMatch) {
+                                            return (
+                                                <blockquote key={i} className="pl-5 py-4 pr-5 italic"
+                                                    style={{ borderLeft: `4px solid ${accent}`, background: toRgba(accent, 0.05) }}>
+                                                    <p className="text-sm leading-relaxed sm:text-base" style={{ color: accent }}>
+                                                        &ldquo;{quoteMatch[1].trim()}&rdquo;
+                                                    </p>
+                                                </blockquote>
+                                            )
+                                        }
+                                        if (destaqueMatch) {
+                                            return (
+                                                <div key={i} className="py-8 px-6 text-center"
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${toRgba(accent, 0.07)}, ${toRgba(accent, 0.02)})`,
+                                                        border: `1px solid ${toRgba(accent, 0.2)}`,
+                                                    }}>
+                                                    <p className="text-xl sm:text-2xl font-black leading-snug text-foreground italic">
+                                                        &ldquo;{destaqueMatch[1].trim()}&rdquo;
+                                                    </p>
+                                                </div>
+                                            )
+                                        }
+                                        return (
+                                            <p key={i} className="text-sm leading-[1.9] text-foreground sm:text-[15px]">{para}</p>
+                                        )
+                                    })}
+                                    <div className="flex items-center gap-2 pt-2" style={{ borderTop: `1px solid ${toRgba(accent, 0.15)}` }}>
+                                        <div className="h-0.5 w-6 flex-shrink-0" style={{ background: accent }} />
+                                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted">Editorial HallyuHub — análise independente</p>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* ── LINHA DO TEMPO ── */}
+                        <GroupErasTimeline
+                            historico={curiosidades}
+                            accent={accent}
+                            groupName={group.name}
+                        />
 
                         <LojaRelacionados
                             tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
@@ -740,20 +832,17 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
                         {relatedPosts.length > 0 && (
                             <section id="artigos">
-                                <SectionHeader icon={<Music className="w-5 h-5" />} title="Artigos Relacionados" count={relatedPosts.length} accent={accent} />
-                                <p className="text-[11px] text-muted mb-3">
-                                    Artigos com vínculo editorial aparecem primeiro, seguidos por descobertas por relevância.
-                                </p>
-
                                 {(() => {
                                     const linked = relatedPosts.filter((post) => post.source === 'linked')
                                     const recommended = relatedPosts.filter((post) => post.source === 'recommended')
+                                    // Se tem 4+ artigos vinculados, não mostrar recomendados (evita artigos não relacionados)
+                                    const showRecommended = linked.length < 4
 
                                     const renderPostCard = (post: (typeof relatedPosts)[number]) => (
                                         <Link
                                             key={post.id}
                                             href={`/blog/${post.slug}`}
-                                            className="group block rounded-xl border border-border bg-background overflow-hidden hover:border-border transition-colors"
+                                            className="group block overflow-hidden border border-border bg-background transition-colors hover:border-foreground/50"
                                         >
                                             <div className="relative aspect-[16/9] bg-surface">
                                                 {post.coverImageUrl ? (
@@ -770,12 +859,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                                     </div>
                                                 )}
                                                 {post.category?.name && (
-                                                    <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full bg-black/60 text-white/90 backdrop-blur-sm">
+                                                    <span className="absolute left-2 top-2 bg-black/60 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-white/90">
                                                         {post.category.name}
                                                     </span>
                                                 )}
                                                 <span
-                                                    className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm border ${
+                                                    className={`absolute right-2 top-2 border px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.08em] ${
                                                         post.source === 'linked'
                                                             ? 'bg-emerald-500/20 text-emerald-100 border-emerald-400/35'
                                                             : 'bg-sky-500/20 text-sky-100 border-sky-400/35'
@@ -802,25 +891,28 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                         </Link>
                                     )
 
+                                    const totalVisible = linked.length + (showRecommended ? recommended.length : 0)
                                     return (
-                                        <div className="space-y-5">
-                                            {linked.length > 0 && (
-                                                <div>
-                                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Relacionados no CMS</p>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        {linked.map(renderPostCard)}
+                                        <div>
+                                            <SectionHeader icon={<Music className="w-5 h-5" />} title="Artigos Relacionados" count={totalVisible} accent={accent} />
+                                            <div className="space-y-5">
+                                                {linked.length > 0 && (
+                                                    <div>
+                                                        {showRecommended && <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Vinculados</p>}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            {linked.map(renderPostCard)}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {recommended.length > 0 && (
-                                                <div>
-                                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Descobertas por relevância</p>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        {recommended.map(renderPostCard)}
+                                                )}
+                                                {showRecommended && recommended.length > 0 && (
+                                                    <div>
+                                                        <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Descobertas por relevância</p>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            {recommended.map(renderPostCard)}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
                                     )
                                 })()}
@@ -830,12 +922,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         {/* Grupos Relacionados */}
                         {relatedGroups.length > 0 && (
                             <section id="relacionados">
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title={group.agencyId ? 'Mesma Agência' : 'Mesma Geração'} count={relatedGroups.length} accent={accent} />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title={group.agencyId ? 'Mesma Agência' : 'Mesma Geração'} count={relatedGroups.length} countLabel={relatedGroups.length === 1 ? 'grupo' : 'grupos'} accent={accent} />
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     {relatedGroups.map(rg => (
                                         <Link key={rg.id} href={`/groups/${rg.slug ?? rg.id}`}
-                                            className="related-group-link flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-[#d0d0d0] hover:bg-surface transition-all group/rg">
-                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
+                                            className="related-group-link group/rg flex items-center gap-3 border border-border bg-background p-3 transition-colors hover:border-foreground/50 hover:bg-surface">
+                                            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden bg-surface">
                                                 {rg.profileImageUrl ? (
                                                     <Image src={rg.profileImageUrl} alt={rg.name} fill sizes="40px" className="object-cover group-hover/rg:scale-105 transition-transform" />
                                                 ) : (
@@ -856,6 +948,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
+                        {/* Spotify embed */}
+                        {spotifyUrl && (
+                            <GroupSpotifyEmbed spotifyUrl={spotifyUrl} groupName={group.name} accent={accent} />
+                        )}
+
                         {/* Discografia Spotify */}
                         {discographyReleases.length > 0 && (
                             <div id="discografia">
@@ -863,54 +960,45 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </div>
                         )}
 
-                        {/* MVs principais */}
+                        {/* ── IDENTIDADE VISUAL ── */}
+                        {officialColorRaw && (
+                            <GroupColorIdentity
+                                officialColor={officialColorRaw}
+                                groupName={group.name}
+                                fanClubName={fanClubName}
+                            />
+                        )}
+
+                        {/* MVs — player interativo */}
                         {videos.length > 0 && (
-                            <section id="mvs">
-                                <SectionHeader icon={<Play className="w-5 h-5" />} title="MVs Principais" count={videos.length} accent={accent} />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {videos.map((mv, i) => {
-                                        const videoId = extractYoutubeId(mv.url)
-                                        if (!videoId) return null
-                                        return (
-                                            <a key={i} href={mv.url} target="_blank" rel="noopener noreferrer"
-                                                className="mv-card group block rounded-xl overflow-hidden border border-border transition-all">
-                                                <div className="relative aspect-video bg-surface">
-                                                    <Image
-                                                        src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                                                        alt={mv.title}
-                                                        fill
-                                                        sizes="(max-width: 640px) 100vw, 50vw"
-                                                        className="object-cover brightness-75 group-hover:brightness-90 transition-all"
-                                                    />
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <div className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-transform group-hover:scale-110"
-                                                            style={{ background: toRgba(accent, 0.85) }}>
-                                                            <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="p-3 bg-background" style={{ borderTop: `1px solid ${toRgba(accent, 0.1)}` }}>
-                                                    <p className="text-sm font-bold text-foreground group-hover:opacity-80 transition-opacity line-clamp-1">{mv.title}</p>
-                                                    <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wider font-bold">YouTube</p>
-                                                </div>
-                                            </a>
-                                        )
-                                    })}
-                                </div>
-                            </section>
+                            <GroupMVPlayer videos={videos} accent={accent} />
+                        )}
+
+                        {/* Presença digital — redes sociais */}
+                        {(Object.keys(socialLinks).length > 0 || spotifyUrl) && (
+                            <GroupSocialPresence
+                                socialLinks={socialLinks}
+                                spotifyUrl={spotifyUrl}
+                                accent={accent}
+                                groupName={group.name}
+                            />
                         )}
 
                         {/* Ex-membros */}
                         {formerMembers.length > 0 && (
                             <section id="ex-membros">
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} muted accent={accent} />
-                                <MemberGrid members={formerMembers} faded accent={accent} />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} countLabel={formerMembers.length === 1 ? 'membro' : 'membros'} muted accent={accent} />
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                                    {formerMembers.map(member => (
+                                        <GroupMemberCard key={member.id} member={member} faded accent={accent} />
+                                    ))}
+                                </div>
                             </section>
                         )}
 
                         {/* Estado vazio */}
                         {group.members.length === 0 && (
-                            <div className="bg-surface rounded-2xl border border-border p-12 text-center">
+                            <div className="border border-border bg-surface p-12 text-center">
                                 <Users className="w-12 h-12 text-muted mx-auto mb-4" />
                                 <p className="text-muted font-bold">Nenhum membro vinculado</p>
                                 <p className="text-muted text-sm mt-1">Sincronize via Admin → Grupos Musicais</p>
@@ -924,50 +1012,32 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     );
 }
 
-/* ── Helpers ── */
-
-
-function extractYoutubeId(url: string): string | null {
-    try {
-        const u = new URL(url)
-        // https://www.youtube.com/watch?v=ID
-        const v = u.searchParams.get('v')
-        if (v) return v
-        // https://youtu.be/ID
-        if (u.hostname === 'youtu.be') return u.pathname.slice(1)
-        // https://www.youtube.com/embed/ID
-        const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/)
-        if (embedMatch) return embedMatch[1]
-        return null
-    } catch {
-        return null
-    }
-}
-
 /* ── Sub-componentes ── */
 
-function SectionHeader({ icon, title, count, muted = false, accent = '#9333ea' }: {
+function SectionHeader({ icon, title, count, countLabel, muted = false, accent = '#9333ea' }: {
     icon: React.ReactNode
     title: string
     count?: number
+    countLabel?: string
     muted?: boolean
     accent?: string
 }) {
     return (
-        <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-xl border"
-                style={muted
-                    ? { background: 'hsl(var(--surface))', borderColor: 'hsl(var(--border))' }
-                    : { background: toRgba(accent, 0.15), borderColor: toRgba(accent, 0.25) }
-                }>
-                <span style={{ color: muted ? '#6b6b6b' : accent }}>{icon}</span>
+        <div className="mb-5 flex items-end justify-between gap-4 border-b border-foreground pb-3">
+            <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center border border-border bg-background">
+                    <span style={{ color: muted ? '#6b6b6b' : accent }}>{icon}</span>
+                </div>
+                <div className="min-w-0">
+                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Dossiê</p>
+                    <h2 className={`text-xl font-black tracking-[-0.03em] ${muted ? 'text-muted' : 'text-foreground'}`}>{title}</h2>
+                </div>
             </div>
-            <div>
-                <h2 className={`text-xl font-black ${muted ? 'text-muted' : 'text-foreground'}`}>{title}</h2>
-                {count !== undefined && (
-                    <p className="text-muted text-xs mt-0.5">{count} {count === 1 ? 'pessoa' : 'pessoas'}</p>
-                )}
-            </div>
+            {count !== undefined && (
+                <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
+                    {count} {countLabel ?? (count === 1 ? 'item' : 'itens')}
+                </p>
+            )}
         </div>
     )
 }
@@ -984,123 +1054,29 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
     )
 }
 
-function StatCard({ icon, label, value, color, accent }: { icon: React.ReactNode; label: string; value: string; color: string; accent?: string }) {
-    return (
-        <div className="p-4 rounded-xl bg-surface border border-border text-center">
-            <div className={`${color} mx-auto mb-1 flex justify-center`}>{icon}</div>
-            <div className={`text-2xl font-black ${color}`} style={accent ? { color: accent } : undefined}>{value}</div>
-            <p className="text-xs text-muted font-bold uppercase tracking-wider mt-0.5">{label}</p>
-        </div>
-    )
+const PLATFORM_LABEL: Record<string, string> = {
+    instagram: 'Instagram', twitter: 'Twitter / X', x: 'X (Twitter)',
+    youtube: 'YouTube', spotify: 'Spotify', tiktok: 'TikTok',
+    facebook: 'Facebook', website: 'Site oficial', weverse: 'Weverse',
+    vlive: 'V Live', fancafe: 'Fan Café',
 }
 
-function SocialLink({ platform, url }: { platform: string; url: string }) {
+function SocialIcon({ platform }: { platform: string }) {
+    const key = platform.toLowerCase()
+    const cls: Record<string, string> = {
+        instagram: 'text-pink-500', twitter: 'text-sky-500', x: 'text-foreground',
+        youtube: 'text-red-500', spotify: 'text-green-500', tiktok: 'text-foreground',
+        facebook: 'text-blue-500', website: 'text-muted', weverse: 'text-purple-400',
+    }
     const icons: Record<string, React.ReactNode> = {
         instagram: <Instagram className="w-4 h-4" />,
         twitter: <Twitter className="w-4 h-4" />,
         x: <Twitter className="w-4 h-4" />,
         youtube: <Youtube className="w-4 h-4" />,
         spotify: <Music className="w-4 h-4" />,
+        tiktok: <Play className="w-4 h-4" />,
         website: <Globe className="w-4 h-4" />,
+        weverse: <Globe className="w-4 h-4" />,
     }
-    const colors: Record<string, string> = {
-        instagram: 'text-pink-500 hover:text-pink-400',
-        twitter: 'text-sky-500 hover:text-sky-400',
-        x: 'text-sky-500 hover:text-sky-400',
-        youtube: 'text-red-500 hover:text-red-400',
-        spotify: 'text-green-500 hover:text-green-400',
-        website: 'text-muted hover:text-foreground',
-    }
-    const key = platform.toLowerCase()
-    return (
-        <a href={url} target="_blank" rel="noopener noreferrer"
-            className={`flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-surface-hover border border-border hover:border-border transition-all ${colors[key] || 'text-muted hover:text-foreground'}`}>
-            <div className="flex items-center gap-2.5">
-                {icons[key] ?? <ExternalLink className="w-4 h-4" />}
-                <span className="text-sm font-bold capitalize">{platform}</span>
-            </div>
-            <ExternalLink className="w-3 h-3 opacity-50" />
-        </a>
-    )
-}
-
-function MemberGrid({
-    members,
-    faded = false,
-    accent = '#9333ea',
-}: {
-    members: {
-        id: string
-        role: string | null
-        joinDate: Date | null
-        leaveDate: Date | null
-        artist: {
-            id: string
-            slug?: string | null
-            nameRomanized: string
-            nameHangul: string | null
-            primaryImageUrl: string | null
-            roles: string[]
-        }
-    }[]
-    faded?: boolean
-    accent?: string
-}) {
-    return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {members.map(member => (
-                <Link
-                    key={member.id}
-                    href={`/artists/${member.artist.slug ?? member.artist.id}`}
-                    className={`group block ${faded ? 'opacity-50 hover:opacity-90 transition-opacity' : ''}`}
-                >
-                    <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-surface border border-border member-card-border transition-all duration-300 mb-3 shadow-sm">
-                        {member.artist.primaryImageUrl ? (
-                            <Image
-                                src={member.artist.primaryImageUrl}
-                                alt={member.artist.nameRomanized}
-                                fill
-                                sizes="(max-width: 640px) 50vw, 25vw"
-                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center"
-                                style={{ background: nameToGradient(member.artist.nameRomanized) }}>
-                                <span className="text-4xl font-black text-white/80 drop-shadow select-none">
-                                    {member.artist.nameRomanized[0]}
-                                </span>
-                            </div>
-                        )}
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
-                        {/* Role badge — always visible */}
-                        {member.role && (
-                            <div className="absolute bottom-2 left-2 right-2">
-                                <span className="text-[10px] font-black uppercase px-2 py-0.5 backdrop-blur-sm text-white/80 group-hover:text-white rounded-full group-accent-badge transition-colors">
-                                    {member.role}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-foreground text-sm leading-tight group-hover:text-accent transition-colors">
-                            {member.artist.nameRomanized}
-                        </h3>
-                        {member.artist.nameHangul && (
-                            <p className="text-[11px] text-muted mt-0.5">{member.artist.nameHangul}</p>
-                        )}
-                        {(member.joinDate || member.leaveDate) && (
-                            <p className="text-[10px] text-muted mt-1">
-                                {member.joinDate ? new Date(member.joinDate).getUTCFullYear() : '?'}
-                                {member.leaveDate ? ` – ${new Date(member.leaveDate).getUTCFullYear()}` : ''}
-                            </p>
-                        )}
-                        <p className="text-[10px] font-semibold mt-1.5" style={{ color: accent }}>
-                            Ver perfil do artista
-                        </p>
-                    </div>
-                </Link>
-            ))}
-        </div>
-    )
+    return <span className={cls[key] ?? 'text-muted'}>{icons[key] ?? <ExternalLink className="w-4 h-4" />}</span>
 }

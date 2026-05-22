@@ -17,6 +17,11 @@ interface BlogImageProps {
   aspectRatio?: 'video' | 'square' | 'thumb'
 }
 
+function resolveBlogImageSrc(src: string | null | undefined) {
+  if (!src) return src
+  return src.replace(/^\/uploads\/blog\//, '/api/uploads/blog/')
+}
+
 export function BlogImage({
   src,
   alt,
@@ -29,12 +34,13 @@ export function BlogImage({
   aspectRatio,
 }: BlogImageProps) {
   const [failed, setFailed] = useState(false)
+  const resolvedSrc = resolveBlogImageSrc(src)
 
   const fillStyle = fill
     ? { position: 'absolute' as const, inset: 0, width: '100%', height: '100%', objectFit: 'cover' as const }
     : undefined
 
-  if (!src || failed) {
+  if (!resolvedSrc || failed) {
     const fallbackCls = fill ? 'absolute inset-0' : ''
     const fallbackStyle = fill
       ? { background: fallbackGradient }
@@ -53,7 +59,7 @@ export function BlogImage({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={resolvedSrc}
       alt={alt}
       width={width}
       height={height}

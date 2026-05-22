@@ -9,46 +9,38 @@ const PREVIEW_QUESTIONS = [
 
 export function HomeQuizBanner() {
     return (
-        <section className="bg-background py-5 pb-7 sm:pb-9">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="bg-background py-4 sm:py-6">
+            <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
                 <Link
                     href="/quiz"
-                    className="home-border-pop group relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-accent-soft border-accent hover:border-accent rounded-2xl p-5 sm:p-8 overflow-hidden transition-all duration-300 hover:bg-accent/15"
+                    className="group grid gap-4 border-y border-border py-5 transition-colors hover:border-accent sm:grid-cols-[48px_minmax(0,1fr)_auto] sm:items-center"
                 >
-                    {/* Glow de fundo */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent/8 via-transparent to-accent/5 pointer-events-none" />
-
-                    {/* Ícone */}
-                    <div className="relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-accent" />
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                            <Sparkles className="w-3 h-3 text-white" />
+                    <div className="relative flex h-12 w-12 items-center justify-center border border-border bg-surface text-accent transition-colors group-hover:border-accent">
+                        <Trophy className="h-5 w-5" />
+                        <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center bg-accent">
+                            <Sparkles className="h-2.5 w-2.5 text-white" />
                         </div>
                     </div>
 
-                    {/* Texto */}
-                    <div className="flex-1 text-center sm:text-left">
-                        <div className="inline-flex items-center gap-1.5 bg-accent/10 border border-accent/20 rounded-full px-3 py-1 mb-2">
-                            <span className="text-[10px] font-black text-accent uppercase tracking-wider">Quiz</span>
-                        </div>
-                        <h2 className="text-lg sm:text-xl font-black text-foreground mb-1 group-hover:text-accent transition-colors">
+                    <div className="min-w-0">
+                        <p className="font-mono text-[9px] font-black uppercase tracking-[0.18em] text-accent">Quiz</p>
+                        <h2 className="mt-1 text-[18px] font-black leading-tight tracking-[-0.02em] text-foreground transition-colors group-hover:text-accent sm:text-[20px]">
                             Quanto você sabe sobre K-Pop e K-Drama?
                         </h2>
-                        <p className="text-sm text-muted mb-3">
+                        <p className="mt-1 text-sm leading-6 text-muted">
                             10 perguntas sobre cultura coreana. Perguntas novas a cada rodada!
                         </p>
-                        <div className="hidden sm:flex flex-wrap gap-2">
+                        <div className="mt-3 hidden flex-wrap gap-2 lg:flex">
                             {PREVIEW_QUESTIONS.map((q, i) => (
-                                <span key={i} className="text-[11px] text-muted bg-background border border-border rounded-full px-3 py-1">
+                                <span key={i} className="border border-border bg-surface px-2.5 py-1 text-[10px] text-muted">
                                     {q}
                                 </span>
                             ))}
                         </div>
                     </div>
 
-                    {/* CTA */}
-                    <div className="flex-shrink-0">
-                        <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-bold group-hover:opacity-90 transition-all shadow-lg shadow-accent/20">
+                    <div>
+                        <span className="inline-flex items-center gap-2 border border-foreground px-4 py-2 text-[12px] font-black uppercase tracking-[0.08em] text-foreground transition-colors group-hover:border-accent group-hover:text-accent">
                             Fazer o quiz
                             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </span>

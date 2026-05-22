@@ -1,9 +1,10 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Film, Shuffle, User, Users } from "lucide-react"
+import { Shuffle } from "lucide-react"
 import type { HomeCluster } from "@/lib/home/home-clusters"
 import { nameToGradient } from "@/lib/utils"
 import type { HomeCompositionMode } from "@/lib/home/home-composition"
+import { SectionTitleBar } from "@/components/ui/SectionTitleBar"
 
 type RandomArtist = {
     id: string
@@ -29,46 +30,6 @@ type RandomProduction = {
     year?: number | null
 }
 
-function MiniEntityCard({
-    href,
-    label,
-    title,
-    subtitle,
-    imageUrl,
-    fallback,
-    icon: Icon,
-}: {
-    href: string
-    label: string
-    title: string
-    subtitle?: string | null
-    imageUrl?: string | null
-    fallback: string
-    icon: React.ElementType
-}) {
-    return (
-        <Link href={href} className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:bg-surface">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border bg-surface">
-                {imageUrl ? (
-                    <Image src={imageUrl} alt={title} fill sizes="48px" className="object-cover" />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white" style={{ background: nameToGradient(fallback) }}>
-                        {fallback[0]}
-                    </div>
-                )}
-            </div>
-            <div className="min-w-0">
-                <div className="mb-0.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-muted">
-                    <Icon className="h-3 w-3" />
-                    {label}
-                </div>
-                <p className="truncate text-[13px] font-bold text-foreground transition-colors group-hover:text-accent">{title}</p>
-                {subtitle && <p className="truncate text-[10px] text-muted">{subtitle}</p>}
-            </div>
-        </Link>
-    )
-}
-
 const SUPPORTING_LABELS = ["Leia também", "Contexto", "Próximo passo", "Relacionado"]
 
 export function HomeDiscoverySection({
@@ -85,69 +46,69 @@ export function HomeDiscoverySection({
     mode: HomeCompositionMode
 }) {
     if (!cluster && !artist && !group && !production) return null
+
     const discoveryTitle = cluster?.key === "trending"
         ? "Continue pelo que está em alta"
         : mode === "editorial"
             ? "Aprofunde o assunto"
             : "Um ponto de partida novo"
-    const [leadClusterItem, ...supportingClusterItems] = cluster?.items ?? []
+
     const leadDescription = cluster?.key === "trending"
         ? "Um bom próximo passo para seguir o assunto que está movimentando a comunidade."
         : mode === "editorial"
             ? "Uma conexão forte para continuar a leitura por outros ângulos."
             : "Uma conexão forte para continuar explorando o tema em destaque."
 
+    const [leadClusterItem, ...supportingClusterItems] = cluster?.items ?? []
+
+    const entities = [
+        artist && { href: `/artists/${artist.slug ?? artist.id}`, label: "Artista", title: artist.nameRomanized, sub: artist.nameHangul, img: artist.primaryImageUrl },
+        group && { href: `/groups/${group.slug ?? group.id}`, label: "Grupo", title: group.name, sub: group.nameHangul, img: group.profileImageUrl },
+        production && { href: `/productions/${production.slug ?? production.id}`, label: "Produção", title: production.titlePt, sub: production.year ? String(production.year) : null, img: production.posterUrl },
+    ].filter(Boolean) as { href: string; label: string; title: string; sub?: string | null; img?: string | null }[]
+
     return (
-        <section className="bg-background py-6 sm:py-7">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className={`grid overflow-hidden rounded-2xl border border-border bg-background shadow-sm ${cluster ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`}>
+        <section className="bg-background">
+            <div className="page-wrap border-t border-border py-10">
+                <div className={`grid gap-10 ${cluster ? "lg:grid-cols-[1.2fr_0.8fr] lg:gap-0 lg:divide-x lg:divide-border/40" : ""}`}>
+
                     {cluster && (
-                        <div className="border-b border-border lg:border-b-0 lg:border-r">
-                            <div className="border-b border-border bg-surface px-4 py-3.5 sm:px-6">
-                                <div className="border-l-[3px] border-accent pl-3">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">{cluster.eyebrow}</p>
-                                <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{cluster.title}</h2>
-                                </div>
-                            </div>
+                        <div className="lg:pr-10">
+                            <SectionTitleBar eyebrow={cluster.eyebrow} title={cluster.title} />
+
                             {leadClusterItem && (
                                 <Link
                                     href={leadClusterItem.href}
-                                    className="group grid grid-cols-[88px_minmax(0,1fr)] gap-3 border-b border-border bg-background p-4 transition-colors hover:bg-surface-editorial/45 sm:grid-cols-[116px_minmax(0,1fr)] sm:p-5"
+                                    className="group mb-4 flex items-start gap-4 pb-4 border-b border-border/40 transition-opacity hover:opacity-75"
                                 >
-                                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface">
-                                        {leadClusterItem.imageUrl ? (
-                                            <Image src={leadClusterItem.imageUrl} alt={leadClusterItem.title} fill sizes="(max-width: 640px) 100vw, 132px" className="object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-lg font-bold text-muted">
-                                                {leadClusterItem.title[0]}
-                                            </div>
+                                    <div className="relative w-24 h-[120px] sm:w-28 sm:h-[140px] shrink-0 overflow-hidden" style={{ background: 'repeating-linear-gradient(135deg, #efefef 0 10px, #e6e6e6 10px 20px)' }}>
+                                        {leadClusterItem.imageUrl && (
+                                            <Image src={leadClusterItem.imageUrl} alt={leadClusterItem.title} fill sizes="112px" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
                                         )}
                                     </div>
-                                    <div className="min-w-0 self-center">
-                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Destaque relacionado</p>
-                                        <h3 className="mt-1 text-[15px] font-bold leading-tight text-foreground transition-colors group-hover:text-accent sm:text-[18px]">
+                                    <div className="min-w-0">
+                                        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Destaque relacionado</p>
+                                        <h3 className="mt-1.5 font-serif text-[22px] font-medium leading-[1.05] tracking-[-0.04em] text-foreground transition-colors group-hover:text-accent sm:text-[26px]">
                                             {leadClusterItem.title}
                                         </h3>
-                                        <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted sm:mt-2 sm:text-[11px]">
+                                        <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-muted">
                                             {leadDescription}
                                         </p>
                                     </div>
                                 </Link>
                             )}
+
                             {supportingClusterItems.length > 0 && (
-                                <div className="grid sm:grid-cols-2">
+                                <div className="grid sm:grid-cols-2 sm:gap-x-6">
                                     {supportingClusterItems.map((item, index) => (
                                         <Link
                                             key={`${cluster.key}-${item.href}`}
                                             href={item.href}
-                                            className={`group flex items-center gap-2.5 px-4 py-3 hover:bg-surface transition-colors
-                                                ${index % 2 === 0 ? "sm:border-r sm:border-border" : ""}
-                                                ${index < 2 ? "border-b border-border" : ""}
-                                            `}
+                                            className="group flex items-center gap-3 border-b border-border/40 py-3 transition-opacity last:border-b-0 hover:opacity-75"
                                         >
-                                            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border bg-surface">
+                                            <div className="relative h-8 w-8 shrink-0 overflow-hidden bg-[#efefef]">
                                                 {item.imageUrl ? (
-                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="36px" className="object-cover" />
+                                                    <Image src={item.imageUrl} alt={item.title} fill sizes="32px" className="object-cover" />
                                                 ) : (
                                                     <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">
                                                         {item.title[0]}
@@ -155,8 +116,8 @@ export function HomeDiscoverySection({
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-muted">{SUPPORTING_LABELS[index] ?? "Relacionado"}</p>
-                                                <p className="truncate text-[13px] font-bold text-foreground group-hover:text-accent transition-colors">{item.title}</p>
+                                                <p className="font-mono text-[8px] font-bold uppercase tracking-[0.12em] text-muted">{SUPPORTING_LABELS[index] ?? "Relacionado"}</p>
+                                                <p className="truncate text-[13px] font-semibold text-foreground transition-colors group-hover:text-accent">{item.title}</p>
                                             </div>
                                         </Link>
                                     ))}
@@ -165,50 +126,37 @@ export function HomeDiscoverySection({
                         </div>
                     )}
 
-                    <div className="bg-background lg:border-l lg:border-border">
-                        <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3.5 sm:px-6">
-                            <div className="border-l-[3px] border-accent pl-3">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Descobrir</p>
-                                <h2 className="mt-0.5 text-[16px] font-bold text-foreground">{discoveryTitle}</h2>
-                            </div>
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent">
-                                <Shuffle className="h-4 w-4" />
-                            </div>
-                        </div>
-                        <div className="space-y-2.5 p-4 sm:p-5">
-                            {artist && (
-                                <MiniEntityCard
-                                    href={`/artists/${artist.slug ?? artist.id}`}
-                                    label="Artista"
-                                    title={artist.nameRomanized}
-                                    subtitle={artist.nameHangul}
-                                    imageUrl={artist.primaryImageUrl}
-                                    fallback={artist.nameRomanized}
-                                    icon={User}
-                                />
-                            )}
-                            {group && (
-                                <MiniEntityCard
-                                    href={`/groups/${group.slug ?? group.id}`}
-                                    label="Grupo"
-                                    title={group.name}
-                                    subtitle={group.nameHangul}
-                                    imageUrl={group.profileImageUrl}
-                                    fallback={group.name}
-                                    icon={Users}
-                                />
-                            )}
-                            {production && (
-                                <MiniEntityCard
-                                    href={`/productions/${production.slug ?? production.id}`}
-                                    label="Produção"
-                                    title={production.titlePt}
-                                    subtitle={production.year ? String(production.year) : null}
-                                    imageUrl={production.posterUrl}
-                                    fallback={production.titlePt}
-                                    icon={Film}
-                                />
-                            )}
+                    <div className="lg:pl-10">
+                        <SectionTitleBar
+                            eyebrow="Descobrir"
+                            title={discoveryTitle}
+                            action={<div className="flex h-6 w-6 items-center justify-center text-muted">
+                                <Shuffle className="h-3.5 w-3.5" />
+                            </div>}
+                        />
+                        <div>
+                            {entities.map((entity, i) => (
+                                <Link
+                                    key={entity.href}
+                                    href={entity.href}
+                                    className={`group flex items-center gap-4 py-3 transition-opacity hover:opacity-75 ${i < entities.length - 1 ? "border-b border-border/40" : ""}`}
+                                >
+                                    <div className="relative h-9 w-9 shrink-0 overflow-hidden bg-[#efefef]">
+                                        {entity.img ? (
+                                            <Image src={entity.img} alt={entity.title} fill sizes="36px" className="object-cover" />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center text-xs font-bold text-white" style={{ background: nameToGradient(entity.title) }}>
+                                                {entity.title[0]}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">{entity.label}</p>
+                                        <p className="truncate text-[14px] font-bold text-foreground transition-colors group-hover:text-accent">{entity.title}</p>
+                                        {entity.sub && <p className="truncate font-mono text-[10px] text-muted">{entity.sub}</p>}
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
                     </div>
                 </div>

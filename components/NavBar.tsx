@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
+import type { MouseEvent } from "react"
 import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
@@ -11,18 +12,47 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 import { BrandMark } from "@/components/ui/BrandMark"
+import { QuickSearch } from "@/components/features/QuickSearch"
 
-interface TickerPost {
-    slug: string
+interface TickerItem {
+    type: 'article' | 'artist'
+    href: string
+    label: string
     title: string
-    category: { name: string } | null
 }
 
-const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
+const navLinks = [
+    { label: "Início", href: "/" },
+    { label: "Artigos", href: "/blog" },
+    { label: "Artistas", href: "/artists" },
+    { label: "Grupos", href: "/groups" },
+    { label: "Produções", href: "/productions" },
+    { label: "Calendário", href: "/calendario" },
+    { label: "Loja", href: "/loja" },
+]
+
+function formatEditionDate() {
+    const date = new Intl.DateTimeFormat("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    }).format(new Date())
+    return `${date} · seul 23:41 · são paulo 11:41`
+}
+
+const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
-    const openSearch = useQuickSearch(s => s.open)
+    const openSearch = useQuickSearch((state) => state.open)
+    const editionDate = useMemo(() => formatEditionDate(), [])
+
+    const handleOpenSearch = (event?: MouseEvent) => {
+        event?.preventDefault()
+        openSearch()
+        window.dispatchEvent(new Event("quick-search:open"))
+    }
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 0)
@@ -32,168 +62,123 @@ const NavBar = ({ tickerPosts = [] }: { tickerPosts?: TickerPost[] }) => {
 
     useEffect(() => {
         const root = document.documentElement
-        root.style.setProperty('--site-header-h', tickerPosts.length > 0 ? 'calc(var(--nav-h) + var(--ticker-h))' : 'var(--nav-h)')
-        return () => {
-            root.style.removeProperty('--site-header-h')
-        }
-    }, [tickerPosts.length])
+        root.style.setProperty("--site-header-h", "192px")
+        return () => { root.style.removeProperty("--site-header-h") }
+    }, [tickerItems.length])
 
-    if (pathname?.startsWith('/auth') || pathname?.startsWith('/admin') || pathname?.startsWith('/write')) return null
-
-    const navLinks = [
-        { label: "Descobrir", href: "/" },
-        { label: "Artigos", href: "/blog" },
-        { label: "Dramas & Filmes", href: "/productions" },
-        { label: "Artistas", href: "/artists" },
-        { label: "Grupos", href: "/groups" },
-        { label: "Agenda", href: "/calendario" },
-        { label: "Loja", href: "/loja" },
-    ]
+    if (pathname?.startsWith("/auth") || pathname?.startsWith("/admin") || pathname?.startsWith("/write")) return null
 
     const isActiveLink = (href: string) => {
-        if (href === '/') return pathname === '/'
-        return pathname === href || pathname?.startsWith(`${href}/`)
+        const cleanHref = href.split("?")[0]
+        if (href === "/") return pathname === "/"
+        return pathname === cleanHref || pathname?.startsWith(`${cleanHref}/`)
     }
 
-    const navBorder = tickerPosts.length > 0 ? '' : 'border-b border-border'
-    const navBg = isScrolled
-        ? `bg-background backdrop-blur-xl ${navBorder} shadow-[0_4px_24px_rgba(0,0,0,0.08)]`
-        : `bg-background ${navBorder}`
-    const spacerClass = 'h-[var(--site-header-h)]'
-
     return (
-        <>
-            <nav
-                className={`fixed left-0 right-0 z-[320] top-[var(--adsense-anchor-top-offset,0px)] transition-[top,background-color,backdrop-filter,box-shadow] duration-300 ${navBg}`}
-            >
-                <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between gap-2 sm:gap-3 h-[52px] sm:h-[60px] lg:h-[64px] px-2 sm:px-0">
+        <nav className={`sticky top-0 z-[320] bg-background transition-shadow duration-300 ${isScrolled ? "shadow-[0_1px_0_var(--color-border)]" : ""}`}>
+            {/* Mobile */}
+            <div className="lg:hidden">
+                <div className="flex h-[52px] items-center justify-between border-b border-border px-3">
+                    <div className="flex items-center gap-2">
+                        <MobileMenu links={navLinks} />
+                        <Link href="/" className="flex items-center gap-2 text-foreground">
+                            <BrandMark size={32} />
+                            <span className="text-[22px] font-black tracking-[-0.035em]">
+                                Hallyu<span className="text-accent">Hub</span>
+                            </span>
+                        </Link>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Link
+                            href="/search"
+                            onClick={handleOpenSearch}
+                            className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-muted transition-colors hover:border-border hover:bg-surface hover:text-foreground"
+                            aria-label="Buscar"
+                        >
+                            <Search className="h-[18px] w-[18px]" />
+                        </Link>
+                        <ThemeToggle />
+                    </div>
+                </div>
+            </div>
 
-                        {/* Left: hamburger (mobile) + logo */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className="flex lg:hidden">
-                                <MobileMenu links={navLinks} />
-                            </div>
-                            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-foreground">
-                                <BrandMark size={36} />
-                                <span className="text-[22px] font-bold tracking-[-0.02em] text-foreground">
-                                    Hallyu<span className="text-[#ff2d78]">Hub</span>
-                                </span>
-                            </Link>
-                        </div>
+            {/* Desktop */}
+            <div className="hidden lg:block">
+                {/* Faixa de data */}
+                <div className="flex h-9 items-center border-b border-border px-10 font-mono text-[12px] lowercase tracking-[0.02em] text-muted">
+                    <span>{editionDate}</span>
+                </div>
 
-                        {/* Center: desktop nav links */}
-                        <div className="hidden lg:flex items-center justify-center gap-1 flex-1 min-w-0 px-2">
-                            {navLinks.map((link) => (
+                {/* Logo + botões */}
+                <div className="flex h-[112px] items-end justify-between border-b-2 border-foreground px-10 pb-5">
+                    <Link href="/" className="group">
+                        <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground transition-colors group-hover:text-accent">
+                            HallyuHub<span className="text-accent">.</span>
+                        </span>
+                        <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
+                            k-pop · k-drama · cultura coreana, em português
+                        </span>
+                    </Link>
+
+                    <div className="flex items-center gap-2 pb-2">
+                        <Link
+                            href="/search"
+                            className="flex h-9 min-w-[320px] items-center gap-2 rounded-md border border-border bg-background px-3 text-left text-[12px] font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground"
+                            onClick={handleOpenSearch}
+                        >
+                            <Search className="h-4 w-4 shrink-0 opacity-70" />
+                            <span className="min-w-0 flex-1 truncate">Buscar em artistas, grupos, produções, loja...</span>
+                            <span className="inline-flex items-center gap-1 border-l border-border pl-2 font-mono text-[10px] font-black uppercase">
+                                <Command className="h-2.5 w-2.5" /> K
+                            </span>
+                        </Link>
+                        <ThemeToggle />
+                        {!session ? (
+                            <>
                                 <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    aria-current={isActiveLink(link.href) ? 'page' : undefined}
-                                    className={`text-[12.5px] lg:text-[13px] font-semibold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap ${
-                                        isActiveLink(link.href)
-                                            ? 'text-accent border-accent/30 bg-accent/8'
-                                            : 'text-foreground border-border bg-background hover:border-border-strong hover:bg-surface'
-                                    }`}
+                                    href="/auth/login"
+                                    className="border border-border px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-foreground transition-colors hover:border-foreground"
                                 >
-                                    {link.label}
+                                    Entrar
                                 </Link>
-                            ))}
-                        </div>
-
-                        {/* Right: search + theme toggle + auth */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                            {/* Search bar (tablet+) */}
-                            <button
-                                type="button"
-                                className="hidden min-w-[132px] items-center gap-2 rounded-full border border-border bg-surface px-3 py-[7px] text-left text-[11.5px] text-muted transition-colors hover:border-accent/35 hover:text-foreground md:min-w-[180px] lg:flex lg:min-w-[230px]"
-                                onClick={() => openSearch()}
-                            >
-                                <Search className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
-                                <span className="min-w-0 flex-1 truncate">Buscar artistas, artigos, dramas...</span>
-                                <span className="hidden items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-black text-muted xl:inline-flex">
-                                    <Command className="h-2.5 w-2.5" /> K
-                                </span>
-                            </button>
-
-                            {/* Mobile search icon */}
-                            <button
-                                onClick={() => openSearch()}
-                                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full text-muted hover:bg-surface transition-colors"
-                                aria-label="Buscar"
-                            >
-                                <Search className="w-[18px] h-[18px]" />
-                            </button>
-
-                            {/* Theme toggle */}
-                            <ThemeToggle />
-
-                            {/* Logged out: Entrar + Criar conta */}
-                            {!session && (
-                                <>
-                                    <Link
-                                        href="/auth/login"
-                                        className="hidden md:block text-[11.5px] font-semibold text-muted hover:text-foreground transition-colors whitespace-nowrap"
-                                    >
-                                        Entrar
-                                    </Link>
-                                    <Link
-                                        href="/auth/register"
-                                        className="hidden sm:block bg-accent text-white text-[11.5px] font-semibold rounded-full px-3 py-[6px] hover:brightness-110 transition-all whitespace-nowrap"
-                                    >
-                                        Criar conta
-                                    </Link>
-                                </>
-                            )}
-
-                            {/* Logged in: notifications + user menu */}
-                            {session && (
-                                <div className="hidden sm:flex items-center gap-1.5">
-                                    <NotificationBell />
-                                    <UserMenu />
-                                </div>
-                            )}
-                        </div>
+                                <Link
+                                    href="/auth/register"
+                                    className="bg-accent px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-90"
+                                >
+                                    Criar conta
+                                </Link>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-1.5">
+                                <NotificationBell />
+                                <UserMenu />
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Ticker strip */}
-                {tickerPosts.length > 0 && (() => {
-                    const items = [...tickerPosts, ...tickerPosts]
-                    return (
-                        <div className="w-full h-[28px] flex items-center overflow-hidden">
-                            <div className="max-w-7xl w-full mx-auto px-0 sm:px-6 lg:px-8 h-full">
-                                <div
-                                    className="flex items-center h-full overflow-hidden"
-                                    style={{ backgroundColor: 'var(--color-ticker-bg)' }}
-                                >
-                                    <div className="flex-shrink-0 flex items-center self-stretch px-3 bg-accent">
-                                        <span className="text-white text-[11px] font-bold uppercase tracking-[0.16em] whitespace-nowrap">Artigos</span>
-                                    </div>
-                                    <div className="overflow-hidden flex-1 min-w-0">
-                                        <div className="flex items-center animate-home-ticker whitespace-nowrap" style={{ width: 'max-content' }}>
-                                            {items.map((item, idx) => (
-                                                <Link
-                                                    key={`ticker-${item.slug}-${idx}`}
-                                                    href={`/blog/${item.slug}`}
-                                                    className="ticker-link inline-flex items-center gap-2 px-5 text-[13.5px] whitespace-nowrap flex-shrink-0 h-[28px] transition-colors"
-                                                >
-                                                    {item.category && (
-                                                        <b className="text-accent font-semibold not-italic">{item.category.name}</b>
-                                                    )}
-                                                    {item.title}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })()}
-            </nav>
-            <div aria-hidden="true" className={spacerClass} />
-
-        </>
+                {/* Nav links */}
+                <div className="flex h-12 items-center border-b-2 border-foreground px-10">
+                    <div className="flex h-full flex-1 items-center gap-8 overflow-x-auto">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                aria-current={isActiveLink(link.href) ? "page" : undefined}
+                                className={`relative flex h-full shrink-0 items-center text-[15px] font-bold tracking-[-0.02em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
+                                    isActiveLink(link.href)
+                                        ? "text-foreground after:scale-x-100 after:bg-accent"
+                                        : "text-muted after:scale-x-0 after:bg-accent hover:text-foreground hover:after:scale-x-100"
+                                }`}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <QuickSearch />
+        </nav>
     )
 }
 
