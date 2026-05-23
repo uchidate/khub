@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { MouseEvent } from "react"
 import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 import { BrandMark } from "@/components/ui/BrandMark"
+import { BrandDot } from "@/components/ui/BrandDot"
 import { QuickSearch } from "@/components/features/QuickSearch"
 
 interface TickerItem {
@@ -31,49 +32,16 @@ const navLinks = [
     { label: "Loja", href: "/loja" },
 ]
 
-const LOGO_COLORS = ['#ff246e', '#b14cff', '#ff6bb0', '#00d4ff']
-
 
 function AnimatedLogoLink() {
-    const [idx, setIdx] = useState(0)
-    const [t, setT] = useState(0)
-    const frameRef = useRef<number>(0)
-    const startRef = useRef<number>(0)
-    const DURATION = 4000
-
-    useEffect(() => {
-        const animate = (ts: number) => {
-            if (!startRef.current) startRef.current = ts
-            setT(((ts - startRef.current) % DURATION) / DURATION)
-            frameRef.current = requestAnimationFrame(animate)
-        }
-        frameRef.current = requestAnimationFrame(animate)
-        const iv = setInterval(() => setIdx(i => (i + 1) % LOGO_COLORS.length), DURATION)
-        return () => { cancelAnimationFrame(frameRef.current); clearInterval(iv) }
-    }, [])
-
-    const pulse = 0.5 + Math.sin(t * Math.PI * 2) * 0.5
-    const wave = Math.sin(t * Math.PI * 2) * 2
-    const color = LOGO_COLORS[idx]
-
     return (
         <Link href="/" className="flex items-end gap-5">
-            <div style={{ filter: `drop-shadow(0 0 ${8 * pulse}px ${color}99)`, color: 'var(--color-fg)' }} className="mb-1 shrink-0">
-                <svg viewBox="0 0 38 38" fill="none" width={72} height={72}>
-                    <rect x="4" y="7" width="6" height="24" rx="3" fill="currentColor" />
-                    <rect x="28" y="7" width="6" height="24" rx="3" fill="currentColor" />
-                    <path
-                        d={`M10 ${19 + wave} C13 14, 17 14, 19 19 C21 24, 25 24, 28 ${19 - wave}`}
-                        stroke={color}
-                        strokeWidth="3"
-                        fill="none"
-                        strokeLinecap="round"
-                    />
-                </svg>
+            <div className="mb-1 shrink-0 text-foreground">
+                <BrandMark size={72} />
             </div>
             <div>
                 <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground">
-                    HallyuHub<span style={{ color, transition: 'color 0.6s ease' }}>.</span>
+                    HallyuHub<BrandDot />
                 </span>
                 <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
                     k-pop · k-drama · cultura coreana, em português
