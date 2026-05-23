@@ -93,7 +93,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         <Link href="/" className="flex items-center gap-2 text-foreground">
                             <BrandMark size={32} />
                             <span className="text-[22px] font-black tracking-[-0.035em]">
-                                Hallyu<span className="text-accent">Hub</span>
+                                Hallyu<span className="text-accent">Hub</span><span className="text-accent">.</span>
                             </span>
                         </Link>
                     </div>
