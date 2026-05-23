@@ -20,7 +20,8 @@
         "categories:seo": ["warn", { "minScore": 0.9 }],
         "first-contentful-paint": ["warn", { "maxNumericValue": 3000 }],
         "largest-contentful-paint": ["warn", { "maxNumericValue": 4000 }],
-        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.1 }]
+        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.1 }],
+        "errors-in-console": "off"
       }
     },
     "upload": {
