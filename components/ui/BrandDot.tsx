@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-const COLORS = ['#ff246e', '#b14cff', '#ff6bb0']
+const COLORS = ['#ff246e', '#b14cff']
 
 export function BrandDot({ className = '' }: { className?: string }) {
     const [idx, setIdx] = useState(0)
