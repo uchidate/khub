@@ -388,7 +388,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           {/* ── Filter bar ─────────────────────────────────────────── */}
           <div className="border border-border mb-8">
             {/* Sort tabs + categorias */}
-            <div className="flex items-center border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <div className="relative">
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+            <div className="flex items-center border-b border-border overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
               {/* Tabs */}
               {[{ key: 'recent', label: 'Mais recentes' }, { key: 'popular', label: 'Mais lidos' }].map(tab => (
                 <Link key={tab.key} href={tabHref(tab.key)} scroll={false}
@@ -418,10 +420,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 )
               })}
             </div>
+            </div>
 
             {/* Tags */}
             {normalizedPopularTags.length > 0 && (
-              <div className="flex items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="relative">
+              <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+              <div className="flex items-center overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
                 <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">
                   <Tag size={9} className="inline mr-1" />tags
                 </span>
@@ -439,6 +444,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                     </Link>
                   )
                 })}
+              </div>
               </div>
             )}
           </div>

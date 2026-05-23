@@ -143,12 +143,14 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                 </Suspense>
             </nav>
             {/* ── Contexto + alfabeto sticky ───────────────────────── */}
-            <section className="sticky top-[var(--site-header-h,52px)] z-10 bg-background">
+            <section className="sticky z-10 bg-background" style={{ top: 'calc(var(--site-header-h, 52px) + 48px)' }}>
                 <div className="page-wrap border-b border-border/50 py-2">
                     <Breadcrumbs items={[{ label: 'Artistas' }]} />
                 </div>
                 <div className="page-wrap border-b border-foreground py-3">
-                    <div className="flex gap-0.5 overflow-x-auto scrollbar-none">
+                    <div className="relative">
+                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+                    <div className="flex gap-0.5 overflow-x-auto scrollbar-none pr-10">
                         {ALPHA.map((L) => {
                             const count = letterCounts[L] ?? 0
                             const active = letter === L
@@ -174,6 +176,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                                 </Link>
                             )
                         })}
+                    </div>
                     </div>
                 </div>
             </section>

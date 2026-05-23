@@ -303,7 +303,9 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {/* Filters */}
             {!hideFilter && (
                 <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 52px)' }}>
-                    <div className="flex w-full items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                    <div className="relative w-full">
+                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
                         <div className="flex shrink-0 items-center gap-2">
                             {renderFilterControls()}
                         </div>
@@ -325,6 +327,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                             </button>
                         )}
                     </div>
+                    </div>
                 </nav>
             )}
 
@@ -342,7 +345,71 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                         </h2>
                         <span className="font-mono text-[11px] text-muted">curado pela redação</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-4">
+
+                    {/* Mobile layout */}
+                    <div className="sm:hidden space-y-3">
+                        {/* Destaque principal — hero full-width */}
+                        {featuredProductions[0] && (() => { const p = featuredProductions[0]; return (
+                            <Link href={`/productions/${p.slug ?? p.id}`} className="group block relative overflow-hidden bg-surface aspect-[4/5]">
+                                {p.imageUrl ? (
+                                    <img src={p.imageUrl} alt={p.titlePt} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                                ) : (
+                                    <div className="w-full h-full bg-surface flex items-center justify-center">
+                                        <span className="font-black text-foreground/10 text-[80px] leading-none">{p.titlePt[0]}</span>
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                                <div className="absolute top-3 left-3 flex flex-col gap-1">
+                                    <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #1 em alta</span>
+                                </div>
+                                {p.voteAverage && (
+                                    <div className="absolute top-3 right-3 bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
+                                        ★ {p.voteAverage.toFixed(1)}
+                                    </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 p-4">
+                                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
+                                    <h3 className="text-[26px] font-black tracking-[-0.03em] leading-[1.05] mt-1 text-white group-hover:text-accent transition-colors">{p.titlePt}</h3>
+                                    {p.titleKr && <p className="text-[12px] text-white/60 mt-0.5">{p.titleKr}</p>}
+                                </div>
+                            </Link>
+                        )})()}
+                        {/* Secundários — 2 colunas */}
+                        {featuredProductions.slice(1).length > 0 && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {featuredProductions.slice(1).map((p, i) => (
+                                    <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group block">
+                                        <div className="relative overflow-hidden bg-surface aspect-[2/3]">
+                                            {p.imageUrl ? (
+                                                <img src={p.imageUrl} alt={p.titlePt} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full bg-surface flex items-center justify-center">
+                                                    <span className="font-black text-foreground/10 text-[40px] leading-none">{p.titlePt[0]}</span>
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                                            <div className="absolute top-2 left-2">
+                                                <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #{i + 2}</span>
+                                            </div>
+                                            {p.voteAverage && (
+                                                <div className="absolute top-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                                    ★ {p.voteAverage.toFixed(1)}
+                                                </div>
+                                            )}
+                                            <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                                                <span className="font-mono text-[8px] font-bold uppercase tracking-wide text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
+                                                <h3 className="text-[14px] font-black tracking-tight leading-tight mt-0.5 text-white group-hover:text-accent transition-colors line-clamp-2">{p.titlePt}</h3>
+                                                {p.titleKr && <p className="text-[10px] text-white/50 mt-0.5 truncate">{p.titleKr}</p>}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop layout — mantém original */}
+                    <div className="hidden sm:grid sm:grid-cols-[2fr_1fr_1fr] gap-4">
                         {featuredProductions.map((p, i) => (
                             <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group block">
                                 <div className={`relative overflow-hidden bg-surface ${i === 0 ? 'aspect-[3/2]' : 'aspect-[2/3]'}`}>

@@ -51,7 +51,7 @@ export function BlogStickyNav({ title, readingTimeMin, shareUrl, shareTitle, cat
 
   return (
     <div
-      className={`fixed top-0 left-0 right-0 z-[330] bg-background/95 backdrop-blur-sm border-b border-border shadow-sm transition-transform duration-300 ${visible ? 'translate-y-0' : '-translate-y-full'}`}
+      className={`fixed top-0 left-0 right-0 z-[330] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm border-b border-border shadow-sm transition-transform duration-300 ${visible ? 'translate-y-0' : '-translate-y-full'}`}
       style={{ willChange: 'transform' }}
     >
       {/* Barra de progresso */}
