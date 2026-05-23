@@ -137,11 +137,11 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         }} />
         <PageTransition className="pb-16">
 
-            <div className="page-wrap flex h-12 items-center border-b border-border/50">
+            <nav aria-label="Filtros" className="page-wrap flex h-12 items-center border-b border-border/50">
                 <Suspense>
                     <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
                 </Suspense>
-            </div>
+            </nav>
             {/* ── Contexto + alfabeto sticky ───────────────────────── */}
             <section className="sticky top-[var(--site-header-h,52px)] z-10 bg-background">
                 <div className="page-wrap border-b border-border/50 py-2">
