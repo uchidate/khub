@@ -16,7 +16,6 @@ import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
-import { BottomNav } from "@/components/ui/BottomNav"
 import { SiteFooter } from "@/components/ui/SiteFooter"
 
 type TickerItem = { type: 'article' | 'artist'; href: string; label: string; title: string }

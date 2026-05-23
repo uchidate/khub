@@ -10,7 +10,7 @@ interface SectionHeaderProps {
     className?: string
 }
 
-export function SectionHeader({ title, count, countLabel, subtitle, backHref, backLabel = 'Início', className = '' }: SectionHeaderProps) {
+export function SectionHeader({ title, count, countLabel, subtitle: _subtitle, backHref, backLabel = 'Início', className = '' }: SectionHeaderProps) {
     return (
         <div className={`flex items-center justify-between mb-6 ${className}`}>
             <div className="flex items-baseline gap-3">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Tag, Copy, ExternalLink } from 'lucide-react'
+import { Tag, ExternalLink } from 'lucide-react'
 import prisma from '@/lib/prisma'
 
 const STORE_LABELS: Record<string, string> = {

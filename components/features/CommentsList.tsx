@@ -29,20 +29,19 @@ export function CommentsList({ newsId, onCommentAdded }: CommentsListProps) {
     const [loading, setLoading] = useState(true)
     const [deleting, setDeleting] = useState<string | null>(null)
 
-    const fetchComments = async () => {
-        setLoading(true)
-        try {
-            const response = await fetch(`/api/news/${newsId}/comments`)
-            const data = await response.json()
-            setComments(data.comments || [])
-        } catch (error) {
-            console.error('Erro ao buscar comentários:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
     useEffect(() => {
+        const fetchComments = async () => {
+            setLoading(true)
+            try {
+                const response = await fetch(`/api/news/${newsId}/comments`)
+                const data = await response.json()
+                setComments(data.comments || [])
+            } catch (error) {
+                console.error('Erro ao buscar comentários:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
         fetchComments()
     }, [newsId, onCommentAdded])
 

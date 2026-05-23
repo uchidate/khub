@@ -89,7 +89,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
         <Link href={`/productions/${prod.slug ?? prod.id}`} className="group flex flex-col">
             <div className="relative aspect-[2/3] overflow-hidden bg-surface">
                 {imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img
                         src={imageUrl}
                         alt={prod.titlePt}
@@ -175,9 +175,6 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         sortBy: searchParams.get('sortBy') || 'popular',
     }), [searchParams])
 
-    const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const getPerPage = () => parseInt(searchParams.get('limit') || '50')
-
     const updateUrl = useCallback((filters: { search: string; type: string; ageRating: string; sortBy: string }, page = 1, limit?: number) => {
         const params = new URLSearchParams()
         if (filters.search) params.set('search', filters.search)
@@ -193,10 +190,11 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         setIsLoading(true)
         try {
             const filters = getFilters()
-            const page = getCurrentPage()
+            const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+            const perPage = parseInt(searchParams.get('limit') || '50')
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: getPerPage().toString(),
+                limit: perPage.toString(),
                 ...(filters.search && { search: filters.search }),
                 ...(filters.type && { type: filters.type }),
                 ...(filters.ageRating && { ageRating: filters.ageRating }),
@@ -211,12 +209,12 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         } finally {
             setIsLoading(false)
         }
-    }, [getFilters])
+    }, [getFilters, searchParams])
 
     useEffect(() => { fetchProductions() }, [fetchProductions])
 
     const filters = getFilters()
-    const currentPage = getCurrentPage()
+    const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1'))
 
     const handleSearch = (value: string) => {
         setSearchInput(value)
@@ -226,7 +224,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
     const handleAgeRating = (value: string) => updateUrl({ ...filters, ageRating: value }, 1)
     const handleSort = (value: string) => updateUrl({ ...filters, sortBy: value }, 1)
     const handlePage = (p: number) => {
-        updateUrl(filters, p, getPerPage())
+        updateUrl(filters, p, parseInt(searchParams.get('limit') || '50'))
     }
     const handlePerPage = (n: number) => {
         updateUrl(filters, 1, n)
@@ -235,19 +233,6 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         setSearchInput('')
         updateUrl({ search: '', type: '', ageRating: '', sortBy: 'popular' }, 1)
     }
-
-    const removeSingleFilter = (key: 'search' | 'type' | 'ageRating' | 'sortBy') => {
-        const next = { ...filters, [key]: key === 'sortBy' ? 'popular' : '' }
-        if (key === 'search') setSearchInput('')
-        updateUrl(next, 1)
-    }
-
-    const activeChips: Array<{ key: 'search' | 'type' | 'ageRating' | 'sortBy'; label: string }> = [
-        ...(filters.search ? [{ key: 'search' as const, label: `Busca: ${filters.search}` }] : []),
-        ...(filters.type ? [{ key: 'type' as const, label: `Tipo: ${TYPE_OPTIONS.find(t => t.value === filters.type)?.label ?? filters.type}` }] : []),
-        ...(filters.ageRating ? [{ key: 'ageRating' as const, label: `Classificacao: ${AGE_RATING_OPTIONS.find(a => a.value === filters.ageRating)?.label ?? filters.ageRating}` }] : []),
-        ...(filters.sortBy !== 'popular' ? [{ key: 'sortBy' as const, label: `Ordem: ${SORT_OPTIONS.find(s => s.value === filters.sortBy)?.label ?? filters.sortBy}` }] : []),
-    ]
 
     const hasActiveFilters = filters.search || filters.type || filters.ageRating
     const chipClass = (active: boolean) =>

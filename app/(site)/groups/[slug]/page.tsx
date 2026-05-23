@@ -32,7 +32,6 @@ import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
 import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
 import { ExternalMusicEntityType } from '@prisma/client'
-import { BrandDot } from '@/components/ui/BrandDot'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
