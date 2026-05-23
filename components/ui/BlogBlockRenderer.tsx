@@ -107,7 +107,7 @@ function renderInline(text: string): React.ReactNode {
 
     while ((match = pattern.exec(text)) !== null) {
         if (match.index > last) parts.push(text.slice(last, match.index))
-        const linkCls = "text-[#ff2d78] underline underline-offset-4 hover:brightness-110 transition-all"
+        const linkCls = "text-accent underline underline-offset-4 hover:brightness-110 transition-all"
         if (match[1] && match[2]) {
             // **[bold link](url)**
             const href = sanitizeHref(match[2])
@@ -340,12 +340,12 @@ function TimelineBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_time
                 {block.items.map((item, i) => (
                     <div key={i} className="flex pb-7 last:pb-0 relative">
                         <div className="w-[88px] shrink-0 text-right pr-4 pt-0.5">
-                            <span className="text-xs font-black text-[#ff2d78] leading-none">{item.year}</span>
+                            <span className="text-xs font-black text-accent leading-none">{item.year}</span>
                         </div>
                         <div className="shrink-0 w-[12px] flex flex-col items-center mr-4">
                             <span
                                 className="w-3 h-3 rounded-full shrink-0 border-2 border-background mt-0.5 shadow-[0_0_0_2px_rgba(255,45,120,0.35)]"
-                                style={{ background: '#ff2d78' }}
+                                style={{ background: 'var(--color-accent)' }}
                             />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -857,22 +857,22 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                     className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-accent text-base font-normal" aria-label="Copiar link da seção">#</a>
             )
             if (block.level === 1) return <h1 id={headingId} className={`group text-3xl md:text-4xl mt-10 mb-5 ${cls}`}>{block.text}{anchor}</h1>
-            if (block.level === 3) return <h3 id={headingId} className={`group text-lg mt-7 mb-3 text-[#ff2d78] ${cls}`}>{block.text}{anchor}</h3>
+            if (block.level === 3) return <h3 id={headingId} className={`group text-lg mt-7 mb-3 text-accent ${cls}`}>{block.text}{anchor}</h3>
             return (
-                <h2 id={headingId} className={`group text-2xl mt-8 mb-4 pb-2 ${cls}`} style={{ borderBottom: '1px solid rgba(255,45,120,0.15)' }}>
+                <h2 id={headingId} className={`group text-2xl mt-8 mb-4 pb-2 border-b border-accent/15 ${cls}`}>
                     {block.text}{anchor}
                 </h2>
             )
         }
 
         case 'blog_paragraph':
-            if (isLead) return <p className="mb-7 text-xl sm:text-2xl leading-relaxed font-medium text-foreground/90 text-justify hyphens-auto">{renderInline(block.text)}</p>
-            return <p className="mb-5 leading-relaxed text-foreground text-lg text-justify hyphens-auto">{renderInline(block.text)}</p>
+            if (isLead) return <p className="mb-7 text-xl sm:text-2xl leading-loose font-medium text-foreground/90 text-justify hyphens-auto">{renderInline(block.text)}</p>
+            return <p className="mb-6 leading-[1.85] text-foreground text-[17px] text-justify hyphens-auto">{renderInline(block.text)}</p>
 
         case 'blog_quote':
             return (
-                <blockquote className="pl-5 my-7 italic py-3 pr-4 rounded-r-xl"
-                    style={{ borderLeft: '4px solid #ff2d78', backgroundColor: 'rgba(255,45,120,0.04)', color: '#6b6b6b' }}>
+                <blockquote className="pl-5 my-7 italic py-3 pr-4 rounded-r-xl text-muted"
+                    style={{ borderLeft: '4px solid var(--color-accent)', backgroundColor: 'var(--color-accent-soft)' }}>
                     <p className="mb-1">{block.text}</p>
                     {block.author && <footer className="text-xs text-muted not-italic">— {block.author}</footer>}
                 </blockquote>
@@ -905,7 +905,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                 </div>
             ) : (
                 <a href={block.url} target="_blank" rel="noopener noreferrer"
-                    className="text-[#ff2d78] underline underline-offset-4 my-4 block">
+                    className="text-accent underline underline-offset-4 my-4 block">
                     {block.caption || block.url}
                 </a>
             )
@@ -966,7 +966,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
 
         case 'blog_callout': {
             const variants = {
-                fact:    { border: '#ff2d78', bg: 'rgba(255,45,120,0.06)',  label: 'FATO',   dot: 'bg-[#ff2d78]' },
+                fact:    { border: 'var(--color-accent)', bg: 'var(--color-accent-soft)',  label: 'FATO',   dot: 'bg-accent' },
                 stat:    { border: '#f59e0b', bg: 'rgba(245,158,11,0.06)', label: 'DADOS',  dot: 'bg-amber-400' },
                 info:    { border: '#3b82f6', bg: 'rgba(59,130,246,0.06)', label: 'INFO',   dot: 'bg-blue-400'  },
                 warning: { border: '#f97316', bg: 'rgba(249,115,22,0.06)', label: 'ATENÇÃO',dot: 'bg-orange-400'},
@@ -991,7 +991,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
             return (
                 <div className="my-7 rounded-xl px-5 py-4"
                     style={{ borderLeft: '3px solid rgba(255,45,120,0.5)', background: 'rgba(255,45,120,0.04)' }}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#ff2d78] mb-1.5">Você sabia?</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1.5">Você sabia?</p>
                     <p className="text-sm leading-relaxed text-foreground">{renderInline(block.text)}</p>
                 </div>
             )
@@ -1021,8 +1021,8 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                     {block.items.map((item, i) => (
                         <li key={i} className="flex items-start gap-3 text-foreground leading-relaxed">
                             {block.ordered
-                                ? <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#ff2d78]/10 text-[#ff2d78] text-xs font-black flex items-center justify-center mt-0.5">{i + 1}</span>
-                                : <span className="flex-shrink-0 w-2 h-2 rounded-full bg-[#ff2d78]/60 mt-2" />
+                                ? <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-black flex items-center justify-center mt-0.5">{i + 1}</span>
+                                : <span className="flex-shrink-0 w-2 h-2 rounded-full bg-accent/60 mt-2" />
                             }
                             <span className="flex-1">{renderInline(item)}</span>
                         </li>
@@ -1071,8 +1071,8 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                 <div className="my-8 space-y-3">
                     {block.title && <p className="text-xs font-black uppercase tracking-widest text-muted mb-4">{block.title}</p>}
                     {block.steps.map((step, i) => (
-                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-[#ff2d78]/20 transition-colors">
-                            <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-[#ff2d78]/10 text-[#ff2d78] text-sm font-black flex items-center justify-center">{i + 1}</span>
+                        <div key={i} className="flex gap-4 p-4 rounded-xl bg-surface border border-border hover:border-accent/20 transition-colors">
+                            <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-accent/10 text-accent text-sm font-black flex items-center justify-center">{i + 1}</span>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-foreground mb-0.5">{step.title}</p>
                                 <p className="text-sm text-muted leading-relaxed">{renderInline(step.text)}</p>
@@ -1116,7 +1116,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                             <tr className="bg-surface">
                                 <th className="text-left px-4 py-2.5 text-xs font-black text-muted uppercase tracking-wide border-b border-border w-1/3"></th>
                                 {block.columns.map((col, i) => (
-                                    <th key={i} className="text-center px-4 py-2.5 text-xs font-black text-[#ff2d78] uppercase tracking-wide border-b border-border">{col}</th>
+                                    <th key={i} className="text-center px-4 py-2.5 text-xs font-black text-accent uppercase tracking-wide border-b border-border">{col}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -1138,7 +1138,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
             return (
                 <div className="my-10 flex items-center gap-4">
                     <div className="flex-1 h-px bg-border" />
-                    <span className="text-[#ff2d78]/40 text-sm">✦</span>
+                    <span className="text-accent/40 text-sm">✦</span>
                     <div className="flex-1 h-px bg-border" />
                 </div>
             )
@@ -1631,19 +1631,19 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
     if (compact) {
         return (
             <Link href={`/artists/${artistId}`}
-                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
-                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-accent/40 bg-surface hover:bg-surface-hover transition-all">
+                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-accent">
                     {data?.primaryImageUrl
                         ? <Image src={data.primaryImageUrl} alt={data.nameRomanized} width={32} height={32} className="w-full h-full object-cover" />
                         : <span>{data?.nameRomanized?.[0] ?? '?'}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate">
                         {data?.nameRomanized ?? artistId}
                     </p>
                     {note && <p className="text-[11px] text-muted leading-snug truncate">{note}</p>}
                 </div>
-                <span className="text-[10px] text-muted shrink-0 group-hover:text-[#ff2d78]">→</span>
+                <span className="text-[10px] text-muted shrink-0 group-hover:text-accent">→</span>
             </Link>
         )
     }
@@ -1652,7 +1652,7 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
         return (
             <div className="flex flex-col">
                 <Link href={`/artists/${artistId}`}
-                    className="group block relative rounded-2xl overflow-hidden border border-border/60 hover:border-[#ff2d78]/60 shadow-sm hover:shadow-xl transition-all aspect-[2/3]">
+                    className="group block relative rounded-2xl overflow-hidden border border-border/60 hover:border-accent/60 shadow-sm hover:shadow-xl transition-all aspect-[2/3]">
                     {data?.primaryImageUrl ? (
                         <Image
                             src={data.primaryImageUrl}
@@ -1662,19 +1662,19 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
                             sizes="(max-width: 768px) 50vw, 25vw"
                         />
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#ff2d78]/20 via-surface to-surface-hover">
-                            <span className="text-5xl font-black text-[#ff2d78]/60">{data?.nameRomanized?.[0] ?? '?'}</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-accent/20 via-surface to-surface-hover">
+                            <span className="text-5xl font-black text-accent/60">{data?.nameRomanized?.[0] ?? '?'}</span>
                         </div>
                     )}
                     {/* gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                     {/* hover: "Ver perfil" badge */}
                     <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-[9px] font-bold text-white bg-[#ff2d78] px-2 py-0.5 rounded-full tracking-wide">Ver perfil</span>
+                        <span className="text-[9px] font-bold text-white bg-accent px-2 py-0.5 rounded-full tracking-wide">Ver perfil</span>
                     </div>
                     {/* bottom info */}
                     <div className="absolute inset-x-0 bottom-0 p-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#ff2d78] mb-0.5">Artista</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-0.5">Artista</p>
                         <p className="text-sm font-black text-white leading-tight">{data?.nameRomanized ?? artistId}</p>
                         {role && <p className="text-[10px] text-white/60 mt-0.5 truncate">{role}</p>}
                     </div>
@@ -1687,7 +1687,7 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
     // Solo expanded card
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-start gap-5 my-4 p-4 rounded-2xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all shadow-sm hover:shadow-md">
+            className="group flex items-start gap-5 my-4 p-4 rounded-2xl border border-border hover:border-accent/40 bg-surface hover:bg-surface-hover transition-all shadow-sm hover:shadow-md">
             <div className="relative w-28 h-36 rounded-xl overflow-hidden shrink-0 border border-border/60">
                 {data?.primaryImageUrl ? (
                     <Image
@@ -1698,19 +1698,19 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
                         sizes="112px"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#ff2d78]/15 to-surface text-3xl font-black text-[#ff2d78]/70">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface text-3xl font-black text-accent/70">
                         {data?.nameRomanized?.[0] ?? '?'}
                     </div>
                 )}
             </div>
             <div className="flex-1 min-w-0 py-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d78] bg-[#ff2d78]/10 px-2 py-0.5 rounded-full inline-block mb-2">Artista</span>
-                <p className="text-xl font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight">
+                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-2">Artista</span>
+                <p className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight">
                     {data?.nameRomanized ?? artistId}
                 </p>
                 {role && <p className="text-sm text-muted mt-1">{role}</p>}
                 {note && <p className="text-sm text-muted mt-2.5 leading-relaxed">{note}</p>}
-                <p className="text-xs text-[#ff2d78] mt-3 font-bold flex items-center gap-1">
+                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
                     Ver perfil completo
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
                 </p>
@@ -1729,33 +1729,33 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
     if (compact) {
         return (
             <Link href={`/groups/${groupId}`}
-                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all">
-                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-[#ff2d78]">
+                className="group flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border hover:border-accent/40 bg-surface hover:bg-surface-hover transition-all">
+                <div className="w-8 h-8 rounded-full bg-surface border border-border overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-accent">
                     {data?.profileImageUrl
                         ? <Image src={data.profileImageUrl} alt={data.name} width={32} height={32} className="w-full h-full object-cover" />
                         : <span>{data?.name?.[0] ?? '?'}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-[#ff2d78] transition-colors truncate">{data?.name ?? groupId}</p>
+                    <p className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate">{data?.name ?? groupId}</p>
                     {note && <p className="text-[11px] text-muted leading-snug truncate">{note}</p>}
                 </div>
-                <span className="text-[10px] text-muted shrink-0 group-hover:text-[#ff2d78]">→</span>
+                <span className="text-[10px] text-muted shrink-0 group-hover:text-accent">→</span>
             </Link>
         )
     }
     return (
         <Link href={`/groups/${groupId}`}
-            className="group my-4 rounded-2xl border border-border hover:border-[#ff2d78]/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg block">
+            className="group my-4 rounded-2xl border border-border hover:border-accent/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg block">
             {/* Banner gradient header */}
-            <div className="relative h-20 bg-gradient-to-r from-[#ff2d78]/15 via-[#ff2d78]/05 to-transparent">
+            <div className="relative h-20 bg-gradient-to-r from-accent/15 via-accent/05 to-transparent">
                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-[9px] font-bold text-white bg-[#ff2d78] px-2.5 py-1 rounded-full">Ver grupo →</span>
+                    <span className="text-[9px] font-bold text-white bg-accent px-2.5 py-1 rounded-full">Ver grupo →</span>
                 </div>
             </div>
             {/* Avatar overlapping banner */}
             <div className="px-5 pb-5">
                 <div className="relative -mt-10 mb-3">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-surface bg-surface overflow-hidden shadow-lg flex items-center justify-center text-2xl font-black text-[#ff2d78]/60">
+                    <div className="w-20 h-20 rounded-2xl border-4 border-surface bg-surface overflow-hidden shadow-lg flex items-center justify-center text-2xl font-black text-accent/60">
                         {data?.profileImageUrl ? (
                             <Image src={data.profileImageUrl} alt={data.name} width={80} height={80} className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
                         ) : (
@@ -1763,13 +1763,13 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
                         )}
                     </div>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d78] bg-[#ff2d78]/10 px-2 py-0.5 rounded-full inline-block mb-1.5">Grupo</span>
-                <p className="text-xl font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight">
+                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-1.5">Grupo</span>
+                <p className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight">
                     {data?.name ?? groupId}
                 </p>
                 {data?.fanClubName && <p className="text-sm text-muted mt-1">Fandom: <strong className="text-foreground font-semibold">{data.fanClubName}</strong></p>}
                 {note && <p className="text-sm text-muted mt-2 leading-relaxed">{note}</p>}
-                <p className="text-xs text-[#ff2d78] mt-3 font-bold flex items-center gap-1">
+                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
                     Ver perfil do grupo
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
                 </p>
@@ -1783,13 +1783,13 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
     const typeLabel = data?.type ? (TYPE_LABELS[data.type] ?? data.type) : null
     return (
         <Link href={`/productions/${productionId}`}
-            className="group flex my-4 rounded-2xl border border-border hover:border-[#ff2d78]/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg">
+            className="group flex my-4 rounded-2xl border border-border hover:border-accent/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg">
             {/* Poster */}
             <div className="relative w-28 shrink-0 bg-surface-hover min-h-[160px]">
                 {data?.imageUrl ? (
                     <Image src={data.imageUrl} alt={data?.titlePt ?? ''} fill className="object-cover group-hover:scale-[1.04] transition-transform duration-500" sizes="112px" />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-[#ff2d78]/30">
+                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-accent/30">
                         {data?.titlePt?.slice(0, 2).toUpperCase() ?? '?'}
                     </div>
                 )}
@@ -1801,14 +1801,14 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
             </div>
             {/* Info */}
             <div className="flex-1 min-w-0 p-4 py-5">
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d78] bg-[#ff2d78]/10 px-2 py-0.5 rounded-full inline-block mb-2">
+                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-2">
                     {typeLabel ?? 'Produção'}
                 </span>
-                <p className="text-lg font-black text-foreground group-hover:text-[#ff2d78] transition-colors leading-tight">
+                <p className="text-lg font-black text-foreground group-hover:text-accent transition-colors leading-tight">
                     {data?.titlePt ?? productionId}
                 </p>
                 {note && <p className="text-sm text-muted mt-2 leading-relaxed">{note}</p>}
-                <p className="text-xs text-[#ff2d78] mt-3 font-bold flex items-center gap-1">
+                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
                     Ver detalhes
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
                 </p>

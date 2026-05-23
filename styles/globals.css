@@ -5,15 +5,15 @@
 @layer base {
   /* ── Light theme (default) ── */
   :root {
-    --color-bg:           #fcfbfc;
-    --color-surface:      #f6f4f7;
-    --color-surface-hover:#f0edf2;
-    --color-border:       #e8e3ea;
-    --color-border-strong:#d8d0db;
+    --color-bg:           #f9f9fb;
+    --color-surface:      #f2f2f6;
+    --color-surface-hover:#e9e9ef;
+    --color-border:       #dddde6;
+    --color-border-strong:#c4c4d0;
     --color-home-frame:   #111111;
-    --color-fg:           #080808;
-    --color-fg-subtle:    #3a3a3a;
-    --color-muted:        #6b6b6b;
+    --color-fg:           #0d0d10;
+    --color-fg-subtle:    #2d2d38;
+    --color-muted:        #5a5a6e;
     --color-accent:       #ff246e;
     --color-accent-soft:  rgba(255, 36, 110, 0.10);
     --color-accent-strong:#e91562;
@@ -21,12 +21,12 @@
     --color-violet:       var(--color-accent);
     --color-gold:         #ff6bb0;
     --color-ink-panel:    #120f15;
-    --color-surface-editorial: #fff3f8;
+    --color-surface-editorial: #fff0f6;
     --color-surface-media:     var(--color-surface);
-    --color-surface-tint:      #fbf7ff;
+    --color-surface-tint:      #f6f0ff;
     --color-shimmer:      rgba(0, 0, 0, 0.04);
-    --color-overlay:      rgba(0, 0, 0, 0.4);
-    --color-skeleton:     #e8e8e8;
+    --color-overlay:      rgba(0, 0, 0, 0.45);
+    --color-skeleton:     #e4e4ec;
     /* Featured panels: sempre alto contraste independente do tema */
     --color-featured-bg:     #0c0c0c;
     --color-featured-fg:     #f5f5f5;
@@ -38,7 +38,7 @@
     --color-ticker-fg-hover: rgba(255, 255, 255, 0.95);
     --color-ticker-divider:  rgba(255, 255, 255, 0.08);
     /* Navbar translucida */
-    --color-navbar-scrolled: rgba(255, 255, 255, 0.85);
+    --color-navbar-scrolled: rgba(249, 249, 251, 0.88);
     /* Alturas fixas para cálculo de offsets sticky */
     --ticker-h: 28px;
     --nav-h: 52px;
@@ -55,15 +55,15 @@
 
   /* ── Dark theme ── */
   .dark {
-    --color-bg:           #0e0c0f;
-    --color-surface:      #18151a;
-    --color-surface-hover:#211d24;
-    --color-border:       #302a33;
-    --color-border-strong:#433b47;
+    --color-bg:           #0d0b0f;
+    --color-surface:      #1b1720;
+    --color-surface-hover:#241f2c;
+    --color-border:       #3a3244;
+    --color-border-strong:#504758;
     --color-home-frame:   #f1eef3;
-    --color-fg:           #f2f2f2;
-    --color-fg-subtle:    #c8c8c8;
-    --color-muted:        #999999;
+    --color-fg:           #f0f0f4;
+    --color-fg-subtle:    #c8c8d4;
+    --color-muted:        #9898a8;
     --color-accent:       #ff367d;
     --color-accent-soft:  rgba(255, 54, 125, 0.18);
     --color-accent-strong:#ff4b8d;
@@ -71,24 +71,24 @@
     --color-violet:       var(--color-accent);
     --color-gold:         #ff7fbd;
     --color-ink-panel:    #0b0910;
-    --color-surface-editorial: #2a1821;
+    --color-surface-editorial: #2e1a24;
     --color-surface-media:     var(--color-surface);
-    --color-surface-tint:      #221925;
-    --color-shimmer:      rgba(255, 255, 255, 0.04);
-    --color-overlay:      rgba(0, 0, 0, 0.6);
-    --color-skeleton:     #2a2a2a;
+    --color-surface-tint:      #251a30;
+    --color-shimmer:      rgba(255, 255, 255, 0.05);
+    --color-overlay:      rgba(0, 0, 0, 0.65);
+    --color-skeleton:     #2e2838;
     /* Featured panels: ligeiramente mais claro que o fundo dark */
-    --color-featured-bg:     #181818;
+    --color-featured-bg:     #1a1a1a;
     --color-featured-fg:     #f0f0f0;
-    --color-featured-muted:  rgba(240, 240, 240, 0.55);
-    --color-featured-border: rgba(240, 240, 240, 0.10);
+    --color-featured-muted:  rgba(240, 240, 240, 0.60);
+    --color-featured-border: rgba(240, 240, 240, 0.12);
     /* Ticker de notícias */
-    --color-ticker-bg:       #111111;
-    --color-ticker-fg:       rgba(200, 200, 200, 0.70);
+    --color-ticker-bg:       #121212;
+    --color-ticker-fg:       rgba(210, 210, 210, 0.75);
     --color-ticker-fg-hover: #f0f0f0;
-    --color-ticker-divider:  rgba(255, 255, 255, 0.06);
+    --color-ticker-divider:  rgba(255, 255, 255, 0.07);
     /* Navbar translucida */
-    --color-navbar-scrolled: rgba(13, 13, 13, 0.85);
+    --color-navbar-scrolled: rgba(13, 11, 15, 0.88);
   }
 }
 
