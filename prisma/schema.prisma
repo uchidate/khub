@@ -627,6 +627,7 @@ model User {
   blogPostVersions       BlogPostVersion[]      @relation("BlogPostVersions")
   takedownsIssued        ProductionTakedown[]   @relation("TakedownHiddenBy")
   takedownsRestored      ProductionTakedown[]   @relation("TakedownRestoredBy")
+  quizResults            QuizResult[]
 
   @@index([email])
 }
@@ -1442,4 +1443,24 @@ model StoreCoupon {
   updatedAt   DateTime @updatedAt
 
   @@index([expiresAt, isActive])
+}
+
+model QuizResult {
+  id             String   @id @default(cuid())
+  userId         String?  // null = anônimo
+  sessionId      String   // fingerprint anônimo
+  score          Int      // acertos
+  total          Int      // total de perguntas
+  points         Int
+  difficulty     String
+  category       String   @default("all")
+  timeHistory    Json     // number[] — tempo por pergunta
+  categoryBreakdown Json  // Record<string, {correct,total}>
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([difficulty])
+  @@index([createdAt])
 }

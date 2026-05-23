@@ -202,7 +202,7 @@ export function HomeFrontPage({
     const safeArtists = trendingArtists.slice(0, 8)
 
     return (
-        <section className="bg-background pt-5 sm:pt-7">
+        <section className="bg-background">
             <div className="mx-auto max-w-[1440px] border-y border-border bg-background">
                 {heroStory ? (
                     <div className="lg:flex lg:min-h-[560px]">
@@ -270,7 +270,7 @@ export function HomeFrontPage({
                 {highlightStories.length > 0 && (
                     <div className="border-t border-border px-4 py-7 sm:px-6 sm:py-8 lg:px-10">
                         <SectionTitleBar
-                            title={<span>Em destaque <span className="text-muted">주요 기사</span></span>}
+                            title="Em destaque"
                             action={<span className="hidden font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted sm:block">seleção editorial</span>}
                         />
                         <div className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4 lg:gap-5">

@@ -292,7 +292,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ))}
       </SectionBar>
 
-      <div className="page-wrap border-b border-border/50 py-2">
+      <div className="sticky z-[190] bg-background border-b border-border/50 py-2 page-wrap" style={{ top: 'calc(var(--site-header-h, 92px) + 48px)' }}>
         <Breadcrumbs items={[{ label: 'Artigos', href: '/blog' }, { label: post.title }]} />
       </div>
 
@@ -373,31 +373,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Share */}
-        <div className="mt-8 pt-6 border-t border-border">
-          <BlogShareButtons
-            title={post.title}
-            url={`${BASE_URL}/blog/${post.slug}`}
-          />
-        </div>
-
-        {/* Author bio */}
-        {(post as unknown as { author?: { bio?: string } }).author?.bio && (
-          <div className="mt-10 flex gap-4 rounded-md border border-border bg-surface p-5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-accent-soft text-sm font-bold text-accent">
-              {BLOG_AUTHOR_AVATAR_INITIAL}
-            </div>
-            <div>
-              <p className="font-semibold text-foreground text-sm">{BLOG_AUTHOR_DISPLAY_NAME}</p>
-              <p className="text-muted text-sm mt-1">{(post as unknown as { author?: { bio?: string } }).author?.bio}</p>
-            </div>
-          </div>
-        )}
-
-
-        {/* Artistas mencionados no artigo */}
+        {/* Artistas mencionados */}
         {artists.length > 0 && (
-          <div className="mt-10 pt-8 border-t border-border">
+          <div className="mt-8 pt-8 border-t border-border">
             <p className="text-xs font-black uppercase tracking-widest text-muted mb-4">Mencionados neste artigo</p>
             <div className="flex flex-wrap gap-3">
               {artists.map(artist => (
@@ -420,60 +398,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Banner Quiz */}
-        <Link
-          href="/quiz"
-          className="group mt-10 flex items-center gap-4 rounded-md border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover"
-        >
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-accent/10 transition-transform group-hover:scale-105">
-            <Trophy className="w-5 h-5 text-accent" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-foreground group-hover:text-accent transition-colors">Quanto você sabe sobre K-Pop e K-Drama?</p>
-            <p className="text-xs text-muted">Faça o quiz do HallyuHub — 10 perguntas, perguntas novas a cada rodada</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-        </Link>
-
-        {/* Navegação anterior / próximo */}
-        {(prevPost || nextPost) && (
-          <div className="mt-8 pt-8 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {prevPost ? (
-              <Link href={`/blog/${prevPost.slug}`} className="group relative flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover overflow-hidden">
-                {prevPost.coverImageUrl && (
-                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
-                    <SafeImage src={prevPost.coverImageUrl} alt={prevPost.title} fill sizes="80px" className="object-cover" fallback={<span />} />
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 flex items-center gap-1"><ArrowLeft size={10} /> Anterior</p>
-                  <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{prevPost.title}</p>
-                </div>
-              </Link>
-            ) : <div />}
-            {nextPost ? (
-              <Link href={`/blog/${nextPost.slug}`} className="group relative flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover overflow-hidden sm:flex-row-reverse sm:text-right">
-                {nextPost.coverImageUrl && (
-                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
-                    <SafeImage src={nextPost.coverImageUrl} alt={nextPost.title} fill sizes="80px" className="object-cover" fallback={<span />} />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-1 flex items-center gap-1 sm:justify-end">Próximo <ArrowRight size={10} /></p>
-                  <p className="text-sm font-bold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-snug">{nextPost.title}</p>
-                </div>
-              </Link>
-            ) : <div />}
-          </div>
-        )}
-
-        <LojaRelacionados
-          tags={post.tags}
-          title="Produtos relacionados"
-          compact
-        />
-
-        {/* Leia também — todas as telas */}
+        {/* Leia também */}
         {relatedPosts.length > 0 && (
           <div className="mt-10 pt-8 border-t border-border">
             <h2 className="text-base font-bold text-foreground mb-4">Leia também</h2>
@@ -485,24 +410,33 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        <div className="mt-8">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
-            <ArrowLeft size={14} />
-            Voltar ao Blog
-          </Link>
-        </div>
+        {/* Quiz */}
+        <Link
+          href="/quiz"
+          className="group mt-8 flex items-center gap-4 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/40 hover:bg-surface-hover"
+        >
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-accent/10 transition-transform group-hover:scale-105">
+            <Trophy className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-foreground group-hover:text-accent transition-colors">Quanto você sabe sobre K-Pop e K-Drama?</p>
+            <p className="text-xs text-muted">Faça o quiz do HallyuHub — 10 perguntas, perguntas novas a cada rodada</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        </Link>
       </div>{/* fim coluna principal */}
 
       {/* ── Sidebar (xl+) ── */}
       <aside className="hidden xl:block">
         <div
-          className="sticky overflow-y-auto"
+          className="sticky flex flex-col gap-4 overflow-y-auto"
           style={{
-            top: 'calc(var(--site-header-h, 92px) + 48px + 8px)',
-            maxHeight: 'calc(100vh - var(--site-header-h, 92px) - 48px - 24px)',
+            top: 'calc(var(--site-header-h, 92px) + 48px + 36px + 8px)',
+            maxHeight: 'calc(100vh - var(--site-header-h, 92px) - 48px - 36px - 24px)',
           }}
         >
           <BlogTableOfContents />
+          <LojaRelacionados tags={post.tags} title="Produtos relacionados" compact />
         </div>
       </aside>
 

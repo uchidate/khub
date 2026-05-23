@@ -58,8 +58,8 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                             >
                                 <div className={`relative overflow-hidden bg-surface ${
                                     isLead
-                                        ? "min-h-[220px] sm:aspect-[16/9] sm:min-h-0"
-                                        : "min-h-[104px] sm:aspect-[16/10] sm:min-h-0"
+                                        ? "min-h-[220px] sm:aspect-[4/3] sm:min-h-0"
+                                        : "min-h-[104px] sm:aspect-[4/3] sm:min-h-0"
                                 }`}>
                                     <BlogImage
                                         src={post.coverImageUrl}
