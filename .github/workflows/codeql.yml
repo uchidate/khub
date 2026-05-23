@@ -19,10 +19,9 @@ name: CodeQL Analysis
 # ============================================================
 
 on:
-  pull_request:
-    branches: [main]
   schedule:
     - cron: '0 0 * * 1'  # Toda segunda-feira 00:00 UTC
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
