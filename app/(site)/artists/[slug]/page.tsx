@@ -24,6 +24,8 @@ import { ExternalMusicEntityType } from "@prisma/client"
 
 import { SITE_URL } from '@/lib/constants/site'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { BrandDot } from '@/components/ui/BrandDot'
+import { BrandWave } from '@/components/ui/BrandWave'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -497,8 +499,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
                         {/* Name */}
                         <h1 className="font-black tracking-[-0.04em] leading-[0.92] text-[clamp(48px,7vw,88px)]">
-                            {artist.nameRomanized}<span className="text-accent">.</span>
+                            {artist.nameRomanized}<BrandDot />
                         </h1>
+                        <BrandWave width={Math.min(artist.nameRomanized.length * 14, 220)} height={14} duration={5000} className="mt-1" />
                         {artist.nameHangul && (
                             <div className="text-[20px] sm:text-[22px] text-muted mt-2 font-medium">
                                 {artist.nameHangul}
