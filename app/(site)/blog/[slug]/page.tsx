@@ -492,23 +492,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>{/* fim coluna principal */}
 
-      {/* ── Sidebar sticky (xl+) ── */}
-      <aside className="hidden xl:flex flex-col gap-4">
-        <div className="sticky top-[72px] flex flex-col gap-4 max-h-[calc(100vh-88px)] overflow-y-auto pr-0.5">
+      {/* ── Sidebar (xl+) ── */}
+      <aside className="hidden xl:block">
+        {/* TOC: sticky — cola no topo e acompanha a rolagem até o fim do aside */}
+        <div className="sticky top-[72px]">
           <BlogTableOfContents />
-          {relatedPosts.length > 0 && (
-            <div className="rounded-xl border border-border overflow-hidden">
-              <div className="px-4 py-3 bg-surface border-b border-border">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-muted">Leia também</p>
-              </div>
-              <div className="divide-y divide-border/50">
-                {relatedPosts.slice(0, 5).map(related => (
-                  <SidebarRelatedCard key={related.slug} post={related} />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Leia também: fluxo natural — aparece conforme o usuário avança no artigo */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-4 rounded-xl border border-border overflow-hidden">
+            <div className="px-4 py-3 bg-surface border-b border-border">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-muted">Leia também</p>
+            </div>
+            <div className="divide-y divide-border/50">
+              {relatedPosts.slice(0, 5).map(related => (
+                <SidebarRelatedCard key={related.slug} post={related} />
+              ))}
+            </div>
+          </div>
+        )}
       </aside>
 
       </div>{/* fim flex */}
