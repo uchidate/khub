@@ -94,6 +94,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                         alt={prod.titlePt}
                         loading={priority ? 'eager' : 'lazy'}
                         decoding={priority ? 'sync' : 'async'}
+                        fetchPriority={priority ? 'high' : 'auto'}
                         className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                         onError={() => setImageFailed(true)}
                     />

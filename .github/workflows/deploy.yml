@@ -237,6 +237,21 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
+      - name: ⏳ Aguardar staging ficar saudável
+        run: |
+          echo "Aguardando staging responder..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://staging.hallyuhub.com.br/api/health || echo "000")
+            echo "  [$i/24] status=$STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Staging saudável"
+              sleep 3
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️ Staging não respondeu em 2min, tentando E2E mesmo assim"
+
       - name: 🎭 Run E2E Tests
         run: npx playwright test
         env:
