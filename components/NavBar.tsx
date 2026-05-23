@@ -131,7 +131,8 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
 
     useEffect(() => {
         const root = document.documentElement
-        root.style.setProperty("--site-header-h", "192px")
+        const isMobile = window.matchMedia("(max-width: 1023px)").matches
+        root.style.setProperty("--site-header-h", isMobile ? "92px" : "192px")
         return () => { root.style.removeProperty("--site-header-h") }
     }, [tickerItems.length])
 
@@ -170,7 +171,9 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                     </div>
                 </div>
                 {/* Nav links mobile */}
-                <div className="flex h-10 items-center gap-6 overflow-x-auto px-3 scrollbar-none" style={{ background: '#0a0a0a' }}>
+                <div className="relative" style={{ background: '#0a0a0a' }}>
+                <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10" style={{ background: 'linear-gradient(to right, transparent, #0a0a0a)' }} />
+                <div className="flex h-10 items-center gap-6 overflow-x-auto px-3 scrollbar-none pr-10">
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
@@ -186,6 +189,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                             {link.label}
                         </Link>
                     ))}
+                </div>
                 </div>
             </div>
 
@@ -238,7 +242,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                 </div>
 
                 {/* Nav links */}
-                <div className="flex h-12 items-center border-b-2 border-foreground px-10">
+                <div className="flex h-12 items-center border-b-2 border-foreground px-10" style={{ background: '#0a0a0a' }}>
                     <div className="flex h-full flex-1 items-center gap-8 overflow-x-auto">
                         {navLinks.map((link) => (
                             <Link
@@ -247,9 +251,10 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                                 aria-current={isActiveLink(link.href) ? "page" : undefined}
                                 className={`relative flex h-full shrink-0 items-center text-[15px] font-bold tracking-[-0.02em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
                                     isActiveLink(link.href)
-                                        ? "text-foreground after:scale-x-100 after:bg-accent"
-                                        : "text-muted after:scale-x-0 after:bg-accent hover:text-foreground hover:after:scale-x-100"
+                                        ? "after:scale-x-100 after:bg-accent"
+                                        : "after:scale-x-0 after:bg-accent"
                                 }`}
+                                style={{ color: isActiveLink(link.href) ? '#ff246e' : 'rgba(255,255,255,0.7)' }}
                             >
                                 {link.label}
                             </Link>

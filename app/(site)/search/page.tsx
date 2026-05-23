@@ -176,7 +176,9 @@ function SearchContent() {
                 </button>
             </form>
 
-            <div className="mb-8 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <div className="relative mb-8">
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+            <div className="flex items-center gap-2 overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
                 {[
                     { label: 'Artistas', href: query ? `/artists?search=${encodeURIComponent(query)}` : '/artists', icon: <User size={13} /> },
                     { label: 'Grupos', href: query ? `/groups?search=${encodeURIComponent(query)}` : '/groups', icon: <Users size={13} /> },
@@ -192,6 +194,7 @@ function SearchContent() {
                         {item.label}
                     </Link>
                 ))}
+            </div>
             </div>
 
             {/* Filter tabs */}

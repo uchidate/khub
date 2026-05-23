@@ -232,7 +232,7 @@ export default async function RootLayout({
                         <AuthGateModal />
                         <PWAInstaller />
                         <CookieBanner />
-                        <BottomNav />
+
                         <SiteFooter />
                     </div>
                     </AnalyticsProvider>
