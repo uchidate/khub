@@ -283,7 +283,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
     )
 
     return (
-        <div id="productions-list" className="overflow-x-hidden">
+        <div id="productions-list" style={{ overflowX: 'clip' }}>
             {/* Filters */}
             {!hideFilter && (
                 <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
