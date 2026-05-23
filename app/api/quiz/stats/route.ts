@@ -39,7 +39,6 @@ export async function GET() {
             }),
         ])
 
-        const totalCorrect = topScores.reduce((s, r) => s + r.score, 0)
         const globalAvgPct = totalGames > 0
             ? await prisma.quizResult.aggregate({ _avg: { score: true, total: true } }).then(r =>
                 r._avg.total ? Math.round(((r._avg.score ?? 0) / r._avg.total) * 100) : null)
