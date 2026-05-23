@@ -24,6 +24,9 @@ on:
   schedule:
     - cron: '0 0 * * 1'  # Toda segunda-feira 00:00 UTC
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   analyze:
     name: Analyze (JavaScript/TypeScript)
