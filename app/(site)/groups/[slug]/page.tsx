@@ -431,7 +431,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         </div>
                         <h1 className="font-display font-black leading-[0.82] tracking-[-0.06em] text-white drop-shadow-2xl"
                             style={{ fontSize: 'clamp(52px, 10vw, 140px)' }}>
-                            {group.name}<BrandDot />
+                            {group.name}
                         </h1>
                         <BrandWave width={Math.min(group.name.length * 16, 260)} height={14} duration={4500} className="mt-2" />
                         {group.nameHangul && (
