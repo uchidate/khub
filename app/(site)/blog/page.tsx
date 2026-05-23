@@ -321,19 +321,18 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'Blog | HallyuHub', url: `${BASE_URL}/blog`, inLanguage: 'pt-BR' }} />
+      {/* SectionBar fora do PageTransition: overflow-x-hidden em ancestral quebra position:sticky */}
+      <SectionBar>
+        {orderedCategories.length > 0 && (
+          <>
+            <Link href="/blog" className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${!activeCategory ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>Todos</Link>
+            {orderedCategories.map((c) => (
+              <Link key={c.id} href={`/blog?category=${c.slug}`} className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${activeCategory === c.slug ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>{c.name}</Link>
+            ))}
+          </>
+        )}
+      </SectionBar>
       <PageTransition className="overflow-x-hidden pb-16">
-
-        {/* ── Filtros + breadcrumb ─────────────────────────────────── */}
-        <SectionBar>
-          {orderedCategories.length > 0 && (
-            <>
-              <Link href="/blog" className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${!activeCategory ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>Todos</Link>
-              {orderedCategories.map((c) => (
-                <Link key={c.id} href={`/blog?category=${c.slug}`} className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${activeCategory === c.slug ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border-strong hover:text-foreground'}`}>{c.name}</Link>
-              ))}
-            </>
-          )}
-        </SectionBar>
         <div className="page-wrap flex items-center justify-between gap-4 border-b border-border/50 py-3">
           <div className="min-w-0">
             <Breadcrumbs items={[{ label: 'Artigos' }]} className="mb-1" />

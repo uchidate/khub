@@ -168,7 +168,7 @@ export default async function Home() {
             }} />
 
             {/* Âncoras de seção — mobile only */}
-            <nav aria-label="Seções" className="lg:hidden sticky z-[210] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
+            <nav aria-label="Seções" className="sticky z-[210] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
                 <div className="relative">
                     <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
                     <div className="flex gap-0 overflow-x-auto scrollbar-none pr-10">
