@@ -65,17 +65,19 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore(lint): auto-fix semanal — eslint --fix
-
-Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git commit -m "chore(lint): auto-fix semanal — eslint --fix" \
+            -m "Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
           git push origin "$BRANCH"
+          PR_BODY="Correções automáticas geradas por \`eslint --fix\`. Revisar antes de mergear — o auto-fix pode alterar lógica em casos raros."
           gh pr create \
             --base main \
             --title "🧹 chore(lint): auto-fix semanal" \
-            --body "Correções automáticas geradas por \`eslint --fix\`.
-
-Revisar antes de mergear — o auto-fix pode alterar lógica em casos raros." \
-            --label "maintenance"
+            --body "$PR_BODY" \
+            --label "maintenance" || \
+          gh pr create \
+            --base main \
+            --title "🧹 chore(lint): auto-fix semanal" \
+            --body "$PR_BODY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
