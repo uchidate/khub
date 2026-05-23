@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Film, Search, X } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -284,7 +283,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
     )
 
     return (
-        <div id="productions-list">
+        <div id="productions-list" className="overflow-x-hidden">
             {/* Filters */}
             {!hideFilter && (
                 <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
