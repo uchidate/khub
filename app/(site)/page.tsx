@@ -167,6 +167,29 @@ export default async function Home() {
                 },
             }} />
 
+            {/* Âncoras de seção — mobile only */}
+            <nav aria-label="Seções" className="lg:hidden sticky z-[210] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
+                <div className="relative">
+                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+                    <div className="flex gap-0 overflow-x-auto scrollbar-none pr-10">
+                        {[
+                            { label: 'Destaques', href: '#destaques' },
+                            { label: 'Descobertas', href: '#descobertas' },
+                            { label: 'Agora', href: '#agora' },
+                            { label: 'Aniversários', href: '#aniversarios' },
+                            { label: 'Radar', href: '#radar' },
+                            { label: 'Quiz', href: '#quiz' },
+                            { label: 'Loja', href: '#loja' },
+                        ].map(({ label, href }) => (
+                            <a key={href} href={href} className="shrink-0 px-4 py-2.5 font-mono text-[11px] font-bold text-muted hover:text-foreground border-r border-border/50 transition-colors">
+                                {label}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            </nav>
+
+            <div id="destaques">
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
                 carouselPosts={carouselPosts}
@@ -176,6 +199,8 @@ export default async function Home() {
                 spotlightProduction={spotlightProduction}
                 latestPosts={feedPosts.slice(0, 10)}
             />
+            </div>
+            <div id="descobertas">
             <HomeDiscoverySection
                 cluster={featuredCluster ?? trendingCluster}
                 artist={randomArtist ? { id: randomArtist.id, slug: randomArtist.slug, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
@@ -183,6 +208,8 @@ export default async function Home() {
                 production={randomProduction ? { id: randomProduction.id, slug: randomProduction.slug, titlePt: randomProduction.titlePt, posterUrl: randomProduction.imageUrl, year: randomProduction.year } : null}
                 mode={compositionMode}
             />
+            </div>
+            <div id="agora">
             <HomeNowStrip
                 artist={trendingArtists[0] ?? null}
                 group={trendingGroups[0] ?? null}
@@ -200,7 +227,9 @@ export default async function Home() {
                 birthday={todaysBirthdays[0] ?? null}
                 mode={compositionMode}
             />
-            <HomeTodaysBirthdays artists={todaysBirthdays.slice(1)} />
+            </div>
+            <div id="aniversarios"><HomeTodaysBirthdays artists={todaysBirthdays.slice(1)} /></div>
+            <div id="radar">
             <HomeBelowFold
                 watchProductions={watchProductions}
                 feedPosts={belowFoldFeedPosts}
@@ -209,8 +238,9 @@ export default async function Home() {
                 hasStreaming={hasStreaming}
                 compositionMode={compositionMode}
             />
-            <HomeQuizBanner />
-            <HomeLojaDestaque products={featuredProducts} />
+            </div>
+            <div id="quiz"><HomeQuizBanner /></div>
+            <div id="loja"><HomeLojaDestaque products={featuredProducts} /></div>
             <ScrollToTop />
         </div>
     )
