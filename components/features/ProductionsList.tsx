@@ -445,7 +445,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                     <div className="mb-5 flex items-baseline justify-between border-b border-foreground pb-3">
                         <h2 className="text-[22px] font-black tracking-[-0.03em] text-foreground">Todas as produções</h2>
                         <p className="font-mono text-[11px] text-muted">
-                            {pagination.total > 0 ? `vendo 1–${Math.min(getPerPage(), productions.length)} de ${pagination.total.toLocaleString('pt-BR')}` : 'Refine sua busca'}
+                            {pagination.total > 0 ? `vendo 1–${Math.min(parseInt(searchParams.get('limit') || '50'), productions.length)} de ${pagination.total.toLocaleString('pt-BR')}` : 'Refine sua busca'}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
@@ -457,7 +457,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                     <PaginationControls
                         currentPage={currentPage}
                         totalPages={pagination.pages}
-                        perPage={getPerPage()}
+                        perPage={parseInt(searchParams.get('limit') || '50')}
                         perPageOptions={[24, 36, 50]}
                         total={pagination.total}
                         onPageChange={handlePage}

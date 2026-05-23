@@ -153,7 +153,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
     }, [updateUrl])
 
     const handlePageChange = (newPage: number) => {
-        updateUrl(getFiltersFromUrl(), newPage, undefined, getPerPage())
+        updateUrl(getFiltersFromUrl(), newPage, undefined, parseInt(searchParams.get('limit') || '50'))
     }
     const handlePerPage = (n: number) => {
         updateUrl(getFiltersFromUrl(), 1, undefined, n)
@@ -246,7 +246,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                     <PaginationControls
                         currentPage={pagination.page}
                         totalPages={pagination.pages}
-                        perPage={getPerPage()}
+                        perPage={parseInt(searchParams.get('limit') || '50')}
                         total={pagination.total}
                         onPageChange={handlePageChange}
                         onPerPageChange={handlePerPage}
