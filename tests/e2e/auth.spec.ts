@@ -27,7 +27,7 @@ test.describe('Autenticação', () => {
 
   test('link "esqueci a senha" funciona', async ({ page }) => {
     await page.goto('/auth/login')
-    const forgotLink = page.locator('a[href*="forgot"], a[href*="esqueci"], a:has-text("Esqueci")')
+    const forgotLink = page.locator('a[href*="forgot"], a[href*="esqueci"], a:has-text("Esqueci"), a:has-text("Esqueceu")')
     await expect(forgotLink.first()).toBeVisible()
     await forgotLink.first().click()
     await expect(page).toHaveURL(/forgot|esqueci|reset/)
