@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     } else if (difficulty === 'hard') {
         where.difficulty = { in: ['medium', 'hard'] }
     }
-    // difficulty 'medium' or 'all' = no filter
 
     const questions = await prisma.quizQuestion.findMany({
         where,
@@ -36,15 +35,9 @@ export async function GET(request: NextRequest) {
             relatedHref: true,
             relatedLabel: true,
         },
-        orderBy: [
-            { position: 'asc' },
-            { createdAt: 'asc' },
-        ],
     })
 
-    // Shuffle and slice server-side so each request returns a different set
     const shuffled = shuffle(questions).slice(0, limit)
-
     return NextResponse.json(shuffled)
 }
 
