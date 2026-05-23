@@ -38,6 +38,23 @@ jobs:
         with:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: 💾 Backup staging antes de sobrescrever
+        run: |
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "
+            STAGING_PG=\$(docker ps --format '{{.Names}}' | xargs -I{} sh -c \
+              'docker exec {} psql -U hallyuhub -lqt 2>/dev/null | grep -q hallyuhub_staging && echo {}' 2>/dev/null | head -1)
+            if [ -n \"\$STAGING_PG\" ]; then
+              BACKUP=\"/tmp/staging_backup_\$(date +%Y%m%d_%H%M%S).dump\"
+              docker exec \"\$STAGING_PG\" pg_dump -U hallyuhub -Fc hallyuhub_staging > \"\$BACKUP\" 2>/dev/null \
+                && echo \"✅ Backup: \$BACKUP (\$(du -sh \$BACKUP | cut -f1))\" \
+                || echo '⚠️ Backup falhou — continuando mesmo assim'
+              # Manter só os últimos 3 backups
+              ls -t /tmp/staging_backup_*.dump 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null || true
+            else
+              echo '⚠️ Container staging não encontrado — sem backup'
+            fi
+          " 2>/dev/null || echo '⚠️ SSH falhou no backup — continuando'
+
       - name: 📤 Upload sync script
         run: |
           cat > /tmp/sync-script.sh << 'SCRIPT'
