@@ -142,7 +142,7 @@ export function SeoChecklist({
         })
 
         return result
-    }, [title, excerpt, bodyText, wordCount, focusKeyword, coverImageUrl, tags])
+    }, [title, excerpt, bodyText, wordCount, focusKeyword, coverImageUrl, tags, blocks])
 
     const okCount = checks.filter(c => c.status === 'ok').length
     const failCount = checks.filter(c => c.status === 'fail').length

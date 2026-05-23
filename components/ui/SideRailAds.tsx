@@ -26,12 +26,12 @@ export function SideRailAds() {
         try {
             if (!pushedLeft.current) {
                 pushedLeft.current = true
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
             }
             if (!pushedRight.current) {
                 pushedRight.current = true
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
             }
         } catch { /* AdSense ainda não carregou */ }

@@ -42,6 +42,11 @@ dist
 # Testing
 coverage
 .nyc_output
+tests/
+**/*.test.ts
+**/*.spec.ts
+playwright.config.ts
+vitest.config.ts
 
 # Database
 *.db
@@ -60,6 +65,19 @@ temp-images
 # Documentation (não necessário no container)
 docs/*.md
 README.md
+
+# CI/CD e configs de dev (não necessário no container)
+.github/
+.claude/
+eslint.config.mjs
+.lighthouserc.json
+.prettierrc*
+jest.config*
+vitest.config*
+playwright.config*
+*.lighthouserc*
+CHANGELOG.md
+CONTRIBUTING.md
 
 # Scripts de desenvolvimento
 test-gemini.js

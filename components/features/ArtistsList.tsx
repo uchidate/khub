@@ -40,7 +40,7 @@ function ArtistCard({ artist, priority, trending }: { artist: Artist; priority?:
         <Link href={`/artists/${artist.slug ?? artist.id}`} className="group flex flex-col">
             <div className="relative aspect-[4/5] overflow-hidden bg-surface">
                 {imageSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img
                         src={imageSrc}
                         alt={artist.nameRomanized}

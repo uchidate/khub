@@ -49,7 +49,7 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
         })
         .catch(() => {})
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [fields])
 
   useEffect(() => {

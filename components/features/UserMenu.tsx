@@ -29,7 +29,7 @@ export function UserMenu() {
         aria-label="Menu do usuário"
       >
         {session.user.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
+           
           <img src={session.user.image} alt={session.user.name || 'User'} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-[#ff2d78] flex items-center justify-center">

@@ -84,9 +84,6 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         to: searchParams.get('to') || undefined,
     }), [searchParams])
 
-    const getCurrentPage = () => Math.max(1, parseInt(searchParams.get('page') || '1'))
-    const getPerPage = () => parseInt(searchParams.get('limit') || '50')
-
     // Atualizar URL com filtros e feed mode
     const updateUrl = useCallback((filters: FilterValues, page: number = 1, feed?: FeedMode, limit?: number) => {
         const params = new URLSearchParams()
@@ -110,11 +107,12 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         setIsLoading(true)
         try {
             const filters = getFiltersFromUrl()
-            const page = getCurrentPage()
+            const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+            const perPage = parseInt(searchParams.get('limit') || '50')
 
             const params = new URLSearchParams({
                 page: page.toString(),
-                limit: getPerPage().toString(),
+                limit: perPage.toString(),
                 feed: feedModeRef.current,
                 ...(filters.search && { search: filters.search }),
                 ...(filters.artistId && { artistId: filters.artistId }),
@@ -139,7 +137,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
         } finally {
             setIsLoading(false)
         }
-    }, [getFiltersFromUrl])
+    }, [getFiltersFromUrl, searchParams])
 
     // Sincronizar feedMode com URL (ex: botão voltar do browser)
     useEffect(() => {
@@ -155,7 +153,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
     }, [updateUrl])
 
     const handlePageChange = (newPage: number) => {
-        updateUrl(getFiltersFromUrl(), newPage, undefined, getPerPage())
+        updateUrl(getFiltersFromUrl(), newPage, undefined, parseInt(searchParams.get('limit') || '50'))
     }
     const handlePerPage = (n: number) => {
         updateUrl(getFiltersFromUrl(), 1, undefined, n)
@@ -248,7 +246,7 @@ export function NewsList({ initialArtists = [], initialGroups = [] }: NewsListPr
                     <PaginationControls
                         currentPage={pagination.page}
                         totalPages={pagination.pages}
-                        perPage={getPerPage()}
+                        perPage={parseInt(searchParams.get('limit') || '50')}
                         total={pagination.total}
                         onPageChange={handlePageChange}
                         onPerPageChange={handlePerPage}

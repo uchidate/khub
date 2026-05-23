@@ -84,7 +84,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
               <div className="mx-4 mt-4 mb-2 rounded-2xl border border-border bg-surface p-4 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-accent/20">
                   {session.user.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-accent flex items-center justify-center">

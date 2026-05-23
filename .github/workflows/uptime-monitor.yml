@@ -1,0 +1,72 @@
+name: 🟢 Uptime Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # a cada hora
+  workflow_dispatch:
+
+concurrency:
+  group: uptime-monitor
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  check-production:
+    name: 🟢 Health Check — Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    continue-on-error: true
+
+    steps:
+      - name: 🔍 Health check
+        run: |
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+            https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+          echo "HTTP: $HTTP"
+          {
+            echo "## 🟢 Uptime Monitor — Production"
+            echo "| URL | Status |"
+            echo "|-----|--------|"
+            if [ "$HTTP" = "200" ]; then
+              echo "| https://www.hallyuhub.com.br | ✅ $HTTP |"
+            else
+              echo "| https://www.hallyuhub.com.br | ❌ $HTTP |"
+            fi
+            echo ""
+            echo "Verificado em: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$HTTP" != "200" ]; then
+            echo "❌ Production DOWN (HTTP $HTTP)"
+            exit 1
+          fi
+          echo "✅ Production UP"
+
+  check-staging:
+    name: 🟡 Health Check — Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    continue-on-error: true
+
+    steps:
+      - name: 🔍 Health check
+        run: |
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+            https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
+          echo "HTTP: $HTTP"
+          {
+            echo "## 🟡 Uptime Monitor — Staging"
+            echo "| URL | Status |"
+            echo "|-----|--------|"
+            if [ "$HTTP" = "200" ]; then
+              echo "| https://staging.hallyuhub.com.br | ✅ $HTTP |"
+            else
+              echo "| https://staging.hallyuhub.com.br | ❌ $HTTP |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$HTTP" != "200" ]; then
+            echo "❌ Staging DOWN (HTTP $HTTP)"
+            exit 1
+          fi
+          echo "✅ Staging UP"

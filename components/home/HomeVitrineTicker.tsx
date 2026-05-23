@@ -51,7 +51,7 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
                             >
                                 {/* Imagem */}
                                 <div className={`${compact ? 'w-[66px] h-[66px] min-w-[66px] min-h-[66px] rounded-md sm:w-[88px] sm:h-[88px] sm:min-w-[88px] sm:min-h-[88px]' : 'h-[92px] w-[92px] min-h-[92px] min-w-[92px] rounded-md'} relative overflow-hidden border border-border bg-background transition-colors duration-200 group-hover:border-accent/60`}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    { }
                                     <img
                                         src={p.imageUrl}
                                         alt={p.name}

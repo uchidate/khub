@@ -49,6 +49,7 @@ jobs:
     name: 📅 Publicar posts agendados
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    continue-on-error: true
     concurrency:
       group: cron-publish-scheduled
       cancel-in-progress: false
@@ -69,6 +70,7 @@ jobs:
     name: 📰 Buscar notícias
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     concurrency:
       group: cron-fetch-news
       cancel-in-progress: false
@@ -89,6 +91,7 @@ jobs:
     name: 🏷️ Taguear notícias
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    continue-on-error: true
     concurrency:
       group: cron-tag-news
       cancel-in-progress: false
@@ -113,6 +116,7 @@ jobs:
     name: 📡 Buscar sinais de streaming
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    continue-on-error: true
     concurrency:
       group: cron-fetch-streaming-signals
       cancel-in-progress: false
@@ -135,6 +139,7 @@ jobs:
     name: 📈 Atualizar trending score
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    continue-on-error: true
     concurrency:
       group: cron-update-trending
       cancel-in-progress: false
@@ -157,6 +162,7 @@ jobs:
     name: 💿 Sincronizar discografia
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     concurrency:
       group: cron-sync-discography
       cancel-in-progress: false
@@ -177,6 +183,7 @@ jobs:
     name: 🎭 Sincronizar elenco
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     concurrency:
       group: cron-sync-cast
       cancel-in-progress: false
@@ -199,6 +206,7 @@ jobs:
     name: 🔗 Sincronizar redes sociais (Wikidata)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     concurrency:
       group: cron-sync-social-links
       cancel-in-progress: false
@@ -219,6 +227,7 @@ jobs:
     name: 👁️ Atualizar visibilidade de artistas
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    continue-on-error: true
     concurrency:
       group: cron-artist-visibility
       cancel-in-progress: false
@@ -239,6 +248,7 @@ jobs:
     name: 📬 Email digest de blog
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     concurrency:
       group: cron-digest
       cancel-in-progress: false
@@ -261,6 +271,7 @@ jobs:
     name: 🎬 Atualizar top shows de streaming
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     concurrency:
       group: cron-fetch-streaming-shows
       cancel-in-progress: false
@@ -283,6 +294,7 @@ jobs:
     name: 🎵 Sincronizar discografia de grupos (Spotify)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    continue-on-error: true
     concurrency:
       group: cron-sync-groups-discography
       cancel-in-progress: false

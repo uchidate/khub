@@ -47,9 +47,8 @@ COPY --from=deps /app/package-lock.json ./package-lock.json
 # Remover dev dependencies (economiza ~200-300MB)
 RUN npm prune --production --legacy-peer-deps
 
-# Stage 3: Builder
+# Stage 3: Builder — sem apt-get (Prisma gerado no stage deps, binário já em node_modules)
 FROM node:20-bullseye-slim AS builder
-RUN apt-get update && apt-get install -y openssl ca-certificates libssl1.1 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # OTIMIZAÇÃO: Copiar node_modules completo (com dev deps para build)
@@ -102,7 +101,7 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 # Cache mount para .next/cache: o Next.js reusa chunks compilados entre builds.
 # Resultado: builds subsequentes ~3-5 min mais rápidos (apenas módulos alterados recompilam).
 RUN --mount=type=cache,target=/app/.next/cache \
-    npm run build
+    npx next build --turbopack
 
 # Stage 4: Runner (produção)
 FROM node:20-bullseye-slim AS runner
@@ -112,8 +111,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -m nextjs
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 -m nextjs
 
 # OTIMIZAÇÃO: Copiar APENAS node_modules de produção (deps-production stage)
 # Economiza ~200-300MB e acelera push/pull do registry

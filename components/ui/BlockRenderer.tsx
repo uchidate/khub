@@ -46,7 +46,7 @@ function BlockItem({ block }: { block: NewsBlock }) {
         case 'image':
             return (
                 <span className="block my-8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img
                         src={block.url}
                         alt={block.caption || ''}

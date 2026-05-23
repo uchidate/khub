@@ -52,7 +52,7 @@ export function SearchBar() {
       })
 
     return () => controller.abort()
-  }, [debouncedQuery])
+  }, [debouncedQuery, trackSearch])
 
   const handleClear = () => {
     setQuery('')

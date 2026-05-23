@@ -1,0 +1,88 @@
+name: 🧹 Weekly Lint Sweep
+
+# Toda segunda-feira roda eslint --fix e abre PR se houver correções automáticas.
+# Mantém o threshold de warnings baixo sem esforço manual.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Segunda-feira às 8h UTC
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  lint-sweep:
+    name: 🧹 ESLint auto-fix sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node_modules
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-modules-
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🧹 Run ESLint --fix
+        run: |
+          npx eslint app/ lib/ components/ --fix 2>/dev/null || true
+          echo "ESLint fix concluído"
+
+      - name: 🔍 Verificar se há mudanças
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Nenhuma correção automática encontrada"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Correções encontradas:"
+            git diff --stat
+          fi
+
+      - name: 📋 Abrir PR com correções
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          BRANCH="chore/lint-sweep-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore(lint): auto-fix semanal — eslint --fix
+
+Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --title "🧹 chore(lint): auto-fix semanal" \
+            --body "Correções automáticas geradas por \`eslint --fix\`.
+
+Revisar antes de mergear — o auto-fix pode alterar lógica em casos raros." \
+            --label "maintenance"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Sem correções necessárias
+        if: steps.changes.outputs.changed == 'false'
+        run: |
+          {
+            echo "## ✅ Lint Sweep"
+            echo "Nenhuma correção automática necessária. Base de código limpa."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,50 +1,32 @@
-## Descricao
+## O que este PR faz
 
-<!-- Descreva brevemente o que este PR faz -->
+<!-- Uma frase descrevendo a mudança -->
 
-## Tipo de Mudanca
+## Tipo
 
-- [ ] Bug fix
-- [ ] Nova feature
-- [ ] Melhoria de performance
-- [ ] Refatoracao
-- [ ] Documentacao
-- [ ] Outro: ___________
+- [ ] feat — nova funcionalidade
+- [ ] fix — correção de bug
+- [ ] perf — performance
+- [ ] chore/refactor — sem impacto em funcionalidade
 
 ---
 
-## Checklist Pre-Producao
+## Checklist
 
-### Obrigatorio (marque todos antes de mergear):
+- [ ] TypeScript sem erros (`npm run typecheck`)
+- [ ] ESLint sem erros (`npm run lint`)
+- [ ] Nenhum secret ou `.env` commitado
+- [ ] Deploy em staging passou (CI garante automaticamente)
+- [ ] Testei o fluxo principal em staging.hallyuhub.com.br
 
-- [ ] **Codigo foi deployado em STAGING** (branch develop)
-- [ ] **Testei as funcionalidades em staging** (http://servidor:3001)
-- [ ] **Verifiquei os logs do container** sem erros
-- [ ] **Console do browser** sem erros novos
-- [ ] Lint e TypeScript passando (`npm run lint && npx tsc --noEmit`)
+### Se aplicável
 
-### Se aplicavel:
-
-- [ ] Migracoes de banco foram testadas
-- [ ] Variaveis de ambiente atualizadas
-- [ ] Documentacao atualizada
+- [ ] Migração de banco testada em staging
+- [ ] Variáveis de ambiente adicionadas via `/set-env`
+- [ ] Sem arquivos de `components/account/` (WIP separado)
 
 ---
 
-## Evidencia de Teste em Staging
+## Evidência
 
-<!-- Cole aqui screenshot ou descreva o teste feito -->
-
-**Testado em:** staging (http://servidor:3001)
-**Data/Hora:**
-
----
-
-## Processo Seguido
-
-```
-LOCAL → STAGING → PRODUCAO
-   ✓       ✓         ⏳
-```
-
-> Lembre-se: Este merge vai para PRODUCAO. Certifique-se de ter validado em STAGING primeiro.
+<!-- Screenshot, log ou descrição do teste em staging -->

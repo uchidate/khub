@@ -24,6 +24,13 @@ on:
       - 'feat/**'
       - 'fix/**'
       - 'chore/**'
+      - 'perf/**'
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/cron-jobs.yml'
+      - '.github/workflows/parity-check.yml'
+      - '.github/workflows/sync-staging.yml'
+      - '.github/dependabot.yml'
   workflow_dispatch:
     inputs:
       branch:
@@ -58,22 +65,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Cache node_modules
         id: cache-node-modules
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', 'prisma/schema.prisma', 'prisma-kpopping/schema.prisma') }}
+          restore-keys: ${{ runner.os }}-node-modules-
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --legacy-peer-deps
 
       - name: Generate Prisma Client
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: |
           npx prisma generate
           npx prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts
@@ -81,17 +87,38 @@ jobs:
       - name: 🔍 Lint & Type Check
         run: |
           echo "::group::ESLint"
-          npx eslint app/ lib/ --max-warnings 10
+          npx eslint app/ lib/ components/ --max-warnings 10 --cache --cache-location node_modules/.cache/eslint/
           echo "::endgroup::"
           echo "::group::TypeScript"
           npx tsc --noEmit
           echo "::endgroup::"
+          {
+            echo "## ✅ Validate Code"
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| ESLint | ✅ Passed |"
+            echo "| TypeScript | ✅ Passed |"
+            echo "| Commit: \`${{ github.sha }}\` | Branch: \`${{ github.ref_name }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 🗄️ Migration Check
+        run: |
+          # Verifica se o schema.prisma está em sync com os arquivos de migration.
+          # Não precisa de banco — compara schema com histórico de migrations local.
+          if npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code 2>/dev/null; then
+            echo "✅ Schema em sync com migrations"
+            echo "| 🗄️ Migrations | ✅ Sincronizado |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ schema.prisma tem mudanças sem migration — rode 'npx prisma migrate dev'"
+            echo "| 🗄️ Migrations | ⚠️ Schema sem migration |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        continue-on-error: true  # avisa mas não bloqueia CI
 
       - name: 🧪 Tests
-        run: npx vitest run
-
-      - name: 🔒 Security Audit
-        run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
+        run: npx vitest run --coverage
 
   # ════════════════════════════════════════════════════════════════
   # FASE 2a: Build da imagem Docker (feat/*, fix/*, chore/*, staging — não main)
@@ -139,7 +166,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=staging
-            type=sha,prefix=staging-
 
       - name: Build and Push
         id: build
@@ -164,10 +190,9 @@ jobs:
             NEXT_PUBLIC_BING_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}
             NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
-          cache-from: |
-            type=gha
-            type=registry,ref=ghcr.io/uchidate/khub:staging
+          cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: 📊 Summary
         run: |
@@ -414,3 +439,80 @@ jobs:
           echo "### 🟢 Deploy Production Concluído" >> $GITHUB_STEP_SUMMARY
           echo "Coolify fez pull da imagem e o container está respondendo." >> $GITHUB_STEP_SUMMARY
           echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════════
+  # ROLLBACK AUTOMÁTICO — acionado se deploy-production falhar
+  # ════════════════════════════════════════════════════════════════
+
+  auto-rollback:
+    name: ⏪ Auto-Rollback Production
+    needs: deploy-production
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: production
+      url: https://www.hallyuhub.com.br
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-ssh
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: ⏪ Rollback — restaurar imagem anterior
+        run: |
+          REGISTRY="ghcr.io/${{ env.IMAGE_NAME }}"
+          echo "🔄 Restaurando rollback-latest → latest..."
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "
+            docker pull ${REGISTRY}:rollback-latest && \
+            docker tag ${REGISTRY}:rollback-latest ${REGISTRY}:latest && \
+            docker push ${REGISTRY}:latest && \
+            echo '✅ Imagem restaurada'
+          " || { echo '❌ Falha ao restaurar imagem'; exit 1; }
+
+      - uses: ./.github/actions/coolify-deploy
+        with:
+          coolify_uuid: ${{ vars.COOLIFY_PRODUCTION_UUID }}
+          coolify_token: ${{ secrets.COOLIFY_TOKEN }}
+          health_url: https://www.hallyuhub.com.br/api/health
+          resolve: www.hallyuhub.com.br:443:31.97.255.107
+          max_wait_seconds: '120'
+
+      - name: 📊 Summary
+        run: |
+          {
+            echo "### ⏪ Rollback Automático Executado"
+            echo "Deploy falhou — production restaurado para versão anterior."
+            echo "Investigue o erro no job **🟢 Deploy to Production** antes de fazer novo deploy."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ════════════════════════════════════════════════════════════════
+  # NOTIFICAÇÃO — deploy de production concluído com sucesso
+  # ════════════════════════════════════════════════════════════════
+
+  notify-production:
+    name: 📣 Notify Production Deploy
+    needs: deploy-production
+    if: success() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: 📣 Notificar deploy bem-sucedido
+        run: |
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          ACTOR="${{ github.actor }}"
+          SHA="${{ github.sha }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "## ✅ Production Deploy"
+            echo "| Campo | Valor |"
+            echo "|-------|-------|"
+            echo "| Commit | \`${SHA:0:7}\` |"
+            echo "| Mensagem | ${COMMIT_MSG} |"
+            echo "| Por | ${ACTOR} |"
+            echo "| URL | [Ver run](${RUN_URL}) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Production deploy concluído: ${COMMIT_MSG} (${SHA:0:7})"

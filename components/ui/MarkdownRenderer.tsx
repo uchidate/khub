@@ -180,7 +180,7 @@ function buildComponents(source?: string | null): Components {
 
         img: ({ src, alt }) => (
             <span className="block my-8">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                { }
                 <img
                     src={src}
                     alt={alt || ''}
