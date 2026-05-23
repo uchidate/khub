@@ -2,6 +2,7 @@ import { AuthOptions, DefaultSession } from "next-auth"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
+import SpotifyProvider from "next-auth/providers/spotify"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/prisma"
 
@@ -44,6 +45,15 @@ export const authOptions: AuthOptions = {
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             allowDangerousEmailAccountLinking: false,
+          }),
+        ]
+      : []),
+    ...(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET
+      ? [
+          SpotifyProvider({
+            clientId: process.env.SPOTIFY_CLIENT_ID,
+            clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+            authorization: 'https://accounts.spotify.com/authorize?scope=user-read-email,user-read-private',
           }),
         ]
       : []),

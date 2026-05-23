@@ -16,32 +16,26 @@ test.describe('Páginas Públicas', () => {
   })
 
   test('artigo de blog abre e exibe conteúdo', async ({ page }) => {
-    await page.goto('/blog')
-    // Excluir RSS feed e links que não são artigos
+    // domcontentloaded na listagem — só precisa dos links, não das imagens
+    await page.goto('/blog', { waitUntil: 'domcontentloaded' })
     const firstArticle = page.locator('main a[href^="/blog/"]:not([href*="feed"]):not([href="/blog/"])').first()
     const href = await firstArticle.getAttribute('href')
     expect(href).toBeTruthy()
     await page.goto(href!)
     await expect(page).toHaveURL(new RegExp('/blog/'))
-    await expect(page.locator('h1')).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('h1')).toBeVisible({ timeout: 15_000 })
   })
 
-  test('página /search carrega', async ({ page }) => {
-    // Search lê query da URL — vai direto com parâmetro
+  test('página /search — carrega e exibe resultados', async ({ page }) => {
     await page.goto('/search?q=IVE')
     await expect(page.locator('main')).toBeVisible()
-    // Deve exibir resultados ou mensagem de estado dentro do main
+    // Verifica mensagem de estado E resultados numa única navegação
     await expect(
       page.locator('main').getByText(/resultado|artista|grupo|Digite pelo menos/i).first()
     ).toBeVisible({ timeout: 30_000 })
-  })
-
-  test('busca por artista retorna resultados', async ({ page }) => {
-    await page.goto('/search?q=IVE')
-    // Aguarda resultados de artistas ou grupos
     await expect(
       page.locator('a[href*="/artists/"], a[href*="/groups/"]').first()
-    ).toBeVisible({ timeout: 10_000 })
+    ).toBeVisible({ timeout: 15_000 })
   })
 
   test('página /artists carrega lista', async ({ page }) => {

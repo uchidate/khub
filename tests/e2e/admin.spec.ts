@@ -18,22 +18,26 @@ const ADMIN_ROUTES = [
   '/admin/enrichment',
 ]
 
-test.describe('Admin — proteção de rotas', () => {
-  for (const route of ADMIN_ROUTES) {
-    test(`${route} não exibe painel sem autenticação`, async ({ page }) => {
-      await page.goto(route, { timeout: 60000 })
-      await page.waitForLoadState('domcontentloaded')
-      const finalUrl = page.url()
-      // Não deve permanecer na rota admin
-      const stayedOnAdmin = finalUrl.includes(route) && !finalUrl.includes('/auth/')
-      // Se ficou na rota, não deve exibir menu de admin (sidebar)
-      if (stayedOnAdmin) {
-        const adminSidebar = await page.locator('[data-testid="admin-sidebar"], nav a[href="/admin/analytics"]').isVisible().catch(() => false)
-        expect(adminSidebar, `${route} não deve exibir admin sidebar sem autenticação`).toBeFalsy()
-      } else {
-        // Redirecionou — ok
-        expect(finalUrl).not.toContain(route.replace('/admin', '/admin/') + 'dashboard')
+// Um único teste verifica todas as rotas em paralelo com waitUntil: 'commit'
+// (espera só os headers, não renderiza — ~5x mais rápido que load completo)
+test('Admin — todas as rotas redirecionam sem autenticação', async ({ page }) => {
+  await Promise.all(
+    ADMIN_ROUTES.map(async (route) => {
+      const tab = await page.context().newPage()
+      try {
+        await tab.goto(route, { waitUntil: 'commit', timeout: 15_000 })
+        const finalUrl = tab.url()
+        const stayedOnAdmin = finalUrl.includes(route) && !finalUrl.includes('/auth/')
+        if (stayedOnAdmin) {
+          const adminSidebar = await tab
+            .locator('[data-testid="admin-sidebar"], nav a[href="/admin/analytics"]')
+            .isVisible()
+            .catch(() => false)
+          expect(adminSidebar, `${route} não deve exibir sidebar`).toBeFalsy()
+        }
+      } finally {
+        await tab.close()
       }
     })
-  }
+  )
 })

@@ -28,12 +28,22 @@ runs:
         TOKEN: ${{ inputs.coolify_token }}
       run: |
         echo "Triggering deploy (uuid: $UUID)..."
-        RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-          "curl -s -w '\n%{http_code}' -X GET \
-            --connect-timeout 10 --max-time 60 \
-            \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
-            -H \"Authorization: Bearer ${TOKEN}\" \
-            -H 'Content-Type: application/json'")
+        for attempt in 1 2 3; do
+          echo "SSH attempt $attempt/3..."
+          RESPONSE=$(ssh -i ~/.ssh/id_rsa \
+            -o ConnectTimeout=20 \
+            -o ServerAliveInterval=10 \
+            -o ServerAliveCountMax=3 \
+            -o StrictHostKeyChecking=no \
+            root@31.97.255.107 \
+            "curl -s -w '\n%{http_code}' -X GET \
+              --connect-timeout 10 --max-time 60 \
+              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
+              -H \"Authorization: Bearer ${TOKEN}\" \
+              -H 'Content-Type: application/json'" 2>/dev/null) && break
+          echo "⚠️ SSH timeout (attempt $attempt), retrying in 10s..."
+          sleep 10
+        done
         HTTP_CODE=$(echo "$RESPONSE" | tail -1)
         BODY=$(echo "$RESPONSE" | head -1)
         echo "Response: $BODY"

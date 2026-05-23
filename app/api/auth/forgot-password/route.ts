@@ -83,9 +83,14 @@ export const POST = withLogging(async function POST(request: NextRequest) {
       }
     }
 
+    const devPayload = process.env.NODE_ENV === 'development'
+      ? { resetUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/auth/reset-password?token=${resetToken}` }
+      : {}
+
     return NextResponse.json({
       success: true,
       message: 'Se o email existir, você receberá um link de recuperação.',
+      ...devPayload,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
