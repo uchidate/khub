@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Film, Search, X } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -95,6 +94,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
                         alt={prod.titlePt}
                         loading={priority ? 'eager' : 'lazy'}
                         decoding={priority ? 'sync' : 'async'}
+                        fetchPriority={priority ? 'high' : 'auto'}
                         className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                         onError={() => setImageFailed(true)}
                     />

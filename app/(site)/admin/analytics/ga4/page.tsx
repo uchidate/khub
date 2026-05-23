@@ -629,7 +629,11 @@ export default function Ga4AnalyticsPage() {
                 {error && (
                     <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-400 flex items-center gap-3">
                         <span className="flex-1">{error}</span>
-                        <button onClick={() => load(days)} className="text-xs underline underline-offset-2 shrink-0">tentar novamente</button>
+                        {error.includes('invalid_grant') || error.includes('Token has been expired') ? (
+                            <a href="/api/admin/analytics/ga4/auth" className="text-xs underline underline-offset-2 shrink-0 text-amber-400">re-autorizar Google</a>
+                        ) : (
+                            <button onClick={() => load(days)} className="text-xs underline underline-offset-2 shrink-0">tentar novamente</button>
+                        )}
                     </div>
                 )}
 

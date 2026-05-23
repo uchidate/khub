@@ -766,6 +766,7 @@ function isNonCompactArtistCard(block: BlogBlock): boolean {
     return block.type === 'blog_artist_card' && !block.compact
 }
 
+
 // Internal marker type to differentiate portrait groups from compact groups
 type PortraitGroupMarker = { _portraitGroup: true; items: BlogBlock[] }
 function isPortraitGroup(item: unknown): item is PortraitGroupMarker {

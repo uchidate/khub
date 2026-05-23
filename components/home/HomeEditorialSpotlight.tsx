@@ -134,7 +134,7 @@ export function HomeEditorialSpotlight({
                                 href={`/blog/${post.slug}`}
                                 className="group grid grid-cols-[88px_minmax(0,1fr)] overflow-hidden border-b border-border bg-background transition-colors last:border-b-0 hover:bg-surface/70 sm:block sm:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b lg:border-r-0"
                             >
-                                <div className="relative h-24 bg-surface sm:h-auto sm:aspect-[16/9] lg:aspect-[2.5/1]">
+                                <div className="relative h-24 bg-surface sm:h-auto sm:aspect-[4/3] lg:aspect-[4/3]">
                                     <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 1024px) 33vw, 28vw" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
                                 </div>
                                 <div className="p-3">

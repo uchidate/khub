@@ -131,7 +131,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     useEffect(() => {
         const root = document.documentElement
         const isMobile = window.matchMedia("(max-width: 1023px)").matches
-        root.style.setProperty("--site-header-h", isMobile ? "92px" : "192px")
+        root.style.setProperty("--site-header-h", isMobile ? "92px" : "196px")
         return () => { root.style.removeProperty("--site-header-h") }
     }, [tickerItems.length])
 

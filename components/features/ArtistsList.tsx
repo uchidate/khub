@@ -48,6 +48,7 @@ function ArtistCard({ artist, priority, trending }: { artist: Artist; priority?:
                         height={300}
                         loading={priority ? 'eager' : 'lazy'}
                         decoding={priority ? 'sync' : 'async'}
+                        fetchPriority={priority ? 'high' : 'auto'}
                         className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
                         onError={() => setImageFailed(true)}
                     />

@@ -11,9 +11,8 @@ import { BlogHeroCarousel } from '@/components/blog/BlogHeroCarousel'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { SectionBar } from '@/components/ui/SectionBar'
-import { Clock, Eye, ArrowRight, Tag, TrendingUp, BookOpen, ChevronRight, Sparkles } from 'lucide-react'
+import { Clock, Eye, ArrowRight, TrendingUp, BookOpen, ChevronRight, Sparkles } from 'lucide-react'
 import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/config/blog'
-import { getTagStyle } from '@/lib/utils/tag-colors'
 import prisma from '@/lib/prisma'
 import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { SITE_URL } from '@/lib/constants/site'
@@ -185,7 +184,7 @@ function EditorialSideCard({ post, priority }: { post: PostItem; priority?: bool
   return (
     <Link href={`/blog/${post.slug}`}
       className="group flex flex-col border border-border bg-background transition-colors duration-200 hover:border-accent/50 overflow-hidden flex-1">
-      <div className="relative aspect-[16/8] overflow-hidden bg-muted/20 shrink-0">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted/20 shrink-0">
         <BlogImage src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 240px" priority={priority}
           className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
           fallbackGradient={cfg ? `linear-gradient(135deg, ${cfg.bg}, ${cfg.color}44)` : '#f5f5f5'}
@@ -208,7 +207,7 @@ function PostCard({ post, priority }: { post: PostItem; priority?: boolean }) {
     <Link href={`/blog/${post.slug}`}
       className="group flex flex-col overflow-hidden border border-border bg-background transition-colors duration-300 hover:border-accent/50 h-full">
       {cfg && <div className="h-0.5 w-full shrink-0" style={{ backgroundColor: cfg.color }} />}
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted/20 shrink-0">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted/20 shrink-0">
         <BlogImage src={post.coverImageUrl} alt={post.title} fill priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
@@ -384,83 +383,30 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
         {/* ── Conteúdo principal ────────────────────────────────────── */}
         <div className="page-wrap mt-8">
 
-          {/* ── Filter bar ─────────────────────────────────────────── */}
-          <div className="border border-border mb-8">
-            {/* Sort tabs + categorias */}
-            <div className="relative">
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-            <div className="flex items-center border-b border-border overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
-              {/* Tabs */}
+          {/* Sort tabs + filtro ativo */}
+          <div className="flex items-center justify-between gap-4 mb-8 border-b border-border pb-4">
+            <div className="flex items-center gap-1">
               {[{ key: 'recent', label: 'Mais recentes' }, { key: 'popular', label: 'Mais lidos' }].map(tab => (
                 <Link key={tab.key} href={tabHref(tab.key)} scroll={false}
-                  className={`px-4 py-3 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                    activeSortBy === tab.key ? 'bg-foreground text-background font-bold' : 'text-muted hover:text-foreground'
+                  className={`px-3 py-1.5 text-[12px] font-bold transition-colors rounded-full ${
+                    activeSortBy === tab.key ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'
                   }`}>
                   {tab.label}
                 </Link>
               ))}
-              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-3 border-r border-border shrink-0">Tema</span>
-              <Link href="/blog" scroll={false}
-                className={`px-3 py-3 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                  !isFiltered ? 'bg-foreground text-background font-bold' : 'text-muted hover:text-foreground'
-                }`}>
-                Todos
-              </Link>
-              {orderedCategories.map(c => {
-                const isActive = activeCategory === c.slug
-                const href = activeTag ? `/blog?category=${c.slug}&tag=${encodeURIComponent(activeTag)}` : `/blog?category=${c.slug}`
-                return (
-                  <Link key={c.id} href={href} scroll={false}
-                    className={`px-3 py-3 font-mono text-[11px] shrink-0 border-r border-border transition-colors ${
-                      isActive ? 'bg-foreground text-background font-bold' : 'text-muted hover:text-foreground'
-                    }`}>
-                    {c.name} <span className="opacity-40">{c._count.posts}</span>
-                  </Link>
-                )
-              })}
             </div>
-            </div>
-
-            {/* Tags */}
-            {normalizedPopularTags.length > 0 && (
-              <div className="relative">
-              <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-              <div className="flex items-center overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
-                <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-muted px-3 py-2.5 border-r border-border shrink-0">
-                  <Tag size={9} className="inline mr-1" />tags
-                </span>
-                {normalizedPopularTags.map(({ tag }) => {
-                  const ts = getTagStyle(tag)
-                  const isActiveTag = activeTag === tag
-                  const href = isActiveTag
-                    ? (activeCategory ? `/blog?category=${activeCategory}` : '/blog')
-                    : (activeCategory ? `/blog?category=${activeCategory}&tag=${encodeURIComponent(tag)}` : `/blog?tag=${encodeURIComponent(tag)}`)
-                  return (
-                    <Link key={tag} href={href} scroll={false}
-                      className="px-3 py-2.5 font-mono text-[10px] shrink-0 border-r border-border transition-colors whitespace-nowrap"
-                      style={isActiveTag ? { backgroundColor: ts.color, color: '#fff' } : { color: ts.color }}>
-                      {tag}
-                    </Link>
-                  )
-                })}
+            {isFiltered ? (
+              <div className="flex items-center gap-2">
+                {activeCatConfig && (
+                  <span className="text-[11px] font-bold px-2 py-0.5" style={{ color: activeCatConfig.color, backgroundColor: activeCatConfig.bg }}>{activeCatConfig.name}</span>
+                )}
+                {activeTag && <span className="text-[11px] text-muted">#{activeTag}</span>}
+                <Link href="/blog" className="text-[11px] text-accent hover:underline font-semibold">Limpar</Link>
               </div>
-              </div>
+            ) : (
+              <span className="font-mono text-[10px] text-muted">{total} artigos</span>
             )}
           </div>
-
-          {/* Filtro ativo */}
-          {isFiltered && (
-            <div className="flex items-center gap-3 mb-6 p-3.5 bg-background border-y border-border">
-              <div className="flex items-center gap-2 flex-wrap flex-1">
-                {activeCatConfig && (
-                  <span className="text-xs font-bold px-2 py-0.5" style={{ color: activeCatConfig.color, backgroundColor: activeCatConfig.bg }}>{activeCatConfig.name}</span>
-                )}
-                {activeTag && <span className="flex items-center gap-1 text-xs text-muted"><Tag size={10} />#{activeTag}</span>}
-                <span className="text-xs text-muted">{posts.length} {posts.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}</span>
-              </div>
-              <Link href="/blog" className="text-xs text-accent hover:underline font-semibold whitespace-nowrap">Limpar filtros</Link>
-            </div>
-          )}
 
           {/* ── Layout: main + sidebar ─────────────────────────────── */}
           <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_300px] gap-10 xl:gap-14">
@@ -515,10 +461,6 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                             ))}
                           </div>
                         </div>
-                      )}
-
-                      {block2Posts.length > 0 && (
-                        <LojaRelacionados tags={popularTags.slice(0, 5).map(t => t.tag)} compact />
                       )}
 
                       {block2Posts.length > 0 && (
@@ -618,75 +560,11 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                 </div>
               )}
 
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3">Categorias</p>
-                <div className="flex flex-col gap-1">
-                  {orderedCategories.map(c => {
-                    const cfg = BLOG_CATEGORY_BY_SLUG[c.slug]
-                    const isActive = activeCategory === c.slug
-                    return (
-                      <Link key={c.id} href={isActive ? '/blog' : `/blog?category=${c.slug}`} scroll={false}
-                        className="group flex items-center gap-2.5 px-3 py-2.5 border transition-all"
-                        style={isActive ? { backgroundColor: cfg?.bg ?? '#f3f4f6', borderColor: `${cfg?.color ?? '#374151'}40` } : { borderColor: 'transparent', backgroundColor: 'transparent' }}>
-                        <span className="w-2 h-2 shrink-0" style={{ backgroundColor: cfg?.color ?? '#9ca3af' }} />
-                        <span className="text-xs font-semibold flex-1 transition-colors" style={isActive ? { color: cfg?.color } : undefined}>{c.name}</span>
-                        <span className="text-[10px] font-bold opacity-35" style={isActive ? { color: cfg?.color } : undefined}>{c._count.posts}</span>
-                        <ArrowRight size={11}
-                          className={`transition-all shrink-0 ${isActive ? 'opacity-60' : 'opacity-0 group-hover:opacity-50 group-hover:translate-x-0.5'}`}
-                          style={isActive ? { color: cfg?.color } : undefined} />
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {normalizedPopularTags.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-3 flex items-center gap-1.5">
-                    <Tag size={10} /> Tags populares
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {normalizedPopularTags.slice(0, 10).map(({ tag }) => {
-                      const ts = getTagStyle(tag)
-                      const isActiveTag = activeTag === tag
-                      return (
-                        <Link key={tag} href={isActiveTag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`} scroll={false}
-                            className="px-2.5 py-1 font-mono text-[10px] font-semibold transition-colors"
-                          style={{ color: isActiveTag ? '#fff' : ts.color, backgroundColor: isActiveTag ? ts.color : ts.bg }}>
-                          {tag}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              <LojaRelacionados tags={normalizedPopularTags.slice(0, 5).map(t => t.tag)} compact />
             </aside>
           </div>
         </div>
 
-        {/* ── Strip escura — categorias no estilo Direction C ───────── */}
-        {!isFiltered && page === 1 && orderedCategories.length > 0 && (
-          <section className="mt-12 border-t border-border bg-background">
-            <div className="page-wrap py-10">
-              <div className="flex items-baseline justify-between mb-6 border-b border-foreground pb-4">
-                <h2 className="text-[24px] font-black tracking-[-0.03em] text-foreground">
-                  Por categoria
-                </h2>
-                <span className="font-mono text-[11px] text-muted">filtre por tema</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                {orderedCategories.map(c => (
-                  <Link key={c.id} href={`/blog?category=${c.slug}`}
-                    className="group p-4 border border-border hover:border-accent/50 transition-colors flex flex-col gap-2 bg-background">
-                    <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted transition-colors group-hover:text-accent">{c.name}</div>
-                    <div className="text-[32px] font-black leading-none text-foreground">{c._count.posts}</div>
-                    <div className="font-mono text-[10px] text-muted group-hover:text-accent transition-colors">ver tudo →</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
 
         <ScrollToTop />
       </PageTransition>
