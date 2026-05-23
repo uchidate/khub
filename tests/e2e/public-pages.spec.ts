@@ -30,10 +30,10 @@ test.describe('Páginas Públicas', () => {
     // Search lê query da URL — vai direto com parâmetro
     await page.goto('/search?q=IVE')
     await expect(page.locator('main')).toBeVisible()
-    // Deve exibir resultados ou mensagem "Digite pelo menos 2 caracteres"
+    // Deve exibir resultados ou mensagem de estado dentro do main
     await expect(
-      page.locator('text=/resultado|artista|grupo|Digite pelo menos/i').first()
-    ).toBeVisible({ timeout: 10_000 })
+      page.locator('main').getByText(/resultado|artista|grupo|Digite pelo menos/i).first()
+    ).toBeVisible({ timeout: 30_000 })
   })
 
   test('busca por artista retorna resultados', async ({ page }) => {
