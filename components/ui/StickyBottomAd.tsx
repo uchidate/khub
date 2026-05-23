@@ -40,7 +40,7 @@ export function StickyBottomAd() {
         if (!visible || pushed.current || !CLIENT || !SLOT) return
         pushed.current = true
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
         } catch (_) { /* adsbygoogle may throw on blocked ads */ }
     }, [visible])

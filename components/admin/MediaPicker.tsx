@@ -125,7 +125,7 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
                                     onClick={() => setSelected(f.url)}
                                     className={`relative group rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-square bg-surface ${selected === f.url ? 'border-[#ff2d78]' : 'border-transparent hover:border-border'}`}
                                 >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    { }
                                     <img src={f.url} alt={f.filename} className="absolute inset-0 w-full h-full object-cover" />
                                     {selected === f.url && (
                                         <div className="absolute inset-0 bg-[#ff2d78]/20 flex items-center justify-center">

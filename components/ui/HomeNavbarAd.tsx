@@ -13,7 +13,7 @@ export function HomeNavbarAd() {
         if (IS_DEV || !CLIENT || !SLOT || pushed.current) return
         pushed.current = true
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
         } catch { /* AdSense ainda não carregou */ }
     }, [])

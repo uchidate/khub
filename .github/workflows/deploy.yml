@@ -102,7 +102,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 🧪 Tests
-        run: npx vitest run
+        run: npx vitest run --coverage
 
   # ════════════════════════════════════════════════════════════════
   # FASE 2a: Build da imagem Docker (feat/*, fix/*, chore/*, staging — não main)
