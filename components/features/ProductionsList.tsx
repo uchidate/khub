@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Film, Search, X } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
