@@ -1,0 +1,82 @@
+name: 💾 DB Backup — Production
+
+# Backup diário do banco de produção com retenção de 7 dias no servidor.
+# Roda às 3h UTC (00h BRT) — horário de menor tráfego.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  backup:
+    name: 💾 Backup Production DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: false  # backup crítico — falha deve notificar
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-ssh
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 💾 Executar backup
+        run: |
+          ssh -i ~/.ssh/id_rsa root@31.97.255.107 << 'ENDSSH'
+          set -e
+          BACKUP_DIR="/opt/backups/hallyuhub"
+          mkdir -p "$BACKUP_DIR"
+
+          # Descobrir container postgres de produção
+          PROD_PG=""
+          while IFS= read -r name; do
+            if docker exec "$name" psql -U hallyuhub -lqt 2>/dev/null | grep -q "hallyuhub_production"; then
+              PROD_PG="$name"
+              break
+            fi
+          done < <(docker ps --format "{{.Names}}")
+
+          [ -n "$PROD_PG" ] || { echo "❌ Container postgres production não encontrado"; exit 1; }
+
+          FILENAME="prod_$(date +%Y%m%d_%H%M%S).dump"
+          FILEPATH="$BACKUP_DIR/$FILENAME"
+
+          echo "Gerando backup: $FILENAME"
+          docker exec "$PROD_PG" pg_dump \
+            -U hallyuhub -Fc --no-acl --no-owner \
+            hallyuhub_production > "$FILEPATH"
+
+          SIZE=$(du -sh "$FILEPATH" | cut -f1)
+          echo "✅ Backup: $FILEPATH ($SIZE)"
+
+          # Retenção: manter apenas os últimos 7 backups
+          ls -t "$BACKUP_DIR"/prod_*.dump 2>/dev/null | tail -n +8 | xargs rm -f 2>/dev/null || true
+          REMAINING=$(ls "$BACKUP_DIR"/prod_*.dump 2>/dev/null | wc -l)
+          echo "Backups mantidos: $REMAINING"
+          ls -lh "$BACKUP_DIR"/prod_*.dump 2>/dev/null
+          ENDSSH
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          {
+            echo "## 💾 Backup Production DB"
+            echo "Executado em: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo "Backups ficam em \`/opt/backups/hallyuhub/\` no servidor (retenção 7 dias)."
+            echo ""
+            echo "Para restaurar:"
+            echo "\`\`\`bash"
+            echo "ssh root@31.97.255.107"
+            echo "ls /opt/backups/hallyuhub/  # listar backups"
+            echo "docker exec -i <postgres-container> pg_restore -U hallyuhub -d hallyuhub_production /opt/backups/hallyuhub/<arquivo>.dump"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"

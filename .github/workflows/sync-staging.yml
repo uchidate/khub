@@ -13,7 +13,7 @@ name: 🔄 Sync Staging ← Production
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 1'  # toda segunda-feira às 6h UTC
+    - cron: '0 4 * * *'  # diariamente às 4h UTC (01h BRT) — após o backup das 3h
 
 concurrency:
   group: sync-staging

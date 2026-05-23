@@ -101,6 +101,22 @@ jobs:
             echo "| Commit: \`${{ github.sha }}\` | Branch: \`${{ github.ref_name }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: 🗄️ Migration Check
+        run: |
+          # Verifica se o schema.prisma está em sync com os arquivos de migration.
+          # Não precisa de banco — compara schema com histórico de migrations local.
+          if npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code 2>/dev/null; then
+            echo "✅ Schema em sync com migrations"
+            echo "| 🗄️ Migrations | ✅ Sincronizado |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ schema.prisma tem mudanças sem migration — rode 'npx prisma migrate dev'"
+            echo "| 🗄️ Migrations | ⚠️ Schema sem migration |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        continue-on-error: true  # avisa mas não bloqueia CI
+
       - name: 🧪 Tests
         run: npx vitest run --coverage
 
