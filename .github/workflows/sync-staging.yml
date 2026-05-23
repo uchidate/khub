@@ -15,6 +15,9 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # toda segunda-feira às 6h UTC
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   sync:
     name: 🔄 Sync Staging DB from Production
@@ -26,13 +29,10 @@ jobs:
       url: https://staging.hallyuhub.com.br
 
     steps:
-      - name: 🔑 Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "UserKnownHostsFile /dev/null" >> ~/.ssh/config
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-ssh
+        with:
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: 📤 Upload sync script
         run: |
