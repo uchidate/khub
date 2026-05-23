@@ -92,6 +92,14 @@ jobs:
           echo "::group::TypeScript"
           npx tsc --noEmit
           echo "::endgroup::"
+          {
+            echo "## ✅ Validate Code"
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| ESLint | ✅ Passed |"
+            echo "| TypeScript | ✅ Passed |"
+            echo "| Commit: \`${{ github.sha }}\` | Branch: \`${{ github.ref_name }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 🧪 Tests
         run: npx vitest run
