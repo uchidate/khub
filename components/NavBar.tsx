@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { MouseEvent } from "react"
 import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
@@ -33,7 +33,47 @@ const navLinks = [
 ]
 
 
+const SUBTITLES = [
+    'k-pop · k-drama · cultura coreana, em português',
+    'artistas · grupos · produções',
+    'tendências · notícias · calendário',
+    'tudo sobre o universo hallyu',
+]
+
 function AnimatedLogoLink() {
+    const [si, setSi] = useState(0)
+    const [text, setText] = useState(SUBTITLES[0])
+    const [deleting, setDeleting] = useState(false)
+    const pos = useRef(SUBTITLES[0].length)
+
+    useEffect(() => {
+        const target = SUBTITLES[si]
+        let timeout: ReturnType<typeof setTimeout>
+
+        if (!deleting) {
+            if (pos.current < target.length) {
+                timeout = setTimeout(() => {
+                    pos.current++
+                    setText(target.slice(0, pos.current))
+                }, 40)
+            } else {
+                // Pausa longa antes de apagar — 8 segundos
+                timeout = setTimeout(() => setDeleting(true), 8000)
+            }
+        } else {
+            if (pos.current > 0) {
+                timeout = setTimeout(() => {
+                    pos.current--
+                    setText(target.slice(0, pos.current))
+                }, 22)
+            } else {
+                setDeleting(false)
+                setSi(i => (i + 1) % SUBTITLES.length)
+            }
+        }
+        return () => clearTimeout(timeout)
+    }, [text, deleting, si])
+
     return (
         <Link href="/" className="flex items-end gap-5">
             <div className="mb-1 shrink-0 text-foreground">
@@ -43,8 +83,8 @@ function AnimatedLogoLink() {
                 <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground">
                     HallyuHub<BrandDot />
                 </span>
-                <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
-                    k-pop · k-drama · cultura coreana, em português
+                <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted min-w-[320px]">
+                    {text}<span className="opacity-60 animate-pulse">|</span>
                 </span>
             </div>
         </Link>
