@@ -165,7 +165,7 @@ function RelatedPostCard({ post }: { post: RelatedPost }) {
   )
 }
 
-function SidebarRelatedCard({ post }: { post: RelatedPost }) {
+function _SidebarRelatedCard({ post }: { post: RelatedPost }) {
   return (
     <Link href={`/blog/${post.slug}`} className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-surface-hover">
       {post.coverImageUrl && (
@@ -297,7 +297,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>
 
       <div className="page-wrap pt-8">
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-10 xl:gap-12 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-10 xl:gap-12 xl:items-stretch">
 
       {/* ── Coluna principal ── */}
       <div className="min-w-0">
@@ -394,17 +394,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
-        {/* Artigos relacionados — mobile/tablet (sidebar oculta em <xl) */}
-        {relatedPosts.length > 0 && (
-          <div className="xl:hidden mt-10 pt-8 border-t border-border">
-            <h2 className="text-base font-bold text-foreground mb-4">Artigos relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {relatedPosts.slice(0, 3).map(related => (
-                <RelatedPostCard key={related.slug} post={related} />
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Artistas mencionados no artigo */}
         {artists.length > 0 && (
@@ -484,6 +473,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           compact
         />
 
+        {/* Leia também — todas as telas */}
+        {relatedPosts.length > 0 && (
+          <div className="mt-10 pt-8 border-t border-border">
+            <h2 className="text-base font-bold text-foreground mb-4">Leia também</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {relatedPosts.slice(0, 3).map(related => (
+                <RelatedPostCard key={related.slug} post={related} />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-8">
           <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={14} />
@@ -494,24 +495,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* ── Sidebar (xl+) ── */}
       <aside className="hidden xl:block">
-        {/* TOC: sticky — cola no topo e acompanha a rolagem até o fim do aside */}
-        <div className="sticky top-[72px]">
+        <div
+          className="sticky overflow-y-auto"
+          style={{
+            top: 'calc(var(--site-header-h, 92px) + 48px + 8px)',
+            maxHeight: 'calc(100vh - var(--site-header-h, 92px) - 48px - 24px)',
+          }}
+        >
           <BlogTableOfContents />
         </div>
-
-        {/* Leia também: fluxo natural — aparece conforme o usuário avança no artigo */}
-        {relatedPosts.length > 0 && (
-          <div className="mt-4 rounded-xl border border-border overflow-hidden">
-            <div className="px-4 py-3 bg-surface border-b border-border">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-muted">Leia também</p>
-            </div>
-            <div className="divide-y divide-border/50">
-              {relatedPosts.slice(0, 5).map(related => (
-                <SidebarRelatedCard key={related.slug} post={related} />
-              ))}
-            </div>
-          </div>
-        )}
       </aside>
 
       </div>{/* fim flex */}
