@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════
 # Fluxo:
 #   feat/* ou staging → validate → build image → push ghcr.io:staging → deploy Coolify staging
-#   main (PR merge)   → validate → build image do main → push staging → promote staging→latest → deploy Coolify production
+#   main (PR merge)   → validate → promote staging→latest (sem rebuild) → deploy Coolify production
 #
 # Desenvolvimento:
 #   1. git checkout -b feat/minha-feature
@@ -100,7 +100,7 @@ jobs:
   build-image:
     name: 🐳 Build Docker Image
     needs: validate-code
-    if: github.ref != 'refs/heads/main' || github.event_name == 'push'
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -236,7 +236,7 @@ jobs:
 
   promote-image:
     name: 🏷️ Promote Image to Production
-    needs: [validate-code, build-image]
+    needs: validate-code
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -306,47 +306,16 @@ jobs:
         with:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 🚀 Trigger Coolify Deploy
-        run: |
-          UUID="${{ vars.COOLIFY_STAGING_UUID }}"
-          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-          echo "Triggering Coolify deploy for staging via server SSH (uuid: $UUID)..."
-          RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-            "curl -s -w '\n%{http_code}' -X GET \
-              --connect-timeout 10 --max-time 60 \
-              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
-              -H \"Authorization: Bearer ${TOKEN}\" \
-              -H 'Content-Type: application/json'")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          echo "Response: $BODY"
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
-
-      - name: 🔍 Smoke Test
-        run: |
-          echo "Aguardando container subir..."
-          for i in $(seq 1 18); do
-            sleep 10
-            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 \
-              --resolve "staging.hallyuhub.com.br:443:31.97.255.107" \
-              https://staging.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
-            if [ "$HTTP" = "200" ]; then
-              echo "✅ Staging health check OK após $((i * 10))s"
-              exit 0
-            fi
-            echo "⏳ Tentativa $i/12: HTTP $HTTP"
-          done
-          echo "❌ Staging não respondeu após 120s"
-          exit 1
+      - uses: ./.github/actions/coolify-deploy
+        with:
+          coolify_uuid: ${{ vars.COOLIFY_STAGING_UUID }}
+          coolify_token: ${{ secrets.COOLIFY_TOKEN }}
+          health_url: https://staging.hallyuhub.com.br/api/health
+          resolve: staging.hallyuhub.com.br:443:31.97.255.107
 
       - name: 📊 Summary
         run: |
           echo "### 🟡 Deploy Staging Concluído" >> $GITHUB_STEP_SUMMARY
-          echo "Coolify fez pull da imagem e o container está respondendo." >> $GITHUB_STEP_SUMMARY
           echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════════
@@ -370,43 +339,12 @@ jobs:
         with:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 🚀 Trigger Coolify Deploy
-        run: |
-          UUID="${{ vars.COOLIFY_PRODUCTION_UUID }}"
-          TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-          echo "Triggering Coolify deploy for production via server SSH (uuid: $UUID)..."
-          RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-            "curl -s -w '\n%{http_code}' -X GET \
-              --connect-timeout 10 --max-time 60 \
-              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
-              -H \"Authorization: Bearer ${TOKEN}\" \
-              -H 'Content-Type: application/json'")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          echo "Response: $BODY"
-          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
-            echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-          echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
-
-      - name: 🔍 Smoke Test
-        run: |
-          echo "Aguardando container subir..."
-          for i in $(seq 1 18); do
-            sleep 10
-            # Acessa via IP direto para evitar bloqueio do Cloudflare nos IPs do GitHub Actions
-            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 \
-              --resolve "www.hallyuhub.com.br:443:31.97.255.107" \
-              https://www.hallyuhub.com.br/api/health 2>/dev/null || echo "000")
-            if [ "$HTTP" = "200" ]; then
-              echo "✅ Production health check OK após $((i * 10))s"
-              exit 0
-            fi
-            echo "⏳ Tentativa $i/18: HTTP $HTTP"
-          done
-          echo "❌ Production não respondeu após 180s"
-          exit 1
+      - uses: ./.github/actions/coolify-deploy
+        with:
+          coolify_uuid: ${{ vars.COOLIFY_PRODUCTION_UUID }}
+          coolify_token: ${{ secrets.COOLIFY_TOKEN }}
+          health_url: https://www.hallyuhub.com.br/api/health
+          resolve: www.hallyuhub.com.br:443:31.97.255.107
 
       - name: 🔥 Cache Warm-up
         run: |

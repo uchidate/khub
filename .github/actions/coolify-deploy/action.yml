@@ -1,0 +1,66 @@
+name: Coolify Deploy + Smoke Test
+description: Dispara deploy no Coolify via SSH e aguarda health check
+
+inputs:
+  coolify_uuid:
+    description: "UUID da aplicação no Coolify"
+    required: true
+  coolify_token:
+    description: "Token de API do Coolify"
+    required: true
+  health_url:
+    description: "URL do health check (ex: https://staging.hallyuhub.com.br/api/health)"
+    required: true
+  resolve:
+    description: "Argumento --resolve para curl (ex: staging.hallyuhub.com.br:443:31.97.255.107)"
+    required: true
+  max_wait_seconds:
+    description: "Tempo máximo de espera em segundos"
+    default: '180'
+
+runs:
+  using: composite
+  steps:
+    - name: 🚀 Trigger Coolify Deploy
+      shell: bash
+      env:
+        UUID: ${{ inputs.coolify_uuid }}
+        TOKEN: ${{ inputs.coolify_token }}
+      run: |
+        echo "Triggering deploy (uuid: $UUID)..."
+        RESPONSE=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
+          "curl -s -w '\n%{http_code}' -X GET \
+            --connect-timeout 10 --max-time 60 \
+            \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
+            -H \"Authorization: Bearer ${TOKEN}\" \
+            -H 'Content-Type: application/json'")
+        HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+        BODY=$(echo "$RESPONSE" | head -1)
+        echo "Response: $BODY"
+        if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+          echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
+          exit 1
+        fi
+        echo "✅ Deploy triggered (HTTP $HTTP_CODE)"
+
+    - name: 🔍 Smoke Test
+      shell: bash
+      env:
+        HEALTH_URL: ${{ inputs.health_url }}
+        RESOLVE: ${{ inputs.resolve }}
+        MAX_WAIT: ${{ inputs.max_wait_seconds }}
+      run: |
+        ITERATIONS=$(( MAX_WAIT / 10 ))
+        echo "Aguardando container subir (máx ${MAX_WAIT}s)..."
+        for i in $(seq 1 "$ITERATIONS"); do
+          sleep 10
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+            --resolve "$RESOLVE" "$HEALTH_URL" 2>/dev/null || echo "000")
+          if [ "$HTTP" = "200" ]; then
+            echo "✅ Health check OK após $((i * 10))s"
+            exit 0
+          fi
+          echo "⏳ Tentativa $i/$ITERATIONS: HTTP $HTTP"
+        done
+        echo "❌ App não respondeu após ${MAX_WAIT}s"
+        exit 1
