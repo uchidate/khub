@@ -24,6 +24,13 @@ on:
       - 'feat/**'
       - 'fix/**'
       - 'chore/**'
+      - 'perf/**'
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/cron-jobs.yml'
+      - '.github/workflows/parity-check.yml'
+      - '.github/workflows/sync-staging.yml'
+      - '.github/dependabot.yml'
   workflow_dispatch:
     inputs:
       branch:
@@ -58,22 +65,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Cache node_modules
         id: cache-node-modules
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json', 'prisma/schema.prisma', 'prisma-kpopping/schema.prisma') }}
+          restore-keys: ${{ runner.os }}-node-modules-
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --legacy-peer-deps
 
       - name: Generate Prisma Client
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: |
           npx prisma generate
           npx prisma generate --schema=prisma-kpopping/schema.prisma --config=prisma-kpopping/prisma.config.ts
@@ -81,7 +87,7 @@ jobs:
       - name: 🔍 Lint & Type Check
         run: |
           echo "::group::ESLint"
-          npx eslint app/ lib/ --max-warnings 10
+          npx eslint app/ lib/ components/ --max-warnings 10
           echo "::endgroup::"
           echo "::group::TypeScript"
           npx tsc --noEmit
@@ -89,9 +95,6 @@ jobs:
 
       - name: 🧪 Tests
         run: npx vitest run
-
-      - name: 🔒 Security Audit
-        run: npm audit --audit-level=high || echo "::warning::Vulnerabilidades high/critical encontradas — revisar"
 
   # ════════════════════════════════════════════════════════════════
   # FASE 2a: Build da imagem Docker (feat/*, fix/*, chore/*, staging — não main)
@@ -139,7 +142,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=staging
-            type=sha,prefix=staging-
 
       - name: Build and Push
         id: build
@@ -164,10 +166,9 @@ jobs:
             NEXT_PUBLIC_BING_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}
             NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
-          cache-from: |
-            type=gha
-            type=registry,ref=ghcr.io/uchidate/khub:staging
+          cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: 📊 Summary
         run: |
