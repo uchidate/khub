@@ -304,8 +304,8 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {!hideFilter && (
                 <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
                     <div className="relative w-full">
-                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
+                    <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
                         <div className="flex shrink-0 items-center gap-2">
                             {renderFilterControls()}
                         </div>
