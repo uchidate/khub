@@ -137,7 +137,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         }} />
         <PageTransition className="pb-16">
 
-            <nav aria-label="Filtros" className="page-wrap flex h-12 items-center border-b border-border/50">
+            <nav aria-label="Filtros" className="sticky z-[210] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 52px)' }}>
                 <Suspense>
                     <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
                 </Suspense>
@@ -148,7 +148,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                     <Breadcrumbs items={[{ label: 'Artistas' }]} />
                 </div>
                 <div className="page-wrap border-b border-foreground py-3">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex gap-0.5 overflow-x-auto scrollbar-none">
                         {ALPHA.map((L) => {
                             const count = letterCounts[L] ?? 0
                             const active = letter === L
@@ -161,7 +161,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                                     key={L}
                                     href={disabled ? '#' : href}
                                     aria-disabled={disabled}
-                                    className={`flex flex-col items-center px-2.5 py-2 min-w-[36px] font-mono rounded-sm transition-colors ${
+                                    className={`flex flex-col items-center shrink-0 w-[32px] sm:w-[36px] py-2 font-mono rounded-sm transition-colors ${
                                         active
                                             ? 'bg-accent text-white'
                                             : disabled
@@ -169,8 +169,8 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
                                             : 'text-foreground hover:bg-surface'
                                     }`}
                                 >
-                                    <span className="text-[16px] font-bold leading-none">{L}</span>
-                                    <span className="text-[9px] opacity-70 mt-0.5">{count}</span>
+                                    <span className="text-[13px] sm:text-[15px] font-bold leading-none">{L}</span>
+                                    <span className="text-[8px] sm:text-[9px] opacity-70 mt-0.5">{count}</span>
                                 </Link>
                             )
                         })}
