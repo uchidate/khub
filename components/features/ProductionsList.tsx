@@ -302,7 +302,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         <div id="productions-list">
             {/* Filters */}
             {!hideFilter && (
-                <div className="page-wrap flex h-12 items-center border-b border-border/50">
+                <nav aria-label="Filtros" className="page-wrap flex h-12 items-center border-b border-border/50">
                     <div className="flex w-full items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                         <div className="flex shrink-0 items-center gap-2">
                             {renderFilterControls()}
@@ -325,7 +325,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                             </button>
                         )}
                     </div>
-                </div>
+                </nav>
             )}
 
             {!hideFilter && (

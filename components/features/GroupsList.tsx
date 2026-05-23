@@ -190,7 +190,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
         <div id="groups-list">
 
             {/* Filtros */}
-            {!hideFilter && <div className="page-wrap flex h-12 items-center border-b border-border/50">
+            {!hideFilter && <nav aria-label="Filtros" className="page-wrap flex h-12 items-center border-b border-border/50">
                 <div className="flex w-full items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                     <div className="flex shrink-0 items-center gap-2">
                         {renderFilterControls()}
@@ -220,7 +220,7 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                     </div>
                     )}
                 </div>
-            </div>}
+            </nav>}
 
             {!hideFilter && (
                 <div className="page-wrap border-b border-border/50 py-2">
