@@ -149,13 +149,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install crane
+        uses: imjasonh/setup-crane@v0.4
+
       - name: Save Rollback Image
         run: |
           SOURCE_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
           ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-staging"
-          docker pull "$SOURCE_TAG" 2>/dev/null && \
-            docker tag "$SOURCE_TAG" "$ROLLBACK_TAG" && \
-            docker push "$ROLLBACK_TAG" && \
+          crane copy "$SOURCE_TAG" "$ROLLBACK_TAG" 2>/dev/null && \
             echo "✅ Rollback image saved: $ROLLBACK_TAG" || \
             echo "⚠️ No previous image to save (first deploy)"
 
@@ -190,9 +191,12 @@ jobs:
             NEXT_PUBLIC_BING_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}
             NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
-          cache-from: type=gha
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:staging
           cache-to: type=gha,mode=max
           provenance: false
+          sbom: false
 
       - name: 📊 Summary
         run: |
