@@ -81,7 +81,7 @@ function AnimatedLogoLink() {
             </div>
             <div>
                 <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground">
-                    HallyuHub<BrandDot />
+                    HallyuHub<span aria-hidden="true" className="inline-flex items-end pb-[0.12em]" style={{ lineHeight: 1 }}><svg width="0.22em" height="0.22em" viewBox="0 0 1 1" style={{ display: 'inline-block', fill: '#ff246e' }}><circle cx="0.5" cy="0.5" r="0.5" /></svg></span>
                 </span>
                 <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted min-w-[320px]">
                     {text}<span className="opacity-60 animate-pulse">|</span>

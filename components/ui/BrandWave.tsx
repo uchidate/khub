@@ -1,9 +1,4 @@
-'use client'
-
-import { useEffect, useRef, useState } from 'react'
-
-const COLORS = ['#ff246e', '#b14cff']
-const INITIAL_COLOR = COLORS[0]
+const COLOR = '#ff246e'
 
 interface BrandWaveProps {
     width?: number
@@ -12,29 +7,11 @@ interface BrandWaveProps {
     className?: string
 }
 
-export function BrandWave({ width = 180, height = 16, duration = 4000, className = '' }: BrandWaveProps) {
-    const [idx, setIdx] = useState(0)
-    const [t, setT] = useState(0)
-    const [ready, setReady] = useState(false)
-    const frameRef = useRef<number>(0)
-    const startRef = useRef<number>(0)
-
-    useEffect(() => {
-        const animate = (ts: number) => {
-            if (!startRef.current) startRef.current = ts
-            setT(((ts - startRef.current) % duration) / duration)
-            frameRef.current = requestAnimationFrame(animate)
-        }
-        frameRef.current = requestAnimationFrame(animate)
-        const iv = setInterval(() => setIdx(i => (i + 1) % COLORS.length), duration)
-        setReady(true)
-        return () => { cancelAnimationFrame(frameRef.current); clearInterval(iv) }
-    }, [duration])
-
+export function BrandWave({ width = 180, height = 16, className = '' }: BrandWaveProps) {
     const mid = height / 2
     const amp = height * 0.38
     const points = Array.from({ length: width + 1 }, (_, x) => {
-        const y = mid + Math.sin((x / width) * Math.PI * 4 + t * Math.PI * 2) * amp
+        const y = mid + Math.sin((x / width) * Math.PI * 4) * amp
         return `${x},${y}`
     }).join(' ')
 
@@ -50,39 +27,20 @@ export function BrandWave({ width = 180, height = 16, duration = 4000, className
             <polyline
                 points={points}
                 fill="none"
-                stroke={ready ? COLORS[idx] : INITIAL_COLOR}
+                stroke={COLOR}
                 strokeWidth="2"
                 strokeLinecap="round"
-                style={{ transition: ready ? 'stroke 0.6s ease' : 'none' }}
             />
         </svg>
     )
 }
 
 // Versão full-width para dividir seções
-export function BrandWaveDivider({ duration = 4000, className = '' }: { duration?: number; className?: string }) {
-    const [idx, setIdx] = useState(0)
-    const [t, setT] = useState(0)
-    const [ready, setReady] = useState(false)
-    const frameRef = useRef<number>(0)
-    const startRef = useRef<number>(0)
+export function BrandWaveDivider({ className = '' }: { duration?: number; className?: string }) {
     const H = 20
-
-    useEffect(() => {
-        const animate = (ts: number) => {
-            if (!startRef.current) startRef.current = ts
-            setT(((ts - startRef.current) % duration) / duration)
-            frameRef.current = requestAnimationFrame(animate)
-        }
-        frameRef.current = requestAnimationFrame(animate)
-        const iv = setInterval(() => setIdx(i => (i + 1) % COLORS.length), duration)
-        setReady(true)
-        return () => { cancelAnimationFrame(frameRef.current); clearInterval(iv) }
-    }, [duration])
-
     const W = 800, mid = H / 2, amp = H * 0.38
     const points = Array.from({ length: W + 1 }, (_, x) => {
-        const y = mid + Math.sin((x / W) * Math.PI * 6 + t * Math.PI * 2) * amp
+        const y = mid + Math.sin((x / W) * Math.PI * 6) * amp
         return `${x},${y}`
     }).join(' ')
 
@@ -92,10 +50,9 @@ export function BrandWaveDivider({ duration = 4000, className = '' }: { duration
                 <polyline
                     points={points}
                     fill="none"
-                    stroke={ready ? COLORS[idx] : INITIAL_COLOR}
+                    stroke={COLOR}
                     strokeWidth="1.5"
                     strokeLinecap="round"
-                    style={{ transition: ready ? 'stroke 0.6s ease' : 'none' }}
                 />
             </svg>
         </div>

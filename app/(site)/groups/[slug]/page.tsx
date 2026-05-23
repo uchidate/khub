@@ -33,7 +33,6 @@ import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
 import { ExternalMusicEntityType } from '@prisma/client'
 import { BrandDot } from '@/components/ui/BrandDot'
-import { BrandWave } from '@/components/ui/BrandWave'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -433,7 +432,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             style={{ fontSize: 'clamp(52px, 10vw, 140px)' }}>
                             {group.name}
                         </h1>
-                        <BrandWave width={Math.min(group.name.length * 16, 260)} height={14} duration={4500} className="mt-2" />
                         {group.nameHangul && (
                             <p className="mt-2 text-xl font-semibold sm:text-2xl drop-shadow" style={{ color: accent }}>{group.nameHangul}</p>
                         )}
