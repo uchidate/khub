@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { BrandDot } from '@/components/ui/BrandDot'
 
 interface SectionTitleBarProps {
     title: React.ReactNode
@@ -20,7 +21,7 @@ export function SectionTitleBar({ title, eyebrow, href, linkText = 'Ver todos â†
                     </p>
                 )}
                 <h2 className="mt-0.5 text-[20px] font-black tracking-[-0.03em] text-foreground sm:text-[22px]">
-                    {title}
+                    {title}<BrandDot />
                 </h2>
             </div>
             {action ?? (href && (

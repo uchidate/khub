@@ -32,6 +32,7 @@ import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
 import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
 import { ExternalMusicEntityType } from '@prisma/client'
+import { BrandDot } from '@/components/ui/BrandDot'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -429,7 +430,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         </div>
                         <h1 className="font-display font-black leading-[0.82] tracking-[-0.06em] text-white drop-shadow-2xl"
                             style={{ fontSize: 'clamp(52px, 10vw, 140px)' }}>
-                            {group.name}.
+                            {group.name}
                         </h1>
                         {group.nameHangul && (
                             <p className="mt-2 text-xl font-semibold sm:text-2xl drop-shadow" style={{ color: accent }}>{group.nameHangul}</p>

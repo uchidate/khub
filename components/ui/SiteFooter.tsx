@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Instagram } from 'lucide-react'
+import { BrandDot } from '@/components/ui/BrandDot'
 
 const NAV_COLUMNS = [
     {
@@ -48,7 +49,7 @@ export function SiteFooter() {
                     <div className="col-span-2 sm:col-span-1">
                         <Link href="/" className="inline-block">
                             <span className="text-[18px] font-extrabold tracking-tight text-white">
-                                Hallyu<span className="text-[#ff2d78]">Hub</span>
+                                HallyuHub<BrandDot />
                             </span>
                         </Link>
                         <p className="text-[12px] text-white/40 mt-3 leading-relaxed max-w-[200px]">

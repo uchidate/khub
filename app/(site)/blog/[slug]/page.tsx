@@ -9,6 +9,7 @@ import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
 import { BookOpen, Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
+import { BrandDot } from '@/components/ui/BrandDot'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -303,7 +304,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Header */}
         <header className="mb-7">
-          <h1 className="font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}</h1>
+          <h1 className="font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}<BrandDot /></h1>
 
           {post.excerpt && (
             <p className="text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>

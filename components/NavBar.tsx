@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { MouseEvent } from "react"
 import { Command, Search } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { useSession } from "next-auth/react"
 import { useQuickSearch } from "@/lib/hooks/useQuickSearch"
 import { BrandMark } from "@/components/ui/BrandMark"
+import { BrandDot } from "@/components/ui/BrandDot"
 import { QuickSearch } from "@/components/features/QuickSearch"
 
 interface TickerItem {
@@ -30,6 +31,65 @@ const navLinks = [
     { label: "Calendário", href: "/calendario" },
     { label: "Loja", href: "/loja" },
 ]
+
+
+const SUBTITLES = [
+    'k-pop · k-drama · cultura coreana, em português',
+    'artistas · grupos · produções',
+    'tendências · notícias · calendário',
+    'tudo sobre o universo hallyu',
+]
+
+function AnimatedLogoLink() {
+    const [si, setSi] = useState(0)
+    const [text, setText] = useState(SUBTITLES[0])
+    const [deleting, setDeleting] = useState(false)
+    const pos = useRef(SUBTITLES[0].length)
+
+    useEffect(() => {
+        const target = SUBTITLES[si]
+        let timeout: ReturnType<typeof setTimeout>
+
+        if (!deleting) {
+            if (pos.current < target.length) {
+                timeout = setTimeout(() => {
+                    pos.current++
+                    setText(target.slice(0, pos.current))
+                }, 40)
+            } else {
+                // Pausa longa antes de apagar — 8 segundos
+                timeout = setTimeout(() => setDeleting(true), 8000)
+            }
+        } else {
+            if (pos.current > 0) {
+                timeout = setTimeout(() => {
+                    pos.current--
+                    setText(target.slice(0, pos.current))
+                }, 22)
+            } else {
+                setDeleting(false)
+                setSi(i => (i + 1) % SUBTITLES.length)
+            }
+        }
+        return () => clearTimeout(timeout)
+    }, [text, deleting, si])
+
+    return (
+        <Link href="/" className="flex items-end gap-5">
+            <div className="mb-1 shrink-0 text-foreground">
+                <BrandMark size={72} />
+            </div>
+            <div>
+                <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground">
+                    HallyuHub<span aria-hidden="true" className="inline-flex items-end pb-[0.12em]" style={{ lineHeight: 1 }}><svg width="0.22em" height="0.22em" viewBox="0 0 1 1" style={{ display: 'inline-block', fill: '#ff246e' }}><circle cx="0.5" cy="0.5" r="0.5" /></svg></span>
+                </span>
+                <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted min-w-[320px]">
+                    {text}<span className="opacity-60 animate-pulse">|</span>
+                </span>
+            </div>
+        </Link>
+    )
+}
 
 function formatEditionDate(now = new Date()) {
     const date = new Intl.DateTimeFormat("pt-BR", {
@@ -93,7 +153,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         <Link href="/" className="flex items-center gap-2 text-foreground">
                             <BrandMark size={32} />
                             <span className="text-[22px] font-black tracking-[-0.035em]">
-                                Hallyu<span className="text-accent">Hub</span>
+                                HallyuHub<span className="text-accent">.</span>
                             </span>
                         </Link>
                     </div>
@@ -120,14 +180,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
 
                 {/* Logo + botões */}
                 <div className="flex h-[112px] items-end justify-between border-b-2 border-foreground px-10 pb-5">
-                    <Link href="/" className="group">
-                        <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground transition-colors group-hover:text-accent">
-                            HallyuHub<span className="text-accent">.</span>
-                        </span>
-                        <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
-                            k-pop · k-drama · cultura coreana, em português
-                        </span>
-                    </Link>
+                    <AnimatedLogoLink />
 
                     <div className="flex items-center gap-2 pb-2">
                         <Link
