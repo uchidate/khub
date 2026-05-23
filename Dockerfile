@@ -101,7 +101,7 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 # Cache mount para .next/cache: o Next.js reusa chunks compilados entre builds.
 # Resultado: builds subsequentes ~3-5 min mais rápidos (apenas módulos alterados recompilam).
 RUN --mount=type=cache,target=/app/.next/cache \
-    npm run build
+    npx next build --turbopack
 
 # Stage 4: Runner (produção)
 FROM node:20-bullseye-slim AS runner
