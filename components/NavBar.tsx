@@ -120,13 +120,16 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
 
                 {/* Logo + botões */}
                 <div className="flex h-[112px] items-end justify-between border-b-2 border-foreground px-10 pb-5">
-                    <Link href="/" className="group">
-                        <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground transition-colors group-hover:text-accent">
-                            HallyuHub<span className="text-accent">.</span>
-                        </span>
-                        <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
-                            k-pop · k-drama · cultura coreana, em português
-                        </span>
+                    <Link href="/" className="group flex items-end gap-4">
+                        <div className="mb-1 shrink-0"><BrandMark size={56} /></div>
+                        <div>
+                            <span className="block text-[58px] font-black leading-[0.86] tracking-[-0.055em] text-foreground transition-colors group-hover:text-accent">
+                                HallyuHub<span className="text-accent">.</span>
+                            </span>
+                            <span className="mt-2 block text-[14px] font-semibold tracking-[-0.02em] text-muted">
+                                k-pop · k-drama · cultura coreana, em português
+                            </span>
+                        </div>
                     </Link>
 
                     <div className="flex items-center gap-2 pb-2">
