@@ -63,6 +63,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
   // Map job to UTC hours it runs
   function getRunHours(schedule: string): number[] {
     const [_minPart, hourPart] = schedule.split(' ')
+    if (!hourPart) return []
     if (hourPart.startsWith('*/')) {
       const interval = parseInt(hourPart.slice(2))
       return hours.filter(h => h % interval === 0)
