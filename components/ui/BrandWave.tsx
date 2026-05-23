@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-const COLORS = ['#ff246e', '#b14cff', '#ff6bb0', '#00d4ff']
+const COLORS = ['#ff246e', '#b14cff']
+const INITIAL_COLOR = COLORS[0]
 
 interface BrandWaveProps {
     width?: number
@@ -14,6 +15,7 @@ interface BrandWaveProps {
 export function BrandWave({ width = 180, height = 16, duration = 4000, className = '' }: BrandWaveProps) {
     const [idx, setIdx] = useState(0)
     const [t, setT] = useState(0)
+    const [ready, setReady] = useState(false)
     const frameRef = useRef<number>(0)
     const startRef = useRef<number>(0)
 
@@ -25,6 +27,7 @@ export function BrandWave({ width = 180, height = 16, duration = 4000, className
         }
         frameRef.current = requestAnimationFrame(animate)
         const iv = setInterval(() => setIdx(i => (i + 1) % COLORS.length), duration)
+        setReady(true)
         return () => { cancelAnimationFrame(frameRef.current); clearInterval(iv) }
     }, [duration])
 
@@ -47,10 +50,10 @@ export function BrandWave({ width = 180, height = 16, duration = 4000, className
             <polyline
                 points={points}
                 fill="none"
-                stroke={COLORS[idx]}
+                stroke={ready ? COLORS[idx] : INITIAL_COLOR}
                 strokeWidth="2"
                 strokeLinecap="round"
-                style={{ transition: 'stroke 0.6s ease' }}
+                style={{ transition: ready ? 'stroke 0.6s ease' : 'none' }}
             />
         </svg>
     )
@@ -60,6 +63,7 @@ export function BrandWave({ width = 180, height = 16, duration = 4000, className
 export function BrandWaveDivider({ duration = 4000, className = '' }: { duration?: number; className?: string }) {
     const [idx, setIdx] = useState(0)
     const [t, setT] = useState(0)
+    const [ready, setReady] = useState(false)
     const frameRef = useRef<number>(0)
     const startRef = useRef<number>(0)
     const H = 20
@@ -72,6 +76,7 @@ export function BrandWaveDivider({ duration = 4000, className = '' }: { duration
         }
         frameRef.current = requestAnimationFrame(animate)
         const iv = setInterval(() => setIdx(i => (i + 1) % COLORS.length), duration)
+        setReady(true)
         return () => { cancelAnimationFrame(frameRef.current); clearInterval(iv) }
     }, [duration])
 
@@ -87,10 +92,10 @@ export function BrandWaveDivider({ duration = 4000, className = '' }: { duration
                 <polyline
                     points={points}
                     fill="none"
-                    stroke={COLORS[idx]}
+                    stroke={ready ? COLORS[idx] : INITIAL_COLOR}
                     strokeWidth="1.5"
                     strokeLinecap="round"
-                    style={{ transition: 'stroke 0.6s ease' }}
+                    style={{ transition: ready ? 'stroke 0.6s ease' : 'none' }}
                 />
             </svg>
         </div>
