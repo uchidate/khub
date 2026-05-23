@@ -137,13 +137,13 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         }} />
         <PageTransition className="pb-16">
 
-            <nav aria-label="Filtros" className="sticky z-[210] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 52px)' }}>
+            <nav aria-label="Filtros" className="sticky z-[210] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
                 <Suspense>
                     <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
                 </Suspense>
             </nav>
             {/* ── Contexto + alfabeto sticky ───────────────────────── */}
-            <section className="sticky z-10 bg-background" style={{ top: 'calc(var(--site-header-h, 52px) + 48px)' }}>
+            <section className="sticky z-10 bg-background" style={{ top: 'calc(var(--site-header-h, 92px) + 48px)' }}>
                 <div className="page-wrap border-b border-border/50 py-2">
                     <Breadcrumbs items={[{ label: 'Artistas' }]} />
                 </div>
