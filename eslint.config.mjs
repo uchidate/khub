@@ -26,6 +26,9 @@ export default [
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
+    },
     languageOptions: {
       parser: tsparser,
       parserOptions: {
