@@ -1,0 +1,20 @@
+name: Setup SSH Key
+description: Configura chave SSH para acesso ao servidor de produção
+
+inputs:
+  ssh_private_key:
+    description: "Chave SSH privada"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: 🔑 Setup SSH Key
+      shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh_private_key }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        printf 'StrictHostKeyChecking no\nUserKnownHostsFile /dev/null\n' >> ~/.ssh/config

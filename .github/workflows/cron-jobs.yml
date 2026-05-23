@@ -2,7 +2,7 @@ name: ⏰ Cron Jobs
 
 # Chamadas HTTP diretas ao Next.js via curl → /api/cron/<endpoint>
 # Nunca usar docker exec — apenas HTTP para evitar OOM.
-# --resolve bypassa Cloudflare indo direto ao servidor (SERVER_IP secret).
+# Chamadas vão via Cloudflare (DNS normal). CRON_SECRET autentica cada request.
 # Cada job tem concurrency group para não sobrepor execuções.
 
 on:
@@ -37,6 +37,7 @@ on:
 
 env:
   BASE_URL: https://www.hallyuhub.com.br
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 # ── Macro p/ condição de schedule ───────────────────────────────────────────
 # Uso: (github.event_name == 'schedule' && github.event.schedule == '<expr>')
@@ -63,7 +64,6 @@ jobs:
           endpoint: /api/cron/publish-scheduled
           max_time: '60'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   fetch-news:
     name: 📰 Buscar notícias
@@ -84,7 +84,6 @@ jobs:
           endpoint: /api/cron/fetch-news
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   tag-news:
     name: 🏷️ Taguear notícias
@@ -107,7 +106,6 @@ jobs:
           endpoint: /api/cron/tag-news
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── A cada 15 minutos ─────────────────────────────────────────────────────
 
@@ -130,7 +128,6 @@ jobs:
           endpoint: /api/cron/fetch-streaming-signals
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── A cada 6 horas ────────────────────────────────────────────────────────
 
@@ -153,7 +150,6 @@ jobs:
           endpoint: /api/cron/update-trending
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── A cada hora ───────────────────────────────────────────────────────────
 
@@ -176,7 +172,6 @@ jobs:
           endpoint: /api/cron/sync-discography
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   sync-cast:
     name: 🎭 Sincronizar elenco
@@ -197,7 +192,6 @@ jobs:
           endpoint: /api/cron/sync-cast
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── Diário 02:00 UTC ──────────────────────────────────────────────────────
 
@@ -220,7 +214,6 @@ jobs:
           endpoint: /api/cron/sync-social-links-wikidata
           max_time: '600'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   artist-visibility:
     name: 👁️ Atualizar visibilidade de artistas
@@ -241,7 +234,6 @@ jobs:
           endpoint: /api/cron/artist-visibility
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   digest:
     name: 📬 Email digest de blog
@@ -262,7 +254,6 @@ jobs:
           endpoint: /api/cron/digest
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── Diário 03:00 UTC ──────────────────────────────────────────────────────
 
@@ -285,7 +276,6 @@ jobs:
           endpoint: /api/cron/fetch-streaming-shows
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
 
   # ─── Semanal domingo 06:00 UTC (03:00 BRT) ─────────────────────────────────
 
@@ -308,4 +298,3 @@ jobs:
           endpoint: /api/cron/sync-groups-discography
           max_time: '1800'   # 30min — corrigido (era 60s)
           cron_secret: ${{ secrets.CRON_SECRET }}
-          server_ip: ${{ secrets.SERVER_IP }}
