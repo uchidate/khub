@@ -973,10 +973,10 @@ export function QuizClient() {
                 </div>
             )}
 
-            <div className="grid sm:grid-cols-[1fr_280px] gap-6 items-start">
+            <div className="sm:flex sm:gap-6 sm:items-start">
 
                 {/* Coluna principal */}
-                <div style={{
+                <div className="min-w-0 flex-1" style={{
                     opacity: animating ? 0 : 1,
                     transform: animating ? 'translateY(5px)' : 'translateY(0)',
                     transition: 'opacity 0.18s, transform 0.18s',
@@ -1094,7 +1094,7 @@ export function QuizClient() {
                 </div>
 
                 {/* Sidebar */}
-                <div className="hidden sm:flex flex-col gap-4">
+                <div className="hidden sm:flex flex-col gap-4 w-[280px] shrink-0">
 
                     <div className="border border-border bg-surface p-4">
                         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted mb-4">Placar</p>
