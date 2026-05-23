@@ -145,8 +145,8 @@ export function ArtistFilters({ initialFilters = {} }: ArtistFiltersProps) {
 
     return (
         <div className="relative w-full">
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-        <div className="flex w-full items-center gap-2 overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
+        <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+        <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
             <div className="flex shrink-0 items-center gap-2">
                 {renderFilterControls()}
             </div>

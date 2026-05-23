@@ -304,8 +304,8 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {!hideFilter && (
                 <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
                     <div className="relative w-full">
-                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10" style={{ scrollbarWidth: 'none' }}>
+                    <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
+                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
                         <div className="flex shrink-0 items-center gap-2">
                             {renderFilterControls()}
                         </div>
@@ -332,14 +332,14 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             )}
 
             {!hideFilter && (
-                <div className="page-wrap border-b border-border/50 py-2">
+                <div className="page-wrap border-b border-border/50 py-1.5">
                     <Breadcrumbs items={[{ label: 'Produções' }]} />
                 </div>
             )}
 
             {!hideFilter && featuredProductions.length > 0 && (
-                <section className="page-wrap pt-6 pb-6">
-                    <div className="flex items-baseline justify-between mb-5">
+                <section className="page-wrap pt-3 pb-6">
+                    <div className="flex items-baseline justify-between mb-3">
                         <h2 className="text-[22px] font-black tracking-[-0.03em] text-foreground">
                             Capa do mês <span className="font-normal text-muted text-base ml-2">이달의 작품</span>
                         </h2>
@@ -358,19 +358,17 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                         <span className="font-black text-foreground/10 text-[80px] leading-none">{p.titlePt[0]}</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                                <div className="absolute top-3 left-3 flex flex-col gap-1">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                <div className="absolute top-3 left-3 flex items-center gap-2">
                                     <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #1 em alta</span>
+                                    {p.voteAverage && (
+                                        <span className="bg-black/65 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">★ {p.voteAverage.toFixed(1)}</span>
+                                    )}
                                 </div>
-                                {p.voteAverage && (
-                                    <div className="absolute top-3 right-3 bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
-                                        ★ {p.voteAverage.toFixed(1)}
-                                    </div>
-                                )}
-                                <div className="absolute bottom-0 left-0 right-0 p-4">
-                                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
-                                    <h3 className="text-[26px] font-black tracking-[-0.03em] leading-[1.05] mt-1 text-white group-hover:text-accent transition-colors">{p.titlePt}</h3>
-                                    {p.titleKr && <p className="text-[12px] text-white/60 mt-0.5">{p.titleKr}</p>}
+                                <div className="absolute bottom-0 left-0 right-0 p-5">
+                                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-accent/90">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
+                                    <h3 className="text-[32px] font-black tracking-[-0.04em] leading-[1.0] mt-1 text-white group-hover:text-accent transition-colors">{p.titlePt}</h3>
+                                    {p.titleKr && <p className="text-[13px] text-white/55 mt-1">{p.titleKr}</p>}
                                 </div>
                             </Link>
                         )})()}
