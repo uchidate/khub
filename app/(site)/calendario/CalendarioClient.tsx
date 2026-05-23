@@ -3,49 +3,29 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Cake, CalendarDays, Film, Search, ShoppingBag, Sparkles, X } from 'lucide-react'
+import { ArrowRight, Cake, CalendarDays, Film, Search, ShoppingBag, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
-import { FilterPills } from '@/components/ui/FilterPills'
 
 export interface StoreProductCard {
-    id: string
-    name: string
-    price?: string | null
-    originalPrice?: string | null
-    imageUrl: string
-    affiliateUrl: string
-    store: string | null
-    badge?: string
-    rating?: number
-    soldCount?: string | null
+    id: string; name: string; price?: string | null; originalPrice?: string | null
+    imageUrl: string; affiliateUrl: string; store: string | null; badge?: string
+    rating?: number; soldCount?: string | null
 }
 
 export interface BirthdayEvent {
-    artistId: string
-    artistSlug: string | null
-    nameRomanized: string
-    nameHangul: string | null
-    primaryImageUrl: string | null
-    date: string // ISO
-    age: number
-    daysUntil: number
+    artistId: string; artistSlug: string | null; nameRomanized: string
+    nameHangul: string | null; primaryImageUrl: string | null
+    date: string; age: number; daysUntil: number
 }
 
 export interface ProductionEvent {
-    id: string
-    slug: string | null
-    titlePt: string
-    titleKr: string | null
-    imageUrl: string | null
-    date: string // ISO
-    type: string | null
-    network: string | null
-    daysUntil: number
+    id: string; slug: string | null; titlePt: string; titleKr: string | null
+    imageUrl: string | null; date: string; type: string | null
+    network: string | null; daysUntil: number
 }
 
 type CalendarEvent = {
-    date: string
-    daysUntil: number
+    date: string; daysUntil: number
     kind: 'birthday' | 'release'
     data: BirthdayEvent | ProductionEvent
 }
@@ -54,54 +34,49 @@ interface Props {
     birthdays: BirthdayEvent[]
     releases: ProductionEvent[]
     recentReleases: ProductionEvent[]
-    todayStr: string // YYYY-MM-DD
+    todayStr: string
     storeProducts?: StoreProductCard[]
 }
 
-const MONTH_NAMES_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const MONTH_NAMES_SHORT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-const DAY_LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+const MONTH_NAMES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const MONTH_NAMES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+const DAY_LETTERS = ['D','S','T','Q','Q','S','S']
 
-function daysUntilLabel(days: number) {
+function daysLabel(days: number) {
     if (days === 0) return { text: 'Hoje', cls: 'bg-accent text-white' }
-    if (days === 1) return { text: 'Amanhã', cls: 'bg-accent/15 text-accent' }
-    if (days <= 7) return { text: `Em ${days} dias`, cls: 'bg-surface-hover text-muted' }
-    return { text: `Em ${days} dias`, cls: 'bg-surface-hover text-muted' }
+    if (days === 1) return { text: 'Amanhã', cls: 'bg-accent/20 text-accent font-bold' }
+    if (days <= 7) return { text: `${days}d`, cls: 'bg-surface-hover text-muted' }
+    return { text: `${days}d`, cls: 'bg-surface-hover text-muted' }
 }
 
-function shortDateLabel(date: string) {
+function shortDate(date: string) {
     const d = new Date(date)
     return `${d.getUTCDate()} ${MONTH_NAMES_SHORT[d.getUTCMonth()]}`
 }
 
 function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
-    year: number
-    month: number
-    birthdayDays: Set<number>
-    releaseDays: Set<number>
-    todayStr: string
+    year: number; month: number; birthdayDays: Set<number>; releaseDays: Set<number>; todayStr: string
 }) {
     const todayDate = new Date(todayStr + 'T00:00:00Z')
     const isCurrentMonth = todayDate.getUTCFullYear() === year && todayDate.getUTCMonth() === month
     const todayDay = isCurrentMonth ? todayDate.getUTCDate() : -1
-
     const firstDay = new Date(Date.UTC(year, month, 1)).getUTCDay()
     const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
     const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
     while (cells.length % 7 !== 0) cells.push(null)
 
     return (
-        <div className="border border-border bg-surface p-4">
-            <p className="mb-3 text-xs font-black uppercase tracking-[0.14em] text-muted">
-                {MONTH_NAMES_FULL[month]} {year}
+        <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-foreground">
+                {MONTH_NAMES_FULL[month]} <span className="text-muted font-normal">{year}</span>
             </p>
-            <div className="grid grid-cols-7 gap-0.5 mb-1">
+            <div className="grid grid-cols-7 mb-1">
                 {DAY_LETTERS.map((d, i) => (
-                    <div key={i} className="text-center text-[9px] font-bold text-muted/50 py-0.5">{d}</div>
+                    <div key={i} className="text-center text-[9px] font-bold text-muted/40 py-0.5">{d}</div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-0.5">
+            <div className="grid grid-cols-7 gap-px">
                 {cells.map((day, i) => {
                     if (!day) return <div key={i} />
                     const hasBday = birthdayDays.has(day)
@@ -109,10 +84,10 @@ function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
                     const isToday = day === todayDay
                     const isPast = isCurrentMonth && day < todayDay
                     return (
-                        <div key={i} className={`relative flex min-h-8 flex-col items-center justify-center py-1 ${isToday ? 'bg-accent text-white' : 'hover:bg-surface-hover'} ${isPast ? 'opacity-35' : ''}`}>
+                        <div key={i} className={`relative flex min-h-[30px] flex-col items-center justify-center rounded-md py-1 ${isToday ? 'bg-accent text-white' : 'hover:bg-surface-hover'} ${isPast ? 'opacity-30' : ''}`}>
                             <span className={`text-[11px] font-bold leading-none ${isToday ? 'text-white' : 'text-foreground'}`}>{day}</span>
                             {(hasBday || hasRelease) && (
-                                <div className="flex gap-0.5 mt-0.5">
+                                <div className="flex gap-px mt-0.5">
                                     {hasBday && <div className={`h-1 w-1 rounded-full ${isToday ? 'bg-white' : 'bg-pink-400'}`} />}
                                     {hasRelease && <div className={`h-1 w-1 rounded-full ${isToday ? 'bg-white/70' : 'bg-blue-400'}`} />}
                                 </div>
@@ -121,50 +96,54 @@ function MiniCalendar({ year, month, birthdayDays, releaseDays, todayStr }: {
                     )
                 })}
             </div>
-            <div className="mt-3 flex gap-3 border-t border-border pt-3">
-                <span className="flex items-center gap-1 text-[10px] text-muted"><span className="w-2 h-2 rounded-full bg-pink-400 inline-block" /> Aniversário</span>
-                <span className="flex items-center gap-1 text-[10px] text-muted"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Lançamento</span>
+            <div className="mt-3 flex gap-4 border-t border-border pt-3">
+                <span className="flex items-center gap-1.5 text-[10px] text-muted"><span className="w-2 h-2 rounded-full bg-pink-400 inline-block" /> Aniversário</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-muted"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Estreia</span>
             </div>
         </div>
     )
 }
 
-function CompactEventLink({ event }: { event: CalendarEvent }) {
+function EventCard({ event }: { event: CalendarEvent }) {
     if (event.kind === 'birthday') {
         const b = event.data as BirthdayEvent
         return (
-            <Link href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors hover:bg-surface-hover">
-                <div className="relative h-7 w-7 flex-shrink-0 overflow-hidden rounded-full bg-background">
-                    {b.primaryImageUrl ? (
-                        <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">{b.nameRomanized[0]}</div>
-                    )}
+            <Link href={`/artists/${b.artistSlug ?? b.artistId}`}
+                className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-pink-400/40 hover:shadow-sm">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-surface-hover ring-2 ring-pink-400/20">
+                    {b.primaryImageUrl
+                        ? <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" />
+                        : <div className="flex h-full w-full items-center justify-center text-sm font-black text-muted">{b.nameRomanized[0]}</div>}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold leading-tight text-foreground group-hover:text-accent">{b.nameRomanized}</p>
-                    <p className="text-[10px] leading-tight text-muted">{b.age} anos</p>
+                    <p className="truncate text-sm font-bold text-foreground group-hover:text-accent transition-colors">{b.nameRomanized}</p>
+                    <p className="flex items-center gap-1.5 text-[11px] text-muted">
+                        <Cake size={10} className="text-pink-400 shrink-0" />
+                        {b.age} anos · {shortDate(b.date)}
+                    </p>
                 </div>
-                <Cake className="h-3 w-3 flex-shrink-0 text-accent" />
+                <span className="shrink-0 rounded-full bg-pink-400/10 px-2 py-1 text-[10px] font-black text-pink-500">🎂</span>
             </Link>
         )
     }
-
     const r = event.data as ProductionEvent
     return (
-        <Link href={`/productions/${r.slug ?? r.id}`} className="group flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors hover:bg-surface-hover">
-            <div className="relative h-8 w-6 flex-shrink-0 overflow-hidden bg-background">
-                {r.imageUrl ? (
-                    <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" />
-                ) : (
-                    <Film className="absolute inset-0 m-auto h-3 w-3 text-muted/40" />
-                )}
+        <Link href={`/productions/${r.slug ?? r.id}`}
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-blue-400/40 hover:shadow-sm">
+            <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-surface-hover">
+                {r.imageUrl
+                    ? <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" />
+                    : <Film className="absolute inset-0 m-auto h-4 w-4 text-muted/30" />}
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold leading-tight text-foreground group-hover:text-accent">{r.titlePt}</p>
-                <p className="truncate text-[10px] leading-tight text-muted">{r.type === 'movie' ? 'Filme' : 'K-Drama'}{r.network && ` · ${r.network}`}</p>
+                <p className="truncate text-sm font-bold text-foreground group-hover:text-accent transition-colors">{r.titlePt}</p>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted">
+                    <Film size={10} className="text-blue-400 shrink-0" />
+                    {r.type === 'movie' ? 'Filme' : 'K-Drama'}{r.network && ` · ${r.network}`}
+                </p>
+                <p className="text-[10px] text-muted/70">{shortDate(r.date)}</p>
             </div>
-            <Film className="h-3 w-3 flex-shrink-0 text-accent" />
+            <span className="shrink-0 rounded-full bg-blue-400/10 px-2 py-1 text-[10px] font-black text-blue-500">▶</span>
         </Link>
     )
 }
@@ -174,6 +153,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
     const [search, setSearch] = useState('')
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
 
+    const today = new Date(todayStr + 'T00:00:00Z')
     const todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
     const todayReleases = releases.filter(r => r.daysUntil === 0)
     const hasToday = todayBirthdays.length > 0 || todayReleases.length > 0
@@ -181,28 +161,22 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
     const filteredBirthdays = useMemo(() => {
         if (filter === 'releases') return []
         const q = search.toLowerCase()
-        return birthdays.filter(b =>
-            !q || b.nameRomanized.toLowerCase().includes(q) || b.nameHangul?.toLowerCase().includes(q)
-        )
+        return birthdays.filter(b => !q || b.nameRomanized.toLowerCase().includes(q) || b.nameHangul?.toLowerCase().includes(q))
     }, [birthdays, filter, search])
 
     const filteredReleases = useMemo(() => {
         if (filter === 'birthdays') return []
         const q = search.toLowerCase()
-        return releases.filter(r =>
-            !q || r.titlePt.toLowerCase().includes(q) || r.titleKr?.toLowerCase().includes(q)
-        )
+        return releases.filter(r => !q || r.titlePt.toLowerCase().includes(q) || r.titleKr?.toLowerCase().includes(q))
     }, [releases, filter, search])
 
-    // Group by month
     const allEvents = useMemo(() => {
         const evs: CalendarEvent[] = [
             ...filteredBirthdays.map(b => ({ date: b.date, daysUntil: b.daysUntil, kind: 'birthday' as const, data: b })),
             ...filteredReleases.map(r => ({ date: r.date, daysUntil: r.daysUntil, kind: 'release' as const, data: r })),
         ]
         evs.sort((a, b) => a.daysUntil - b.daysUntil)
-
-        const byMonth: Map<string, CalendarEvent[]> = new Map()
+        const byMonth = new Map<string, CalendarEvent[]>()
         for (const ev of evs) {
             const d = new Date(ev.date)
             const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
@@ -212,337 +186,237 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
         return byMonth
     }, [filteredBirthdays, filteredReleases])
 
-    // Build calendar dot sets for current & next month
     const calendarMonths = useMemo(() => {
-        const today = new Date(todayStr + 'T00:00:00Z')
-        const months = [
-            { year: today.getUTCFullYear(), month: today.getUTCMonth() },
-        ]
+        const months = [{ year: today.getUTCFullYear(), month: today.getUTCMonth() }]
         const next = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1))
         months.push({ year: next.getUTCFullYear(), month: next.getUTCMonth() })
         return months.map(({ year, month }) => {
             const bdDays = new Set<number>()
             const relDays = new Set<number>()
-            for (const b of birthdays) {
-                const d = new Date(b.date)
-                if (d.getUTCFullYear() === year && d.getUTCMonth() === month) bdDays.add(d.getUTCDate())
-            }
-            for (const r of releases) {
-                const d = new Date(r.date)
-                if (d.getUTCFullYear() === year && d.getUTCMonth() === month) relDays.add(d.getUTCDate())
-            }
+            for (const b of birthdays) { const d = new Date(b.date); if (d.getUTCFullYear() === year && d.getUTCMonth() === month) bdDays.add(d.getUTCDate()) }
+            for (const r of releases) { const d = new Date(r.date); if (d.getUTCFullYear() === year && d.getUTCMonth() === month) relDays.add(d.getUTCDate()) }
             return { year, month, bdDays, relDays }
         })
     }, [birthdays, releases, todayStr])
 
-    const filterOptions = [
-        { value: 'all', label: 'Tudo' },
-        { value: 'birthdays', label: 'Aniversários' },
-        { value: 'releases', label: 'Lançamentos' },
-    ]
+    const nextSevenDays = useMemo(() => [
+        ...birthdays.filter(b => b.daysUntil >= 0 && b.daysUntil <= 7).map(b => ({ id: `b-${b.artistId}`, href: `/artists/${b.artistSlug ?? b.artistId}`, title: b.nameRomanized, subtitle: `${b.age} anos`, date: b.date, daysUntil: b.daysUntil, kind: 'birthday' as const, imageUrl: b.primaryImageUrl })),
+        ...releases.filter(r => r.daysUntil >= 0 && r.daysUntil <= 7).map(r => ({ id: `r-${r.id}`, href: `/productions/${r.slug ?? r.id}`, title: r.titlePt, subtitle: r.type === 'movie' ? 'Filme' : 'K-Drama', date: r.date, daysUntil: r.daysUntil, kind: 'release' as const, imageUrl: r.imageUrl })),
+    ].sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 10), [birthdays, releases])
 
-    const nextSevenDays = useMemo(() => {
-        type QuickEvent = { id: string; href: string; title: string; subtitle: string; date: string; daysUntil: number; kind: 'birthday' | 'release'; imageUrl: string | null }
-        const items: QuickEvent[] = [
-            ...birthdays
-                .filter(b => b.daysUntil >= 0 && b.daysUntil <= 7)
-                .map(b => ({
-                    id: `b-${b.artistId}`,
-                    href: `/artists/${b.artistSlug ?? b.artistId}`,
-                    title: b.nameRomanized,
-                    subtitle: `${b.age} anos`,
-                    date: b.date,
-                    daysUntil: b.daysUntil,
-                    kind: 'birthday' as const,
-                    imageUrl: b.primaryImageUrl,
-                })),
-            ...releases
-                .filter(r => r.daysUntil >= 0 && r.daysUntil <= 7)
-                .map(r => ({
-                    id: `r-${r.id}`,
-                    href: `/productions/${r.slug ?? r.id}`,
-                    title: r.titlePt,
-                    subtitle: r.type === 'movie' ? 'Filme' : 'K-Drama',
-                    date: r.date,
-                    daysUntil: r.daysUntil,
-                    kind: 'release' as const,
-                    imageUrl: r.imageUrl,
-                })),
-        ]
-        return items.sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 8)
-    }, [birthdays, releases])
+    const thisMonthTotal = (birthdays.filter(b => { const d = new Date(b.date); return d.getUTCFullYear() === today.getUTCFullYear() && d.getUTCMonth() === today.getUTCMonth() }).length)
+        + (releases.filter(r => { const d = new Date(r.date); return d.getUTCFullYear() === today.getUTCFullYear() && d.getUTCMonth() === today.getUTCMonth() }).length)
 
-    const nextBirthdays = birthdays.slice(0, 4)
-    const nextReleases = releases.slice(0, 4)
-    const totalVisibleEvents = filteredBirthdays.length + filteredReleases.length
-    const toggleMonth = (key: string) => {
-        setExpandedMonths(current => {
-            const next = new Set(current)
-            if (next.has(key)) next.delete(key)
-            else next.add(key)
-            return next
-        })
-    }
+    const toggleMonth = (key: string) => setExpandedMonths(cur => { const n = new Set(cur); n.has(key) ? n.delete(key) : n.add(key); return n })
 
     return (
         <div>
-            <div className="page-wrap flex h-12 items-center border-b border-border/50">
-                <div className="flex w-full min-w-0 items-center gap-2">
-                    <div className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                        <FilterPills options={filterOptions} value={filter} onChange={setFilter} className="w-max flex-nowrap rounded-md" />
+            {/* Sticky filter bar */}
+            <div className="sticky z-[200] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
+                <div className="page-wrap flex h-12 items-center gap-3">
+                    <div className="flex shrink-0 gap-1">
+                        {[
+                            { v: 'all', label: 'Tudo' },
+                            { v: 'birthdays', label: '🎂 Idols' },
+                            { v: 'releases', label: '▶ Estreias' },
+                        ].map(({ v, label }) => (
+                            <button key={v} onClick={() => setFilter(v)}
+                                className={`h-7 rounded-full px-3 text-[12px] font-bold transition-colors ${filter === v ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'}`}>
+                                {label}
+                            </button>
+                        ))}
                     </div>
-                    <div className="relative w-[148px] shrink-0 sm:w-[260px] lg:w-[340px]">
-                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                        <input
-                            type="text"
-                            placeholder="Buscar..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="h-8 w-full !rounded-md !border-border !bg-background !py-0 !pl-8 !pr-8 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:!border-foreground focus:outline-none"
-                        />
+                    <div className="flex-1" />
+                    <div className="relative w-[180px] sm:w-[240px]">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                        <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
+                            className="h-8 w-full rounded-full border border-border bg-surface pl-8 pr-8 text-[13px] text-foreground placeholder:text-muted focus:border-foreground focus:outline-none" />
                         {search && (
-                            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground" aria-label="Limpar busca">
-                                <X className="h-4 w-4" />
+                            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="page-wrap border-b border-border/50 py-2">
+            {/* Breadcrumb */}
+            <div className="page-wrap border-b border-border/50 py-2.5">
                 <Breadcrumbs items={[{ label: 'Calendário' }]} />
             </div>
 
-        <div className="page-wrap space-y-8 py-8">
-            {/* Today section */}
-            {hasToday && (
-                <section className="border border-accent/20 bg-accent-soft p-5">
-                    <div className="mb-4 flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-accent" />
-                        <h2 className="text-sm font-black uppercase tracking-[0.14em] text-accent">Hoje</h2>
+            {/* Hero strip */}
+            <div className="border-b border-border bg-surface">
+                <div className="page-wrap flex items-center justify-between gap-4 py-5">
+                    <div>
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-muted mb-0.5">Calendário Hallyu</p>
+                        <h1 className="text-2xl font-black text-foreground">
+                            {MONTH_NAMES_FULL[today.getUTCMonth()]} <span className="text-muted font-normal text-lg">{today.getUTCFullYear()}</span>
+                        </h1>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        {todayBirthdays.map(b => (
-                            <Link key={b.artistId} href={`/artists/${b.artistSlug ?? b.artistId}`}
-                                className="group flex items-center gap-2.5 border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40">
-                                <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface-hover flex-shrink-0">
-                                    {b.primaryImageUrl ? (
-                                        <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-muted">{b.nameRomanized[0]}</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors">{b.nameRomanized}</p>
-                                    <p className="text-[10px] text-muted">Aniversário, {b.age} anos</p>
-                                </div>
-                            </Link>
-                        ))}
-                        {todayReleases.map(r => (
-                            <Link key={r.id} href={`/productions/${r.slug ?? r.id}`}
-                                className="group flex items-center gap-2.5 border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40">
-                                <div className="relative w-8 h-11 rounded-lg overflow-hidden bg-surface-hover flex-shrink-0">
-                                    {r.imageUrl ? (
-                                        <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" />
-                                    ) : (
-                                        <Film className="w-4 h-4 text-muted/40 absolute inset-0 m-auto" />
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-foreground group-hover:text-accent transition-colors line-clamp-1">{r.titlePt}</p>
-                                    <p className="text-[10px] text-muted">{r.type === 'movie' ? 'Filme' : 'K-Drama'}</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(260px,0.75fr)_minmax(260px,0.75fr)]">
-                <div className="border border-border bg-surface p-4">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-xs font-black uppercase tracking-[0.14em] text-accent">Próximos 7 dias</p>
-                            <h2 className="mt-1 text-lg font-black text-foreground">Agenda imediata</h2>
+                    <div className="flex items-center gap-6">
+                        <div className="text-center">
+                            <p className="text-2xl font-black text-foreground">{thisMonthTotal}</p>
+                            <p className="text-[10px] font-semibold text-muted">este mês</p>
                         </div>
-                        <span className="bg-background px-2.5 py-1 text-[10px] font-mono font-black text-muted">
-                            {nextSevenDays.length} item{nextSevenDays.length !== 1 ? 's' : ''}
-                        </span>
-                    </div>
-                    {nextSevenDays.length > 0 ? (
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            {nextSevenDays.map(event => {
-                                const badge = daysUntilLabel(event.daysUntil)
-                                return (
-                                    <Link key={event.id} href={event.href} className="group flex items-center gap-3 border border-border bg-background p-2.5 transition-colors hover:border-accent/40">
-                                        <div className={`relative h-11 w-11 flex-shrink-0 overflow-hidden bg-surface-hover`}>
-                                            {event.imageUrl ? (
-                                                <Image src={event.imageUrl} alt={event.title} fill className="object-cover object-top" />
-                                            ) : (
-                                                <div className="flex h-full w-full items-center justify-center">
-                                                    {event.kind === 'birthday' ? <Cake className="h-4 w-4 text-muted/40" /> : <Film className="h-4 w-4 text-muted/40" />}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-bold text-foreground group-hover:text-accent">{event.title}</p>
-                                            <p className="text-[11px] text-muted">{shortDateLabel(event.date)} · {event.subtitle}</p>
-                                        </div>
-                                        <span className={`flex-shrink-0 px-2 py-1 text-[9px] font-mono font-black ${badge.cls}`}>{badge.text}</span>
-                                    </Link>
-                                )
-                            })}
+                        <div className="text-center">
+                            <p className="text-2xl font-black text-foreground">{nextSevenDays.length}</p>
+                            <p className="text-[10px] font-semibold text-muted">esta semana</p>
                         </div>
-                    ) : (
-                        <div className="border border-border bg-background p-5 text-sm text-muted">
-                            Nenhuma data nos próximos 7 dias.
+                        <div className="text-center hidden sm:block">
+                            <p className="text-2xl font-black text-foreground">{birthdays.length + releases.length}</p>
+                            <p className="text-[10px] font-semibold text-muted">total</p>
                         </div>
-                    )}
-                </div>
-
-                <div className="border border-border bg-surface p-4">
-                    <div className="mb-4 flex items-center gap-2">
-                        <Cake className="h-4 w-4 text-accent" />
-                        <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Próximos aniversários</h2>
-                    </div>
-                    <div className="space-y-2">
-                        {nextBirthdays.map(b => (
-                            <Link key={b.artistId} href={`/artists/${b.artistSlug ?? b.artistId}`} className="group flex items-center gap-2.5 bg-background p-2.5 transition-colors hover:bg-surface-hover">
-                                <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-surface-hover">
-                                    {b.primaryImageUrl ? <Image src={b.primaryImageUrl} alt={b.nameRomanized} fill className="object-cover object-top" /> : <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-muted">{b.nameRomanized[0]}</div>}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-bold text-foreground group-hover:text-accent">{b.nameRomanized}</p>
-                                    <p className="text-[10px] text-muted">{shortDateLabel(b.date)} · {b.age} anos</p>
-                                </div>
-                            </Link>
-                        ))}
                     </div>
                 </div>
+            </div>
 
-                <div className="border border-border bg-surface p-4">
-                    <div className="mb-4 flex items-center gap-2">
-                        <Film className="h-4 w-4 text-accent" />
-                        <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Próximas estreias</h2>
-                    </div>
-                    <div className="space-y-2">
-                        {nextReleases.map(r => (
-                            <Link key={r.id} href={`/productions/${r.slug ?? r.id}`} className="group flex items-center gap-2.5 bg-background p-2.5 transition-colors hover:bg-surface-hover">
-                                <div className="relative h-11 w-8 flex-shrink-0 overflow-hidden bg-surface-hover">
-                                    {r.imageUrl ? <Image src={r.imageUrl} alt={r.titlePt} fill className="object-cover" /> : <Film className="absolute inset-0 m-auto h-3.5 w-3.5 text-muted/40" />}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-xs font-bold text-foreground group-hover:text-accent">{r.titlePt}</p>
-                                    <p className="text-[10px] text-muted">{shortDateLabel(r.date)}{r.network && ` · ${r.network}`}</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            <div className="page-wrap grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_300px]">
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+                {/* Coluna principal */}
                 <div className="min-w-0 space-y-8">
-                    {/* Recent releases horizontal scroll */}
+
+                    {/* Hoje */}
+                    {hasToday && (
+                        <section>
+                            <div className="mb-3 flex items-center gap-2">
+                                <Sparkles className="h-4 w-4 text-accent" />
+                                <h2 className="text-sm font-black uppercase tracking-[0.14em] text-accent">Hoje</h2>
+                                <div className="flex-1 h-px bg-accent/20" />
+                            </div>
+                            <div className="grid gap-2.5 sm:grid-cols-2">
+                                {[...todayBirthdays.map(b => ({ date: b.date, daysUntil: 0, kind: 'birthday' as const, data: b })),
+                                  ...todayReleases.map(r => ({ date: r.date, daysUntil: 0, kind: 'release' as const, data: r }))
+                                ].map((ev, i) => <EventCard key={i} event={ev} />)}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Próximos 7 dias */}
+                    {nextSevenDays.length > 0 && (
+                        <section>
+                            <div className="mb-3 flex items-center gap-2">
+                                <CalendarDays className="h-4 w-4 text-muted" />
+                                <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Esta semana</h2>
+                                <div className="flex-1 h-px bg-border" />
+                                <span className="text-[10px] font-mono font-black text-muted">{nextSevenDays.length}</span>
+                            </div>
+                            {/* Timeline */}
+                            <div className="relative pl-6">
+                                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+                                <div className="space-y-3">
+                                    {nextSevenDays.map(ev => {
+                                        const badge = daysLabel(ev.daysUntil)
+                                        const isBday = ev.kind === 'birthday'
+                                        return (
+                                            <Link key={ev.id} href={ev.href}
+                                                className="group relative flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:border-accent/40 hover:shadow-sm">
+                                                <div className={`absolute -left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border-2 border-background ${isBday ? 'bg-pink-400' : 'bg-blue-400'}`} />
+                                                {ev.imageUrl
+                                                    ? <div className={`relative shrink-0 overflow-hidden bg-surface-hover ${isBday ? 'h-10 w-10 rounded-full' : 'h-12 w-9 rounded-lg'}`}>
+                                                        <Image src={ev.imageUrl} alt={ev.title} fill className="object-cover object-top" />
+                                                      </div>
+                                                    : <div className={`flex shrink-0 items-center justify-center bg-surface-hover text-muted/40 ${isBday ? 'h-10 w-10 rounded-full' : 'h-12 w-9 rounded-lg'}`}>
+                                                        {isBday ? <Cake size={14} /> : <Film size={14} />}
+                                                      </div>
+                                                }
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-bold text-foreground group-hover:text-accent transition-colors">{ev.title}</p>
+                                                    <p className="text-[11px] text-muted">{shortDate(ev.date)} · {ev.subtitle}</p>
+                                                </div>
+                                                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${badge.cls}`}>{badge.text}</span>
+                                            </Link>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Lançamentos recentes */}
                     {recentReleases.length > 0 && (
                         <section>
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                                <h2 className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted">
-                                    <Film className="h-3.5 w-3.5 text-accent" />
-                                    Lançamentos recentes
-                                </h2>
-                                <span className="text-[10px] font-bold text-muted">{recentReleases.length} recentes</span>
+                            <div className="mb-3 flex items-center gap-2">
+                                <Film className="h-4 w-4 text-muted" />
+                                <h2 className="text-sm font-black uppercase tracking-[0.14em] text-foreground">Lançamentos recentes</h2>
+                                <div className="flex-1 h-px bg-border" />
                             </div>
                             <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 scrollbar-none">
                                 {recentReleases.map(p => (
-                                    <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group w-28 flex-shrink-0">
-                                        <div className="relative mb-2 h-40 w-28 overflow-hidden border border-border bg-surface">
-                                            {p.imageUrl ? (
-                                                <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                                            ) : (
-                                                <div className="flex h-full w-full items-center justify-center">
-                                                    <Film className="h-6 w-6 text-muted/30" />
-                                                </div>
-                                            )}
+                                    <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group w-[100px] shrink-0">
+                                        <div className="relative mb-2 aspect-[2/3] w-[100px] overflow-hidden rounded-xl border border-border bg-surface">
+                                            {p.imageUrl
+                                                ? <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                                                : <div className="flex h-full w-full items-center justify-center"><Film className="h-6 w-6 text-muted/30" /></div>}
                                         </div>
-                                        <p className="line-clamp-2 text-[11px] font-bold leading-tight text-foreground group-hover:text-accent">{p.titlePt}</p>
+                                        <p className="line-clamp-2 text-[11px] font-bold leading-tight text-foreground group-hover:text-accent transition-colors">{p.titlePt}</p>
                                     </Link>
                                 ))}
                             </div>
                         </section>
                     )}
 
-                    {/* Timeline by month */}
+                    {/* Timeline por mês */}
                     {allEvents.size === 0 ? (
-                        <div className="border border-border bg-surface py-16 text-center text-muted">
+                        <div className="rounded-xl border border-border bg-surface py-16 text-center text-muted">
                             <p className="font-semibold">Nenhum evento encontrado.</p>
                         </div>
                     ) : (
                         <div className="space-y-10">
                             {[...allEvents.entries()].map(([key, events]) => {
                                 const [yearStr, monthStr] = key.split('-')
-                                const year = Number(yearStr)
-                                const month = Number(monthStr)
-                                const dayGroups = [...events.reduce<Map<string, CalendarEvent[]>>((acc, event) => {
-                                    const dayKey = event.date.split('T')[0]
-                                    if (!acc.has(dayKey)) acc.set(dayKey, [])
-                                    acc.get(dayKey)!.push(event)
+                                const year = Number(yearStr); const month = Number(monthStr)
+                                const byDay = [...events.reduce<Map<string, CalendarEvent[]>>((acc, ev) => {
+                                    const dk = ev.date.split('T')[0]
+                                    if (!acc.has(dk)) acc.set(dk, [])
+                                    acc.get(dk)!.push(ev)
                                     return acc
                                 }, new Map()).entries()]
                                 const isExpanded = expandedMonths.has(key)
-                                const visibleDayGroups = isExpanded ? dayGroups : dayGroups.slice(0, 8)
-                                const hiddenDays = dayGroups.length - visibleDayGroups.length
+                                const visible = isExpanded ? byDay : byDay.slice(0, 6)
+                                const hidden = byDay.length - visible.length
 
                                 return (
                                     <section key={key}>
                                         <div className="mb-4 flex items-center gap-3">
-                                            <h2 className="text-lg font-black text-foreground">
-                                                {MONTH_NAMES_FULL[month]} <span className="text-sm font-normal text-muted">{year}</span>
-                                            </h2>
-                                            <div className="h-px flex-1 bg-border" />
-                                            <span className="text-[10px] font-bold text-muted">{events.length} evento{events.length !== 1 ? 's' : ''}</span>
+                                            <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-surface border border-border">
+                                                <span className="text-[10px] font-black uppercase text-muted">{MONTH_NAMES_SHORT[month]}</span>
+                                                <span className="text-lg font-black leading-none text-foreground">{year.toString().slice(2)}</span>
+                                            </div>
+                                            <div>
+                                                <h2 className="text-base font-black text-foreground">{MONTH_NAMES_FULL[month]} {year}</h2>
+                                                <p className="text-[11px] text-muted">{events.length} evento{events.length !== 1 ? 's' : ''}</p>
+                                            </div>
+                                            <div className="flex-1 h-px bg-border" />
                                         </div>
-                                        <div className="grid gap-3 md:grid-cols-2">
-                                            {visibleDayGroups.map(([dayKey, dayEvents]) => {
-                                                const d = new Date(`${dayKey}T00:00:00Z`)
-                                                const badge = daysUntilLabel(dayEvents[0].daysUntil)
-                                                const birthdayCount = dayEvents.filter(event => event.kind === 'birthday').length
-                                                const releaseCount = dayEvents.length - birthdayCount
 
+                                        <div className="space-y-4">
+                                            {visible.map(([dayKey, dayEvents]) => {
+                                                const d = new Date(`${dayKey}T00:00:00Z`)
+                                                const badge = daysLabel(dayEvents[0].daysUntil)
                                                 return (
-                                                    <div key={dayKey} className="border border-border bg-surface p-3">
-                                                        <div className="mb-2 flex items-center gap-3">
-                                                            <div className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center border border-border bg-background">
-                                                                <p className="text-lg font-black leading-none text-foreground">{d.getUTCDate()}</p>
-                                                                <p className="text-[10px] font-bold uppercase text-muted">{DAY_NAMES[d.getUTCDay()]}</p>
+                                                    <div key={dayKey}>
+                                                        <div className="mb-2 flex items-center gap-2.5">
+                                                            <div className={`flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-lg ${dayEvents[0].daysUntil === 0 ? 'bg-accent text-white' : 'bg-surface border border-border'}`}>
+                                                                <span className={`text-sm font-black leading-none ${dayEvents[0].daysUntil === 0 ? 'text-white' : 'text-foreground'}`}>{d.getUTCDate()}</span>
+                                                                <span className={`text-[8px] font-bold uppercase ${dayEvents[0].daysUntil === 0 ? 'text-white/70' : 'text-muted'}`}>{DAY_NAMES[d.getUTCDay()]}</span>
                                                             </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-xs font-black uppercase tracking-[0.12em] text-muted">{shortDateLabel(dayEvents[0].date)}</p>
-                                                                <div className="mt-1 flex flex-wrap gap-1.5">
-                                                                    {birthdayCount > 0 && <span className="bg-accent-soft px-2 py-0.5 text-[9px] font-mono font-black text-accent">{birthdayCount} aniversário{birthdayCount !== 1 ? 's' : ''}</span>}
-                                                                    {releaseCount > 0 && <span className="bg-surface-hover px-2 py-0.5 text-[9px] font-mono font-black text-muted">{releaseCount} estreia{releaseCount !== 1 ? 's' : ''}</span>}
-                                                                </div>
-                                                            </div>
-                                                            <span className={`flex-shrink-0 px-2 py-1 text-[9px] font-mono font-black ${badge.cls}`}>{badge.text}</span>
+                                                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${badge.cls}`}>{badge.text}</span>
+                                                            <div className="flex-1 h-px bg-border/50" />
+                                                            <span className="text-[10px] text-muted">{dayEvents.length} evento{dayEvents.length !== 1 ? 's' : ''}</span>
                                                         </div>
-                                                        <div className="space-y-1">
-                                                            {dayEvents.slice(0, 4).map((event, idx) => (
-                                                                <CompactEventLink key={`${dayKey}-${event.kind}-${idx}`} event={event} />
-                                                            ))}
-                                                            {dayEvents.length > 4 && (
-                                                                <p className="px-2 pt-1 text-[10px] font-bold text-muted">+ {dayEvents.length - 4} evento{dayEvents.length - 4 !== 1 ? 's' : ''} nesse dia</p>
-                                                            )}
+                                                        <div className="grid gap-2 sm:grid-cols-2 pl-10">
+                                                            {dayEvents.map((ev, idx) => <EventCard key={idx} event={ev} />)}
                                                         </div>
                                                     </div>
                                                 )
                                             })}
                                         </div>
-                                        {hiddenDays > 0 && (
-                                            <button
-                                                onClick={() => toggleMonth(key)}
-                                                className="mt-4 w-full border border-border bg-surface px-4 py-3 text-xs font-black text-muted transition-colors hover:border-accent/40 hover:text-accent"
-                                            >
-                                                {isExpanded ? 'Mostrar menos' : `Mostrar mais ${hiddenDays} dia${hiddenDays !== 1 ? 's' : ''}`}
+
+                                        {hidden > 0 && (
+                                            <button onClick={() => toggleMonth(key)}
+                                                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-black text-muted transition-colors hover:border-accent/40 hover:text-accent">
+                                                {isExpanded ? <><ChevronUp size={14} /> Mostrar menos</> : <><ChevronDown size={14} /> Ver mais {hidden} dia{hidden !== 1 ? 's' : ''}</>}
                                             </button>
                                         )}
                                     </section>
@@ -552,77 +426,70 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                     )}
                 </div>
 
-                <aside className="space-y-5 lg:sticky lg:top-[calc(var(--site-sticky-top)+1rem)] lg:self-start">
-                    <div className="border border-border bg-surface p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.14em] text-muted">Resumo filtrado</p>
-                        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                            <div className="bg-background p-3">
-                                <p className="text-xl font-black text-foreground">{totalVisibleEvents}</p>
-                                <p className="mt-1 text-[10px] font-semibold text-muted">total</p>
-                            </div>
-                            <div className="bg-background p-3">
-                                <p className="text-xl font-black text-foreground">{filteredBirthdays.length}</p>
-                                <p className="mt-1 text-[10px] font-semibold text-muted">idols</p>
-                            </div>
-                            <div className="bg-background p-3">
-                                <p className="text-xl font-black text-foreground">{filteredReleases.length}</p>
-                                <p className="mt-1 text-[10px] font-semibold text-muted">estreias</p>
-                            </div>
+                {/* Sidebar */}
+                <aside className="space-y-6 lg:sticky lg:self-start" style={{ top: 'calc(var(--site-header-h, 92px) + 3.5rem + 1rem)' }}>
+
+                    {/* Resumo */}
+                    <div className="rounded-xl border border-border bg-surface p-4">
+                        <p className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-muted">Resumo</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { n: filteredBirthdays.length + filteredReleases.length, label: 'total' },
+                                { n: filteredBirthdays.length, label: 'idols' },
+                                { n: filteredReleases.length, label: 'estreias' },
+                            ].map(({ n, label }) => (
+                                <div key={label} className="rounded-lg bg-background p-3 text-center">
+                                    <p className="text-xl font-black text-foreground">{n}</p>
+                                    <p className="text-[10px] font-semibold text-muted">{label}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted">
-                            <CalendarDays className="h-3.5 w-3.5 text-accent" />
-                            Visão mensal
-                        </div>
+                    {/* Mini calendários */}
+                    <div className="space-y-3">
+                        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-muted">
+                            <CalendarDays className="h-3.5 w-3.5 text-accent" /> Visão mensal
+                        </p>
                         {calendarMonths.map(({ year, month, bdDays, relDays }) => (
                             <MiniCalendar key={`${year}-${month}`} year={year} month={month}
                                 birthdayDays={bdDays} releaseDays={relDays} todayStr={todayStr} />
                         ))}
                     </div>
 
+                    {/* Loja */}
                     {storeProducts.length > 0 && (
-                        <section className="overflow-hidden border border-border bg-surface">
+                        <div className="overflow-hidden rounded-xl border border-border bg-surface">
                             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
                                 <div className="flex min-w-0 items-center gap-2">
-                                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-accent text-white">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white">
                                         <ShoppingBag className="h-3.5 w-3.5" />
                                     </span>
-                                    <div className="min-w-0">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-accent">Vitrine</p>
-                                        <p className="truncate text-xs font-bold text-foreground">Achados para fãs</p>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-accent">Vitrine</p>
+                                        <p className="text-xs font-bold text-foreground">Achados para fãs</p>
                                     </div>
                                 </div>
-                                <Link href="/loja" className="inline-flex flex-shrink-0 items-center gap-1 text-xs font-black text-muted transition-colors hover:text-accent">
+                                <Link href="/loja" className="flex shrink-0 items-center gap-1 text-xs font-black text-muted hover:text-accent transition-colors">
                                     Ver <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>
                             </div>
                             <div className="grid grid-cols-2 gap-3 p-3">
                                 {storeProducts.slice(0, 4).map(p => (
-                                    <a
-                                        key={p.id}
-                                        href={p.affiliateUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer sponsored"
-                                        className="group min-w-0"
-                                    >
-                                        <div className="relative mb-1.5 aspect-square overflow-hidden border border-border bg-background transition-colors group-hover:border-accent/40">
+                                    <a key={p.id} href={p.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored" className="group">
+                                        <div className="relative mb-1.5 aspect-square overflow-hidden rounded-lg border border-border bg-background transition-colors group-hover:border-accent/40">
                                             <Image src={p.imageUrl} alt={p.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
-                                            {p.badge && (
-                                                <span className="absolute left-1.5 top-1.5 bg-accent px-1.5 py-0.5 text-[8px] font-mono font-black text-white">{p.badge}</span>
-                                            )}
+                                            {p.badge && <span className="absolute left-1.5 top-1.5 rounded bg-accent px-1.5 py-0.5 text-[8px] font-mono font-black text-white">{p.badge}</span>}
                                         </div>
                                         <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-foreground">{p.name}</p>
                                         {p.price && <p className="mt-0.5 text-[11px] font-black text-foreground">{p.price}</p>}
                                     </a>
                                 ))}
                             </div>
-                        </section>
+                        </div>
                     )}
                 </aside>
             </div>
-        </div>
         </div>
     )
 }
