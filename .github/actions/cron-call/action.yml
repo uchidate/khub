@@ -11,7 +11,8 @@ inputs:
   cron_secret:
     required: true
   server_ip:
-    required: true
+    required: false
+    description: "Deprecated — não utilizado"
   base_url:
     default: 'https://www.hallyuhub.com.br'
 
@@ -40,16 +41,14 @@ runs:
         " 2>/dev/null
         }
 
-        HOST=$(echo "$BASE_URL" | sed 's|https://||')
         SUCCESS=0
 
         for attempt in 1 2 3; do
           echo "▶ Tentativa $attempt/3 — $ENDPOINT"
 
-          RESPONSE=$(curl -sf -w "\n%{http_code}" \
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
             --max-time "$MAX_TIME" \
             --connect-timeout 15 \
-            --resolve "${HOST}:443:${SERVER_IP}" \
             -X POST "${BASE_URL}${ENDPOINT}" \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Accept: application/json" \
