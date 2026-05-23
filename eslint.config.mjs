@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
+import nextPlugin from "@next/eslint-plugin-next";
 
 export default [
   js.configs.recommended,
@@ -35,6 +36,7 @@ export default [
     plugins: {
       "@typescript-eslint": tseslint,
       "react-hooks": reactHooks,
+      "@next/next": nextPlugin,
     },
     rules: {
       "no-unused-vars": "off",
@@ -43,9 +45,10 @@ export default [
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }],
-      "no-undef": "off", // TypeScript handles this
+      "no-undef": "off",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      "@next/next/no-img-element": "warn",
     },
   },
 ];

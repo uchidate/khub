@@ -42,7 +42,7 @@ export function StickyBottomAd() {
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
-        } catch {}
+        } catch (_) { /* adsbygoogle may throw on blocked ads */ }
     }, [visible])
 
     if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth') || pathname?.startsWith('/write')) return null

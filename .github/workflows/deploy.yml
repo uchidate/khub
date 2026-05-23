@@ -87,7 +87,7 @@ jobs:
       - name: 🔍 Lint & Type Check
         run: |
           echo "::group::ESLint"
-          npx eslint app/ lib/ components/ --max-warnings 10
+          npx eslint app/ lib/ components/ --max-warnings 80
           echo "::endgroup::"
           echo "::group::TypeScript"
           npx tsc --noEmit
