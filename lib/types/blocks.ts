@@ -106,6 +106,7 @@ export type BlogQuoteBlock = {
 export type BlogImageBlock = {
     type: 'blog_image'
     url: string
+    alt?: string
     caption?: string
     fullWidth?: boolean
     size?: 'small' | 'medium' | 'full'

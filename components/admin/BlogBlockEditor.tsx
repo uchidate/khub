@@ -524,8 +524,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                         </div>
                     )}
-                    <input value={(block as { alt?: string }).alt || ''} onChange={e => onChange({ ...block, alt: e.target.value } as BlogBlock)}
-                        placeholder="Texto alternativo (alt) — describe a imagem para SEO e acessibilidade..." className={inputCls} />
+                    <input value={block.alt || ''} onChange={e => onChange({ ...block, alt: e.target.value })}
+                        placeholder="Texto alternativo (alt) — descreva a imagem para SEO e acessibilidade..." className={inputCls} />
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                         placeholder="Legenda (opcional)..." className={inputCls} />
                     <div className="flex items-center gap-3">

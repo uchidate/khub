@@ -237,7 +237,7 @@ function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' 
                         >
                             <img
                                 src={proxied(block.url)}
-                                alt={block.caption || ''}
+                                alt={block.alt || block.caption || ''}
                                 className="w-full rounded-2xl border border-border shadow-xl group-hover:brightness-[.93] transition-all duration-200"
                                 loading="lazy"
                                 onError={() => setError(true)}
