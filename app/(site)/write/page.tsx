@@ -614,7 +614,10 @@ function WritePageContent() {
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#ff2d78]/10 text-[#ff2d78] ml-1">
                   {BLOG_TEMPLATE_LABELS[template]}
                 </span>
-                <button onClick={() => { setTemplatePicked(false); setBlocks([]) }}
+                <button onClick={() => {
+                  if (blocks.length > 0 && !window.confirm('Trocar template vai apagar todos os blocos. Continuar?')) return
+                  setTemplatePicked(false); setBlocks([])
+                }}
                   className="text-[10px] text-muted/60 hover:text-muted transition-colors">
                   trocar
                 </button>

@@ -608,6 +608,56 @@ function GalleryBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { t
     )
 }
 
+function ListBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_list' }>; onChange: (b: BlogBlock) => void }) {
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+    return (
+        <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-muted">
+                <input type="checkbox" checked={block.ordered ?? false}
+                    onChange={e => onChange({ ...block, ordered: e.target.checked })}
+                    className="accent-purple-500" />
+                Lista numerada
+            </label>
+            {block.items.map((item, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                    <span className="text-xs text-muted shrink-0 w-5 text-right">{block.ordered ? `${i + 1}.` : '•'}</span>
+                    <input
+                        ref={el => { inputRefs.current[i] = el }}
+                        value={item}
+                        onChange={e => {
+                            const items = [...block.items]; items[i] = e.target.value
+                            onChange({ ...block, items })
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const items = [...block.items]; items.splice(i + 1, 0, '')
+                                onChange({ ...block, items })
+                                setTimeout(() => inputRefs.current[i + 1]?.focus(), 0)
+                            }
+                            if (e.key === 'Backspace' && !item && block.items.length > 1) {
+                                e.preventDefault()
+                                onChange({ ...block, items: block.items.filter((_, j) => j !== i) })
+                                setTimeout(() => inputRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                            }
+                        }}
+                        placeholder={`Item ${i + 1}...`}
+                        className={`${inputCls} flex-1`}
+                    />
+                    <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                        className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                </div>
+            ))}
+            <button onClick={() => {
+                onChange({ ...block, items: [...block.items, ''] })
+                setTimeout(() => inputRefs.current[block.items.length]?.focus(), 0)
+            }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Adicionar item
+            </button>
+        </div>
+    )
+}
+
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
         case 'blog_heading':
@@ -1225,34 +1275,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_list':
-            return (
-                <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-muted">
-                        <input type="checkbox" checked={block.ordered ?? false}
-                            onChange={e => onChange({ ...block, ordered: e.target.checked })}
-                            className="accent-purple-500" />
-                        Lista numerada
-                    </label>
-                    {block.items.map((item, i) => (
-                        <div key={i} className="flex gap-2 items-center">
-                            <span className="text-xs text-muted shrink-0 w-5 text-right">{block.ordered ? `${i + 1}.` : '•'}</span>
-                            <input value={item} onChange={e => {
-                                const items = [...block.items]; items[i] = e.target.value
-                                onChange({ ...block, items })
-                            }} onKeyDown={e => {
-                                if (e.key === 'Enter') { e.preventDefault(); const items = [...block.items]; items.splice(i + 1, 0, ''); onChange({ ...block, items }); setTimeout(() => (e.currentTarget.closest('.space-y-2')?.querySelectorAll('input[placeholder^="Item"]') as NodeListOf<HTMLInputElement>)?.[i + 1]?.focus(), 0) }
-                                if (e.key === 'Backspace' && !item && block.items.length > 1) { e.preventDefault(); onChange({ ...block, items: block.items.filter((_, j) => j !== i) }) }
-                            }} placeholder={`Item ${i + 1}...`} className={`${inputCls} flex-1`} />
-                            <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
-                        </div>
-                    ))}
-                    <button onClick={() => onChange({ ...block, items: [...block.items, ''] })}
-                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar item
-                    </button>
-                </div>
-            )
+            return <ListBlockEditor block={block} onChange={onChange} />
 
         case 'blog_pros_cons':
             return (
