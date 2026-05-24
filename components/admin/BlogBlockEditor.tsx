@@ -1204,8 +1204,24 @@ function BlockRow({
                         {BLOG_BLOCK_TYPE_LABELS[block.type]}
                     </span>
                     <span className="text-[10px] text-muted/40 shrink-0 group-hover/row:text-muted/70 transition-colors">#{index + 1}</span>
-                    {collapsed && blockPreview(block) && (
-                        <span className="text-[11px] text-muted/70 truncate ml-2 max-w-xs">{blockPreview(block)}</span>
+                    {collapsed && (
+                        <>
+                            {(block.type === 'blog_image' && block.url) && (
+                                <img src={block.url} alt="" className="w-8 h-6 rounded object-cover shrink-0 ml-2 border border-border/60"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            )}
+                            {(block.type === 'blog_gallery' && block.urls.length > 0) && (
+                                <div className="flex gap-0.5 ml-2 shrink-0">
+                                    {block.urls.slice(0, 3).map((url, i) => url ? (
+                                        <img key={i} src={url} alt="" className="w-6 h-6 rounded object-cover border border-border/60"
+                                            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    ) : null)}
+                                </div>
+                            )}
+                            {blockPreview(block) && (
+                                <span className="text-[11px] text-muted/70 truncate ml-2 max-w-xs">{blockPreview(block)}</span>
+                            )}
+                        </>
                     )}
                     <ChevronRight className={`w-3.5 h-3.5 text-muted/40 ml-auto shrink-0 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
                 </button>
@@ -1304,6 +1320,8 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             type = 'blog_spotify'; extra = { url: text }
         } else if (/tiktok\.com/.test(text)) {
             type = 'blog_tiktok'; extra = { url: text }
+        } else if (/\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(text)) {
+            type = 'blog_image'; extra = { url: text, caption: '' }
         }
 
         if (type) {
@@ -1359,7 +1377,10 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                     className={dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-accent/40 rounded-xl' : ''}
                 >
                     {i === 0 && (
-                        <InsertStrip onInsert={type => { setPaletteInsertAfter(-1); insertBlock(-1, type) }} />
+                        <InsertStrip
+                            onInsert={type => { setPaletteInsertAfter(-1); insertBlock(-1, type) }}
+                            onOpenPalette={() => { setPaletteInsertAfter(-1); setShowCommandPalette(true) }}
+                        />
                     )}
                     <BlockRow
                         block={block} index={i} total={blocks.length}
@@ -1379,12 +1400,21 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
 
             {/* Add at end */}
             <div className="relative pt-1">
-                <button
-                    onClick={() => setShowSelector(v => !v)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-purple-500/30 transition-colors w-full justify-center"
-                >
-                    <Plus className="w-4 h-4" /> Bloco
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSelector(v => !v)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-purple-500/30 transition-colors flex-1 justify-center"
+                    >
+                        <Plus className="w-4 h-4" /> Bloco
+                    </button>
+                    <button
+                        onClick={() => { setPaletteInsertAfter(blocks.length - 1); setShowCommandPalette(true) }}
+                        className="flex items-center gap-1 px-3 py-2 rounded-xl border border-dashed border-border text-[11px] font-mono text-muted hover:text-accent hover:border-accent/40 transition-colors shrink-0"
+                        title="Paleta de blocos (⌘K)"
+                    >
+                        ⌘K
+                    </button>
+                </div>
                 {showSelector && (
                     <TypeSelector
                         onSelect={type => { insertBlock(blocks.length - 1, type); setShowSelector(false) }}

@@ -81,8 +81,8 @@ export function SeoChecklist({
         result.push({
             id: 'excerpt',
             label: excerpt ? `Resumo: ${excerpt.length} caracteres` : 'Resumo ausente',
-            status: excerpt.length >= 100 && excerpt.length <= 160 ? 'ok' : excerpt.length > 0 ? 'warn' : 'fail',
-            detail: !excerpt ? 'Adicione um resumo de 100–160 caracteres' : excerpt.length > 160 ? 'Muito longo para meta description' : undefined,
+            status: excerpt.length >= 120 && excerpt.length <= 160 ? 'ok' : excerpt.length > 0 ? 'warn' : 'fail',
+            detail: !excerpt ? 'Adicione um resumo de 120–160 caracteres' : excerpt.length > 160 ? 'Muito longo para meta description' : excerpt.length < 120 ? `Muito curto: ${excerpt.length}/120 chars mínimo` : undefined,
         })
 
         // 3. Word count

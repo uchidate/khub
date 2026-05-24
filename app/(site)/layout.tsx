@@ -16,7 +16,7 @@ import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
-import { SiteFooter } from "@/components/ui/SiteFooter"
+import { ConditionalFooter } from "@/components/ui/ConditionalFooter"
 
 type TickerItem = { type: 'article' | 'artist'; href: string; label: string; title: string }
 
@@ -235,7 +235,7 @@ export default async function RootLayout({
                         <PWAInstaller />
                         <CookieBanner />
 
-                        <SiteFooter />
+                        <ConditionalFooter />
                     </div>
                     </AnalyticsProvider>
                 </SessionProvider>

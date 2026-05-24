@@ -345,7 +345,7 @@ function WritePageContent() {
   const readingTime = Math.max(1, Math.ceil(wordCount / 200))
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[100] overflow-auto' : ''}`}>
+    <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[400] overflow-auto' : ''}`}>
       {/* Publish checklist modal */}
       {showPublishChecklist && (
         <PublishChecklist
@@ -454,7 +454,7 @@ function WritePageContent() {
         </div>
       </div>
 
-      <div className={`mx-auto px-4 py-6 grid gap-6 transition-all w-full ${sidebarOpen ? 'max-w-6xl grid-cols-1 lg:grid-cols-[1fr_300px]' : 'max-w-3xl grid-cols-1'}`}>
+      <div className={`mx-auto px-4 py-6 grid gap-6 transition-all w-full ${focusMode ? 'max-w-2xl grid-cols-1' : sidebarOpen ? 'max-w-6xl grid-cols-1 lg:grid-cols-[1fr_300px]' : 'max-w-3xl grid-cols-1'}`}>
         {/* Main editor */}
         <div className="space-y-4">
           {/* Mode tabs */}
@@ -518,7 +518,7 @@ function WritePageContent() {
         </div>
 
         {/* Sidebar */}
-        {sidebarOpen && <aside className="space-y-5">
+        {sidebarOpen && !focusMode && <aside className="space-y-5">
           {/* Article Health */}
           <ArticleHealthPanel
             issues={issues}
@@ -560,7 +560,13 @@ function WritePageContent() {
               placeholder="Resumo (aparece na listagem e no Google)..."
               maxLength={600} rows={3}
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors" />
-            <p className="text-xs text-muted text-right">{excerpt.length}/600</p>
+            <p className={`text-xs text-right tabular-nums ${
+              excerpt.length >= 120 && excerpt.length <= 160 ? 'text-green-500' :
+              excerpt.length > 160 ? 'text-yellow-500' :
+              excerpt.length > 0 ? 'text-orange-400' : 'text-muted'
+            }`}>
+              {excerpt.length} <span className="text-muted font-normal">/ ideal 120–160</span>
+            </p>
           </div>
 
           {/* Cover image */}
@@ -614,7 +620,12 @@ function WritePageContent() {
 
           {/* Tags */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Tags</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Tags</label>
+              <span className={`text-[10px] tabular-nums ${tags.length >= 3 ? 'text-green-500' : tags.length > 0 ? 'text-orange-400' : 'text-muted'}`}>
+                {tags.length}/10
+              </span>
+            </div>
             <div className="flex gap-2">
               <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
