@@ -737,10 +737,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
-                            <textarea value={item.text || ''} onChange={e => {
-                                const items = [...block.items]; items[i] = { ...item, text: e.target.value }
+                            <AutoTextarea value={item.text || ''} onChange={v => {
+                                const items = [...block.items]; items[i] = { ...item, text: v }
                                 onChange({ ...block, items })
-                            }} rows={2} placeholder="Detalhes opcionais..." className={inputCls} />
+                            }} minRows={2} placeholder="Detalhes opcionais..." />
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, items: [...block.items, { year: '', title: '', text: '', emoji: '' }] })}
@@ -793,15 +793,15 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título da música..." className={inputCls} />
                     <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
                         placeholder="Fonte (artista, álbum)..." className={inputCls} />
-                    <textarea value={block.lines.map(l => l.original).join('\n')}
-                        onChange={e => onChange({ ...block, lines: e.target.value.split('\n').map(original => ({ original, translation: '' })) })}
-                        rows={4} placeholder="Letras originais (coreano), uma por linha..." className={inputCls} />
-                    <textarea value={block.lines.map(l => l.translation).join('\n')}
-                        onChange={e => {
-                            const translations = e.target.value.split('\n')
+                    <AutoTextarea value={block.lines.map(l => l.original).join('\n')}
+                        onChange={v => onChange({ ...block, lines: v.split('\n').map(original => ({ original, translation: '' })) })}
+                        minRows={4} placeholder="Letras originais (coreano), uma por linha..." />
+                    <AutoTextarea value={block.lines.map(l => l.translation).join('\n')}
+                        onChange={v => {
+                            const translations = v.split('\n')
                             onChange({ ...block, lines: block.lines.map((l, i) => ({ ...l, translation: translations[i] ?? '' })) })
                         }}
-                        rows={4} placeholder="Traduções (uma por linha)..." className={inputCls} />
+                        minRows={4} placeholder="Traduções (uma por linha)..." />
                 </div>
             )
 
@@ -873,10 +873,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
                     {block.quotes.map((q, i) => (
                         <div key={i} className="flex gap-2 items-start">
-                            <textarea value={q.text} onChange={e => {
-                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
+                            <AutoTextarea value={q.text} onChange={v => {
+                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: v }
                                 onChange({ ...block, quotes })
-                            }} rows={2} placeholder={`Citação ${i + 1}`} className={`${inputCls} flex-1`} />
+                            }} minRows={2} placeholder={`Citação ${i + 1}`} className="flex-1" />
                             <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400 pt-2"><X className="w-4 h-4" /></button>
                         </div>
@@ -1069,14 +1069,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título do deck..." className={inputCls} />
                     {block.cards.map((card, i) => (
                         <div key={i} className="grid grid-cols-2 gap-2 p-2 rounded-lg border border-border">
-                            <textarea value={card.front} onChange={e => {
-                                const cards = [...block.cards]; cards[i] = { ...card, front: e.target.value }
+                            <AutoTextarea value={card.front} onChange={v => {
+                                const cards = [...block.cards]; cards[i] = { ...card, front: v }
                                 onChange({ ...block, cards })
-                            }} rows={2} placeholder="Frente" className={inputCls} />
-                            <textarea value={card.back} onChange={e => {
-                                const cards = [...block.cards]; cards[i] = { ...card, back: e.target.value }
+                            }} minRows={2} placeholder="Frente" />
+                            <AutoTextarea value={card.back} onChange={v => {
+                                const cards = [...block.cards]; cards[i] = { ...card, back: v }
                                 onChange({ ...block, cards })
-                            }} rows={2} placeholder="Verso" className={inputCls} />
+                            }} minRows={2} placeholder="Verso" />
                             <button onClick={() => onChange({ ...block, cards: block.cards.filter((_, j) => j !== i) })}
                                 className="col-span-2 text-xs text-muted hover:text-red-400 text-right">
                                 remover card

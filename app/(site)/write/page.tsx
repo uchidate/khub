@@ -64,6 +64,22 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
   )
 }
 
+function ExcerptTextarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.max(el.scrollHeight, 72)}px`
+  }, [value])
+  return (
+    <textarea ref={ref} value={value} onChange={e => onChange(e.target.value)}
+      placeholder="Resumo (aparece na listagem e no Google)..."
+      maxLength={600} rows={3}
+      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
+      style={{ overflow: 'hidden' }} />
+  )
+}
+
 // ─── Main write page ──────────────────────────────────────────────────────────
 
 function WritePageContent() {
@@ -562,10 +578,7 @@ function WritePageContent() {
           {/* Excerpt */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
-            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)}
-              placeholder="Resumo (aparece na listagem e no Google)..."
-              maxLength={600} rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors" />
+            <ExcerptTextarea value={excerpt} onChange={setExcerpt} />
             <p className={`text-xs text-right tabular-nums ${
               excerpt.length >= 120 && excerpt.length <= 160 ? 'text-green-500' :
               excerpt.length > 160 ? 'text-yellow-500' :
