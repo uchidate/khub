@@ -18,33 +18,38 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const post = await prisma.blogPost.findUnique({ where: { id }, select: { id: true } })
   if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const versions = await prisma.blogPostVersion.findMany({
-    where: { blogPostId: id },
-    orderBy: { savedAt: 'desc' },
-    select: {
-      id: true,
-      savedAt: true,
-      note: true,
-      title: true,
-      excerpt: true,
-      contentMd: true,
-      pinned: true,
-      label: true,
-      savedBy: { select: { id: true, name: true, email: true } },
-    },
-  })
+  // Fetch versions with blocks count via raw query (avoids pulling full blocks payload)
+  type RawVersion = {
+    id: string; savedAt: Date; note: string | null; title: string
+    excerpt: string | null; contentMd: string; pinned: boolean
+    label: string | null; blocksCount: bigint | null
+    savedById: string; savedByName: string | null; savedByEmail: string | null
+  }
 
-  // Adiciona wordCount e remove contentMd da resposta (evita payload grande)
-  const result = versions.map(v => ({
+  const raw = await prisma.$queryRaw<RawVersion[]>`
+    SELECT
+      v.id, v."savedAt", v.note, v.title, v.excerpt, v."contentMd",
+      v.pinned, v.label,
+      CASE WHEN v.blocks IS NOT NULL AND jsonb_typeof(v.blocks) = 'array'
+           THEN jsonb_array_length(v.blocks) ELSE NULL END AS "blocksCount",
+      u.id AS "savedById", u.name AS "savedByName", u.email AS "savedByEmail"
+    FROM "BlogPostVersion" v
+    LEFT JOIN "User" u ON u.id = v."savedById"
+    WHERE v."blogPostId" = ${id}
+    ORDER BY v."savedAt" DESC
+  `
+
+  const result = raw.map(v => ({
     id: v.id,
     savedAt: v.savedAt,
     note: v.note,
     title: v.title,
     excerpt: v.excerpt,
     wordCount: wordCount(v.contentMd),
+    blocksCount: v.blocksCount !== null ? Number(v.blocksCount) : null,
     pinned: v.pinned,
     label: v.label,
-    savedBy: v.savedBy,
+    savedBy: { id: v.savedById, name: v.savedByName, email: v.savedByEmail },
   }))
 
   return NextResponse.json(result)

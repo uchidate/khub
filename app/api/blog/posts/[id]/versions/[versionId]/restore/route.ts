@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireEditorOrAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
+import { snapshotPost } from '@/lib/services/blog-version'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,46 +14,27 @@ export async function POST(
 
   const { id, versionId } = await params
 
-  const version = await prisma.blogPostVersion.findUnique({
-    where: { id: versionId },
-  })
-
+  const version = await prisma.blogPostVersion.findUnique({ where: { id: versionId } })
   if (!version || version.blogPostId !== id) {
     return NextResponse.json({ error: 'Version not found' }, { status: 404 })
   }
 
-  // Salva o estado atual como nova versão antes de restaurar
-  const current = await prisma.blogPost.findUnique({
-    where: { id },
-    select: { title: true, excerpt: true, contentMd: true, blocks: true },
+  // Snapshot do estado atual antes de restaurar
+  await snapshotPost(id, {
+    savedById: session!.user.id,
+    note: `(auto) pre-restore para ${version.savedAt.toISOString().slice(0, 16)}`,
   })
 
-  if (!current) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
-
-  const [updated] = await prisma.$transaction([
-    prisma.blogPost.update({
-      where: { id },
-      data: {
-        title: version.title,
-        excerpt: version.excerpt,
-        contentMd: version.contentMd,
-        blocks: version.blocks ?? undefined,
-        updatedAt: new Date(),
-      },
-    }),
-    // snapshot do estado atual como "pré-restauração"
-    prisma.blogPostVersion.create({
-      data: {
-        blogPostId: id,
-        title: current.title,
-        excerpt: current.excerpt,
-        contentMd: current.contentMd,
-        blocks: current.blocks as object ?? undefined,
-        savedById: session!.user.id,
-        note: `(auto) antes de restaurar para versão ${version.savedAt.toISOString().slice(0, 16)}`,
-      },
-    }),
-  ])
+  const updated = await prisma.blogPost.update({
+    where: { id },
+    data: {
+      title: version.title,
+      excerpt: version.excerpt,
+      contentMd: version.contentMd,
+      blocks: version.blocks ?? undefined,
+      updatedAt: new Date(),
+    },
+  })
 
   return NextResponse.json(updated)
 }
