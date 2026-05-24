@@ -1319,6 +1319,9 @@ interface BlogBlockEditorProps {
     onChange: (blocks: BlogBlock[]) => void
 }
 
+let _keyCounter = 0
+function nextKey() { return `bk_${++_keyCounter}` }
+
 export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [showSelector, setShowSelector] = useState(false)
     const [forceCollapsed, setForceCollapsed] = useState<boolean | undefined>(undefined)
@@ -1327,24 +1330,44 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [dragIdx, setDragIdx] = useState<number | null>(null)
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
+    // Stable keys parallel to blocks — prevents remount on reorder/insert
+    const [blockKeys, setBlockKeys] = useState<string[]>(() => blocks.map(() => nextKey()))
+
+    // Sync keys length when blocks change externally (e.g., restore, template pick)
+    useEffect(() => {
+        setBlockKeys(prev => {
+            if (prev.length === blocks.length) return prev
+            if (blocks.length > prev.length) {
+                return [...prev, ...Array.from({ length: blocks.length - prev.length }, nextKey)]
+            }
+            return prev.slice(0, blocks.length)
+        })
+    }, [blocks.length])
+
     function updateBlock(i: number, updated: BlogBlock) {
         const next = [...blocks]; next[i] = updated; onChange(next)
     }
-    function deleteBlock(i: number) { onChange(blocks.filter((_, j) => j !== i)) }
+    function deleteBlock(i: number) {
+        setBlockKeys(k => k.filter((_, j) => j !== i))
+        onChange(blocks.filter((_, j) => j !== i))
+    }
     function insertBlock(afterIndex: number, type: BlogBlockType) {
         const next = [...blocks]
         next.splice(afterIndex + 1, 0, defaultBlock(type))
+        setBlockKeys(k => { const nk = [...k]; nk.splice(afterIndex + 1, 0, nextKey()); return nk })
         onChange(next)
     }
     function duplicateBlock(i: number) {
         const next = [...blocks]
         next.splice(i + 1, 0, { ...blocks[i] })
+        setBlockKeys(k => { const nk = [...k]; nk.splice(i + 1, 0, nextKey()); return nk })
         onChange(next)
     }
     function moveBlock(from: number, to: number) {
         const next = [...blocks]
         const [removed] = next.splice(from, 1)
         next.splice(to, 0, removed)
+        setBlockKeys(k => { const nk = [...k]; const [rk] = nk.splice(from, 1); nk.splice(to, 0, rk); return nk })
         onChange(next)
     }
 
@@ -1427,7 +1450,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
 
             {blocks.map((block, i) => (
                 <div
-                    key={i}
+                    key={blockKeys[i] ?? i}
                     data-block-index={i}
                     draggable
                     onDragStart={() => setDragIdx(i)}

@@ -116,7 +116,10 @@ function WritePageContent() {
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [focusKeyword, setFocusKeyword] = useState('')
+  const [focusKeyword, setFocusKeyword] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem(`seo_kw_${editId ?? 'new'}`) ?? ''
+  })
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
 
@@ -237,6 +240,12 @@ function WritePageContent() {
       })
       .catch(() => {})
   }, [editId])
+
+  // Persist focus keyword per post
+  useEffect(() => {
+    if (!focusKeyword) return
+    localStorage.setItem(`seo_kw_${postId ?? editId ?? 'new'}`, focusKeyword)
+  }, [focusKeyword, postId, editId])
 
   // Fetch version count when postId changes
   useEffect(() => {
