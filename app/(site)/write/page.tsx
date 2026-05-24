@@ -79,17 +79,18 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
   )
 }
 
-function ExcerptTextarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ExcerptTextarea({ value, onChange, placeholder = 'Resumo (aparece na listagem e no Google)...', maxLength = 600 }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number
+}) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     const el = ref.current; if (!el) return
     el.style.height = 'auto'
-    el.style.height = `${Math.max(el.scrollHeight, 72)}px`
+    el.style.height = `${Math.max(el.scrollHeight, 60)}px`
   }, [value])
   return (
     <textarea ref={ref} value={value} onChange={e => onChange(e.target.value)}
-      placeholder="Resumo (aparece na listagem e no Google)..."
-      maxLength={600} rows={3}
+      placeholder={placeholder} maxLength={maxLength} rows={2}
       className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
       style={{ overflow: 'hidden' }} />
   )
@@ -120,10 +121,12 @@ function WritePageContent() {
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
 
   const [saving, setSaving] = useState(false)
+  const [autosaving, setAutosaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [versionCount, setVersionCount] = useState<number | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
   const [showPublishChecklist, setShowPublishChecklist] = useState(false)
@@ -224,7 +227,16 @@ function WritePageContent() {
       .catch(() => {})
   }, [editId])
 
-  // Auto-save to localStorage
+  // Fetch version count when postId changes
+  useEffect(() => {
+    if (!postId) return
+    fetch(`/api/blog/posts/${postId}/versions`)
+      .then(r => r.json())
+      .then(data => setVersionCount(Array.isArray(data) ? data.length : null))
+      .catch(() => {})
+  }, [postId])
+
+  // Auto-save to localStorage (new posts)
   useEffect(() => {
     if (editId || (!title && !content && blocks.length === 0)) return
     const timer = setTimeout(() => {
@@ -232,6 +244,40 @@ function WritePageContent() {
     }, 1000)
     return () => clearTimeout(timer)
   }, [title, content, excerpt, tags, blocks, editId])
+
+  // Server autosave every 30s for existing posts
+  const lastAutosaveRef = useRef<string>('')
+  useEffect(() => {
+    if (!postId || saving) return
+    const timer = setTimeout(async () => {
+      const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
+      if (!title.trim() || !hasContent) return
+      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ' })
+      if (payload === lastAutosaveRef.current) return
+      lastAutosaveRef.current = payload
+      setAutosaving(true)
+      try {
+        const res = await fetch(`/api/blog/posts/${postId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, excerpt: excerpt || undefined, contentMd: content || ' ',
+            blocks: editorMode === 'blocks' ? blocks : null }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setVersionCount(c => (c ?? 0) + 1)
+          if (data.slug) setPostSlug(data.slug)
+          setLastSavedAt(new Date())
+          setSaveState('saved')
+          setTimeout(() => setSaveState('idle'), 3000)
+        }
+      } catch { /* silent */ } finally {
+        setAutosaving(false)
+      }
+    }, 30000)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, excerpt, blocks, content, postId, saving, editorMode])
 
   function pickTemplate(t: BlogTemplate) {
     setTemplate(t)
@@ -275,6 +321,7 @@ function WritePageContent() {
       if (!postId) setPostId(data.id)
       if (data.slug) setPostSlug(data.slug)
       setPostStatus(data.status)
+      setVersionCount(c => (c ?? 0) + 1)
       setSaveState('saved')
       setSaveError(null)
       setLastSavedAt(new Date())
@@ -417,7 +464,13 @@ function WritePageContent() {
           }`}>{statusLabels[postStatus] ?? postStatus}</span>
 
           {/* Autosave indicator */}
-          {saveState === 'saved' && lastSavedAt && (
+          {autosaving && (
+            <span className="hidden lg:flex items-center gap-1 text-[11px] text-muted/60 mr-2">
+              <Loader2 size={10} className="animate-spin" />
+              salvando…
+            </span>
+          )}
+          {!autosaving && saveState === 'saved' && lastSavedAt && (
             <span className="hidden lg:flex items-center gap-1 text-[11px] text-muted mr-2">
               <CheckCircle size={11} className="text-green-500" />
               {formatTimestamp(lastSavedAt)}
@@ -725,14 +778,7 @@ function WritePageContent() {
           {postId && (
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted uppercase tracking-wider">Nota da versão</label>
-              <textarea
-                value={versionNote}
-                onChange={e => setVersionNote(e.target.value)}
-                placeholder="Descreva o que mudou nesta versão (opcional)…"
-                maxLength={300}
-                rows={2}
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
-              />
+              <ExcerptTextarea value={versionNote} onChange={setVersionNote} placeholder="Descreva o que mudou nesta versão (opcional)…" maxLength={300} />
               <p className="text-xs text-muted text-right">{versionNote.length}/300</p>
             </div>
           )}
@@ -747,12 +793,21 @@ function WritePageContent() {
                 <div className="flex items-center gap-2">
                   <History className="w-3.5 h-3.5 text-muted" />
                   <span className="text-xs font-black uppercase tracking-wider text-foreground">Versões</span>
+                  {versionCount !== null && versionCount > 0 && (
+                    <span className="text-[10px] font-bold tabular-nums bg-surface-hover px-1.5 py-0.5 rounded-full text-muted">{versionCount}</span>
+                  )}
                 </div>
                 <span className="text-[10px] text-muted">{showVersionHistory ? 'fechar' : 'ver'}</span>
               </button>
               {showVersionHistory && (
                 <div className="border-t border-border">
-                  <VersionHistoryPanel postId={postId} onRestore={v => { setBlocksWithHistory(v.blocks); setShowVersionHistory(false) }} />
+                  <VersionHistoryPanel postId={postId} onRestore={v => {
+                setTitle(v.title)
+                if (v.excerpt) setExcerpt(v.excerpt)
+                if (v.blocks?.length) { setBlocksWithHistory(v.blocks); setEditorMode('blocks') }
+                else if (v.contentMd?.trim()) { setContent(v.contentMd); setEditorMode('markdown') }
+                setShowVersionHistory(false)
+              }} />
                 </div>
               )}
             </div>
