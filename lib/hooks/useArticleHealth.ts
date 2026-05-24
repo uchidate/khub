@@ -99,6 +99,12 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
         if (block.type === 'blog_image' && block.url && !(block as { alt?: string }).alt?.trim()) {
             issues.push({ id: `img-no-alt-${i}`, severity: 'info', title: 'Imagem sem alt text', detail: `Bloco ${i + 1} — importante para SEO e acessibilidade`, field: 'blocks', blockIndex: i })
         }
+        if (block.type === 'blog_gallery') {
+            const emptySlots = (block.urls ?? []).filter(u => !u.trim()).length
+            if (emptySlots > 0) {
+                issues.push({ id: `gallery-empty-${i}`, severity: 'warning', title: 'Galeria com URL vazia', detail: `Bloco ${i + 1} — ${emptySlots} imagem(ns) sem URL`, field: 'blocks', blockIndex: i })
+            }
+        }
         if (block.type === 'blog_video' && block.url) {
             const re = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
             if (!block.url.match(re)) {
@@ -107,6 +113,24 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
         }
         if (block.type === 'blog_paragraph' && 'text' in block && !(block as { text: string }).text?.trim() && input.title.trim()) {
             issues.push({ id: `empty-para-${i}`, severity: 'warning', title: 'Parágrafo vazio', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
+        }
+        if (block.type === 'blog_paragraph' && 'text' in block) {
+            const words = (block as { text: string }).text?.split(/\s+/).filter(Boolean).length ?? 0
+            if (words > 250) {
+                issues.push({ id: `long-para-${i}`, severity: 'info', title: 'Parágrafo muito longo', detail: `Bloco ${i + 1} — ${words} palavras, considere dividir`, field: 'blocks', blockIndex: i })
+            }
+        }
+        if (block.type === 'blog_heading' && !(block as { text: string }).text?.trim()) {
+            issues.push({ id: `empty-heading-${i}`, severity: 'warning', title: 'Subtítulo vazio', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
+        }
+        if (block.type === 'blog_artist_card' && !(block as { artistId: string }).artistId?.trim()) {
+            issues.push({ id: `card-no-artist-${i}`, severity: 'error', title: 'Card de artista sem ID', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
+        }
+        if (block.type === 'blog_group_card' && !(block as { groupId: string }).groupId?.trim()) {
+            issues.push({ id: `card-no-group-${i}`, severity: 'error', title: 'Card de grupo sem ID', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
+        }
+        if (block.type === 'blog_production_card' && !(block as { productionId: string }).productionId?.trim()) {
+            issues.push({ id: `card-no-prod-${i}`, severity: 'error', title: 'Card de produção sem ID', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
         }
     })
 
