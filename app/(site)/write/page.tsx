@@ -299,7 +299,7 @@ function WritePageContent() {
       } catch { /* silent */ } finally {
         setAutosaving(false)
       }
-    }, 30000)
+    }, 15000)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, excerpt, blocks, content, postId, saving, editorMode, coverImageUrl, categoryId, tags, isPrivate])

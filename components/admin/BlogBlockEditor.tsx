@@ -678,7 +678,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <div>
                         <label className={labelCls}>Artista</label>
                         <EntityPicker kind="artist" currentId={block.artistId}
-                            onChange={(id) => onChange({ ...block, artistId: id })} />
+                            onChange={(id, label) => onChange({ ...block, artistId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
                         placeholder="Nota editorial (opcional)..." className={inputCls} />
@@ -693,7 +693,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <div>
                         <label className={labelCls}>Grupo</label>
                         <EntityPicker kind="group" currentId={block.groupId}
-                            onChange={(id) => onChange({ ...block, groupId: id })} />
+                            onChange={(id, label) => onChange({ ...block, groupId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
                         placeholder="Nota editorial (opcional)..." className={inputCls} />
@@ -708,7 +708,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <div>
                         <label className={labelCls}>Produção</label>
                         <EntityPicker kind="production" currentId={block.productionId}
-                            onChange={(id) => onChange({ ...block, productionId: id })} />
+                            onChange={(id, label) => onChange({ ...block, productionId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
                         placeholder="Nota editorial (opcional)..." className={inputCls} />
@@ -1221,6 +1221,9 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={item} onChange={e => {
                                 const items = [...block.items]; items[i] = e.target.value
                                 onChange({ ...block, items })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const items = [...block.items]; items.splice(i + 1, 0, ''); onChange({ ...block, items }); setTimeout(() => (e.currentTarget.closest('.space-y-2')?.querySelectorAll('input[placeholder^="Item"]') as NodeListOf<HTMLInputElement>)?.[i + 1]?.focus(), 0) }
+                                if (e.key === 'Backspace' && !item && block.items.length > 1) { e.preventDefault(); onChange({ ...block, items: block.items.filter((_, j) => j !== i) }) }
                             }} placeholder={`Item ${i + 1}...`} className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
@@ -1685,9 +1688,9 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_tiktok':          return block.url || '(sem URL)'
         case 'blog_spotify':         return block.url || '(sem URL)'
         case 'blog_timeline':        return `${block.items.length} marco(s)${block.items[0]?.year ? ` — de ${block.items[0].year}` : ''}`
-        case 'blog_artist_card':     return block.artistId ? block.artistId.slice(0, 24) + '…' : '(sem artista)'
-        case 'blog_group_card':      return block.groupId ? block.groupId.slice(0, 24) + '…' : '(sem grupo)'
-        case 'blog_production_card': return block.productionId ? block.productionId.slice(0, 24) + '…' : '(sem produção)'
+        case 'blog_artist_card':     return block._label || (block.artistId ? block.artistId.slice(0, 24) + '…' : '(sem artista)')
+        case 'blog_group_card':      return block._label || (block.groupId ? block.groupId.slice(0, 24) + '…' : '(sem grupo)')
+        case 'blog_production_card': return block._label || (block.productionId ? block.productionId.slice(0, 24) + '…' : '(sem produção)')
         case 'blog_stats_row':       return `${block.items.length} campo(s)`
         case 'blog_rating':          return `Nota: ${block.score}/10${block.label ? ` — ${block.label}` : ''}`
         case 'blog_divider':         return '───✦───'
@@ -1724,6 +1727,7 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_achievement':     return `${block.items.length} conquista(s)`
         case 'blog_mv_breakdown':    return `${block.title || block.videoId} — ${block.scenes.length} cena(s)`
         case 'blog_flashcard':       return `${block.title || ''} ${block.cards.length} card(s)`
+        case 'blog_idol_facts':      return block.name ? `${block.name} — ${block.facts.length} fato(s)` : '(sem nome)'
         default:                     return '(bloco)'
     }
 }
