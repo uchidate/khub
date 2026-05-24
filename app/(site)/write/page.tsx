@@ -1,13 +1,21 @@
 'use client'
 
-import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X, Blocks, FileText, Layout, ImageIcon } from 'lucide-react'
+import {
+    Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X,
+    Blocks, FileText, Layout, ImageIcon, PanelRightClose, PanelRightOpen,
+    Maximize2, Minimize2, Undo2, Redo2, Clock, History,
+} from 'lucide-react'
 import { BlogBlockEditor } from '@/components/admin/BlogBlockEditor'
 import { SeoChecklist } from '@/components/admin/SeoChecklist'
 import { MediaPicker } from '@/components/admin/MediaPicker'
+import { ArticleHealthPanel } from '@/components/admin/ArticleHealthPanel'
+import { PublishChecklist } from '@/components/admin/PublishChecklist'
+import { VersionHistoryPanel } from '@/components/admin/VersionHistoryPanel'
+import { useArticleHealth } from '@/lib/hooks/useArticleHealth'
 import type { BlogBlock, BlogTemplate } from '@/lib/types/blocks'
 import { BLOG_TEMPLATE_BLOCKS, BLOG_TEMPLATE_LABELS } from '@/lib/types/blocks'
 
@@ -78,6 +86,45 @@ function WritePageContent() {
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [focusMode, setFocusMode] = useState(false)
+  const [showPublishChecklist, setShowPublishChecklist] = useState(false)
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [postSlug, setPostSlug] = useState<string | null>(null)
+
+  // Undo/Redo history
+  const [blockHistory, setBlockHistory] = useState<BlogBlock[][]>([])
+  const [blockFuture, setBlockFuture] = useState<BlogBlock[][]>([])
+  const isUndoRedo = useRef(false)
+
+  const setBlocksWithHistory = useCallback((next: BlogBlock[] | ((prev: BlogBlock[]) => BlogBlock[])) => {
+    if (isUndoRedo.current) { isUndoRedo.current = false; return }
+    setBlocks(prev => {
+      const resolved = typeof next === 'function' ? next(prev) : next
+      setBlockHistory(h => [...h.slice(-49), prev])
+      setBlockFuture([])
+      return resolved
+    })
+  }, [])
+
+  function undo() {
+    if (blockHistory.length === 0) return
+    const prev = blockHistory[blockHistory.length - 1]
+    isUndoRedo.current = true
+    setBlockFuture(f => [blocks, ...f])
+    setBlockHistory(h => h.slice(0, -1))
+    setBlocks(prev)
+  }
+
+  function redo() {
+    if (blockFuture.length === 0) return
+    const next = blockFuture[0]
+    isUndoRedo.current = true
+    setBlockHistory(h => [...h, blocks])
+    setBlockFuture(f => f.slice(1))
+    setBlocks(next)
+  }
   const [saveError, setSaveError] = useState<string | null>(null)
   const [versionNote, setVersionNote] = useState('')
   const [postId, setPostId] = useState<string | null>(editId)
@@ -124,6 +171,7 @@ function WritePageContent() {
         setTags(post.tags || [])
         setCategoryId(post.categoryId ?? null)
         setPostStatus(post.status)
+        if (post.slug) setPostSlug(post.slug)
         setIsPrivate(post.isPrivate ?? false)
         if (post.scheduledAt) {
           const d = new Date(post.scheduledAt)
@@ -188,9 +236,11 @@ function WritePageContent() {
       const data = await res.json()
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data))
       if (!postId) setPostId(data.id)
+      if (data.slug) setPostSlug(data.slug)
       setPostStatus(data.status)
       setSaveState('saved')
       setSaveError(null)
+      setLastSavedAt(new Date())
       localStorage.removeItem(AUTOSAVE_KEY)
       setVersionNote('')
       setTimeout(() => setSaveState('idle'), 3000)
@@ -259,18 +309,23 @@ function WritePageContent() {
     return count
   }, [editorMode, content, blocks])
 
-  // Cmd+S / Ctrl+S to save
+  const { issues, errors: healthErrors, warnings: healthWarnings, checking: healthChecking } = useArticleHealth({
+    title, excerpt, coverImageUrl, categoryId, tags, blocks, focusKeyword, wordCount,
+  })
+
+  // Global keyboard shortcuts
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault()
-        if (title && hasContent && !saving) handleSave()
-      }
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key === 's') { e.preventDefault(); if (title && hasContent && !saving) handleSave() }
+      if (mod && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo() }
+      if (mod && (e.shiftKey && e.key === 'z' || e.key === 'y')) { e.preventDefault(); redo() }
+      if (e.key === 'Escape' && focusMode) { e.preventDefault(); setFocusMode(false) }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, hasContent, saving])
+  }, [title, hasContent, saving, focusMode, blockHistory, blockFuture, blocks])
 
   if (status === 'loading') return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>
   if (!session) return <div className="min-h-screen flex items-center justify-center text-muted">Faça login para escrever.</div>
@@ -280,33 +335,93 @@ function WritePageContent() {
     DRAFT: 'Rascunho', PENDING_REVIEW: 'Aguardando revisão', PUBLISHED: 'Publicado', ARCHIVED: 'Arquivado',
   }
 
+  function formatTimestamp(date: Date): string {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+    if (diff < 60) return 'agora'
+    if (diff < 3600) return `há ${Math.floor(diff / 60)}min`
+    return `às ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+  }
+
+  const readingTime = Math.max(1, Math.ceil(wordCount / 200))
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[100] overflow-auto' : ''}`}>
+      {/* Publish checklist modal */}
+      {showPublishChecklist && (
+        <PublishChecklist
+          issues={issues}
+          isPublished={postStatus === 'PUBLISHED'}
+          onConfirm={() => { setShowPublishChecklist(false); handlePublish() }}
+          onCancel={() => setShowPublishChecklist(false)}
+        />
+      )}
+
       {/* Top bar */}
-      <div className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl px-4 py-2 flex items-center gap-3">
-        <Link href="/blog" className="p-2 text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface">
-          <ArrowLeft size={18} />
-        </Link>
+      <div className={`sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl px-4 py-2 flex items-center gap-3 ${focusMode ? 'bg-background/95' : ''}`}>
+        {!focusMode && (
+          <Link href="/blog" className="p-2 text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface">
+            <ArrowLeft size={18} />
+          </Link>
+        )}
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Título do artigo..."
           className="flex-1 bg-transparent text-lg font-bold text-foreground placeholder:text-muted focus:outline-none min-w-0"
         />
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Status */}
           <span className={`hidden sm:block px-2 py-0.5 rounded text-xs font-medium ${
             postStatus === 'PUBLISHED' ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
             postStatus === 'PENDING_REVIEW' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' :
             'bg-surface text-muted'
           }`}>{statusLabels[postStatus] ?? postStatus}</span>
 
-          {saveState === 'saved' && <CheckCircle size={16} className="text-green-500" />}
+          {/* Save status */}
+          {saveState === 'saved' && lastSavedAt && (
+            <span className="hidden sm:flex items-center gap-1 text-[11px] text-muted">
+              <CheckCircle size={12} className="text-green-500" />
+              Salvo {formatTimestamp(lastSavedAt)}
+            </span>
+          )}
           {saveState === 'error' && (
             <span className="flex items-center gap-1 text-red-500 text-xs">
-              <XCircle size={16} />
+              <XCircle size={14} />
               {saveError}
             </span>
           )}
+
+          {/* Undo/Redo */}
+          <button onClick={undo} disabled={blockHistory.length === 0} title="Desfazer (⌘Z)"
+            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface disabled:opacity-30 transition-all">
+            <Undo2 size={14} />
+          </button>
+          <button onClick={redo} disabled={blockFuture.length === 0} title="Refazer (⌘⇧Z)"
+            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface disabled:opacity-30 transition-all">
+            <Redo2 size={14} />
+          </button>
+
+          {/* Preview */}
+          {postSlug && (
+            <button
+              onClick={async () => { await handleSave(); window.open(`/blog/${postSlug}`, '_blank') }}
+              title="Preview (abre em nova aba)"
+              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
+              <Eye size={14} />
+            </button>
+          )}
+
+          {/* Focus mode */}
+          <button onClick={() => setFocusMode(v => !v)} title={focusMode ? 'Sair do modo foco (ESC)' : 'Modo foco'}
+            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
+            {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
+
+          {/* Sidebar toggle */}
+          <button onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Ocultar sidebar' : 'Mostrar sidebar'}
+            className="hidden lg:flex p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
+            {sidebarOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+          </button>
 
           <button onClick={handleSave} disabled={saving || !title || !hasContent}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-sm font-medium transition-all disabled:opacity-40">
@@ -315,7 +430,7 @@ function WritePageContent() {
           </button>
 
           {canPublish ? (
-            <button onClick={handlePublish} disabled={publishing || !title || !hasContent}
+            <button onClick={() => setShowPublishChecklist(true)} disabled={publishing || !title || !hasContent}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff2d78] text-white text-sm font-bold transition-all disabled:opacity-40 hover:bg-[#e0256a]">
               {publishing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               {postStatus === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
@@ -330,7 +445,7 @@ function WritePageContent() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+      <div className={`max-w-5xl mx-auto px-4 py-6 grid gap-6 transition-all ${sidebarOpen ? 'grid-cols-1 lg:grid-cols-[1fr_280px]' : 'grid-cols-1'}`}>
         {/* Main editor */}
         <div className="space-y-4">
           {/* Mode tabs */}
@@ -350,8 +465,12 @@ function WritePageContent() {
               </button>
             )}
             {wordCount > 0 && (
-              <span className="ml-auto text-[11px] text-muted pr-1 tabular-nums">
-                {wordCount.toLocaleString('pt-BR')} palavra{wordCount !== 1 ? 's' : ''}
+              <span className="ml-auto flex items-center gap-2 text-[11px] text-muted pr-1 tabular-nums">
+                {wordCount.toLocaleString('pt-BR')} palavras
+                <span className="flex items-center gap-1 text-muted/60">
+                  <Clock size={10} />
+                  {readingTime} min
+                </span>
               </span>
             )}
           </div>
@@ -373,7 +492,7 @@ function WritePageContent() {
                     trocar
                   </button>
                 </div>
-                <BlogBlockEditor blocks={blocks} onChange={setBlocks} />
+                <BlogBlockEditor blocks={blocks} onChange={setBlocksWithHistory} />
               </div>
             )
           ) : (
@@ -387,7 +506,29 @@ function WritePageContent() {
         </div>
 
         {/* Sidebar */}
-        <aside className="space-y-5">
+        {sidebarOpen && <aside className="space-y-5">
+          {/* Article Health */}
+          <ArticleHealthPanel
+            issues={issues}
+            errors={healthErrors}
+            warnings={healthWarnings}
+            checking={healthChecking}
+            onJumpToField={(field) => {
+              const fieldMap: Record<string, string> = {
+                title: 'input[placeholder="Título do artigo..."]',
+                excerpt: 'textarea[placeholder*="Resumo"]',
+                cover: 'input[placeholder*="URL externa"]',
+              }
+              const sel = fieldMap[field]
+              if (sel) (document.querySelector(sel) as HTMLElement | null)?.focus()
+            }}
+            onJumpToBlock={(index) => {
+              const els = document.querySelectorAll('[data-block-index]')
+              const el = els[index] as HTMLElement | null
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }}
+          />
+
           {/* SEO Checklist */}
           <SeoChecklist
             title={title}
@@ -539,6 +680,27 @@ function WritePageContent() {
             </div>
           )}
 
+          {/* Version History */}
+          {postId && (
+            <div className="rounded-xl border border-border overflow-hidden">
+              <button
+                onClick={() => setShowVersionHistory(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <History className="w-3.5 h-3.5 text-muted" />
+                  <span className="text-xs font-black uppercase tracking-wider text-foreground">Versões</span>
+                </div>
+                <span className="text-[10px] text-muted">{showVersionHistory ? 'fechar' : 'ver'}</span>
+              </button>
+              {showVersionHistory && (
+                <div className="border-t border-border">
+                  <VersionHistoryPanel postId={postId} onRestore={v => { setBlocksWithHistory(v.blocks); setShowVersionHistory(false) }} />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Markdown cheat sheet (only in markdown mode) */}
           {editorMode === 'markdown' && (
             <div className="space-y-2 p-3 bg-surface border border-border rounded-xl">
@@ -553,7 +715,7 @@ function WritePageContent() {
               </div>
             </div>
           )}
-        </aside>
+        </aside>}
       </div>
     </div>
   )
