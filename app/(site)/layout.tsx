@@ -139,7 +139,7 @@ export default async function RootLayout({
         <html lang="pt-BR" className={`${outfit.variable} ${inter.variable} ${sora.variable}`} suppressHydrationWarning>
             <head>
                 {/* Anti-FOUC: aplica tema dark/light ANTES do primeiro paint para evitar flash branco */}
-                <script key="anti-fouc" dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
+                <script key="anti-fouc" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('hallyuhub_theme');if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
                 {/* Meta viewport manual — evita <__next_viewport_boundary__> do Next.js 16 que gera array sem key */}
                 <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
                 <meta key="theme-color" name="theme-color" content="#bc13fe" />
@@ -162,6 +162,7 @@ export default async function RootLayout({
                         <script
                             key="adsense-auto-ads"
                             async
+                            suppressHydrationWarning
                             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
                             crossOrigin="anonymous"
                         />
