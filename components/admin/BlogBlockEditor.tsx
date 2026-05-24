@@ -822,21 +822,24 @@ function ListBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type
 
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
-        case 'blog_heading':
+        case 'blog_heading': {
+            const fontCls = block.level === 1 ? 'text-2xl font-black' : block.level === 3 ? 'text-base font-bold' : 'text-xl font-bold'
             return (
                 <div className="space-y-2">
-                    <div className="flex gap-2">
-                        {([1, 2, 3] as const).map(l => (
+                    <div className="flex gap-1">
+                        {([2, 3] as const).map(l => (
                             <button key={l} onClick={() => onChange({ ...block, level: l })}
-                                className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${block.level === l ? 'bg-purple-600/30 border-purple-500/40 text-purple-300' : 'border-border text-muted hover:text-foreground'}`}>
+                                className={`px-2.5 py-1 rounded text-xs font-black border transition-colors ${block.level === l ? 'bg-purple-600/30 border-purple-500/40 text-purple-300' : 'border-border text-muted hover:text-foreground'}`}>
                                 H{l}
                             </button>
                         ))}
                     </div>
                     <input value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        placeholder="Título do bloco..." className={inputCls} />
+                        placeholder={`Título H${block.level ?? 2}...`}
+                        className={`w-full bg-surface border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 ${fontCls}`} />
                 </div>
             )
+        }
 
         case 'blog_paragraph':
             return <ParagraphBlockEditor block={block} onChange={onChange} />
@@ -1043,6 +1046,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 <input value={item.title} onChange={e => {
                                     const items = [...block.items]; items[i] = { ...item, title: e.target.value }
                                     onChange({ ...block, items })
+                                }} onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const items = [...block.items]
+                                        items.splice(i + 1, 0, { year: '', title: '', text: '', emoji: '' })
+                                        onChange({ ...block, items })
+                                    }
                                 }} placeholder="Marco da carreira..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
                                     className="text-muted hover:text-red-400 shrink-0">
