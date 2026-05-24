@@ -16,6 +16,7 @@ async function handler(request: NextRequest) {
 
     // Filtros
     const search = searchParams.get('search') || undefined
+    const ids = searchParams.get('ids') || undefined  // comma-separated IDs for bulk resolve
     const role = searchParams.get('role') || undefined
     const groupId = searchParams.get('groupId') || undefined
     const agencyId = searchParams.get('agencyId') || undefined
@@ -23,13 +24,15 @@ async function handler(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'trending'
 
     // Construir where clause
-    const where: any = {
-        // Filtrar artistas marcados como não-relevantes ou ocultos pelo admin
-        flaggedAsNonKorean: false,
-        isHidden: false,
-    }
+    const where: any = ids
+        ? { id: { in: ids.split(',').map(s => s.trim()).filter(Boolean) } }
+        : {
+            // Filtrar artistas marcados como não-relevantes ou ocultos pelo admin
+            flaggedAsNonKorean: false,
+            isHidden: false,
+        }
 
-    if (search) {
+    if (!ids && search) {
         where.OR = [
             { nameRomanized: { contains: search, mode: 'insensitive' } },
             { nameHangul: { contains: search, mode: 'insensitive' } },
@@ -37,7 +40,7 @@ async function handler(request: NextRequest) {
         ]
     }
 
-    if (role) {
+    if (!ids && role) {
         // Tolerância a inconsistências históricas de formato nos dados importados
         const ROLE_VARIANTS: Record<string, string[]> = {
             ATOR:       ['ATOR', 'Ator', 'Ator/Atriz', 'ACTOR'],
@@ -50,17 +53,17 @@ async function handler(request: NextRequest) {
         where.roles = { hasSome: variants }
     }
 
-    if (groupId) {
+    if (!ids && groupId) {
         where.memberships = { some: { groupId, isActive: true } }
     }
 
-    if (agencyId) {
+    if (!ids && agencyId) {
         where.agencyId = agencyId
     }
 
-    if (memberType === 'group') {
+    if (!ids && memberType === 'group') {
         where.memberships = { some: { isActive: true } }
-    } else if (memberType === 'solo') {
+    } else if (!ids && memberType === 'solo') {
         where.memberships = { none: { isActive: true } }
     }
 

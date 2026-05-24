@@ -198,39 +198,40 @@ type EntityKind = 'artist' | 'group' | 'production'
 type EntityResult = { id: string; label: string; sublabel?: string; imageUrl?: string | null }
 
 function EntityPicker({
-    kind, currentId, onChange,
+    kind, currentId, onChange, initialLabel,
 }: {
     kind: EntityKind
     currentId: string
     onChange: (id: string, label: string) => void
+    initialLabel?: string
 }) {
     const [searching, setSearching] = useState(!currentId)
     const [query, setQuery] = useState('')
     const [results, setResults] = useState<EntityResult[]>([])
     const [loading, setLoading] = useState(false)
-    const [pickedLabel, setPickedLabel] = useState('')
+    const [pickedLabel, setPickedLabel] = useState(initialLabel ?? '')
     const ref = useRef<HTMLDivElement>(null)
 
-    // Resolve name for pre-existing ID (e.g., when editing a saved post)
+    // Resolve name for pre-existing ID only if no label cached in block data
     useEffect(() => {
         if (!currentId || pickedLabel) return
         async function resolveName() {
             try {
                 if (kind === 'artist') {
-                    const r = await fetch(`/api/artists/list?id=${currentId}&limit=1`)
+                    const r = await fetch(`/api/artists/list?ids=${currentId}&limit=1`)
                     const d = await r.json()
                     const a = (d.artists ?? [])[0]
-                    if (a) setPickedLabel(a.nameRomanized)
+                    if (a?.nameRomanized) setPickedLabel(a.nameRomanized)
                 } else if (kind === 'group') {
                     const r = await fetch(`/api/groups/list`)
                     const d = await r.json()
                     const g = (d.groups ?? []).find((x: { id: string; name: string }) => x.id === currentId)
                     if (g) setPickedLabel(g.name)
                 } else {
-                    const r = await fetch(`/api/productions/list?id=${currentId}&limit=1`)
+                    const r = await fetch(`/api/productions/list?ids=${currentId}&limit=1`)
                     const d = await r.json()
                     const p = (d.productions ?? [])[0]
-                    if (p) setPickedLabel(p.titlePt || p.titleKr || p.id)
+                    if (p) setPickedLabel(p.titlePt || p.titleKr || currentId)
                 }
             } catch { /* silent */ }
         }
@@ -837,7 +838,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <div>
                         <label className={labelCls}>Artista</label>
-                        <EntityPicker kind="artist" currentId={block.artistId}
+                        <EntityPicker kind="artist" currentId={block.artistId} initialLabel={block._label}
                             onChange={(id, label) => onChange({ ...block, artistId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
@@ -852,7 +853,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <div>
                         <label className={labelCls}>Grupo</label>
-                        <EntityPicker kind="group" currentId={block.groupId}
+                        <EntityPicker kind="group" currentId={block.groupId} initialLabel={block._label}
                             onChange={(id, label) => onChange({ ...block, groupId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
@@ -867,7 +868,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <div>
                         <label className={labelCls}>Produção</label>
-                        <EntityPicker kind="production" currentId={block.productionId}
+                        <EntityPicker kind="production" currentId={block.productionId} initialLabel={block._label}
                             onChange={(id, label) => onChange({ ...block, productionId: id, _label: label || block._label })} />
                     </div>
                     <input value={block.note || ''} onChange={e => onChange({ ...block, note: e.target.value })}
