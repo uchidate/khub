@@ -1841,6 +1841,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [paletteInsertAfter, setPaletteInsertAfter] = useState(-1)
     const [dragIdx, setDragIdx] = useState<number | null>(null)
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+    const lastActiveIndex = useRef<number>(-1)
 
     // Stable keys parallel to blocks — prevents remount on reorder/insert
     const [blockKeys, setBlockKeys] = useState<string[]>(() => blocks.map(() => nextKey()))
@@ -1898,7 +1899,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
         return () => document.removeEventListener('keydown', handleKeyDown)
     }, [blocks.length])
 
-    // URL paste detection
+    // URL paste detection — inserts after the last active block
     const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
         const text = e.clipboardData.getData('text/plain').trim()
         if (!text.startsWith('http')) return
@@ -1918,14 +1919,16 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             type = 'blog_spotify'; extra = { url: text }
         } else if (/tiktok\.com/.test(text)) {
             type = 'blog_tiktok'; extra = { url: text }
-        } else if (/\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(text)) {
+        } else if (/\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(text) || /r2\.dev\/|cloudflare|imagekit\.io|supabase\.co\/storage/i.test(text)) {
             type = 'blog_image'; extra = { url: text, caption: '' }
         }
 
         if (type) {
             e.preventDefault()
+            const insertAfter = lastActiveIndex.current >= 0 ? lastActiveIndex.current : blocks.length - 1
             const next = [...blocks]
-            next.push({ ...defaultBlock(type), ...extra } as BlogBlock)
+            next.splice(insertAfter + 1, 0, { ...defaultBlock(type), ...extra } as BlogBlock)
+            setBlockKeys(k => { const nk = [...k]; nk.splice(insertAfter + 1, 0, nextKey()); return nk })
             onChange(next)
         }
     }, [blocks, onChange])
@@ -1964,6 +1967,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                 <div
                     key={blockKeys[i] ?? i}
                     data-block-index={i}
+                    onClick={() => { lastActiveIndex.current = i }}
                     draggable
                     onDragStart={() => setDragIdx(i)}
                     onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
