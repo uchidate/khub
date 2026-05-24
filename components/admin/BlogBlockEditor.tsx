@@ -411,8 +411,31 @@ function CompactToggle({ value, onChange }: { value: boolean; onChange: (v: bool
 
 // ─── Individual field editors ─────────────────────────────────────────────────
 
-const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
+const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-none"
 const labelCls = "text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block"
+
+function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '' }: {
+    value: string; onChange: (v: string) => void; placeholder?: string; minRows?: number; className?: string
+}) {
+    const ref = useRef<HTMLTextAreaElement>(null)
+    useEffect(() => {
+        const el = ref.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${Math.max(el.scrollHeight, minRows * 24)}px`
+    }, [value, minRows])
+    return (
+        <textarea
+            ref={ref}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={minRows}
+            className={`${inputCls} ${className}`}
+            style={{ overflow: 'hidden' }}
+        />
+    )
+}
 
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
@@ -433,14 +456,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_paragraph':
-            return <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                rows={4} placeholder="Escreva o parágrafo... (**negrito**, [link](url))" className={inputCls} />
+            return <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                placeholder="Escreva o parágrafo... (**negrito**, [link](url))" minRows={4} />
 
         case 'blog_quote':
             return (
                 <div className="space-y-2">
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={3} placeholder="Texto da citação..." className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto da citação..." minRows={3} />
                     <input value={block.author || ''} onChange={e => onChange({ ...block, author: e.target.value })}
                         placeholder="Autor (opcional)..." className={inputCls} />
                 </div>
@@ -639,8 +662,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
                             placeholder="Rótulo (ex: Drama, Álbum)..." className={inputCls} />
                     </div>
-                    <textarea value={block.summary || ''} onChange={e => onChange({ ...block, summary: e.target.value })}
-                        rows={2} placeholder="Resumo da avaliação..." className={inputCls} />
+                    <AutoTextarea value={block.summary || ''} onChange={v => onChange({ ...block, summary: v })}
+                        placeholder="Resumo da avaliação..." minRows={2} />
                 </div>
             )
 
@@ -668,8 +691,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </div>
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título (opcional)..." className={inputCls} />
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={2} placeholder="Texto do destaque... (**negrito** suportado)" className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto do destaque... (**negrito** suportado)" minRows={2} />
                 </div>
             )
         case 'blog_curiosity':
@@ -677,15 +700,15 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.emoji || ''} onChange={e => onChange({ ...block, emoji: e.target.value })}
                         placeholder="Emoji (ex: 🎤)" className={inputCls} />
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={3} placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" minRows={3} />
                 </div>
             )
         case 'blog_highlight':
             return (
                 <div className="space-y-2">
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={2} placeholder="Texto em destaque visual grande..." className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto em destaque visual grande..." minRows={2} />
                     <input value={block.attribution || ''} onChange={e => onChange({ ...block, attribution: e.target.value })}
                         placeholder="Atribuição (opcional)..." className={inputCls} />
                 </div>
