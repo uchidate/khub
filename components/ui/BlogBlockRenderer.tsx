@@ -214,6 +214,7 @@ function Lightbox({ urls, startIdx, caption, onClose }: {
 
 function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' }> }) {
     const [open, setOpen] = useState(false)
+    const [error, setError] = useState(false)
     const sizeClass =
         block.size === 'small'  ? 'mx-auto max-w-[260px]' :
         block.size === 'medium' ? 'mx-auto max-w-sm' :
@@ -223,27 +224,35 @@ function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' 
         <>
             <span className="block my-8">
                 <span className={`block ${sizeClass}`}>
-                    <button
-                        onClick={() => setOpen(true)}
-                        className="relative group w-full block cursor-zoom-in"
-                        aria-label="Ampliar imagem"
-                    >
-                        <img
-                            src={proxied(block.url)}
-                            alt={block.caption || ''}
-                            className="w-full rounded-2xl border border-border shadow-xl group-hover:brightness-[.93] transition-all duration-200"
-                            loading="lazy"
-                        />
-                        <span className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                            <Maximize2 className="w-3.5 h-3.5" />
+                    {error ? (
+                        <span className="flex items-center justify-center w-full aspect-video rounded-2xl border border-border bg-surface text-muted text-sm gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                            <span className="opacity-50">Imagem indisponível</span>
                         </span>
-                    </button>
+                    ) : (
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="relative group w-full block cursor-zoom-in"
+                            aria-label="Ampliar imagem"
+                        >
+                            <img
+                                src={proxied(block.url)}
+                                alt={block.caption || ''}
+                                className="w-full rounded-2xl border border-border shadow-xl group-hover:brightness-[.93] transition-all duration-200"
+                                loading="lazy"
+                                onError={() => setError(true)}
+                            />
+                            <span className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/30 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                            </span>
+                        </button>
+                    )}
                 </span>
                 {block.caption && (
                     <span className="block text-center text-xs text-muted mt-2 italic">{block.caption}</span>
                 )}
             </span>
-            {open && block.url && (
+            {open && block.url && !error && (
                 <Lightbox urls={[block.url]} startIdx={0} caption={block.caption} onClose={() => setOpen(false)} />
             )}
         </>
@@ -251,6 +260,30 @@ function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' 
 }
 
 // ── Gallery block with lightbox ───────────────────────────────────────────────
+
+function GalleryItem({ url, caption, idx, onOpen }: { url: string; caption?: string; idx: number; onOpen: () => void }) {
+    const [error, setError] = useState(false)
+    if (error) return (
+        <span className="aspect-video flex items-center justify-center rounded-xl border border-border bg-surface text-muted text-xs gap-1.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span className="opacity-50">Indisponível</span>
+        </span>
+    )
+    return (
+        <button onClick={onOpen} className="aspect-video relative rounded-xl overflow-hidden border border-border cursor-zoom-in group">
+            <img
+                src={proxied(url)}
+                alt={`${caption ?? 'Imagem'} ${idx + 1}`}
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
+                loading="lazy"
+                onError={() => setError(true)}
+            />
+            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </span>
+        </button>
+    )
+}
 
 function GalleryBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_gallery' }> }) {
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
@@ -266,21 +299,7 @@ function GalleryBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_galle
             <div className="my-8 space-y-2">
                 <div className={`grid gap-3 ${colClass}`}>
                     {validUrls.map((url, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setLightboxIdx(i)}
-                            className="aspect-video relative rounded-xl overflow-hidden border border-border cursor-zoom-in group"
-                        >
-                            <img
-                                src={proxied(url)}
-                                alt={`${block.caption ?? 'Imagem'} ${i + 1}`}
-                                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
-                                loading="lazy"
-                            />
-                            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-                                <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </span>
-                        </button>
+                        <GalleryItem key={i} url={url} caption={block.caption} idx={i} onOpen={() => setLightboxIdx(i)} />
                     ))}
                 </div>
                 {block.caption && (

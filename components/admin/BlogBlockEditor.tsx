@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
     Plus, Trash2, ChevronUp, ChevronDown,
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
+import { BlockCommandPalette } from './BlockCommandPalette'
 
 // ─── Icons & colors ───────────────────────────────────────────────────────────
 
@@ -1127,17 +1128,28 @@ function blockPreview(block: BlogBlock): string {
 
 // ─── Insert strip ─────────────────────────────────────────────────────────────
 
-function InsertStrip({ onInsert }: { onInsert: (type: BlogBlockType) => void }) {
+function InsertStrip({ onInsert, onOpenPalette }: { onInsert: (type: BlogBlockType) => void; onOpenPalette?: () => void }) {
     const [open, setOpen] = useState(false)
     return (
         <div className="relative flex items-center justify-center h-5 group/strip">
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-border opacity-0 group-hover/strip:opacity-100 transition-opacity" />
-            <button
-                onClick={() => setOpen(v => !v)}
-                className="relative z-10 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-surface border border-border text-muted hover:text-purple-400 hover:border-purple-500/40 transition-all opacity-0 group-hover/strip:opacity-100 text-[10px] font-bold"
-            >
-                <Plus className="w-3 h-3" /> inserir
-            </button>
+            <div className="relative z-10 flex items-center gap-1 opacity-0 group-hover/strip:opacity-100 transition-all">
+                <button
+                    onClick={() => setOpen(v => !v)}
+                    className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-surface border border-border text-muted hover:text-purple-400 hover:border-purple-500/40 transition-all text-[10px] font-bold"
+                >
+                    <Plus className="w-3 h-3" /> inserir
+                </button>
+                {onOpenPalette && (
+                    <button
+                        onClick={onOpenPalette}
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-surface border border-border text-muted hover:text-accent hover:border-accent/40 transition-all text-[10px] font-mono"
+                        title="Abrir paleta de blocos (⌘K)"
+                    >
+                        ⌘K
+                    </button>
+                )}
+            </div>
             {open && (
                 <div className="absolute z-30 top-full mt-1 left-1/2 -translate-x-1/2">
                     <TypeSelector onSelect={t => { onInsert(t); setOpen(false) }} onClose={() => setOpen(false)} />
@@ -1230,6 +1242,10 @@ interface BlogBlockEditorProps {
 export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [showSelector, setShowSelector] = useState(false)
     const [forceCollapsed, setForceCollapsed] = useState<boolean | undefined>(undefined)
+    const [showCommandPalette, setShowCommandPalette] = useState(false)
+    const [paletteInsertAfter, setPaletteInsertAfter] = useState(-1)
+    const [dragIdx, setDragIdx] = useState<number | null>(null)
+    const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
     function updateBlock(i: number, updated: BlogBlock) {
         const next = [...blocks]; next[i] = updated; onChange(next)
@@ -1252,8 +1268,63 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
         onChange(next)
     }
 
+    // Cmd+K global shortcut
+    useEffect(() => {
+        function handleKeyDown(e: KeyboardEvent) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                const tag = (e.target as HTMLElement)?.tagName
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return
+                e.preventDefault()
+                setPaletteInsertAfter(blocks.length - 1)
+                setShowCommandPalette(true)
+            }
+        }
+        document.addEventListener('keydown', handleKeyDown)
+        return () => document.removeEventListener('keydown', handleKeyDown)
+    }, [blocks.length])
+
+    // URL paste detection
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+        const text = e.clipboardData.getData('text/plain').trim()
+        if (!text.startsWith('http')) return
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+        let type: BlogBlockType | null = null
+        let extra: Partial<BlogBlock> = {}
+
+        if (/youtu(\.be|be\.com)/.test(text)) {
+            type = 'blog_video'; extra = { url: text }
+        } else if (/instagram\.com/.test(text)) {
+            type = 'blog_instagram'; extra = { url: text }
+        } else if (/twitter\.com|x\.com/.test(text)) {
+            type = 'blog_twitter'; extra = { url: text }
+        } else if (/open\.spotify\.com/.test(text)) {
+            type = 'blog_spotify'; extra = { url: text }
+        } else if (/tiktok\.com/.test(text)) {
+            type = 'blog_tiktok'; extra = { url: text }
+        }
+
+        if (type) {
+            e.preventDefault()
+            const next = [...blocks]
+            next.push({ ...defaultBlock(type), ...extra } as BlogBlock)
+            onChange(next)
+        }
+    }, [blocks, onChange])
+
     return (
-        <div className="space-y-0">
+        <div className="space-y-0" onPaste={handlePaste}>
+            {showCommandPalette && (
+                <BlockCommandPalette
+                    onSelect={type => {
+                        insertBlock(paletteInsertAfter, type)
+                        setShowCommandPalette(false)
+                    }}
+                    onClose={() => setShowCommandPalette(false)}
+                />
+            )}
+
             {blocks.length > 1 && (
                 <div className="flex justify-end mb-1">
                     <button
@@ -1268,14 +1339,26 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             )}
             {blocks.length === 0 && (
                 <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl">
-                    Nenhum bloco ainda. Clique em <span className="text-foreground font-medium">+ Bloco</span> para começar.
+                    Nenhum bloco ainda. Clique em <span className="text-foreground font-medium">+ Bloco</span> ou pressione <kbd className="font-mono text-xs border border-border rounded px-1">⌘K</kbd> para começar.
                 </div>
             )}
 
             {blocks.map((block, i) => (
-                <div key={i}>
+                <div
+                    key={i}
+                    data-block-index={i}
+                    draggable
+                    onDragStart={() => setDragIdx(i)}
+                    onDragOver={e => { e.preventDefault(); setDragOverIdx(i) }}
+                    onDrop={() => {
+                        if (dragIdx !== null && dragIdx !== i) moveBlock(dragIdx, i)
+                        setDragIdx(null); setDragOverIdx(null)
+                    }}
+                    onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+                    className={dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-accent/40 rounded-xl' : ''}
+                >
                     {i === 0 && (
-                        <InsertStrip onInsert={type => insertBlock(-1, type)} />
+                        <InsertStrip onInsert={type => { setPaletteInsertAfter(-1); insertBlock(-1, type) }} />
                     )}
                     <BlockRow
                         block={block} index={i} total={blocks.length}
@@ -1286,7 +1369,10 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                         onDuplicate={() => duplicateBlock(i)}
                         forceCollapsed={forceCollapsed}
                     />
-                    <InsertStrip onInsert={type => insertBlock(i, type)} />
+                    <InsertStrip
+                        onInsert={type => insertBlock(i, type)}
+                        onOpenPalette={() => { setPaletteInsertAfter(i); setShowCommandPalette(true) }}
+                    />
                 </div>
             ))}
 
