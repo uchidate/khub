@@ -92,6 +92,10 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   color: var(--color-fg);
   background-color: var(--color-bg);
