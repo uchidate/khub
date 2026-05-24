@@ -1426,6 +1426,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 <input value={step.title} onChange={e => {
                                     const steps = [...block.steps]; steps[i] = { ...step, title: e.target.value }
                                     onChange({ ...block, steps })
+                                }} onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const steps = [...block.steps]
+                                        steps.splice(i + 1, 0, { title: '', text: '' })
+                                        onChange({ ...block, steps })
+                                    }
                                 }} placeholder="Título do passo..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, steps: block.steps.filter((_, j) => j !== i) })}
                                     className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
@@ -1454,6 +1461,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 <input value={item.question} onChange={e => {
                                     const items = [...block.items]; items[i] = { ...item, question: e.target.value }
                                     onChange({ ...block, items })
+                                }} onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const items = [...block.items]
+                                        items.splice(i + 1, 0, { question: '', answer: '' })
+                                        onChange({ ...block, items })
+                                    }
                                 }} placeholder="Pergunta / título da seção..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
                                     className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
