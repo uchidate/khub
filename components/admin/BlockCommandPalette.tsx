@@ -16,6 +16,25 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
 
 const ALL_TYPES: BlogBlockType[] = TYPE_GROUPS.flatMap(g => g.types)
 
+const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
+    blog_heading: 'H', blog_paragraph: '¶', blog_quote: '"', blog_list: '•',
+    blog_callout: '!', blog_curiosity: '?', blog_highlight: '★', blog_divider: '—',
+    blog_image: '🖼', blog_gallery: '⬜', blog_video: '▶', blog_twitter: '𝕏',
+    blog_instagram: '◎', blog_tiktok: '♪', blog_spotify: '◉',
+    blog_timeline: '⏱', blog_steps: '①', blog_pros_cons: '±', blog_comparison: '⇔',
+    blog_accordion: '▾', blog_tabs: '⊞', blog_ranking: '🏆', blog_alert: '⚠',
+    blog_artist_card: '👤', blog_group_card: '👥', blog_production_card: '🎬',
+    blog_stats_row: '📊', blog_rating: '⭐', blog_product_card: '🛍',
+    blog_member_grid: '⊡', blog_setlist: '♫', blog_comeback_card: '💿',
+    blog_trivia: '💡', blog_idol_facts: '📋',
+    blog_vs: '⚡', blog_poll: '📊', blog_quiz: '🧠', blog_flashcard: '🃏',
+    blog_countdown: '⏳', blog_before_after: '↔',
+    blog_lyrics: '🎵', blog_lyrics_parallel: '🎶', blog_era_card: '🗂',
+    blog_chart_history: '📈', blog_fandom: '💜', blog_lightstick: '🔦',
+    blog_positions: '👑', blog_discography_grid: '💽', blog_achievement: '🏅',
+    blog_mv_breakdown: '🎥',
+}
+
 interface Props {
     onSelect: (type: BlogBlockType) => void
     onClose: () => void
@@ -95,8 +114,9 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
                                                 data-idx={idx}
                                                 onClick={() => onSelect(type)}
                                                 onMouseEnter={() => setActiveIdx(idx)}
-                                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${idx === activeIdx ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface'}`}
+                                                className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${idx === activeIdx ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface'}`}
                                             >
+                                                <span className="w-6 text-center text-sm shrink-0 select-none">{TYPE_ICONS[type] ?? '◻'}</span>
                                                 <span className="text-sm font-medium flex-1">{BLOG_BLOCK_TYPE_LABELS[type]}</span>
                                                 <span className="text-[10px] text-muted font-mono">{type.replace('blog_', '')}</span>
                                             </button>

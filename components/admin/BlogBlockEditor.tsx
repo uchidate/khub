@@ -6,7 +6,7 @@ import {
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
     User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
     ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
-    ChevronsUpDown,
+    ChevronsUpDown, GripVertical,
 } from 'lucide-react'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
@@ -411,8 +411,31 @@ function CompactToggle({ value, onChange }: { value: boolean; onChange: (v: bool
 
 // ─── Individual field editors ─────────────────────────────────────────────────
 
-const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-y"
+const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-none"
 const labelCls = "text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block"
+
+function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '' }: {
+    value: string; onChange: (v: string) => void; placeholder?: string; minRows?: number; className?: string
+}) {
+    const ref = useRef<HTMLTextAreaElement>(null)
+    useEffect(() => {
+        const el = ref.current
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = `${Math.max(el.scrollHeight, minRows * 24)}px`
+    }, [value, minRows])
+    return (
+        <textarea
+            ref={ref}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={minRows}
+            className={`${inputCls} ${className}`}
+            style={{ overflow: 'hidden' }}
+        />
+    )
+}
 
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
@@ -433,14 +456,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_paragraph':
-            return <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                rows={4} placeholder="Escreva o parágrafo... (**negrito**, [link](url))" className={inputCls} />
+            return <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                placeholder="Escreva o parágrafo... (**negrito**, [link](url))" minRows={4} />
 
         case 'blog_quote':
             return (
                 <div className="space-y-2">
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={3} placeholder="Texto da citação..." className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto da citação..." minRows={3} />
                     <input value={block.author || ''} onChange={e => onChange({ ...block, author: e.target.value })}
                         placeholder="Autor (opcional)..." className={inputCls} />
                 </div>
@@ -639,8 +662,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
                             placeholder="Rótulo (ex: Drama, Álbum)..." className={inputCls} />
                     </div>
-                    <textarea value={block.summary || ''} onChange={e => onChange({ ...block, summary: e.target.value })}
-                        rows={2} placeholder="Resumo da avaliação..." className={inputCls} />
+                    <AutoTextarea value={block.summary || ''} onChange={v => onChange({ ...block, summary: v })}
+                        placeholder="Resumo da avaliação..." minRows={2} />
                 </div>
             )
 
@@ -668,8 +691,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </div>
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título (opcional)..." className={inputCls} />
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={2} placeholder="Texto do destaque... (**negrito** suportado)" className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto do destaque... (**negrito** suportado)" minRows={2} />
                 </div>
             )
         case 'blog_curiosity':
@@ -677,15 +700,15 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.emoji || ''} onChange={e => onChange({ ...block, emoji: e.target.value })}
                         placeholder="Emoji (ex: 🎤)" className={inputCls} />
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={3} placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" minRows={3} />
                 </div>
             )
         case 'blog_highlight':
             return (
                 <div className="space-y-2">
-                    <textarea value={block.text} onChange={e => onChange({ ...block, text: e.target.value })}
-                        rows={2} placeholder="Texto em destaque visual grande..." className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        placeholder="Texto em destaque visual grande..." minRows={2} />
                     <input value={block.attribution || ''} onChange={e => onChange({ ...block, attribution: e.target.value })}
                         placeholder="Atribuição (opcional)..." className={inputCls} />
                 </div>
@@ -714,10 +737,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
-                            <textarea value={item.text || ''} onChange={e => {
-                                const items = [...block.items]; items[i] = { ...item, text: e.target.value }
+                            <AutoTextarea value={item.text || ''} onChange={v => {
+                                const items = [...block.items]; items[i] = { ...item, text: v }
                                 onChange({ ...block, items })
-                            }} rows={2} placeholder="Detalhes opcionais..." className={inputCls} />
+                            }} minRows={2} placeholder="Detalhes opcionais..." />
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, items: [...block.items, { year: '', title: '', text: '', emoji: '' }] })}
@@ -770,15 +793,15 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título da música..." className={inputCls} />
                     <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
                         placeholder="Fonte (artista, álbum)..." className={inputCls} />
-                    <textarea value={block.lines.map(l => l.original).join('\n')}
-                        onChange={e => onChange({ ...block, lines: e.target.value.split('\n').map(original => ({ original, translation: '' })) })}
-                        rows={4} placeholder="Letras originais (coreano), uma por linha..." className={inputCls} />
-                    <textarea value={block.lines.map(l => l.translation).join('\n')}
-                        onChange={e => {
-                            const translations = e.target.value.split('\n')
+                    <AutoTextarea value={block.lines.map(l => l.original).join('\n')}
+                        onChange={v => onChange({ ...block, lines: v.split('\n').map(original => ({ original, translation: '' })) })}
+                        minRows={4} placeholder="Letras originais (coreano), uma por linha..." />
+                    <AutoTextarea value={block.lines.map(l => l.translation).join('\n')}
+                        onChange={v => {
+                            const translations = v.split('\n')
                             onChange({ ...block, lines: block.lines.map((l, i) => ({ ...l, translation: translations[i] ?? '' })) })
                         }}
-                        rows={4} placeholder="Traduções (uma por linha)..." className={inputCls} />
+                        minRows={4} placeholder="Traduções (uma por linha)..." />
                 </div>
             )
 
@@ -850,10 +873,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
                     {block.quotes.map((q, i) => (
                         <div key={i} className="flex gap-2 items-start">
-                            <textarea value={q.text} onChange={e => {
-                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
+                            <AutoTextarea value={q.text} onChange={v => {
+                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: v }
                                 onChange({ ...block, quotes })
-                            }} rows={2} placeholder={`Citação ${i + 1}`} className={`${inputCls} flex-1`} />
+                            }} minRows={2} placeholder={`Citação ${i + 1}`} className="flex-1" />
                             <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400 pt-2"><X className="w-4 h-4" /></button>
                         </div>
@@ -1046,14 +1069,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título do deck..." className={inputCls} />
                     {block.cards.map((card, i) => (
                         <div key={i} className="grid grid-cols-2 gap-2 p-2 rounded-lg border border-border">
-                            <textarea value={card.front} onChange={e => {
-                                const cards = [...block.cards]; cards[i] = { ...card, front: e.target.value }
+                            <AutoTextarea value={card.front} onChange={v => {
+                                const cards = [...block.cards]; cards[i] = { ...card, front: v }
                                 onChange({ ...block, cards })
-                            }} rows={2} placeholder="Frente" className={inputCls} />
-                            <textarea value={card.back} onChange={e => {
-                                const cards = [...block.cards]; cards[i] = { ...card, back: e.target.value }
+                            }} minRows={2} placeholder="Frente" />
+                            <AutoTextarea value={card.back} onChange={v => {
+                                const cards = [...block.cards]; cards[i] = { ...card, back: v }
                                 onChange({ ...block, cards })
-                            }} rows={2} placeholder="Verso" className={inputCls} />
+                            }} minRows={2} placeholder="Verso" />
                             <button onClick={() => onChange({ ...block, cards: block.cards.filter((_, j) => j !== i) })}
                                 className="col-span-2 text-xs text-muted hover:text-red-400 text-right">
                                 remover card
@@ -1179,18 +1202,19 @@ function BlockRow({
     }, [forceCollapsed])
 
     return (
-        <div className={`group relative bg-surface border rounded-xl transition-colors ${collapsed ? 'border-border' : 'border-border hover:border-border/80'}`}>
+        <div className={`group/row relative bg-surface border rounded-xl transition-all ${collapsed ? 'border-border' : 'border-border hover:border-accent/20 hover:shadow-sm'}`}>
             {/* Header bar */}
-            <div className="flex items-center gap-2 px-3 py-2.5">
-                {/* Reorder controls */}
-                <div className="flex flex-col items-center gap-0 shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2">
+                {/* Drag handle + reorder controls — visible only on hover */}
+                <div className="flex flex-col items-center gap-0 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                    <GripVertical className="w-3.5 h-3.5 text-muted/50 mb-0.5" />
                     <button onClick={onMoveUp} disabled={index === 0}
-                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
-                        <ChevronUp className="w-3.5 h-3.5" />
+                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                        <ChevronUp className="w-3 h-3" />
                     </button>
                     <button onClick={onMoveDown} disabled={index === total - 1}
-                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
-                        <ChevronDown className="w-3.5 h-3.5" />
+                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                        <ChevronDown className="w-3 h-3" />
                     </button>
                 </div>
 
@@ -1202,22 +1226,38 @@ function BlockRow({
                         {ICONS[block.type]}
                         {BLOG_BLOCK_TYPE_LABELS[block.type]}
                     </span>
-                    <span className="text-[10px] text-muted shrink-0">#{index + 1}</span>
+                    <span className="text-[10px] text-muted/40 shrink-0 group-hover/row:text-muted/70 transition-colors">#{index + 1}</span>
                     {collapsed && (
-                        <span className="text-xs text-muted truncate ml-1 italic">{blockPreview(block)}</span>
+                        <>
+                            {(block.type === 'blog_image' && block.url) && (
+                                <img src={block.url} alt="" className="w-8 h-6 rounded object-cover shrink-0 ml-2 border border-border/60"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            )}
+                            {(block.type === 'blog_gallery' && block.urls.length > 0) && (
+                                <div className="flex gap-0.5 ml-2 shrink-0">
+                                    {block.urls.slice(0, 3).map((url, i) => url ? (
+                                        <img key={i} src={url} alt="" className="w-6 h-6 rounded object-cover border border-border/60"
+                                            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    ) : null)}
+                                </div>
+                            )}
+                            {blockPreview(block) && (
+                                <span className="text-[11px] text-muted/70 truncate ml-2 max-w-xs">{blockPreview(block)}</span>
+                            )}
+                        </>
                     )}
-                    <ChevronRight className={`w-3.5 h-3.5 text-muted ml-auto shrink-0 transition-transform ${collapsed ? '' : 'rotate-90'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 text-muted/40 ml-auto shrink-0 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
                 </button>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
+                {/* Actions — visible only on hover */}
+                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
                     <button onClick={onDuplicate} title="Duplicar"
-                        className="p-1 text-muted hover:text-foreground transition-colors">
-                        <Copy className="w-3.5 h-3.5" />
+                        className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition-colors">
+                        <Copy className="w-3 h-3" />
                     </button>
                     <button onClick={onDelete} title="Remover"
-                        className="p-1 text-muted hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
+                        className="p-1.5 rounded-md text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                        <Trash2 className="w-3 h-3" />
                     </button>
                 </div>
             </div>
@@ -1303,6 +1343,8 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             type = 'blog_spotify'; extra = { url: text }
         } else if (/tiktok\.com/.test(text)) {
             type = 'blog_tiktok'; extra = { url: text }
+        } else if (/\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(text)) {
+            type = 'blog_image'; extra = { url: text, caption: '' }
         }
 
         if (type) {
@@ -1358,7 +1400,10 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                     className={dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-accent/40 rounded-xl' : ''}
                 >
                     {i === 0 && (
-                        <InsertStrip onInsert={type => { setPaletteInsertAfter(-1); insertBlock(-1, type) }} />
+                        <InsertStrip
+                            onInsert={type => { setPaletteInsertAfter(-1); insertBlock(-1, type) }}
+                            onOpenPalette={() => { setPaletteInsertAfter(-1); setShowCommandPalette(true) }}
+                        />
                     )}
                     <BlockRow
                         block={block} index={i} total={blocks.length}
@@ -1378,12 +1423,21 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
 
             {/* Add at end */}
             <div className="relative pt-1">
-                <button
-                    onClick={() => setShowSelector(v => !v)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-purple-500/30 transition-colors w-full justify-center"
-                >
-                    <Plus className="w-4 h-4" /> Bloco
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSelector(v => !v)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-border text-sm text-muted hover:text-foreground hover:border-purple-500/30 transition-colors flex-1 justify-center"
+                    >
+                        <Plus className="w-4 h-4" /> Bloco
+                    </button>
+                    <button
+                        onClick={() => { setPaletteInsertAfter(blocks.length - 1); setShowCommandPalette(true) }}
+                        className="flex items-center gap-1 px-3 py-2 rounded-xl border border-dashed border-border text-[11px] font-mono text-muted hover:text-accent hover:border-accent/40 transition-colors shrink-0"
+                        title="Paleta de blocos (⌘K)"
+                    >
+                        ⌘K
+                    </button>
+                </div>
                 {showSelector && (
                     <TypeSelector
                         onSelect={type => { insertBlock(blocks.length - 1, type); setShowSelector(false) }}

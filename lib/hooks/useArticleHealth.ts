@@ -60,6 +60,8 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
 
     if (!input.excerpt.trim()) {
         issues.push({ id: 'no-excerpt', severity: 'warning', title: 'Sem resumo', detail: 'Aparece no Google e na listagem', field: 'excerpt' })
+    } else if (input.excerpt.length < 120) {
+        issues.push({ id: 'short-excerpt', severity: 'warning', title: 'Resumo curto', detail: `${input.excerpt.length} chars — ideal: 120–160 para SEO`, field: 'excerpt' })
     } else if (input.excerpt.length > 160) {
         issues.push({ id: 'long-excerpt', severity: 'info', title: 'Resumo longo', detail: `${input.excerpt.length} chars — Google trunca em 160`, field: 'excerpt' })
     }

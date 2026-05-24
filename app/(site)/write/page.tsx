@@ -29,17 +29,23 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
   const templates: { key: BlogTemplate; desc: string; icon: string }[] = [
     { key: 'free',      desc: 'Começa vazio — total liberdade', icon: '✏️' },
     { key: 'idol_bio',  desc: 'Stats, carreira, destaques', icon: '⭐' },
+    { key: 'group_bio', desc: 'Integrantes, disco, conquistas', icon: '👥' },
+    { key: 'comeback',  desc: 'Tracklist, conceito, nota', icon: '💿' },
     { key: 'review',    desc: 'Análise com nota e veredicto', icon: '🎬' },
+    { key: 'interview', desc: 'Citações e contexto', icon: '🎤' },
+    { key: 'guide',     desc: 'Passo a passo com FAQ', icon: '📖' },
+    { key: 'news',      desc: 'Breaking news, reação dos fãs', icon: '📰' },
     { key: 'ranking',   desc: 'Lista ordenada Top N', icon: '🏆' },
+    { key: 'listicle',  desc: 'Listagem numerada com conclusão', icon: '📋' },
   ]
   return (
-    <div className="py-16 flex flex-col items-center gap-6">
+    <div className="py-12 flex flex-col items-center gap-6">
       <div className="text-center">
         <Layout className="w-8 h-8 text-[#ff2d78] mx-auto mb-3" />
         <h2 className="text-xl font-black text-foreground mb-1">Escolha um template</h2>
         <p className="text-sm text-muted">Os blocos podem ser editados livremente depois</p>
       </div>
-      <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
         {templates.map(t => (
           <button
             key={t.key}
@@ -55,6 +61,22 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
         ))}
       </div>
     </div>
+  )
+}
+
+function ExcerptTextarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.max(el.scrollHeight, 72)}px`
+  }, [value])
+  return (
+    <textarea ref={ref} value={value} onChange={e => onChange(e.target.value)}
+      placeholder="Resumo (aparece na listagem e no Google)..."
+      maxLength={600} rows={3}
+      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
+      style={{ overflow: 'hidden' }} />
   )
 }
 
@@ -345,7 +367,7 @@ function WritePageContent() {
   const readingTime = Math.max(1, Math.ceil(wordCount / 200))
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[100] overflow-auto' : ''}`}>
+    <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[400] overflow-auto' : ''}`}>
       {/* Publish checklist modal */}
       {showPublishChecklist && (
         <PublishChecklist
@@ -357,95 +379,104 @@ function WritePageContent() {
       )}
 
       {/* Top bar */}
-      <div className={`sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl px-4 py-2 flex items-center gap-3 ${focusMode ? 'bg-background/95' : ''}`}>
+      <div className={`sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl px-4 flex items-center gap-2 h-12 ${focusMode ? 'bg-background/95' : ''}`}>
         {!focusMode && (
-          <Link href="/blog" className="p-2 text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface">
-            <ArrowLeft size={18} />
+          <Link href="/blog" className="p-1.5 text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface shrink-0">
+            <ArrowLeft size={16} />
           </Link>
         )}
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Título do artigo..."
-          className="flex-1 bg-transparent text-lg font-bold text-foreground placeholder:text-muted focus:outline-none min-w-0"
+          className="flex-1 bg-transparent text-sm font-semibold text-foreground placeholder:text-muted focus:outline-none min-w-0"
         />
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Status */}
-          <span className={`hidden sm:block px-2 py-0.5 rounded text-xs font-medium ${
-            postStatus === 'PUBLISHED' ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
-            postStatus === 'PENDING_REVIEW' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' :
+
+        {/* Left controls group: status + save indicator + undo/redo + view tools */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          {/* Status badge */}
+          <span className={`hidden md:block px-2 py-0.5 rounded-md text-[11px] font-semibold mr-1 ${
+            postStatus === 'PUBLISHED' ? 'bg-green-500/15 text-green-600 dark:text-green-400' :
+            postStatus === 'PENDING_REVIEW' ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400' :
             'bg-surface text-muted'
           }`}>{statusLabels[postStatus] ?? postStatus}</span>
 
-          {/* Save status */}
+          {/* Autosave indicator */}
           {saveState === 'saved' && lastSavedAt && (
-            <span className="hidden sm:flex items-center gap-1 text-[11px] text-muted">
-              <CheckCircle size={12} className="text-green-500" />
-              Salvo {formatTimestamp(lastSavedAt)}
+            <span className="hidden lg:flex items-center gap-1 text-[11px] text-muted mr-2">
+              <CheckCircle size={11} className="text-green-500" />
+              {formatTimestamp(lastSavedAt)}
             </span>
           )}
           {saveState === 'error' && (
-            <span className="flex items-center gap-1 text-red-500 text-xs">
-              <XCircle size={14} />
-              {saveError}
+            <span className="flex items-center gap-1 text-red-500 text-[11px] mr-1">
+              <XCircle size={12} />
+              {saveError?.slice(0, 30)}
             </span>
           )}
 
           {/* Undo/Redo */}
           <button onClick={undo} disabled={blockHistory.length === 0} title="Desfazer (⌘Z)"
-            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface disabled:opacity-30 transition-all">
-            <Undo2 size={14} />
+            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-all">
+            <Undo2 size={13} />
           </button>
           <button onClick={redo} disabled={blockFuture.length === 0} title="Refazer (⌘⇧Z)"
-            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface disabled:opacity-30 transition-all">
-            <Redo2 size={14} />
+            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-all">
+            <Redo2 size={13} />
           </button>
+
+          <div className="w-px h-4 bg-border mx-1" />
 
           {/* Preview */}
           {postSlug && (
             <button
               onClick={async () => { await handleSave(); window.open(`/blog/${postSlug}`, '_blank') }}
               title="Preview (abre em nova aba)"
-              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
-              <Eye size={14} />
+              className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all">
+              <Eye size={13} />
             </button>
           )}
 
           {/* Focus mode */}
           <button onClick={() => setFocusMode(v => !v)} title={focusMode ? 'Sair do modo foco (ESC)' : 'Modo foco'}
-            className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
-            {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all">
+            {focusMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
           </button>
 
           {/* Sidebar toggle */}
           <button onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? 'Ocultar sidebar' : 'Mostrar sidebar'}
-            className="hidden lg:flex p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-all">
-            {sidebarOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+            className="hidden lg:flex p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all">
+            {sidebarOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}
           </button>
 
+          <div className="w-px h-4 bg-border mx-1" />
+        </div>
+
+        {/* Right actions group: Save + Publish */}
+        <div className="flex items-center gap-2 shrink-0">
           <button onClick={handleSave} disabled={saving || !title || !hasContent}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-sm font-medium transition-all disabled:opacity-40">
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-xs font-medium transition-all disabled:opacity-40">
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             Salvar
           </button>
 
           {canPublish ? (
             <button onClick={() => setShowPublishChecklist(true)} disabled={publishing || !title || !hasContent}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff2d78] text-white text-sm font-bold transition-all disabled:opacity-40 hover:bg-[#e0256a]">
-              {publishing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff2d78] text-white text-xs font-bold transition-all disabled:opacity-40 hover:bg-[#e0256a]">
+              {publishing ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
               {postStatus === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
             </button>
           ) : postStatus === 'DRAFT' ? (
             <button onClick={handleSubmit} disabled={submitting || !title || !hasContent}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff2d78] text-white text-sm font-bold transition-all disabled:opacity-40 hover:bg-[#e0256a]">
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff2d78] text-white text-xs font-bold transition-all disabled:opacity-40 hover:bg-[#e0256a]">
+              {submitting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
               Enviar para revisão
             </button>
           ) : null}
         </div>
       </div>
 
-      <div className={`max-w-5xl mx-auto px-4 py-6 grid gap-6 transition-all ${sidebarOpen ? 'grid-cols-1 lg:grid-cols-[1fr_280px]' : 'grid-cols-1'}`}>
+      <div className={`mx-auto px-4 py-6 grid gap-6 transition-all w-full ${focusMode ? 'max-w-2xl grid-cols-1' : sidebarOpen ? 'max-w-6xl grid-cols-1 lg:grid-cols-[1fr_300px]' : 'max-w-3xl grid-cols-1'}`}>
         {/* Main editor */}
         <div className="space-y-4">
           {/* Mode tabs */}
@@ -458,21 +489,37 @@ function WritePageContent() {
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors ${editorMode === 'markdown' ? 'text-foreground border-b-2 border-[#ff2d78]' : 'text-muted hover:text-foreground'}`}>
               <FileText size={13} /> Markdown
             </button>
-            {editorMode === 'markdown' && (
-              <button onClick={() => {}}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors">
-                <Eye size={12} /> Preview
-              </button>
-            )}
-            {wordCount > 0 && (
-              <span className="ml-auto flex items-center gap-2 text-[11px] text-muted pr-1 tabular-nums">
-                {wordCount.toLocaleString('pt-BR')} palavras
-                <span className="flex items-center gap-1 text-muted/60">
-                  <Clock size={10} />
-                  {readingTime} min
+
+            {/* Template pill inline in tab bar */}
+            {editorMode === 'blocks' && templatePicked && (
+              <div className="flex items-center gap-1 ml-2">
+                <span className="w-px h-3.5 bg-border" />
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#ff2d78]/10 text-[#ff2d78] ml-1">
+                  {BLOG_TEMPLATE_LABELS[template]}
                 </span>
-              </span>
+                <button onClick={() => { setTemplatePicked(false); setBlocks([]) }}
+                  className="text-[10px] text-muted/60 hover:text-muted transition-colors">
+                  trocar
+                </button>
+              </div>
             )}
+
+            <div className="ml-auto flex items-center gap-3 pr-1">
+              {wordCount > 0 && (
+                <span className="flex items-center gap-1.5 text-[11px] text-muted tabular-nums">
+                  <span>{wordCount.toLocaleString('pt-BR')} palavras</span>
+                  <span className="flex items-center gap-0.5 text-muted/50">
+                    <Clock size={9} />{readingTime} min
+                  </span>
+                </span>
+              )}
+              {editorMode === 'markdown' && (
+                <button onClick={() => {}}
+                  className="flex items-center gap-1 text-[11px] text-muted hover:text-foreground transition-colors">
+                  <Eye size={11} /> Preview
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Editor area */}
@@ -480,20 +527,7 @@ function WritePageContent() {
             !templatePicked ? (
               <TemplatePicker onPick={pickTemplate} />
             ) : (
-              <div className="space-y-3">
-                {/* Template badge + change */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted">Template:</span>
-                  <span className="px-2 py-0.5 rounded bg-[#ff2d78]/10 border border-[#ff2d78]/20 text-[#ff2d78] text-xs font-bold">
-                    {BLOG_TEMPLATE_LABELS[template]}
-                  </span>
-                  <button onClick={() => { setTemplatePicked(false); setBlocks([]) }}
-                    className="text-xs text-muted hover:text-foreground transition-colors">
-                    trocar
-                  </button>
-                </div>
-                <BlogBlockEditor blocks={blocks} onChange={setBlocksWithHistory} />
-              </div>
+              <BlogBlockEditor blocks={blocks} onChange={setBlocksWithHistory} />
             )
           ) : (
             <textarea
@@ -506,7 +540,7 @@ function WritePageContent() {
         </div>
 
         {/* Sidebar */}
-        {sidebarOpen && <aside className="space-y-5">
+        {sidebarOpen && !focusMode && <aside className="space-y-5">
           {/* Article Health */}
           <ArticleHealthPanel
             issues={issues}
@@ -544,11 +578,14 @@ function WritePageContent() {
           {/* Excerpt */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
-            <textarea value={excerpt} onChange={e => setExcerpt(e.target.value)}
-              placeholder="Resumo (aparece na listagem e no Google)..."
-              maxLength={600} rows={3}
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors" />
-            <p className="text-xs text-muted text-right">{excerpt.length}/600</p>
+            <ExcerptTextarea value={excerpt} onChange={setExcerpt} />
+            <p className={`text-xs text-right tabular-nums ${
+              excerpt.length >= 120 && excerpt.length <= 160 ? 'text-green-500' :
+              excerpt.length > 160 ? 'text-yellow-500' :
+              excerpt.length > 0 ? 'text-orange-400' : 'text-muted'
+            }`}>
+              {excerpt.length} <span className="text-muted font-normal">/ ideal 120–160</span>
+            </p>
           </div>
 
           {/* Cover image */}
@@ -602,7 +639,12 @@ function WritePageContent() {
 
           {/* Tags */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Tags</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Tags</label>
+              <span className={`text-[10px] tabular-nums ${tags.length >= 3 ? 'text-green-500' : tags.length > 0 ? 'text-orange-400' : 'text-muted'}`}>
+                {tags.length}/10
+              </span>
+            </div>
             <div className="flex gap-2">
               <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
