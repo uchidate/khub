@@ -372,18 +372,36 @@ function TypeSelector({ onSelect, onClose }: {
     const listRef = useRef<HTMLDivElement>(null)
     const q = query.toLowerCase()
 
+    const TYPE_ALIASES_LOCAL: Partial<Record<BlogBlockType, string[]>> = {
+        blog_image: ['foto', 'imagem', 'img'], blog_gallery: ['fotos', 'galeria'],
+        blog_video: ['youtube', 'yt', 'shorts'], blog_spotify: ['musica', 'música', 'playlist'],
+        blog_paragraph: ['texto', 'paragrafo', 'parágrafo'], blog_heading: ['titulo', 'título', 'h2', 'h3'],
+        blog_quote: ['citação', 'citacao'], blog_list: ['lista', 'bullet'],
+        blog_pros_cons: ['prós', 'contras', 'pros', 'vantagens'], blog_steps: ['passos', 'tutorial'],
+        blog_rating: ['nota', 'avaliação', 'score'], blog_artist_card: ['artista', 'idol'],
+        blog_group_card: ['grupo', 'kpop', 'k-pop'], blog_production_card: ['drama', 'filme', 'serie'],
+        blog_lyrics: ['letra', 'lyric'], blog_alert: ['aviso', 'spoiler', 'warning'],
+        blog_divider: ['linha', 'separador'], blog_accordion: ['faq', 'perguntas'],
+    }
+
+    function matchesQuery(type: BlogBlockType) {
+        if (q === '') return true
+        if (BLOG_BLOCK_TYPE_LABELS[type].toLowerCase().includes(q)) return true
+        if (type.replace('blog_', '').includes(q)) return true
+        return TYPE_ALIASES_LOCAL[type]?.some(a => a.includes(q)) ?? false
+    }
+
     const flatTypes = useMemo(() => TYPE_GROUPS.flatMap(group =>
-        group.types.filter(type =>
-            q === '' || BLOG_BLOCK_TYPE_LABELS[type].toLowerCase().includes(q)
-        )
+        group.types.filter(matchesQuery)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [q])
 
     const filteredGroups = useMemo(() => TYPE_GROUPS.map(group => ({
         ...group,
-        types: group.types.filter(type =>
-            q === '' || BLOG_BLOCK_TYPE_LABELS[type].toLowerCase().includes(q)
-        ),
-    })).filter(g => g.types.length > 0), [q])
+        types: group.types.filter(matchesQuery),
+    })).filter(g => g.types.length > 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    , [q])
 
     // Reset active index when query changes
     useEffect(() => { setActiveIdx(0) }, [q])

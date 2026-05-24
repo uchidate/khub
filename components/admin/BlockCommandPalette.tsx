@@ -16,6 +16,40 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
 
 const ALL_TYPES: BlogBlockType[] = TYPE_GROUPS.flatMap(g => g.types)
 
+const TYPE_ALIASES: Partial<Record<BlogBlockType, string[]>> = {
+    blog_image:           ['foto', 'imagem', 'picture', 'img'],
+    blog_gallery:         ['fotos', 'galeria', 'imagens', 'grid'],
+    blog_video:           ['youtube', 'yt', 'shorts', 'reels'],
+    blog_spotify:         ['musica', 'música', 'playlist', 'album', 'álbum', 'track'],
+    blog_paragraph:       ['texto', 'text', 'paragrafo', 'parágrafo'],
+    blog_heading:         ['titulo', 'título', 'h2', 'h3', 'header'],
+    blog_quote:           ['citação', 'citacao', 'blockquote'],
+    blog_callout:         ['destaque', 'nota', 'dica', 'box'],
+    blog_curiosity:       ['curiosidade', 'sabia', 'sabias'],
+    blog_list:            ['lista', 'items', 'bullet', 'bullets'],
+    blog_pros_cons:       ['prós', 'contras', 'pros', 'vantagens', 'desvantagens'],
+    blog_steps:           ['passos', 'tutorial', 'how-to', 'passo a passo'],
+    blog_accordion:       ['faq', 'perguntas', 'respostas', 'dropdown'],
+    blog_comparison:      ['tabela', 'comparação', 'comparacao', 'tabela comparativa'],
+    blog_rating:          ['nota', 'avaliação', 'avaliacao', 'score'],
+    blog_timeline:        ['historia', 'história', 'cronologia'],
+    blog_artist_card:     ['artista', 'idol'],
+    blog_group_card:      ['grupo', 'grupo musical', 'kpop', 'k-pop', 'band'],
+    blog_production_card: ['drama', 'filme', 'serie', 'série', 'kdrama'],
+    blog_lyrics:          ['letra', 'letras', 'lyric'],
+    blog_lyrics_parallel: ['letra paralela', 'traducao', 'tradução', 'romaji', 'romanizado'],
+    blog_countdown:       ['contagem', 'regressiva', 'comeback date'],
+    blog_setlist:         ['concerto', 'show', 'musicas', 'setlist'],
+    blog_trivia:          ['quiz', 'pergunta', 'adivinhe'],
+    blog_poll:            ['votação', 'votacao', 'enquete'],
+    blog_stats_row:       ['stats', 'estatísticas', 'estatisticas', 'dados'],
+    blog_alert:           ['aviso', 'spoiler', 'warning'],
+    blog_twitter:         ['tweet', 'x.com', 'post'],
+    blog_instagram:       ['insta', 'post'],
+    blog_tiktok:          ['tik tok', 'reels'],
+    blog_divider:         ['linha', 'separador', 'hr'],
+}
+
 const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
     blog_heading: 'H', blog_paragraph: '¶', blog_quote: '"', blog_list: '•',
     blog_callout: '!', blog_curiosity: '?', blog_highlight: '★', blog_divider: '—',
@@ -50,10 +84,12 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
     useEffect(() => { inputRef.current?.focus() }, [])
 
     const filtered = query.trim()
-        ? ALL_TYPES.filter(t =>
-            BLOG_BLOCK_TYPE_LABELS[t].toLowerCase().includes(query.toLowerCase()) ||
-            t.replace('blog_', '').includes(query.toLowerCase())
-          )
+        ? ALL_TYPES.filter(t => {
+            const q = query.toLowerCase()
+            if (BLOG_BLOCK_TYPE_LABELS[t].toLowerCase().includes(q)) return true
+            if (t.replace('blog_', '').includes(q)) return true
+            return TYPE_ALIASES[t]?.some(alias => alias.includes(q)) ?? false
+          })
         : ALL_TYPES
 
     useEffect(() => { setActiveIdx(0) }, [query])
