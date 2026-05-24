@@ -1409,13 +1409,31 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título da tabela (opcional)..." className={inputCls} />
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                         {block.columns.map((col, ci) => (
-                            <input key={ci} value={col} onChange={e => {
-                                const columns = [...block.columns]; columns[ci] = e.target.value
-                                onChange({ ...block, columns })
-                            }} placeholder={`Coluna ${ci + 1}`} className={`${inputCls} flex-1`} />
+                            <div key={ci} className="flex gap-1 flex-1 items-center">
+                                <input value={col} onChange={e => {
+                                    const columns = [...block.columns]; columns[ci] = e.target.value
+                                    onChange({ ...block, columns })
+                                }} placeholder={`Coluna ${ci + 1}`} className={`${inputCls} flex-1`} />
+                                {block.columns.length > 2 && (
+                                    <button onClick={() => {
+                                        const columns = block.columns.filter((_, j) => j !== ci)
+                                        const rows = block.rows.map(r => ({ ...r, values: r.values.filter((_, j) => j !== ci) }))
+                                        onChange({ ...block, columns, rows })
+                                    }} className="text-muted hover:text-red-400 shrink-0"><X className="w-3.5 h-3.5" /></button>
+                                )}
+                            </div>
                         ))}
+                        {block.columns.length < 5 && (
+                            <button onClick={() => {
+                                const columns = [...block.columns, `Coluna ${block.columns.length + 1}`]
+                                const rows = block.rows.map(r => ({ ...r, values: [...r.values, ''] }))
+                                onChange({ ...block, columns, rows })
+                            }} className="shrink-0 text-xs text-muted hover:text-cyan-400 flex items-center gap-0.5 whitespace-nowrap">
+                                <Plus className="w-3.5 h-3.5" /> col
+                            </button>
+                        )}
                     </div>
                     {block.rows.map((row, ri) => (
                         <div key={ri} className="flex gap-2 items-center">
