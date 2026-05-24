@@ -1786,7 +1786,7 @@ function InsertStrip({ onInsert, onOpenPalette }: { onInsert: (type: BlogBlockTy
 // ─── Block row ────────────────────────────────────────────────────────────────
 
 function BlockRow({
-    block, index, total, onChange, onDelete, onMoveUp, onMoveDown, onDuplicate, forceCollapsed,
+    block, index, total, onChange, onDelete, onMoveUp, onMoveDown, onDuplicate, forceCollapsed, fresh, onFreshHandled,
 }: {
     block: BlogBlock; index: number; total: number
     onChange: (b: BlogBlock) => void
@@ -1795,12 +1795,26 @@ function BlockRow({
     onMoveDown: () => void
     onDuplicate: () => void
     forceCollapsed?: boolean
+    fresh?: boolean
+    onFreshHandled?: () => void
 }) {
     const [collapsed, setCollapsed] = useState(false)
+    const fieldRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (forceCollapsed !== undefined) setCollapsed(forceCollapsed)
     }, [forceCollapsed])
+
+    useEffect(() => {
+        if (!fresh) return
+        setCollapsed(false)
+        setTimeout(() => {
+            const first = fieldRef.current?.querySelector<HTMLElement>('input, textarea')
+            first?.focus()
+            onFreshHandled?.()
+        }, 50)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fresh])
 
     return (
         <div className={`group/row relative bg-surface border rounded-xl transition-all ${collapsed ? 'border-border' : 'border-border hover:border-accent/20 hover:shadow-sm'}`}>
@@ -1865,7 +1879,7 @@ function BlockRow({
 
             {/* Fields */}
             {!collapsed && (
-                <div className="px-4 pb-4 pt-1 border-t border-border/50">
+                <div ref={fieldRef} className="px-4 pb-4 pt-1 border-t border-border/50">
                     <BlockFieldEditor block={block} onChange={onChange} />
                 </div>
             )}
@@ -1890,6 +1904,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
     const [paletteInsertAfter, setPaletteInsertAfter] = useState(-1)
     const [dragIdx, setDragIdx] = useState<number | null>(null)
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+    const [freshIndex, setFreshIndex] = useState<number | null>(null)
     const lastActiveIndex = useRef<number>(-1)
 
     // Stable keys parallel to blocks — prevents remount on reorder/insert
@@ -1917,6 +1932,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
         const next = [...blocks]
         next.splice(afterIndex + 1, 0, defaultBlock(type))
         setBlockKeys(k => { const nk = [...k]; nk.splice(afterIndex + 1, 0, nextKey()); return nk })
+        setFreshIndex(afterIndex + 1)
         onChange(next)
     }
     function duplicateBlock(i: number) {
@@ -1978,6 +1994,7 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
             const next = [...blocks]
             next.splice(insertAfter + 1, 0, { ...defaultBlock(type), ...extra } as BlogBlock)
             setBlockKeys(k => { const nk = [...k]; nk.splice(insertAfter + 1, 0, nextKey()); return nk })
+            setFreshIndex(insertAfter + 1)
             onChange(next)
         }
     }, [blocks, onChange])
@@ -2041,6 +2058,8 @@ export function BlogBlockEditor({ blocks, onChange }: BlogBlockEditorProps) {
                         onMoveDown={() => moveBlock(i, i + 1)}
                         onDuplicate={() => duplicateBlock(i)}
                         forceCollapsed={forceCollapsed}
+                        fresh={freshIndex === i}
+                        onFreshHandled={() => setFreshIndex(null)}
                     />
                     <InsertStrip
                         onInsert={type => insertBlock(i, type)}
