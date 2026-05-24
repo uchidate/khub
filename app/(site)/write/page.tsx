@@ -272,7 +272,7 @@ function WritePageContent() {
     const timer = setTimeout(async () => {
       const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
       if (!title.trim() || !hasContent) return
-      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ' })
+      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ', coverImageUrl, categoryId, tags, isPrivate })
       if (payload === lastAutosaveRef.current) return
       lastAutosaveRef.current = payload
       setAutosaving(true)
@@ -280,8 +280,14 @@ function WritePageContent() {
         const res = await fetch(`/api/blog/posts/${postId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, excerpt: excerpt || undefined, contentMd: content || ' ',
-            blocks: editorMode === 'blocks' ? blocks : null, noSnapshot: true }),
+          body: JSON.stringify({
+            title, excerpt: excerpt || undefined, contentMd: content || ' ',
+            blocks: editorMode === 'blocks' ? blocks : null,
+            coverImageUrl: coverImageUrl || undefined,
+            categoryId: categoryId || null,
+            tags, isPrivate,
+            noSnapshot: true,
+          }),
         })
         if (res.ok) {
           const data = await res.json()
@@ -293,10 +299,10 @@ function WritePageContent() {
       } catch { /* silent */ } finally {
         setAutosaving(false)
       }
-    }, 30000)
+    }, 15000)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, excerpt, blocks, content, postId, saving, editorMode])
+  }, [title, excerpt, blocks, content, postId, saving, editorMode, coverImageUrl, categoryId, tags, isPrivate])
 
   function pickTemplate(t: BlogTemplate) {
     setTemplate(t)
@@ -390,27 +396,39 @@ function WritePageContent() {
     } catch { setSaveState('error') } finally { setPublishing(false) }
   }
 
-  const addTag = () => {
-    const t = tagInput.trim().toLowerCase()
-    if (t && !tags.includes(t) && tags.length < 10) { setTags(p => [...p, t]); setTagInput('') }
+  const addTag = (raw?: string) => {
+    const input = (raw ?? tagInput).toLowerCase()
+    const parts = input.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean)
+    if (parts.length === 0) return
+    setTags(prev => {
+      const next = [...prev]
+      for (const t of parts) {
+        if (t && !next.includes(t) && next.length < 10) next.push(t)
+      }
+      return next
+    })
+    setTagInput('')
   }
 
   const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
 
   const wordCount = useMemo(() => {
     if (editorMode === 'markdown') return content.split(/\s+/).filter(Boolean).length
+    function countStr(s: unknown) { return typeof s === 'string' ? s.split(/\s+/).filter(Boolean).length : 0 }
     let count = 0
     for (const block of blocks) {
-      if ('text' in block && typeof (block as { text?: unknown }).text === 'string')
-        count += ((block as { text: string }).text).split(/\s+/).filter(Boolean).length
-      if ('summary' in block && typeof (block as { summary?: unknown }).summary === 'string')
-        count += ((block as { summary: string }).summary).split(/\s+/).filter(Boolean).length
-      if ('items' in block && Array.isArray((block as { items?: unknown }).items)) {
-        for (const item of (block as { items: Record<string, unknown>[] }).items) {
-          if (typeof item.text === 'string') count += item.text.split(/\s+/).filter(Boolean).length
-          if (typeof item.title === 'string') count += item.title.split(/\s+/).filter(Boolean).length
+      const b = block as Record<string, unknown>
+      count += countStr(b.text) + countStr(b.summary) + countStr(b.title) + countStr(b.attribution) + countStr(b.answer)
+      for (const arr of ['items', 'steps', 'pros', 'cons', 'tabs', 'tracks', 'scenes', 'cards', 'facts', 'rows'] as const) {
+        const list = b[arr]
+        if (!Array.isArray(list)) continue
+        for (const item of list as Record<string, unknown>[]) {
+          count += countStr(item.text) + countStr(item.title) + countStr(item.label) + countStr(item.answer)
+            + countStr(item.content) + countStr(item.question) + countStr(item.description) + countStr(item.value)
         }
       }
+      if (Array.isArray(b.items) && typeof (b.items as unknown[])[0] === 'string')
+        for (const s of b.items as string[]) count += countStr(s)
     }
     return count
   }, [editorMode, content, blocks])
@@ -432,6 +450,26 @@ function WritePageContent() {
     return () => window.removeEventListener('keydown', onKeyDown)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, hasContent, saving, focusMode, blockHistory, blockFuture, blocks])
+
+  // Save on tab hide — prevents losing work when closing the tab
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === 'hidden' && postId && title && hasContent && !saving && !autosaving) {
+        const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ', coverImageUrl, categoryId, tags, isPrivate })
+        if (payload === lastAutosaveRef.current) return
+        lastAutosaveRef.current = payload
+        navigator.sendBeacon?.(`/api/blog/posts/${postId}`, new Blob([JSON.stringify({
+          title, excerpt: excerpt || undefined, contentMd: content || ' ',
+          blocks: editorMode === 'blocks' ? blocks : null,
+          coverImageUrl: coverImageUrl || undefined, categoryId: categoryId || null,
+          tags, isPrivate, noSnapshot: true,
+        })], { type: 'application/json' }))
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId, title, hasContent, saving, autosaving, excerpt, blocks, content, coverImageUrl, categoryId, tags, isPrivate, editorMode])
 
   if (status === 'loading') return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>
   if (!session) return <div className="min-h-screen flex items-center justify-center text-muted">Faça login para escrever.</div>
@@ -596,7 +634,10 @@ function WritePageContent() {
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#ff2d78]/10 text-[#ff2d78] ml-1">
                   {BLOG_TEMPLATE_LABELS[template]}
                 </span>
-                <button onClick={() => { setTemplatePicked(false); setBlocks([]) }}
+                <button onClick={() => {
+                  if (blocks.length > 0 && !window.confirm('Trocar template vai apagar todos os blocos. Continuar?')) return
+                  setTemplatePicked(false); setBlocks([])
+                }}
                   className="text-[10px] text-muted/60 hover:text-muted transition-colors">
                   trocar
                 </button>
@@ -604,6 +645,9 @@ function WritePageContent() {
             )}
 
             <div className="ml-auto flex items-center gap-3 pr-1">
+              {editorMode === 'blocks' && blocks.length > 0 && (
+                <span className="text-[11px] text-muted/50 tabular-nums">{blocks.length} bloco{blocks.length !== 1 ? 's' : ''}</span>
+              )}
               {wordCount > 0 && (
                 <span className="flex items-center gap-1.5 text-[11px] text-muted tabular-nums">
                   <span>{wordCount.toLocaleString('pt-BR')} palavras</span>
@@ -674,9 +718,44 @@ function WritePageContent() {
             tags={tags}
           />
 
+          {/* Slug */}
+          {postSlug && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">URL do artigo</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg">
+                <span className="text-[11px] text-muted truncate flex-1 font-mono">/blog/{postSlug}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`https://www.hallyuhub.com.br/blog/${postSlug}`)}
+                  title="Copiar URL"
+                  className="shrink-0 text-muted hover:text-foreground transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                </button>
+                {postStatus === 'PUBLISHED' && (
+                  <a href={`/blog/${postSlug}`} target="_blank" rel="noopener noreferrer" title="Abrir artigo" className="shrink-0 text-muted hover:text-foreground transition-colors">
+                    <Eye size={12} />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Excerpt */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
+              {!excerpt && blocks.some(b => b.type === 'blog_paragraph' && (b as { text: string }).text?.length > 80) && (
+                <button
+                  onClick={() => {
+                    const para = blocks.find(b => b.type === 'blog_paragraph') as { text: string } | undefined
+                    if (para?.text) setExcerpt(para.text.slice(0, 160).replace(/\*\*|__|\[.*?\]\(.*?\)/g, '').trim())
+                  }}
+                  className="text-[10px] font-semibold text-[#ff2d78] hover:text-[#e0256a] transition-colors"
+                >
+                  Gerar do 1º parágrafo
+                </button>
+              )}
+            </div>
             <ExcerptTextarea value={excerpt} onChange={setExcerpt} />
             <p className={`text-xs text-right tabular-nums ${
               excerpt.length >= 120 && excerpt.length <= 160 ? 'text-green-500' :
@@ -745,11 +824,15 @@ function WritePageContent() {
               </span>
             </div>
             <div className="flex gap-2">
-              <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                placeholder="Adicionar tag..."
+              <input value={tagInput} onChange={e => {
+                const v = e.target.value
+                if (v.includes(',')) { addTag(v); return }
+                setTagInput(v)
+              }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
+                placeholder="Adicionar tag... (vírgula ou Enter para separar)"
                 className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
-              <button onClick={addTag} className="px-3 py-2 bg-surface border border-border rounded-lg text-muted hover:text-foreground hover:bg-surface-hover text-sm transition-colors">
+              <button onClick={() => addTag()} className="px-3 py-2 bg-surface border border-border rounded-lg text-muted hover:text-foreground hover:bg-surface-hover text-sm transition-colors">
                 <Tag size={14} />
               </button>
             </div>

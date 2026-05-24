@@ -27,20 +27,32 @@ function blocksToText(blocks: BlogBlock[]): string {
     return blocks.map(b => {
         const bb = b as Record<string, unknown>
         switch (b.type) {
-            case 'blog_paragraph':  return b.text
-            case 'blog_heading':    return b.text
-            case 'blog_quote':      return b.text
-            case 'blog_callout':    return `${bb.title ?? ''} ${bb.text ?? ''}`
-            case 'blog_curiosity':  return String(bb.text ?? '')
-            case 'blog_highlight':  return String(bb.text ?? '')
-            case 'blog_list':       return (bb.items as string[] | undefined)?.join(' ') ?? ''
-            case 'blog_pros_cons':  return [...((bb.pros as string[] | undefined) ?? []), ...((bb.cons as string[] | undefined) ?? [])].join(' ')
-            case 'blog_steps':      return ((bb.steps as { title: string; text: string }[] | undefined) ?? []).map(s => `${s.title} ${s.text}`).join(' ')
-            case 'blog_stats_row':  return b.items.map(i => `${i.label} ${i.value}`).join(' ')
-            case 'blog_rating':     return b.summary || ''
-            case 'blog_accordion':  return ((bb.items as { question: string; answer: string }[] | undefined) ?? []).map(i => `${i.question} ${i.answer}`).join(' ')
-            case 'blog_tabs':       return ((bb.tabs as { label: string; content: string }[] | undefined) ?? []).map(t => `${t.label} ${t.content}`).join(' ')
-            case 'blog_ranking':    return ((bb.items as { name: string; description?: string }[] | undefined) ?? []).map(i => `${i.name} ${i.description ?? ''}`).join(' ')
+            case 'blog_paragraph':       return b.text
+            case 'blog_heading':         return b.text
+            case 'blog_quote':           return b.text
+            case 'blog_callout':         return `${bb.title ?? ''} ${bb.text ?? ''}`
+            case 'blog_curiosity':       return String(bb.text ?? '')
+            case 'blog_highlight':       return `${bb.text ?? ''} ${bb.attribution ?? ''}`
+            case 'blog_list':            return (bb.items as string[] | undefined)?.join(' ') ?? ''
+            case 'blog_pros_cons':       return [...((bb.pros as string[] | undefined) ?? []), ...((bb.cons as string[] | undefined) ?? [])].join(' ')
+            case 'blog_steps':           return ((bb.steps as { title: string; text: string }[] | undefined) ?? []).map(s => `${s.title} ${s.text}`).join(' ')
+            case 'blog_stats_row':       return b.items.map(i => `${i.label} ${i.value}`).join(' ')
+            case 'blog_rating':          return `${b.label ?? ''} ${b.summary || ''}`
+            case 'blog_accordion':       return ((bb.items as { question: string; answer: string }[] | undefined) ?? []).map(i => `${i.question} ${i.answer}`).join(' ')
+            case 'blog_tabs':            return ((bb.tabs as { label: string; content: string }[] | undefined) ?? []).map(t => `${t.label} ${t.content}`).join(' ')
+            case 'blog_ranking':         return ((bb.items as { name: string; description?: string }[] | undefined) ?? []).map(i => `${i.name} ${i.description ?? ''}`).join(' ')
+            case 'blog_timeline':        return (b.items ?? []).map(i => `${i.year} ${i.title} ${i.text ?? ''}`).join(' ')
+            case 'blog_alert':           return `${bb.title ?? ''} ${bb.text ?? ''}`
+            case 'blog_trivia':          return `${bb.question ?? ''} ${bb.answer ?? ''} ${bb.hint ?? ''}`
+            case 'blog_comeback_card':   return `${bb.artist ?? ''} ${bb.title ?? ''} ${bb.description ?? ''}`
+            case 'blog_member_grid':     return ((bb.members as { name: string; role?: string }[] | undefined) ?? []).map(m => `${m.name} ${m.role ?? ''}`).join(' ')
+            case 'blog_setlist':         return `${bb.event ?? ''} ${((bb.tracks as { title: string }[] | undefined) ?? []).map(t => t.title).join(' ')}`
+            case 'blog_idol_facts':      return `${bb.name ?? ''} ${((bb.facts as { label: string; value: string }[] | undefined) ?? []).map(f => `${f.label} ${f.value}`).join(' ')}`
+            case 'blog_lyrics':          return (b.lines ?? []).map(l => `${l.original} ${l.translation}`).join(' ')
+            case 'blog_lyrics_parallel': return ((bb.sections as { original: string; translation: string }[] | undefined) ?? []).map(s => `${s.original} ${s.translation}`).join(' ')
+            case 'blog_comparison':      return `${bb.title ?? ''} ${(b.rows ?? []).map(r => `${r.label} ${r.values.join(' ')}`).join(' ')}`
+            case 'blog_era_card':        return `${bb.era ?? ''} ${bb.concept ?? ''}`
+            case 'blog_product_card':    return `${bb.name ?? ''} ${bb.cta ?? ''}`
             default: return ''
         }
     }).filter(Boolean).join(' ')

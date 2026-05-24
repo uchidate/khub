@@ -57,6 +57,7 @@ function VersionRow({
     onPinToggle: (id: string, pinned: boolean) => void
 }) {
     const [restoring, setRestoring] = useState(false)
+    const [confirmRestore, setConfirmRestore] = useState(false)
     const [pinning, setPinning] = useState(false)
     const [expanded, setExpanded] = useState(false)
     const [preview, setPreview] = useState<VersionFull | null>(null)
@@ -64,6 +65,7 @@ function VersionRow({
 
     async function handleRestore() {
         setRestoring(true)
+        setConfirmRestore(false)
         try {
             const r = await fetch(`/api/blog/posts/${postId}/versions/${version.id}/restore`, { method: 'POST' })
             if (r.ok) {
@@ -158,18 +160,28 @@ function VersionRow({
                     >
                         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
-                    <button
-                        onClick={handleRestore}
-                        disabled={restoring}
-                        title="Restaurar esta versão"
-                        className="flex items-center gap-1 text-[10px] font-bold text-accent hover:text-accent/80 transition-colors disabled:opacity-50 ml-1"
-                    >
-                        {restoring
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <RotateCcw className="w-3 h-3" />
-                        }
-                        restaurar
-                    </button>
+                    {confirmRestore ? (
+                        <div className="flex items-center gap-1 ml-1">
+                            <span className="text-[10px] text-muted">Substituir conteúdo atual?</span>
+                            <button onClick={handleRestore} disabled={restoring}
+                                className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors disabled:opacity-50">
+                                {restoring ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Sim'}
+                            </button>
+                            <button onClick={() => setConfirmRestore(false)}
+                                className="text-[10px] text-muted hover:text-foreground transition-colors">
+                                Não
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setConfirmRestore(true)}
+                            title="Restaurar esta versão"
+                            className="flex items-center gap-1 text-[10px] font-bold text-accent hover:text-accent/80 transition-colors ml-1"
+                        >
+                            <RotateCcw className="w-3 h-3" />
+                            restaurar
+                        </button>
+                    )}
                 </div>
             </div>
 

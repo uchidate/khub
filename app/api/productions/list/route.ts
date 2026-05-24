@@ -34,17 +34,20 @@ async function handler(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const search = searchParams.get('search') || undefined
+    const ids = searchParams.get('ids') || undefined  // comma-separated IDs for bulk resolve
     const type = searchParams.get('type') || undefined
     const ageRating = searchParams.get('ageRating') || undefined
     const sortBy = searchParams.get('sortBy') || 'popular'
 
-    const where: any = {
-        // Filtrar produções marcadas como não-relevantes ou ocultas pelo admin
-        flaggedAsNonKorean: false,
-        isHidden: false,
-    }
+    const where: any = ids
+        ? { id: { in: ids.split(',').map(s => s.trim()).filter(Boolean) } }
+        : {
+            // Filtrar produções marcadas como não-relevantes ou ocultas pelo admin
+            flaggedAsNonKorean: false,
+            isHidden: false,
+        }
 
-    if (search) {
+    if (!ids && search) {
         where.OR = [
             { titlePt: { contains: search, mode: 'insensitive' } },
             { titleKr: { contains: search, mode: 'insensitive' } },
@@ -52,15 +55,17 @@ async function handler(request: NextRequest) {
         ]
     }
 
-    if (type) {
+    if (!ids && type) {
         // Map filter values to the actual DB values (legacy data uses PT names)
         const dbValues = TYPE_MAP[type]
         where.type = dbValues ? { in: dbValues } : type
     }
 
     // Aplicar filtro de classificação etária (respeita SystemSettings + UserContentPreferences)
-    const ageRatingFilter = await applyAgeRatingFilter(ageRating)
-    Object.assign(where, ageRatingFilter)
+    if (!ids) {
+        const ageRatingFilter = await applyAgeRatingFilter(ageRating)
+        Object.assign(where, ageRatingFilter)
+    }
 
     // Sort "popular": boost produções presentes no Top 10 dos streamings
     if (sortBy === 'popular') {

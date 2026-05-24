@@ -16,6 +16,40 @@ const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
 
 const ALL_TYPES: BlogBlockType[] = TYPE_GROUPS.flatMap(g => g.types)
 
+const TYPE_ALIASES: Partial<Record<BlogBlockType, string[]>> = {
+    blog_image:           ['foto', 'imagem', 'picture', 'img'],
+    blog_gallery:         ['fotos', 'galeria', 'imagens', 'grid'],
+    blog_video:           ['youtube', 'yt', 'shorts', 'reels'],
+    blog_spotify:         ['musica', 'música', 'playlist', 'album', 'álbum', 'track'],
+    blog_paragraph:       ['texto', 'text', 'paragrafo', 'parágrafo'],
+    blog_heading:         ['titulo', 'título', 'h2', 'h3', 'header'],
+    blog_quote:           ['citação', 'citacao', 'blockquote'],
+    blog_callout:         ['destaque', 'nota', 'dica', 'box'],
+    blog_curiosity:       ['curiosidade', 'sabia', 'sabias'],
+    blog_list:            ['lista', 'items', 'bullet', 'bullets'],
+    blog_pros_cons:       ['prós', 'contras', 'pros', 'vantagens', 'desvantagens'],
+    blog_steps:           ['passos', 'tutorial', 'how-to', 'passo a passo'],
+    blog_accordion:       ['faq', 'perguntas', 'respostas', 'dropdown'],
+    blog_comparison:      ['tabela', 'comparação', 'comparacao', 'tabela comparativa'],
+    blog_rating:          ['nota', 'avaliação', 'avaliacao', 'score'],
+    blog_timeline:        ['historia', 'história', 'cronologia'],
+    blog_artist_card:     ['artista', 'idol'],
+    blog_group_card:      ['grupo', 'grupo musical', 'kpop', 'k-pop', 'band'],
+    blog_production_card: ['drama', 'filme', 'serie', 'série', 'kdrama'],
+    blog_lyrics:          ['letra', 'letras', 'lyric'],
+    blog_lyrics_parallel: ['letra paralela', 'traducao', 'tradução', 'romaji', 'romanizado'],
+    blog_countdown:       ['contagem', 'regressiva', 'comeback date'],
+    blog_setlist:         ['concerto', 'show', 'musicas', 'setlist'],
+    blog_trivia:          ['quiz', 'pergunta', 'adivinhe'],
+    blog_poll:            ['votação', 'votacao', 'enquete'],
+    blog_stats_row:       ['stats', 'estatísticas', 'estatisticas', 'dados'],
+    blog_alert:           ['aviso', 'spoiler', 'warning'],
+    blog_twitter:         ['tweet', 'x.com', 'post'],
+    blog_instagram:       ['insta', 'post'],
+    blog_tiktok:          ['tik tok', 'reels'],
+    blog_divider:         ['linha', 'separador', 'hr'],
+}
+
 const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
     blog_heading: 'H', blog_paragraph: '¶', blog_quote: '"', blog_list: '•',
     blog_callout: '!', blog_curiosity: '?', blog_highlight: '★', blog_divider: '—',
@@ -36,6 +70,17 @@ const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
     blog_ad: '💰',
 }
 
+const RECENT_KEY = 'block_recent_types'
+function getRecentTypes(): BlogBlockType[] {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') } catch { return [] }
+}
+function addRecentType(type: BlogBlockType) {
+    try {
+        const prev = getRecentTypes().filter(t => t !== type)
+        localStorage.setItem(RECENT_KEY, JSON.stringify([type, ...prev].slice(0, 5)))
+    } catch { /* ignore */ }
+}
+
 interface Props {
     onSelect: (type: BlogBlockType) => void
     onClose: () => void
@@ -44,16 +89,24 @@ interface Props {
 export function BlockCommandPalette({ onSelect, onClose }: Props) {
     const [query, setQuery] = useState('')
     const [activeIdx, setActiveIdx] = useState(0)
+    const [recentTypes, setRecentTypes] = useState<BlogBlockType[]>([])
     const inputRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => { inputRef.current?.focus() }, [])
+    useEffect(() => { inputRef.current?.focus(); setRecentTypes(getRecentTypes()) }, [])
+
+    function handleSelect(type: BlogBlockType) {
+        addRecentType(type)
+        onSelect(type)
+    }
 
     const filtered = query.trim()
-        ? ALL_TYPES.filter(t =>
-            BLOG_BLOCK_TYPE_LABELS[t].toLowerCase().includes(query.toLowerCase()) ||
-            t.replace('blog_', '').includes(query.toLowerCase())
-          )
+        ? ALL_TYPES.filter(t => {
+            const q = query.toLowerCase()
+            if (BLOG_BLOCK_TYPE_LABELS[t].toLowerCase().includes(q)) return true
+            if (t.replace('blog_', '').includes(q)) return true
+            return TYPE_ALIASES[t]?.some(alias => alias.includes(q)) ?? false
+          })
         : ALL_TYPES
 
     useEffect(() => { setActiveIdx(0) }, [query])
@@ -61,7 +114,7 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
     function handleKeyDown(e: React.KeyboardEvent) {
         if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, filtered.length - 1)) }
         if (e.key === 'ArrowUp')   { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)) }
-        if (e.key === 'Enter')     { e.preventDefault(); if (filtered[activeIdx]) onSelect(filtered[activeIdx]) }
+        if (e.key === 'Enter')     { e.preventDefault(); if (filtered[activeIdx]) handleSelect(filtered[activeIdx]) }
         if (e.key === 'Escape')    { e.preventDefault(); onClose() }
     }
 
@@ -74,7 +127,10 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
     // Groups for display when no query
     const groups = query.trim()
         ? [{ label: 'Resultados', types: filtered }]
-        : TYPE_GROUPS
+        : [
+            ...(recentTypes.length > 0 ? [{ label: 'Recentes', types: recentTypes }] : []),
+            ...TYPE_GROUPS,
+          ]
 
     return (
         <div className="fixed inset-0 z-[300] flex items-start justify-center pt-[15vh] px-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -113,7 +169,7 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
                                             <button
                                                 key={type}
                                                 data-idx={idx}
-                                                onClick={() => onSelect(type)}
+                                                onClick={() => handleSelect(type)}
                                                 onMouseEnter={() => setActiveIdx(idx)}
                                                 className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${idx === activeIdx ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface'}`}
                                             >
