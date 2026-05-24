@@ -1117,8 +1117,11 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_mv_breakdown':
             return (
                 <div className="space-y-2">
-                    <input value={block.videoId} onChange={e => onChange({ ...block, videoId: e.target.value })}
-                        placeholder="YouTube video ID (ex: dQw4w9WgXcQ)" className={inputCls} />
+                    <input value={block.videoId} onChange={e => {
+                        const raw = e.target.value
+                        const match = raw.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/)
+                        onChange({ ...block, videoId: match ? match[1] : raw })
+                    }} placeholder="YouTube URL ou video ID (ex: dQw4w9WgXcQ)" className={inputCls} />
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título do MV..." className={inputCls} />
                     {block.scenes.map((scene, i) => (
@@ -1166,6 +1169,322 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <button onClick={() => onChange({ ...block, cards: [...block.cards, { front: '', back: '' }] })}
                         className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
                         <Plus className="w-3.5 h-3.5" /> Adicionar card
+                    </button>
+                </div>
+            )
+
+        case 'blog_list':
+            return (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-muted">
+                        <input type="checkbox" checked={block.ordered ?? false}
+                            onChange={e => onChange({ ...block, ordered: e.target.checked })}
+                            className="accent-purple-500" />
+                        Lista numerada
+                    </label>
+                    {block.items.map((item, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <span className="text-xs text-muted shrink-0 w-5 text-right">{block.ordered ? `${i + 1}.` : '•'}</span>
+                            <input value={item} onChange={e => {
+                                const items = [...block.items]; items[i] = e.target.value
+                                onChange({ ...block, items })
+                            }} placeholder={`Item ${i + 1}...`} className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, items: [...block.items, ''] })}
+                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar item
+                    </button>
+                </div>
+            )
+
+        case 'blog_pros_cons':
+            return (
+                <div className="space-y-3">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título (opcional)..." className={inputCls} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-emerald-400">Prós</p>
+                            {block.pros.map((pro, i) => (
+                                <div key={i} className="flex gap-1.5 items-center">
+                                    <input value={pro} onChange={e => {
+                                        const pros = [...block.pros]; pros[i] = e.target.value
+                                        onChange({ ...block, pros })
+                                    }} placeholder={`Pró ${i + 1}...`} className={`${inputCls} flex-1`} />
+                                    <button onClick={() => onChange({ ...block, pros: block.pros.filter((_, j) => j !== i) })}
+                                        className="text-muted hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                            ))}
+                            <button onClick={() => onChange({ ...block, pros: [...block.pros, ''] })}
+                                className="text-xs text-muted hover:text-emerald-400 flex items-center gap-1">
+                                <Plus className="w-3 h-3" /> Adicionar
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold text-red-400">Contras</p>
+                            {block.cons.map((con, i) => (
+                                <div key={i} className="flex gap-1.5 items-center">
+                                    <input value={con} onChange={e => {
+                                        const cons = [...block.cons]; cons[i] = e.target.value
+                                        onChange({ ...block, cons })
+                                    }} placeholder={`Contra ${i + 1}...`} className={`${inputCls} flex-1`} />
+                                    <button onClick={() => onChange({ ...block, cons: block.cons.filter((_, j) => j !== i) })}
+                                        className="text-muted hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                            ))}
+                            <button onClick={() => onChange({ ...block, cons: [...block.cons, ''] })}
+                                className="text-xs text-muted hover:text-red-400 flex items-center gap-1">
+                                <Plus className="w-3 h-3" /> Adicionar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+
+        case 'blog_steps':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título da sequência (opcional)..." className={inputCls} />
+                    {block.steps.map((step, i) => (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                            <div className="flex gap-2 items-center">
+                                <span className="text-xs font-bold text-orange-400 shrink-0 w-5">{i + 1}</span>
+                                <input value={step.title} onChange={e => {
+                                    const steps = [...block.steps]; steps[i] = { ...step, title: e.target.value }
+                                    onChange({ ...block, steps })
+                                }} placeholder="Título do passo..." className={`${inputCls} flex-1`} />
+                                <button onClick={() => onChange({ ...block, steps: block.steps.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                            </div>
+                            <AutoTextarea value={step.text} onChange={v => {
+                                const steps = [...block.steps]; steps[i] = { ...step, text: v }
+                                onChange({ ...block, steps })
+                            }} minRows={2} placeholder="Descrição do passo..." />
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, steps: [...block.steps, { title: '', text: '' }] })}
+                        className="text-xs text-muted hover:text-orange-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar passo
+                    </button>
+                </div>
+            )
+
+        case 'blog_accordion':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título do acordeão (opcional)..." className={inputCls} />
+                    {block.items.map((item, i) => (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                            <div className="flex gap-2 items-center">
+                                <input value={item.question} onChange={e => {
+                                    const items = [...block.items]; items[i] = { ...item, question: e.target.value }
+                                    onChange({ ...block, items })
+                                }} placeholder="Pergunta / título da seção..." className={`${inputCls} flex-1`} />
+                                <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                            </div>
+                            <AutoTextarea value={item.answer} onChange={v => {
+                                const items = [...block.items]; items[i] = { ...item, answer: v }
+                                onChange({ ...block, items })
+                            }} minRows={2} placeholder="Resposta / conteúdo expandido..." />
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, items: [...block.items, { question: '', answer: '' }] })}
+                        className="text-xs text-muted hover:text-violet-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar item
+                    </button>
+                </div>
+            )
+
+        case 'blog_tabs':
+            return (
+                <div className="space-y-2">
+                    {block.tabs.map((tab, i) => (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                            <div className="flex gap-2 items-center">
+                                <input value={tab.label} onChange={e => {
+                                    const tabs = [...block.tabs]; tabs[i] = { ...tab, label: e.target.value }
+                                    onChange({ ...block, tabs })
+                                }} placeholder="Nome da aba..." className={`${inputCls} w-40 shrink-0`} />
+                                <button onClick={() => onChange({ ...block, tabs: block.tabs.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400 ml-auto"><X className="w-4 h-4" /></button>
+                            </div>
+                            <AutoTextarea value={tab.content} onChange={v => {
+                                const tabs = [...block.tabs]; tabs[i] = { ...tab, content: v }
+                                onChange({ ...block, tabs })
+                            }} minRows={3} placeholder="Conteúdo da aba... (**negrito**, [link](url))" />
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, tabs: [...block.tabs, { label: `Aba ${block.tabs.length + 1}`, content: '' }] })}
+                        className="text-xs text-muted hover:text-blue-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar aba
+                    </button>
+                </div>
+            )
+
+        case 'blog_comparison':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título da tabela (opcional)..." className={inputCls} />
+                    <div className="flex gap-2">
+                        {block.columns.map((col, ci) => (
+                            <input key={ci} value={col} onChange={e => {
+                                const columns = [...block.columns]; columns[ci] = e.target.value
+                                onChange({ ...block, columns })
+                            }} placeholder={`Coluna ${ci + 1}`} className={`${inputCls} flex-1`} />
+                        ))}
+                    </div>
+                    {block.rows.map((row, ri) => (
+                        <div key={ri} className="flex gap-2 items-center">
+                            <input value={row.label} onChange={e => {
+                                const rows = [...block.rows]; rows[ri] = { ...row, label: e.target.value }
+                                onChange({ ...block, rows })
+                            }} placeholder="Critério..." className={`${inputCls} w-28 shrink-0`} />
+                            {row.values.map((val, vi) => (
+                                <input key={vi} value={val} onChange={e => {
+                                    const rows = [...block.rows]
+                                    const values = [...row.values]; values[vi] = e.target.value
+                                    rows[ri] = { ...row, values }
+                                    onChange({ ...block, rows })
+                                }} placeholder={block.columns[vi] || `Col ${vi + 1}`} className={`${inputCls} flex-1`} />
+                            ))}
+                            <button onClick={() => onChange({ ...block, rows: block.rows.filter((_, j) => j !== ri) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, rows: [...block.rows, { label: '', values: block.columns.map(() => '') }] })}
+                        className="text-xs text-muted hover:text-cyan-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar linha
+                    </button>
+                </div>
+            )
+
+        case 'blog_ranking':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título do ranking (opcional)..." className={inputCls} />
+                    {block.items.map((item, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <span className="text-xs font-bold text-yellow-400 shrink-0 w-5 text-right">{item.position}</span>
+                            <input value={item.imageUrl || ''} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, imageUrl: e.target.value }
+                                onChange({ ...block, items })
+                            }} placeholder="Foto URL (opcional)" className={`${inputCls} w-32`} />
+                            <input value={item.name} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, name: e.target.value }
+                                onChange({ ...block, items })
+                            }} placeholder="Nome..." className={`${inputCls} flex-1`} />
+                            <input value={item.badge || ''} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, badge: e.target.value }
+                                onChange({ ...block, items })
+                            }} placeholder="Badge" className={`${inputCls} w-20`} />
+                            <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, items: [...block.items, { position: block.items.length + 1, name: '' }] })}
+                        className="text-xs text-muted hover:text-yellow-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar item
+                    </button>
+                </div>
+            )
+
+        case 'blog_member_grid':
+            return (
+                <div className="space-y-2">
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título (ex: Integrantes)..." className={inputCls} />
+                    {block.members.map((member, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={member.imageUrl || ''} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, imageUrl: e.target.value }
+                                onChange({ ...block, members })
+                            }} placeholder="Foto URL" className={`${inputCls} w-32`} />
+                            <input value={member.name} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, name: e.target.value }
+                                onChange({ ...block, members })
+                            }} placeholder="Nome..." className={`${inputCls} flex-1`} />
+                            <input value={member.role || ''} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, role: e.target.value }
+                                onChange({ ...block, members })
+                            }} placeholder="Cargo (vocal, rap...)" className={`${inputCls} w-32`} />
+                            <button onClick={() => onChange({ ...block, members: block.members.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, members: [...block.members, { name: '' }] })}
+                        className="text-xs text-muted hover:text-fuchsia-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar membro
+                    </button>
+                </div>
+            )
+
+        case 'blog_setlist':
+            return (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                        <input value={block.event || ''} onChange={e => onChange({ ...block, event: e.target.value })}
+                            placeholder="Evento..." className={inputCls} />
+                        <input value={block.date || ''} onChange={e => onChange({ ...block, date: e.target.value })}
+                            placeholder="Data (ex: 2024-01-20)..." className={inputCls} />
+                        <input value={block.venue || ''} onChange={e => onChange({ ...block, venue: e.target.value })}
+                            placeholder="Local..." className={inputCls} />
+                    </div>
+                    {block.tracks.map((track, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <span className="text-xs text-muted shrink-0 w-5 text-right">{track.number}.</span>
+                            <input value={track.title} onChange={e => {
+                                const tracks = [...block.tracks]; tracks[i] = { ...track, title: e.target.value }
+                                onChange({ ...block, tracks })
+                            }} placeholder="Título da música..." className={`${inputCls} flex-1`} />
+                            <input value={track.note || ''} onChange={e => {
+                                const tracks = [...block.tracks]; tracks[i] = { ...track, note: e.target.value }
+                                onChange({ ...block, tracks })
+                            }} placeholder="Nota (encore, remix...)" className={`${inputCls} w-36`} />
+                            <button onClick={() => onChange({ ...block, tracks: block.tracks.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, tracks: [...block.tracks, { number: block.tracks.length + 1, title: '' }] })}
+                        className="text-xs text-muted hover:text-green-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar faixa
+                    </button>
+                </div>
+            )
+
+        case 'blog_idol_facts':
+            return (
+                <div className="space-y-2">
+                    <div className="flex gap-2">
+                        <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                            placeholder="Nome do idol..." className={`${inputCls} flex-1`} />
+                        <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                            placeholder="Foto URL (opcional)..." className={`${inputCls} flex-1`} />
+                    </div>
+                    {block.facts.map((fact, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                            <input value={fact.label} onChange={e => {
+                                const facts = [...block.facts]; facts[i] = { ...fact, label: e.target.value }
+                                onChange({ ...block, facts })
+                            }} placeholder="Rótulo (ex: Altura)..." className={`${inputCls} w-32 shrink-0`} />
+                            <input value={fact.value} onChange={e => {
+                                const facts = [...block.facts]; facts[i] = { ...fact, value: e.target.value }
+                                onChange({ ...block, facts })
+                            }} placeholder="Valor (ex: 182cm)..." className={`${inputCls} flex-1`} />
+                            <button onClick={() => onChange({ ...block, facts: block.facts.filter((_, j) => j !== i) })}
+                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                        </div>
+                    ))}
+                    <button onClick={() => onChange({ ...block, facts: [...block.facts, { label: '', value: '' }] })}
+                        className="text-xs text-muted hover:text-pink-400 flex items-center gap-1">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar fato
                     </button>
                 </div>
             )
