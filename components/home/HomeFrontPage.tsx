@@ -214,7 +214,7 @@ export function HomeFrontPage({
                                 <StoryEyebrow story={heroStory} />
                             </div>
                             <Link href={`/blog/${heroStory.slug}`} className="group">
-                                <h1 className="max-w-[13ch] break-words font-serif text-[28px] font-medium leading-[0.96] tracking-[-0.045em] text-foreground transition-colors group-hover:text-accent sm:text-[46px] sm:tracking-[-0.055em] lg:text-[54px] xl:text-[62px]">
+                                <h1 className="max-w-[18ch] break-words font-serif text-[28px] font-medium leading-[0.96] tracking-[-0.045em] text-foreground transition-colors group-hover:text-accent sm:text-[46px] sm:tracking-[-0.055em] lg:text-[54px] xl:text-[62px]">
                                     {heroStory.title}
                                 </h1>
                             </Link>
