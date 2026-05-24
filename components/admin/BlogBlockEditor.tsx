@@ -211,6 +211,33 @@ function EntityPicker({
     const [pickedLabel, setPickedLabel] = useState('')
     const ref = useRef<HTMLDivElement>(null)
 
+    // Resolve name for pre-existing ID (e.g., when editing a saved post)
+    useEffect(() => {
+        if (!currentId || pickedLabel) return
+        async function resolveName() {
+            try {
+                if (kind === 'artist') {
+                    const r = await fetch(`/api/artists/list?id=${currentId}&limit=1`)
+                    const d = await r.json()
+                    const a = (d.artists ?? [])[0]
+                    if (a) setPickedLabel(a.nameRomanized)
+                } else if (kind === 'group') {
+                    const r = await fetch(`/api/groups/list`)
+                    const d = await r.json()
+                    const g = (d.groups ?? []).find((x: { id: string; name: string }) => x.id === currentId)
+                    if (g) setPickedLabel(g.name)
+                } else {
+                    const r = await fetch(`/api/productions/list?id=${currentId}&limit=1`)
+                    const d = await r.json()
+                    const p = (d.productions ?? [])[0]
+                    if (p) setPickedLabel(p.titlePt || p.titleKr || p.id)
+                }
+            } catch { /* silent */ }
+        }
+        resolveName()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentId])
+
     // Close dropdown on outside click
     useEffect(() => {
         function handle(e: MouseEvent) {

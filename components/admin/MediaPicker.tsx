@@ -123,6 +123,8 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
                                 <div
                                     key={f.filename}
                                     onClick={() => setSelected(f.url)}
+                                    onDoubleClick={() => { onChange(f.url); onClose() }}
+                                    title="Clique para selecionar · Duplo clique para usar"
                                     className={`relative group rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-square bg-surface ${selected === f.url ? 'border-[#ff2d78]' : 'border-transparent hover:border-border'}`}
                                 >
                                     { }
@@ -153,7 +155,7 @@ export function MediaPicker({ value, onChange, onClose }: MediaPickerProps) {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between px-5 py-4 border-t border-border gap-3">
-                    <p className="text-xs text-muted truncate flex-1">{selected ? selected : 'Nenhuma imagem selecionada'}</p>
+                    <p className="text-xs text-muted truncate flex-1">{selected ? selected : <span className="opacity-60">Clique para selecionar · Duplo clique para usar direto</span>}</p>
                     <div className="flex gap-2">
                         <button onClick={onClose} className="text-xs px-4 py-2 rounded-lg border border-border text-muted hover:text-foreground transition-colors">Cancelar</button>
                         <button
