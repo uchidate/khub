@@ -396,9 +396,18 @@ function WritePageContent() {
     } catch { setSaveState('error') } finally { setPublishing(false) }
   }
 
-  const addTag = () => {
-    const t = tagInput.trim().toLowerCase()
-    if (t && !tags.includes(t) && tags.length < 10) { setTags(p => [...p, t]); setTagInput('') }
+  const addTag = (raw?: string) => {
+    const input = (raw ?? tagInput).toLowerCase()
+    const parts = input.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean)
+    if (parts.length === 0) return
+    setTags(prev => {
+      const next = [...prev]
+      for (const t of parts) {
+        if (t && !next.includes(t) && next.length < 10) next.push(t)
+      }
+      return next
+    })
+    setTagInput('')
   }
 
   const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
@@ -789,11 +798,15 @@ function WritePageContent() {
               </span>
             </div>
             <div className="flex gap-2">
-              <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                placeholder="Adicionar tag..."
+              <input value={tagInput} onChange={e => {
+                const v = e.target.value
+                if (v.includes(',')) { addTag(v); return }
+                setTagInput(v)
+              }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
+                placeholder="Adicionar tag... (vírgula ou Enter para separar)"
                 className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 transition-colors" />
-              <button onClick={addTag} className="px-3 py-2 bg-surface border border-border rounded-lg text-muted hover:text-foreground hover:bg-surface-hover text-sm transition-colors">
+              <button onClick={() => addTag()} className="px-3 py-2 bg-surface border border-border rounded-lg text-muted hover:text-foreground hover:bg-surface-hover text-sm transition-colors">
                 <Tag size={14} />
               </button>
             </div>
