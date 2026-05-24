@@ -677,6 +677,74 @@ function StringListInput({ items, onChange, placeholder, addLabel, accentClass }
     )
 }
 
+function StatsRowEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_stats_row' }>; onChange: (b: BlogBlock) => void }) {
+    const labelRefs = useRef<(HTMLInputElement | null)[]>([])
+    const valueRefs = useRef<(HTMLInputElement | null)[]>([])
+
+    function addItem(afterIdx: number) {
+        const items = [...block.items]
+        items.splice(afterIdx + 1, 0, { label: '', value: '' })
+        onChange({ ...block, items })
+        setTimeout(() => labelRefs.current[afterIdx + 1]?.focus(), 0)
+    }
+    function removeItem(i: number) {
+        if (block.items.length <= 1) return
+        onChange({ ...block, items: block.items.filter((_, j) => j !== i) })
+        setTimeout(() => labelRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+    }
+
+    return (
+        <div className="space-y-1.5">
+            {block.items.map((item, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                    <input value={(item as { emoji?: string }).emoji || ''} onChange={e => {
+                        const items = [...block.items]
+                        items[i] = { ...item, emoji: e.target.value } as typeof item
+                        onChange({ ...block, items })
+                    }} placeholder="🌟" className={`${inputCls} w-12 text-center`} />
+                    <input
+                        ref={el => { labelRefs.current[i] = el }}
+                        value={item.label}
+                        onChange={e => {
+                            const items = [...block.items]; items[i] = { ...item, label: e.target.value }
+                            onChange({ ...block, items })
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); valueRefs.current[i]?.focus() }
+                            if (e.key === 'Backspace' && !item.label && !item.value && block.items.length > 1) {
+                                e.preventDefault(); removeItem(i)
+                            }
+                        }}
+                        placeholder="Rótulo..." className={`${inputCls} w-1/3`}
+                    />
+                    <input
+                        ref={el => { valueRefs.current[i] = el }}
+                        value={item.value}
+                        onChange={e => {
+                            const items = [...block.items]; items[i] = { ...item, value: e.target.value }
+                            onChange({ ...block, items })
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); addItem(i) }
+                            if (e.key === 'Tab' && !e.shiftKey && i === block.items.length - 1) {
+                                e.preventDefault(); addItem(i)
+                            }
+                        }}
+                        placeholder="Valor..." className={`${inputCls} flex-1`}
+                    />
+                    <button onClick={() => removeItem(i)} className="text-muted hover:text-red-400 shrink-0">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            ))}
+            <button onClick={() => addItem(block.items.length - 1)}
+                className="text-xs text-muted hover:text-cyan-400 transition-colors flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Adicionar linha
+            </button>
+        </div>
+    )
+}
+
 function ProsConsBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_pros_cons' }>; onChange: (b: BlogBlock) => void }) {
     return (
         <div className="space-y-3">
@@ -879,37 +947,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_stats_row':
-            return (
-                <div className="space-y-2">
-                    {block.items.map((item, i) => (
-                        <div key={i} className="flex gap-2 items-center">
-                            <input value={(item as { emoji?: string }).emoji || ''} onChange={e => {
-                                const items = [...block.items]
-                                items[i] = { ...item, emoji: e.target.value } as typeof item
-                                onChange({ ...block, items })
-                            }} placeholder="🌟" className={`${inputCls} w-14 text-center`} />
-                            <input value={item.label} onChange={e => {
-                                const items = [...block.items]
-                                items[i] = { ...item, label: e.target.value }
-                                onChange({ ...block, items })
-                            }} placeholder="Rótulo..." className={`${inputCls} w-1/3`} />
-                            <input value={item.value} onChange={e => {
-                                const items = [...block.items]
-                                items[i] = { ...item, value: e.target.value }
-                                onChange({ ...block, items })
-                            }} placeholder="Valor..." className={inputCls} />
-                            <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 shrink-0">
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
-                    <button onClick={() => onChange({ ...block, items: [...block.items, { label: '', value: '' }] })}
-                        className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar linha
-                    </button>
-                </div>
-            )
+            return <StatsRowEditor block={block} onChange={onChange} />
 
         case 'blog_rating':
             return (
@@ -1043,20 +1081,13 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.question} onChange={e => onChange({ ...block, question: e.target.value })}
                         placeholder="Pergunta da enquete..." className={inputCls} />
-                    {block.options.map((opt, i) => (
-                        <div key={i} className="flex gap-2">
-                            <input value={opt} onChange={e => {
-                                const options = [...block.options]; options[i] = e.target.value
-                                onChange({ ...block, options })
-                            }} placeholder={`Opção ${i + 1}`} className={`${inputCls} flex-1`} />
-                            <button onClick={() => onChange({ ...block, options: block.options.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
-                        </div>
-                    ))}
-                    <button onClick={() => onChange({ ...block, options: [...block.options, ''] })}
-                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar opção
-                    </button>
+                    <StringListInput
+                        items={block.options}
+                        onChange={options => onChange({ ...block, options })}
+                        placeholder={i => `Opção ${i + 1}`}
+                        addLabel="Adicionar opção"
+                        accentClass="hover:text-cyan-400"
+                    />
                 </div>
             )
 
@@ -1972,7 +2003,14 @@ function BlockRow({
 
             {/* Fields */}
             {!collapsed && (
-                <div ref={fieldRef} className="px-4 pb-4 pt-1 border-t border-border/50">
+                <div ref={fieldRef} className="px-4 pb-4 pt-1 border-t border-border/50"
+                    onKeyDown={e => {
+                        if (e.key === 'Escape' && !e.defaultPrevented) {
+                            e.stopPropagation()
+                            setCollapsed(true)
+                        }
+                    }}
+                >
                     <BlockFieldEditor block={block} onChange={onChange} />
                 </div>
             )}
