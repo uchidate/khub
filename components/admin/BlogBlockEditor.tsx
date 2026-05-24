@@ -340,7 +340,15 @@ function TypeSelector({ onSelect, onClose }: {
     onClose: () => void
 }) {
     const [query, setQuery] = useState('')
+    const [activeIdx, setActiveIdx] = useState(0)
+    const listRef = useRef<HTMLDivElement>(null)
     const q = query.toLowerCase()
+
+    const flatTypes = useMemo(() => TYPE_GROUPS.flatMap(group =>
+        group.types.filter(type =>
+            q === '' || BLOG_BLOCK_TYPE_LABELS[type].toLowerCase().includes(q)
+        )
+    ), [q])
 
     const filteredGroups = useMemo(() => TYPE_GROUPS.map(group => ({
         ...group,
@@ -349,7 +357,14 @@ function TypeSelector({ onSelect, onClose }: {
         ),
     })).filter(g => g.types.length > 0), [q])
 
-    const firstResult = filteredGroups[0]?.types[0]
+    // Reset active index when query changes
+    useEffect(() => { setActiveIdx(0) }, [q])
+
+    // Scroll active item into view
+    useEffect(() => {
+        const el = listRef.current?.querySelector('[data-active="true"]') as HTMLElement | null
+        el?.scrollIntoView({ block: 'nearest' })
+    }, [activeIdx])
 
     return (
         <div className="absolute z-20 mt-1 bg-surface border border-border rounded-xl shadow-2xl p-3 min-w-[240px] left-0">
@@ -360,7 +375,9 @@ function TypeSelector({ onSelect, onClose }: {
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                     onKeyDown={e => {
-                        if (e.key === 'Enter' && firstResult) { onSelect(firstResult); onClose() }
+                        if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, flatTypes.length - 1)) }
+                        if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)) }
+                        if (e.key === 'Enter' && flatTypes[activeIdx]) { onSelect(flatTypes[activeIdx]); onClose() }
                         if (e.key === 'Escape') onClose()
                     }}
                     placeholder="Filtrar tipo de bloco..."
@@ -370,24 +387,30 @@ function TypeSelector({ onSelect, onClose }: {
                     <X className="w-3 h-3" />
                 </button>
             </div>
-            <div className="max-h-64 overflow-y-auto">
+            <div ref={listRef} className="max-h-64 overflow-y-auto">
                 {filteredGroups.length === 0 ? (
                     <p className="text-xs text-muted text-center py-4">Nenhum tipo encontrado</p>
                 ) : filteredGroups.map(group => (
                     <div key={group.label} className="mb-2">
                         <p className="text-[10px] font-black uppercase tracking-widest text-muted px-2 mb-1">{group.label}</p>
-                        {group.types.map(type => (
-                            <button
-                                key={type}
-                                onClick={() => { onSelect(type); onClose() }}
-                                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground hover:bg-surface-hover transition-colors text-left ${type === firstResult && query ? 'bg-surface-hover' : ''}`}
-                            >
-                                <span className={`flex items-center justify-center w-6 h-6 rounded border ${COLORS[type]}`}>
-                                    {ICONS[type]}
-                                </span>
-                                {BLOG_BLOCK_TYPE_LABELS[type]}
-                            </button>
-                        ))}
+                        {group.types.map(type => {
+                            const idx = flatTypes.indexOf(type)
+                            const isActive = idx === activeIdx
+                            return (
+                                <button
+                                    key={type}
+                                    data-active={isActive}
+                                    onClick={() => { onSelect(type); onClose() }}
+                                    onMouseEnter={() => setActiveIdx(idx)}
+                                    className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-foreground transition-colors text-left ${isActive ? 'bg-surface-hover' : 'hover:bg-surface-hover'}`}
+                                >
+                                    <span className={`flex items-center justify-center w-6 h-6 rounded border ${COLORS[type]}`}>
+                                        {ICONS[type]}
+                                    </span>
+                                    {BLOG_BLOCK_TYPE_LABELS[type]}
+                                </button>
+                            )
+                        })}
                     </div>
                 ))}
             </div>

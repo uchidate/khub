@@ -22,6 +22,7 @@ const updateSchema = z.object({
   scheduledAt: z.string().datetime().optional().nullable(),
   status: z.string().optional(),
   versionNote: z.string().max(300).optional().nullable(),
+  noSnapshot: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -63,7 +64,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const body = await request.json()
   const validated = updateSchema.parse(body)
-  const { versionNote, ...postFields } = validated
+  const { versionNote, noSnapshot, ...postFields } = validated
 
   const data: Record<string, unknown> = { ...postFields }
   const shouldSyncLinks = Object.prototype.hasOwnProperty.call(postFields, 'blocks')
@@ -82,8 +83,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const isPublishing = postFields.status === 'PUBLISHED' && post.status !== 'PUBLISHED'
   const isUnpublishing = postFields.status === 'DRAFT' && post.status === 'PUBLISHED'
 
-  // Snapshot do estado atual ANTES de salvar
-  if (isContentChange || isPublishing || isUnpublishing) {
+  // Snapshot do estado atual ANTES de salvar (skip em autosave silencioso)
+  if (!noSnapshot && (isContentChange || isPublishing || isUnpublishing)) {
     await snapshotPost(id, {
       savedById: session!.user.id,
       note: versionNote ?? (isPublishing ? 'pre-publicação' : isUnpublishing ? 'pre-despublicação' : undefined),

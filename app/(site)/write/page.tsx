@@ -120,6 +120,7 @@ function WritePageContent() {
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
 
+  const [draftBanner, setDraftBanner] = useState(false)
   const [saving, setSaving] = useState(false)
   const [autosaving, setAutosaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -183,9 +184,18 @@ function WritePageContent() {
       .catch(() => {})
   }, [])
 
-  // Load localStorage draft (new posts only)
+  // Load localStorage draft (new posts only) — show banner instead of auto-applying
   useEffect(() => {
     if (editId) return
+    const saved = localStorage.getItem(AUTOSAVE_KEY)
+    if (!saved) return
+    try {
+      const parsed = JSON.parse(saved)
+      if (parsed.title || parsed.blocks?.length || parsed.content) setDraftBanner(true)
+    } catch { /* ignore */ }
+  }, [editId])
+
+  function restoreDraft() {
     const saved = localStorage.getItem(AUTOSAVE_KEY)
     if (!saved) return
     try {
@@ -194,9 +204,10 @@ function WritePageContent() {
       if (parsed.content) setContent(parsed.content)
       if (parsed.excerpt) setExcerpt(parsed.excerpt)
       if (parsed.tags) setTags(parsed.tags)
-      if (parsed.blocks) { setBlocks(parsed.blocks); setTemplatePicked(true); setEditorMode('blocks') }
+      if (parsed.blocks?.length) { setBlocks(parsed.blocks); setTemplatePicked(true); setEditorMode('blocks') }
     } catch { /* ignore */ }
-  }, [editId])
+    setDraftBanner(false)
+  }
 
   // Load existing post
   useEffect(() => {
@@ -261,11 +272,10 @@ function WritePageContent() {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, excerpt: excerpt || undefined, contentMd: content || ' ',
-            blocks: editorMode === 'blocks' ? blocks : null }),
+            blocks: editorMode === 'blocks' ? blocks : null, noSnapshot: true }),
         })
         if (res.ok) {
           const data = await res.json()
-          setVersionCount(c => (c ?? 0) + 1)
           if (data.slug) setPostSlug(data.slug)
           setLastSavedAt(new Date())
           setSaveState('saved')
@@ -438,6 +448,15 @@ function WritePageContent() {
           onConfirm={() => { setShowPublishChecklist(false); handlePublish() }}
           onCancel={() => setShowPublishChecklist(false)}
         />
+      )}
+
+      {/* Draft restore banner */}
+      {draftBanner && (
+        <div className="sticky top-0 z-[60] flex items-center gap-3 px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-xs">
+          <span className="flex-1">Você tem um rascunho salvo localmente.</span>
+          <button onClick={restoreDraft} className="font-bold hover:underline shrink-0">Restaurar</button>
+          <button onClick={() => { localStorage.removeItem(AUTOSAVE_KEY); setDraftBanner(false) }} className="text-amber-400/60 hover:text-amber-400 shrink-0">Descartar</button>
+        </div>
       )}
 
       {/* Top bar */}
