@@ -96,6 +96,9 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
         if (block.type === 'blog_image' && !block.url) {
             issues.push({ id: `img-no-url-${i}`, severity: 'error', title: 'Imagem sem URL', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
         }
+        if (block.type === 'blog_image' && block.url && !(block as { alt?: string }).alt?.trim()) {
+            issues.push({ id: `img-no-alt-${i}`, severity: 'info', title: 'Imagem sem alt text', detail: `Bloco ${i + 1} — importante para SEO e acessibilidade`, field: 'blocks', blockIndex: i })
+        }
         if (block.type === 'blog_video' && block.url) {
             const re = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
             if (!block.url.match(re)) {

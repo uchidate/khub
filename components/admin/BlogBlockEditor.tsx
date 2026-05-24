@@ -11,6 +11,7 @@ import {
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
 import { BlockCommandPalette } from './BlockCommandPalette'
+import { MediaPicker } from './MediaPicker'
 
 // ─── Icons & colors ───────────────────────────────────────────────────────────
 
@@ -497,16 +498,34 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
 
         case 'blog_image': {
             const size = block.size ?? 'medium'
+            const [showPicker, setShowPicker] = useState(false)
             return (
                 <div className="space-y-2">
-                    <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
-                        placeholder="URL da imagem..." className={inputCls} />
+                    {showPicker && (
+                        <MediaPicker
+                            value={block.url}
+                            onChange={url => { onChange({ ...block, url }); setShowPicker(false) }}
+                            onClose={() => setShowPicker(false)}
+                        />
+                    )}
+                    <div className="flex gap-2">
+                        <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
+                            placeholder="URL da imagem..." className={`${inputCls} flex-1`} />
+                        <button
+                            onClick={() => setShowPicker(true)}
+                            className="shrink-0 px-3 py-2 rounded-lg border border-border text-xs text-muted hover:text-foreground hover:bg-surface-hover transition-colors flex items-center gap-1.5"
+                        >
+                            <ImageIcon className="w-3.5 h-3.5" /> Biblioteca
+                        </button>
+                    </div>
                     {block.url && (
-                        <div className="relative h-36 rounded-lg border border-border overflow-hidden bg-surface">
+                        <div className="relative h-36 rounded-lg border border-border overflow-hidden bg-surface cursor-pointer" onClick={() => setShowPicker(true)}>
                             <img src={block.url} alt="preview" className="w-full h-full object-cover"
                                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                         </div>
                     )}
+                    <input value={(block as { alt?: string }).alt || ''} onChange={e => onChange({ ...block, alt: e.target.value } as BlogBlock)}
+                        placeholder="Texto alternativo (alt) — describe a imagem para SEO e acessibilidade..." className={inputCls} />
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                         placeholder="Legenda (opcional)..." className={inputCls} />
                     <div className="flex items-center gap-3">
@@ -524,35 +543,57 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
         }
 
-        case 'blog_gallery':
+        case 'blog_gallery': {
+            const [galleryPickerIdx, setGalleryPickerIdx] = useState<number | null>(null)
             return (
                 <div className="space-y-2">
+                    {galleryPickerIdx !== null && (
+                        <MediaPicker
+                            value={block.urls[galleryPickerIdx] ?? null}
+                            onChange={url => {
+                                const urls = [...block.urls]; urls[galleryPickerIdx] = url
+                                onChange({ ...block, urls }); setGalleryPickerIdx(null)
+                            }}
+                            onClose={() => setGalleryPickerIdx(null)}
+                        />
+                    )}
                     {block.urls.map((url, i) => (
-                        <div key={i} className="flex gap-2 items-start">
-                            {url && (
-                                <div className="w-16 h-12 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
-                                    <img src={url} alt="" className="w-full h-full object-cover"
+                        <div key={i} className="flex gap-2 items-center">
+                            <div
+                                onClick={() => setGalleryPickerIdx(i)}
+                                className={`w-16 h-12 rounded-lg border border-border overflow-hidden shrink-0 bg-surface cursor-pointer hover:border-purple-500/40 transition-colors flex items-center justify-center ${!url ? 'border-dashed' : ''}`}
+                            >
+                                {url
+                                    ? <img src={url} alt="" className="w-full h-full object-cover"
                                         onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-                                </div>
-                            )}
+                                    : <ImageIcon className="w-4 h-4 text-muted/40" />
+                                }
+                            </div>
                             <input value={url} onChange={e => {
                                 const urls = [...block.urls]; urls[i] = e.target.value
                                 onChange({ ...block, urls })
                             }} placeholder={`URL da imagem ${i + 1}...`} className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, urls: block.urls.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 shrink-0 pt-2">
+                                className="text-muted hover:text-red-400 shrink-0 transition-colors">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
                     ))}
-                    <button onClick={() => onChange({ ...block, urls: [...block.urls, ''] })}
-                        className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar imagem
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={() => onChange({ ...block, urls: [...block.urls, ''] })}
+                            className="text-xs text-muted hover:text-purple-400 transition-colors flex items-center gap-1">
+                            <Plus className="w-3.5 h-3.5" /> Adicionar URL
+                        </button>
+                        <button onClick={() => { onChange({ ...block, urls: [...block.urls, ''] }); setGalleryPickerIdx(block.urls.length) }}
+                            className="text-xs text-muted hover:text-blue-400 transition-colors flex items-center gap-1">
+                            <ImageIcon className="w-3.5 h-3.5" /> Da biblioteca
+                        </button>
+                    </div>
                     <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                         placeholder="Legenda da galeria (opcional)..." className={inputCls} />
                 </div>
             )
+        }
 
         case 'blog_video':
         case 'blog_twitter':

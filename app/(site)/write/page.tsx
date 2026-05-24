@@ -337,7 +337,10 @@ function WritePageContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data))
-      if (!postId) setPostId(data.id)
+      if (!postId) {
+        setPostId(data.id)
+        window.history.replaceState(null, '', `/write?edit=${data.id}`)
+      }
       if (data.slug) setPostSlug(data.slug)
       setPostStatus(data.status)
       setVersionCount(c => (c ?? 0) + 1)
