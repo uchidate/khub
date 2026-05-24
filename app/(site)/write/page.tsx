@@ -451,6 +451,26 @@ function WritePageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, hasContent, saving, focusMode, blockHistory, blockFuture, blocks])
 
+  // Save on tab hide — prevents losing work when closing the tab
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === 'hidden' && postId && title && hasContent && !saving && !autosaving) {
+        const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ', coverImageUrl, categoryId, tags, isPrivate })
+        if (payload === lastAutosaveRef.current) return
+        lastAutosaveRef.current = payload
+        navigator.sendBeacon?.(`/api/blog/posts/${postId}`, new Blob([JSON.stringify({
+          title, excerpt: excerpt || undefined, contentMd: content || ' ',
+          blocks: editorMode === 'blocks' ? blocks : null,
+          coverImageUrl: coverImageUrl || undefined, categoryId: categoryId || null,
+          tags, isPrivate, noSnapshot: true,
+        })], { type: 'application/json' }))
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId, title, hasContent, saving, autosaving, excerpt, blocks, content, coverImageUrl, categoryId, tags, isPrivate, editorMode])
+
   if (status === 'loading') return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>
   if (!session) return <div className="min-h-screen flex items-center justify-center text-muted">Faça login para escrever.</div>
   if (!role || !['admin', 'editor', 'contributor'].includes(role)) return <div className="min-h-screen flex items-center justify-center text-muted">Sem permissão para escrever artigos.</div>
