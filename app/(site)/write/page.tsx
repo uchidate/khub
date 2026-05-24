@@ -625,6 +625,9 @@ function WritePageContent() {
             )}
 
             <div className="ml-auto flex items-center gap-3 pr-1">
+              {editorMode === 'blocks' && blocks.length > 0 && (
+                <span className="text-[11px] text-muted/50 tabular-nums">{blocks.length} bloco{blocks.length !== 1 ? 's' : ''}</span>
+              )}
               {wordCount > 0 && (
                 <span className="flex items-center gap-1.5 text-[11px] text-muted tabular-nums">
                   <span>{wordCount.toLocaleString('pt-BR')} palavras</span>

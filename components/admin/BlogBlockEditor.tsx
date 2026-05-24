@@ -1880,7 +1880,7 @@ function BlockRow({
                 >
                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-bold shrink-0 ${COLORS[block.type]}`}>
                         {ICONS[block.type]}
-                        {BLOG_BLOCK_TYPE_LABELS[block.type]}
+                        {block.type === 'blog_heading' ? `H${(block as { level?: number }).level ?? 2}` : BLOG_BLOCK_TYPE_LABELS[block.type]}
                     </span>
                     <span className="text-[10px] text-muted/40 shrink-0 group-hover/row:text-muted/70 transition-colors">#{index + 1}</span>
                     {collapsed && (
