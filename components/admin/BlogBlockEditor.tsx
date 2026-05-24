@@ -1550,11 +1550,17 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título do ranking (opcional)..." className={inputCls} />
                     {block.items.map((item, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                            <span className="text-xs font-bold text-yellow-400 shrink-0 w-5 text-right">{item.position}</span>
+                            <span className="text-xs font-bold text-yellow-400 shrink-0 w-5 text-right tabular-nums">{item.position}</span>
+                            <div className="w-8 h-8 rounded-lg border border-border overflow-hidden shrink-0 bg-surface flex items-center justify-center">
+                                {item.imageUrl
+                                    ? <img src={item.imageUrl} alt="" className="w-full h-full object-cover"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    : <span className="text-[10px] text-muted/40">#{i+1}</span>}
+                            </div>
                             <input value={item.imageUrl || ''} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, imageUrl: e.target.value }
                                 onChange({ ...block, items })
-                            }} placeholder="Foto URL (opcional)" className={`${inputCls} w-32`} />
+                            }} placeholder="Foto URL" className={`${inputCls} w-28`} />
                             <input value={item.name} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, name: e.target.value }
                                 onChange({ ...block, items })
@@ -1581,10 +1587,16 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título (ex: Integrantes)..." className={inputCls} />
                     {block.members.map((member, i) => (
                         <div key={i} className="flex gap-2 items-center">
+                            <div className="w-10 h-10 rounded-lg border border-border overflow-hidden shrink-0 bg-surface flex items-center justify-center">
+                                {member.imageUrl
+                                    ? <img src={member.imageUrl} alt="" className="w-full h-full object-cover"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    : <User className="w-4 h-4 text-muted/40" />}
+                            </div>
                             <input value={member.imageUrl || ''} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, imageUrl: e.target.value }
                                 onChange({ ...block, members })
-                            }} placeholder="Foto URL" className={`${inputCls} w-32`} />
+                            }} placeholder="Foto URL..." className={`${inputCls} w-28`} />
                             <input value={member.name} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, name: e.target.value }
                                 onChange({ ...block, members })
@@ -1592,7 +1604,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={member.role || ''} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, role: e.target.value }
                                 onChange({ ...block, members })
-                            }} placeholder="Cargo (vocal, rap...)" className={`${inputCls} w-32`} />
+                            }} placeholder="Cargo..." className={`${inputCls} w-28`} />
                             <button onClick={() => onChange({ ...block, members: block.members.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
                         </div>
@@ -1617,17 +1629,38 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </div>
                     {block.tracks.map((track, i) => (
                         <div key={i} className="flex gap-2 items-center">
-                            <span className="text-xs text-muted shrink-0 w-5 text-right">{track.number}.</span>
+                            <span className="text-xs text-muted shrink-0 w-5 text-right tabular-nums">{track.number}.</span>
                             <input value={track.title} onChange={e => {
                                 const tracks = [...block.tracks]; tracks[i] = { ...track, title: e.target.value }
                                 onChange({ ...block, tracks })
-                            }} placeholder="Título da música..." className={`${inputCls} flex-1`} />
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    const tracks = [...block.tracks]
+                                    tracks.splice(i + 1, 0, { number: i + 2, title: '' })
+                                    const renum = tracks.map((t, j) => ({ ...t, number: j + 1 }))
+                                    onChange({ ...block, tracks: renum })
+                                    setTimeout(() => {
+                                        const inputs = document.querySelectorAll<HTMLInputElement>(`[data-setlist-track]`)
+                                        inputs[i + 1]?.focus()
+                                    }, 0)
+                                }
+                                if (e.key === 'Backspace' && !track.title && block.tracks.length > 1) {
+                                    e.preventDefault()
+                                    const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
+                                    onChange({ ...block, tracks })
+                                }
+                            }}
+                            data-setlist-track="1"
+                            placeholder="Título da música..." className={`${inputCls} flex-1`} />
                             <input value={track.note || ''} onChange={e => {
                                 const tracks = [...block.tracks]; tracks[i] = { ...track, note: e.target.value }
                                 onChange({ ...block, tracks })
                             }} placeholder="Nota (encore, remix...)" className={`${inputCls} w-36`} />
-                            <button onClick={() => onChange({ ...block, tracks: block.tracks.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                            <button onClick={() => {
+                                const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
+                                onChange({ ...block, tracks })
+                            }} className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, tracks: [...block.tracks, { number: block.tracks.length + 1, title: '' }] })}
