@@ -486,8 +486,9 @@ function CompactToggle({ value, onChange }: { value: boolean; onChange: (v: bool
 const inputCls = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-purple-500/50 resize-none"
 const labelCls = "text-[10px] font-bold uppercase tracking-widest text-muted mb-1 block"
 
-function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '' }: {
+function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '', onKeyDown }: {
     value: string; onChange: (v: string) => void; placeholder?: string; minRows?: number; className?: string
+    onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
 }) {
     const ref = useRef<HTMLTextAreaElement>(null)
     useEffect(() => {
@@ -501,11 +502,38 @@ function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '
             ref={ref}
             value={value}
             onChange={e => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
             placeholder={placeholder}
             rows={minRows}
             className={`${inputCls} ${className}`}
             style={{ overflow: 'hidden' }}
         />
+    )
+}
+
+function ParagraphBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_paragraph' }>; onChange: (b: BlogBlock) => void }) {
+    const [showSlash, setShowSlash] = useState(false)
+    return (
+        <div className="relative">
+            {showSlash && (
+                <div className="absolute z-20 top-full mt-1 left-0">
+                    <TypeSelector
+                        onSelect={t => { onChange(defaultBlock(t)); setShowSlash(false) }}
+                        onClose={() => setShowSlash(false)}
+                    />
+                </div>
+            )}
+            <AutoTextarea
+                value={block.text}
+                onChange={v => {
+                    if (!block.text && v === '/') { setShowSlash(true); return }
+                    onChange({ ...block, text: v })
+                }}
+                onKeyDown={e => { if (e.key === 'Escape' && showSlash) { e.preventDefault(); setShowSlash(false) } }}
+                placeholder="Escreva um parágrafo... (/ para transformar em outro bloco)"
+                minRows={3}
+            />
+        </div>
     )
 }
 
@@ -742,8 +770,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             )
 
         case 'blog_paragraph':
-            return <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
-                placeholder="Escreva o parágrafo... (**negrito**, [link](url))" minRows={4} />
+            return <ParagraphBlockEditor block={block} onChange={onChange} />
 
         case 'blog_quote':
             return (
