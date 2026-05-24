@@ -29,17 +29,23 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
   const templates: { key: BlogTemplate; desc: string; icon: string }[] = [
     { key: 'free',      desc: 'Começa vazio — total liberdade', icon: '✏️' },
     { key: 'idol_bio',  desc: 'Stats, carreira, destaques', icon: '⭐' },
+    { key: 'group_bio', desc: 'Integrantes, disco, conquistas', icon: '👥' },
+    { key: 'comeback',  desc: 'Tracklist, conceito, nota', icon: '💿' },
     { key: 'review',    desc: 'Análise com nota e veredicto', icon: '🎬' },
+    { key: 'interview', desc: 'Citações e contexto', icon: '🎤' },
+    { key: 'guide',     desc: 'Passo a passo com FAQ', icon: '📖' },
+    { key: 'news',      desc: 'Breaking news, reação dos fãs', icon: '📰' },
     { key: 'ranking',   desc: 'Lista ordenada Top N', icon: '🏆' },
+    { key: 'listicle',  desc: 'Listagem numerada com conclusão', icon: '📋' },
   ]
   return (
-    <div className="py-16 flex flex-col items-center gap-6">
+    <div className="py-12 flex flex-col items-center gap-6">
       <div className="text-center">
         <Layout className="w-8 h-8 text-[#ff2d78] mx-auto mb-3" />
         <h2 className="text-xl font-black text-foreground mb-1">Escolha um template</h2>
         <p className="text-sm text-muted">Os blocos podem ser editados livremente depois</p>
       </div>
-      <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
         {templates.map(t => (
           <button
             key={t.key}

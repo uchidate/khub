@@ -574,13 +574,19 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_idol_facts:       'Ficha do Idol',
 }
 
-export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking'
+export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking' | 'group_bio' | 'comeback' | 'interview' | 'guide' | 'news' | 'listicle'
 
 export const BLOG_TEMPLATE_LABELS: Record<BlogTemplate, string> = {
     free:      'Livre',
     idol_bio:  'Biografia de Idol',
-    review:    'Review',
-    ranking:   'Ranking',
+    group_bio: 'Biografia de Grupo',
+    review:    'Review / Análise',
+    comeback:  'Comeback / Álbum',
+    interview: 'Entrevista',
+    guide:     'Guia Completo',
+    news:      'Notícia',
+    ranking:   'Ranking / Top N',
+    listicle:  'Listagem',
 }
 
 /** Blocos pré-carregados para cada template */
@@ -628,6 +634,103 @@ export const BLOG_TEMPLATE_BLOCKS: Record<BlogTemplate, BlogBlock[]> = {
         { type: 'blog_heading', text: '#4', level: 2 },
         { type: 'blog_paragraph', text: '' },
         { type: 'blog_heading', text: '#5', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+    ],
+
+    group_bio: [
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_stats_row', items: [
+            { label: 'Formação', value: '' },
+            { label: 'Agência', value: '' },
+            { label: 'Integrantes', value: '' },
+            { label: 'Fandom', value: '' },
+            { label: 'Lightstick', value: '' },
+        ]},
+        { type: 'blog_heading', text: 'Integrantes', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Discografia em destaque', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Conceito e identidade', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Conquistas', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Por que acompanhar', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+    ],
+
+    comeback: [
+        { type: 'blog_heading', text: 'O comeback', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Tracklist', level: 2 },
+        { type: 'blog_list', items: [''], ordered: true },
+        { type: 'blog_heading', text: 'Faixas em destaque', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'MV / Conceito visual', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Recepção', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_pros_cons', pros: [''], cons: [''], title: 'Pontos fortes e fracos' },
+        { type: 'blog_rating', score: 8, label: 'Nota geral', summary: '' },
+    ],
+
+    interview: [
+        { type: 'blog_callout', variant: 'fact', title: 'Contexto', text: '' },
+        { type: 'blog_heading', text: 'Sobre a carreira', level: 2 },
+        { type: 'blog_quote', text: '', author: '' },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Sobre o novo projeto', level: 2 },
+        { type: 'blog_quote', text: '', author: '' },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Sobre os fãs', level: 2 },
+        { type: 'blog_quote', text: '', author: '' },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'O que vem por aí', level: 2 },
+        { type: 'blog_quote', text: '', author: '' },
+        { type: 'blog_paragraph', text: '' },
+    ],
+
+    guide: [
+        { type: 'blog_callout', variant: 'fact', title: 'O que você vai aprender', text: '' },
+        { type: 'blog_heading', text: 'Introdução', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Passo a passo', level: 2 },
+        { type: 'blog_steps', steps: [
+            { title: 'Passo 1', text: '' },
+            { title: 'Passo 2', text: '' },
+            { title: 'Passo 3', text: '' },
+        ], title: '' },
+        { type: 'blog_heading', text: 'Dicas importantes', level: 2 },
+        { type: 'blog_list', items: [''], ordered: false },
+        { type: 'blog_heading', text: 'Perguntas frequentes', level: 2 },
+        { type: 'blog_accordion', title: 'FAQ', items: [{ question: '', answer: '' }] },
+        { type: 'blog_heading', text: 'Conclusão', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+    ],
+
+    news: [
+        { type: 'blog_callout', variant: 'info', title: '', text: '' },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'O que aconteceu', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Reação dos fãs', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'O que vem a seguir', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+    ],
+
+    listicle: [
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: '1.', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: '2.', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: '3.', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: '4.', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: '5.', level: 2 },
+        { type: 'blog_paragraph', text: '' },
+        { type: 'blog_heading', text: 'Conclusão', level: 2 },
         { type: 'blog_paragraph', text: '' },
     ],
 }
