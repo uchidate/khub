@@ -70,6 +70,17 @@ const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
     blog_ad: '💰',
 }
 
+const RECENT_KEY = 'block_recent_types'
+function getRecentTypes(): BlogBlockType[] {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') } catch { return [] }
+}
+function addRecentType(type: BlogBlockType) {
+    try {
+        const prev = getRecentTypes().filter(t => t !== type)
+        localStorage.setItem(RECENT_KEY, JSON.stringify([type, ...prev].slice(0, 5)))
+    } catch { /* ignore */ }
+}
+
 interface Props {
     onSelect: (type: BlogBlockType) => void
     onClose: () => void
@@ -78,10 +89,16 @@ interface Props {
 export function BlockCommandPalette({ onSelect, onClose }: Props) {
     const [query, setQuery] = useState('')
     const [activeIdx, setActiveIdx] = useState(0)
+    const [recentTypes, setRecentTypes] = useState<BlogBlockType[]>([])
     const inputRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => { inputRef.current?.focus() }, [])
+    useEffect(() => { inputRef.current?.focus(); setRecentTypes(getRecentTypes()) }, [])
+
+    function handleSelect(type: BlogBlockType) {
+        addRecentType(type)
+        onSelect(type)
+    }
 
     const filtered = query.trim()
         ? ALL_TYPES.filter(t => {
@@ -97,7 +114,7 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
     function handleKeyDown(e: React.KeyboardEvent) {
         if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, filtered.length - 1)) }
         if (e.key === 'ArrowUp')   { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, 0)) }
-        if (e.key === 'Enter')     { e.preventDefault(); if (filtered[activeIdx]) onSelect(filtered[activeIdx]) }
+        if (e.key === 'Enter')     { e.preventDefault(); if (filtered[activeIdx]) handleSelect(filtered[activeIdx]) }
         if (e.key === 'Escape')    { e.preventDefault(); onClose() }
     }
 
@@ -110,7 +127,10 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
     // Groups for display when no query
     const groups = query.trim()
         ? [{ label: 'Resultados', types: filtered }]
-        : TYPE_GROUPS
+        : [
+            ...(recentTypes.length > 0 ? [{ label: 'Recentes', types: recentTypes }] : []),
+            ...TYPE_GROUPS,
+          ]
 
     return (
         <div className="fixed inset-0 z-[300] flex items-start justify-center pt-[15vh] px-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -149,7 +169,7 @@ export function BlockCommandPalette({ onSelect, onClose }: Props) {
                                             <button
                                                 key={type}
                                                 data-idx={idx}
-                                                onClick={() => onSelect(type)}
+                                                onClick={() => handleSelect(type)}
                                                 onMouseEnter={() => setActiveIdx(idx)}
                                                 className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${idx === activeIdx ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-surface'}`}
                                             >
