@@ -952,22 +952,31 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_stats_row':
             return <StatsRowEditor block={block} onChange={onChange} />
 
-        case 'blog_rating':
+        case 'blog_rating': {
+            const score = block.score ?? 8
+            const scoreColor = score >= 9 ? 'text-emerald-400' : score >= 7 ? 'text-yellow-400' : score >= 5 ? 'text-orange-400' : 'text-red-400'
             return (
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <label className={labelCls + ' mb-0'}>Nota (0–10)</label>
-                        <input type="number" min={0} max={10} step={0.5}
-                            value={block.score}
-                            onChange={e => onChange({ ...block, score: parseFloat(e.target.value) || 0 })}
-                            className="w-20 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-yellow-500/50" />
-                        <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
-                            placeholder="Rótulo (ex: Drama, Álbum)..." className={inputCls} />
+                <div className="space-y-3">
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className={labelCls + ' mb-0'}>Nota</label>
+                            <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}<span className="text-sm font-normal text-muted">/10</span></span>
+                        </div>
+                        <input type="range" min={0} max={10} step={0.5}
+                            value={score}
+                            onChange={e => onChange({ ...block, score: parseFloat(e.target.value) })}
+                            className="w-full accent-yellow-400 h-2 rounded-full cursor-pointer" />
+                        <div className="flex justify-between text-[10px] text-muted/50 px-0.5">
+                            {[0,1,2,3,4,5,6,7,8,9,10].map(n => <span key={n}>{n}</span>)}
+                        </div>
                     </div>
+                    <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
+                        placeholder="Rótulo (ex: Drama, Álbum, Trilha sonora)..." className={inputCls} />
                     <AutoTextarea value={block.summary || ''} onChange={v => onChange({ ...block, summary: v })}
                         placeholder="Resumo da avaliação..." minRows={2} />
                 </div>
             )
+        }
 
         case 'blog_divider':
             return <div className="h-px bg-border my-1 rounded" />
