@@ -272,7 +272,7 @@ function WritePageContent() {
     const timer = setTimeout(async () => {
       const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
       if (!title.trim() || !hasContent) return
-      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ' })
+      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ', coverImageUrl, categoryId, tags, isPrivate })
       if (payload === lastAutosaveRef.current) return
       lastAutosaveRef.current = payload
       setAutosaving(true)
@@ -280,8 +280,14 @@ function WritePageContent() {
         const res = await fetch(`/api/blog/posts/${postId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, excerpt: excerpt || undefined, contentMd: content || ' ',
-            blocks: editorMode === 'blocks' ? blocks : null, noSnapshot: true }),
+          body: JSON.stringify({
+            title, excerpt: excerpt || undefined, contentMd: content || ' ',
+            blocks: editorMode === 'blocks' ? blocks : null,
+            coverImageUrl: coverImageUrl || undefined,
+            categoryId: categoryId || null,
+            tags, isPrivate,
+            noSnapshot: true,
+          }),
         })
         if (res.ok) {
           const data = await res.json()
@@ -296,7 +302,7 @@ function WritePageContent() {
     }, 30000)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, excerpt, blocks, content, postId, saving, editorMode])
+  }, [title, excerpt, blocks, content, postId, saving, editorMode, coverImageUrl, categoryId, tags, isPrivate])
 
   function pickTemplate(t: BlogTemplate) {
     setTemplate(t)
@@ -399,18 +405,21 @@ function WritePageContent() {
 
   const wordCount = useMemo(() => {
     if (editorMode === 'markdown') return content.split(/\s+/).filter(Boolean).length
+    function countStr(s: unknown) { return typeof s === 'string' ? s.split(/\s+/).filter(Boolean).length : 0 }
     let count = 0
     for (const block of blocks) {
-      if ('text' in block && typeof (block as { text?: unknown }).text === 'string')
-        count += ((block as { text: string }).text).split(/\s+/).filter(Boolean).length
-      if ('summary' in block && typeof (block as { summary?: unknown }).summary === 'string')
-        count += ((block as { summary: string }).summary).split(/\s+/).filter(Boolean).length
-      if ('items' in block && Array.isArray((block as { items?: unknown }).items)) {
-        for (const item of (block as { items: Record<string, unknown>[] }).items) {
-          if (typeof item.text === 'string') count += item.text.split(/\s+/).filter(Boolean).length
-          if (typeof item.title === 'string') count += item.title.split(/\s+/).filter(Boolean).length
+      const b = block as Record<string, unknown>
+      count += countStr(b.text) + countStr(b.summary) + countStr(b.title) + countStr(b.attribution) + countStr(b.answer)
+      for (const arr of ['items', 'steps', 'pros', 'cons', 'tabs', 'tracks', 'scenes', 'cards', 'facts', 'rows'] as const) {
+        const list = b[arr]
+        if (!Array.isArray(list)) continue
+        for (const item of list as Record<string, unknown>[]) {
+          count += countStr(item.text) + countStr(item.title) + countStr(item.label) + countStr(item.answer)
+            + countStr(item.content) + countStr(item.question) + countStr(item.description) + countStr(item.value)
         }
       }
+      if (Array.isArray(b.items) && typeof (b.items as unknown[])[0] === 'string')
+        for (const s of b.items as string[]) count += countStr(s)
     }
     return count
   }, [editorMode, content, blocks])
@@ -674,9 +683,44 @@ function WritePageContent() {
             tags={tags}
           />
 
+          {/* Slug */}
+          {postSlug && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">URL do artigo</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg">
+                <span className="text-[11px] text-muted truncate flex-1 font-mono">/blog/{postSlug}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`https://www.hallyuhub.com.br/blog/${postSlug}`)}
+                  title="Copiar URL"
+                  className="shrink-0 text-muted hover:text-foreground transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                </button>
+                {postStatus === 'PUBLISHED' && (
+                  <a href={`/blog/${postSlug}`} target="_blank" rel="noopener noreferrer" title="Abrir artigo" className="shrink-0 text-muted hover:text-foreground transition-colors">
+                    <Eye size={12} />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Excerpt */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resumo</label>
+              {!excerpt && blocks.some(b => b.type === 'blog_paragraph' && (b as { text: string }).text?.length > 80) && (
+                <button
+                  onClick={() => {
+                    const para = blocks.find(b => b.type === 'blog_paragraph') as { text: string } | undefined
+                    if (para?.text) setExcerpt(para.text.slice(0, 160).replace(/\*\*|__|\[.*?\]\(.*?\)/g, '').trim())
+                  }}
+                  className="text-[10px] font-semibold text-[#ff2d78] hover:text-[#e0256a] transition-colors"
+                >
+                  Gerar do 1º parágrafo
+                </button>
+              )}
+            </div>
             <ExcerptTextarea value={excerpt} onChange={setExcerpt} />
             <p className={`text-xs text-right tabular-nums ${
               excerpt.length >= 120 && excerpt.length <= 160 ? 'text-green-500' :

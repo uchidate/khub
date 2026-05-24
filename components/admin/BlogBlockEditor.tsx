@@ -1494,6 +1494,152 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </button>
                 </div>
             )
+
+        case 'blog_product_card':
+            return (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.imageUrl} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                            placeholder="URL da imagem..." className={inputCls} />
+                        <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                            placeholder="Nome do produto..." className={inputCls} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                        <input value={block.price} onChange={e => onChange({ ...block, price: e.target.value })}
+                            placeholder="Preço (ex: R$ 49,90)" className={inputCls} />
+                        <input value={block.originalPrice || ''} onChange={e => onChange({ ...block, originalPrice: e.target.value })}
+                            placeholder="Preço original (opcional)" className={inputCls} />
+                        <input value={block.badge || ''} onChange={e => onChange({ ...block, badge: e.target.value })}
+                            placeholder="Badge (ex: Mais vendido)" className={inputCls} />
+                    </div>
+                    <input value={block.affiliateUrl} onChange={e => onChange({ ...block, affiliateUrl: e.target.value })}
+                        placeholder="URL afiliado / compra..." className={inputCls} />
+                    <div className="flex gap-2">
+                        <input value={block.cta || ''} onChange={e => onChange({ ...block, cta: e.target.value })}
+                            placeholder="Texto do botão (ex: Comprar agora)" className={`${inputCls} flex-1`} />
+                        <div className="flex items-center gap-2">
+                            <label className={labelCls + ' mb-0'}>Nota</label>
+                            <input type="number" min={0} max={5} step={0.5} value={block.rating ?? ''}
+                                onChange={e => onChange({ ...block, rating: parseFloat(e.target.value) || undefined })}
+                                className="w-16 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-yellow-500/50" />
+                        </div>
+                    </div>
+                </div>
+            )
+
+        case 'blog_trivia':
+            return (
+                <div className="space-y-2">
+                    <input value={block.question} onChange={e => onChange({ ...block, question: e.target.value })}
+                        placeholder="Pergunta..." className={inputCls} />
+                    <input value={block.hint || ''} onChange={e => onChange({ ...block, hint: e.target.value })}
+                        placeholder="Dica (opcional)..." className={inputCls} />
+                    <AutoTextarea value={block.answer} onChange={v => onChange({ ...block, answer: v })}
+                        minRows={2} placeholder="Resposta (revelada ao clicar)..." />
+                </div>
+            )
+
+        case 'blog_comeback_card':
+            return (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
+                            placeholder="Artista / grupo..." className={inputCls} />
+                        <input value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
+                            placeholder="Título do lançamento..." className={inputCls} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.date} onChange={e => onChange({ ...block, date: e.target.value })}
+                            placeholder="Data (ex: 2025-06-15)..." className={inputCls} />
+                        <input value={block.type_label || ''} onChange={e => onChange({ ...block, type_label: e.target.value })}
+                            placeholder="Tipo (Mini Album, Single...)" className={inputCls} />
+                    </div>
+                    <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                        placeholder="URL da capa (opcional)..." className={inputCls} />
+                    <AutoTextarea value={block.description || ''} onChange={v => onChange({ ...block, description: v })}
+                        minRows={2} placeholder="Descrição (opcional)..." />
+                </div>
+            )
+
+        case 'blog_alert':
+            return (
+                <div className="space-y-2">
+                    <div className="flex gap-1">
+                        {([
+                            { v: 'info',    label: 'Info',    cls: 'bg-blue-600/30 border-blue-500/40 text-blue-300' },
+                            { v: 'tip',     label: 'Dica',    cls: 'bg-emerald-600/30 border-emerald-500/40 text-emerald-300' },
+                            { v: 'warning', label: 'Aviso',   cls: 'bg-orange-600/30 border-orange-500/40 text-orange-300' },
+                            { v: 'spoiler', label: 'Spoiler', cls: 'bg-purple-600/30 border-purple-500/40 text-purple-300' },
+                        ] as const).map(({ v, label, cls }) => (
+                            <button key={v} onClick={() => onChange({ ...block, variant: v })}
+                                className={`px-2.5 py-1 rounded text-xs font-bold border transition-colors ${block.variant === v ? cls : 'border-border text-muted hover:text-foreground'}`}>
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                        placeholder="Título (opcional)..." className={inputCls} />
+                    <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
+                        minRows={2} placeholder="Texto do alerta..." />
+                </div>
+            )
+
+        case 'blog_lyrics_parallel':
+            return (
+                <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                            placeholder="Título da música..." className={inputCls} />
+                        <input value={block.artist || ''} onChange={e => onChange({ ...block, artist: e.target.value })}
+                            placeholder="Artista..." className={inputCls} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <label className={labelCls + ' mb-0'}>Idioma original</label>
+                        <div className="flex gap-1">
+                            {(['ko', 'en', 'ja'] as const).map(l => (
+                                <button key={l} onClick={() => onChange({ ...block, lang: l })}
+                                    className={`px-2.5 py-1 rounded text-xs font-bold border transition-colors ${(block.lang ?? 'ko') === l ? 'bg-purple-600/30 border-purple-500/40 text-purple-300' : 'border-border text-muted hover:text-foreground'}`}>
+                                    {l === 'ko' ? '한국어' : l === 'ja' ? '日本語' : 'EN'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    {block.sections.map((section, i) => (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-2">
+                            <div className="flex gap-2 items-center">
+                                <input value={section.label || ''} onChange={e => {
+                                    const sections = [...block.sections]; sections[i] = { ...section, label: e.target.value }
+                                    onChange({ ...block, sections })
+                                }} placeholder="Seção (Estrofe 1, Refrão...)..." className={`${inputCls} flex-1`} />
+                                <button onClick={() => onChange({ ...block, sections: block.sections.filter((_, j) => j !== i) })}
+                                    className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <AutoTextarea value={section.original} onChange={v => {
+                                    const sections = [...block.sections]; sections[i] = { ...section, original: v }
+                                    onChange({ ...block, sections })
+                                }} minRows={3} placeholder="Original (uma linha por verso)..." />
+                                <AutoTextarea value={section.translation} onChange={v => {
+                                    const sections = [...block.sections]; sections[i] = { ...section, translation: v }
+                                    onChange({ ...block, sections })
+                                }} minRows={3} placeholder="Tradução pt-BR (uma linha por verso)..." />
+                            </div>
+                            <AutoTextarea value={section.romanized || ''} onChange={v => {
+                                const sections = [...block.sections]; sections[i] = { ...section, romanized: v }
+                                onChange({ ...block, sections })
+                            }} minRows={2} placeholder="Romanização (opcional, uma linha por verso)..." />
+                        </div>
+                    ))}
+                    <div className="flex gap-2 items-center">
+                        <button onClick={() => onChange({ ...block, sections: [...block.sections, { original: '', translation: '', romanized: '' }] })}
+                            className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                            <Plus className="w-3.5 h-3.5" /> Adicionar seção
+                        </button>
+                        <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
+                            placeholder="Fonte (opcional)..." className={`${inputCls} flex-1 ml-auto`} />
+                    </div>
+                </div>
+            )
     }
 }
 
