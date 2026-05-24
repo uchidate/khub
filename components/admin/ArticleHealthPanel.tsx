@@ -71,11 +71,11 @@ export function ArticleHealthPanel({ issues, errors, warnings, checking, onJumpT
                 onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
             >
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-foreground">Saúde do artigo</span>
-                    {checking && <Loader2 className="w-3 h-3 animate-spin text-muted" />}
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-black uppercase tracking-wide text-foreground whitespace-nowrap">Saúde</span>
+                    {checking && <Loader2 className="w-3 h-3 animate-spin text-muted shrink-0" />}
                     {!checking && (
-                        <span className={`text-[11px] font-black tabular-nums ${scoreColor}`}>{score}/100</span>
+                        <span className={`text-[11px] font-black tabular-nums shrink-0 ${scoreColor}`}>{score}/100</span>
                     )}
                 </div>
                 <div className="flex items-center gap-2">

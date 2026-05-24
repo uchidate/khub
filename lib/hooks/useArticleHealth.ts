@@ -96,13 +96,16 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
         if (block.type === 'blog_image' && !block.url) {
             issues.push({ id: `img-no-url-${i}`, severity: 'error', title: 'Imagem sem URL', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
         }
+        if (block.type === 'blog_image' && block.url && !(block as { alt?: string }).alt?.trim()) {
+            issues.push({ id: `img-no-alt-${i}`, severity: 'info', title: 'Imagem sem alt text', detail: `Bloco ${i + 1} — importante para SEO e acessibilidade`, field: 'blocks', blockIndex: i })
+        }
         if (block.type === 'blog_video' && block.url) {
             const re = /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
             if (!block.url.match(re)) {
                 issues.push({ id: `video-invalid-${i}`, severity: 'error', title: 'URL de vídeo inválida', detail: `Bloco ${i + 1} — use youtube.com ou youtu.be`, field: 'blocks', blockIndex: i })
             }
         }
-        if (block.type === 'blog_paragraph' && 'text' in block && !(block as { text: string }).text?.trim()) {
+        if (block.type === 'blog_paragraph' && 'text' in block && !(block as { text: string }).text?.trim() && input.title.trim()) {
             issues.push({ id: `empty-para-${i}`, severity: 'warning', title: 'Parágrafo vazio', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
         }
     })

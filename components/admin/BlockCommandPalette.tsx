@@ -8,7 +8,7 @@ import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_list', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
-    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
+    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert', 'blog_ad'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia', 'blog_idol_facts'] },
     { label: 'Interativo', types: ['blog_vs', 'blog_poll', 'blog_quiz', 'blog_flashcard', 'blog_countdown', 'blog_before_after'] },
     { label: 'K-Pop',     types: ['blog_lyrics', 'blog_lyrics_parallel', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
@@ -33,6 +33,7 @@ const TYPE_ICONS: Partial<Record<BlogBlockType, string>> = {
     blog_chart_history: '📈', blog_fandom: '💜', blog_lightstick: '🔦',
     blog_positions: '👑', blog_discography_grid: '💽', blog_achievement: '🏅',
     blog_mv_breakdown: '🎥',
+    blog_ad: '💰',
 }
 
 interface Props {

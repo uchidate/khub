@@ -19,6 +19,7 @@ interface VersionSummary {
   title: string
   excerpt: string | null
   wordCount: number
+  blocksCount: number | null
   note: string | null
   pinned: boolean
   label: string | null
@@ -197,6 +198,7 @@ export default function BlogPostHistory() {
   const [togglingPin, setTogglingPin] = useState<string | null>(null)
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [expandedDiff, setExpandedDiff] = useState<string | null>(null)
+  const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null)
 
   const loadVersions = useCallback(async () => {
     setLoading(true)
@@ -214,8 +216,8 @@ export default function BlogPostHistory() {
   useEffect(() => { loadVersions() }, [loadVersions])
 
   async function handleRestore(versionId: string) {
-    if (!confirm('Restaurar esta versão? O estado atual será salvo como snapshot automático.')) return
     setRestoring(versionId)
+    setConfirmRestoreId(null)
     try {
       const res = await fetch(`/api/blog/posts/${id}/versions/${versionId}/restore`, { method: 'POST' })
       if (!res.ok) throw new Error()
@@ -329,7 +331,10 @@ export default function BlogPostHistory() {
                             <User className="w-3 h-3" />
                             {v.savedBy.name ?? v.savedBy.email}
                           </span>
-                          <span className="text-muted">{v.wordCount.toLocaleString('pt-BR')} pal.</span>
+                          {v.wordCount > 0 && <span className="text-muted">{v.wordCount.toLocaleString('pt-BR')} pal.</span>}
+                          {v.blocksCount !== null && v.blocksCount !== undefined && (
+                            <span className="text-muted">{v.blocksCount} blocos</span>
+                          )}
                         </div>
 
                         {/* Label editor */}
@@ -403,18 +408,34 @@ export default function BlogPostHistory() {
                         </AdminButton>
 
                         {/* Restaurar */}
-                        {!isFirst && (
+                        {!isFirst && confirmRestoreId !== v.id && (
                           <AdminButton
                             size="sm"
                             variant="secondary"
                             disabled={restoring === v.id}
-                            onClick={() => handleRestore(v.id)}
+                            onClick={() => setConfirmRestoreId(v.id)}
                             title="Restaurar esta versão"
                           >
                             {restoring === v.id
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               : <RotateCcw className="w-3.5 h-3.5" />}
                           </AdminButton>
+                        )}
+                        {confirmRestoreId === v.id && (
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleRestore(v.id)}
+                              className="px-2 py-1 rounded text-[10px] font-bold bg-[#ff2d78]/15 text-[#ff2d78] hover:bg-[#ff2d78]/25 transition-colors"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={() => setConfirmRestoreId(null)}
+                              className="px-2 py-1 rounded text-[10px] text-muted hover:text-foreground transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

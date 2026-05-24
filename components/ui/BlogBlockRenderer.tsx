@@ -237,7 +237,7 @@ function ImageBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_image' 
                         >
                             <img
                                 src={proxied(block.url)}
-                                alt={block.caption || ''}
+                                alt={block.alt || block.caption || ''}
                                 className="w-full rounded-2xl border border-border shadow-xl group-hover:brightness-[.93] transition-all duration-200"
                                 loading="lazy"
                                 onError={() => setError(true)}
@@ -1160,6 +1160,16 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                     <div className="flex-1 h-px bg-border" />
                     <span className="text-accent/40 text-sm">✦</span>
                     <div className="flex-1 h-px bg-border" />
+                </div>
+            )
+
+        case 'blog_ad':
+            return (
+                <div className="my-6 flex items-center justify-center min-h-[100px] rounded-xl border border-dashed border-border bg-surface/50 text-muted text-xs">
+                    {/* AdSense auto-ads preenche este slot automaticamente */}
+                    <ins className="adsbygoogle block w-full"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true" />
                 </div>
             )
 

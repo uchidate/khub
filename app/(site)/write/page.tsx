@@ -38,43 +38,59 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
     { key: 'ranking',   desc: 'Lista ordenada Top N', icon: '🏆' },
     { key: 'listicle',  desc: 'Listagem numerada com conclusão', icon: '📋' },
   ]
+  const [free, ...rest] = templates
   return (
-    <div className="py-12 flex flex-col items-center gap-6">
+    <div className="py-12 flex flex-col items-center gap-5">
       <div className="text-center">
         <Layout className="w-8 h-8 text-[#ff2d78] mx-auto mb-3" />
         <h2 className="text-xl font-black text-foreground mb-1">Escolha um template</h2>
         <p className="text-sm text-muted">Os blocos podem ser editados livremente depois</p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
-        {templates.map(t => (
-          <button
-            key={t.key}
-            onClick={() => onPick(t.key)}
-            className="flex flex-col items-start gap-2 p-4 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all text-left"
-          >
-            <span className="text-2xl">{t.icon}</span>
-            <div>
-              <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[t.key]}</p>
-              <p className="text-xs text-muted">{t.desc}</p>
-            </div>
-          </button>
-        ))}
+      <div className="w-full max-w-2xl space-y-3">
+        {/* Free — full-width */}
+        <button
+          onClick={() => onPick(free.key)}
+          className="w-full flex items-center gap-4 p-4 rounded-xl border border-dashed border-border hover:border-[#ff2d78]/50 bg-surface hover:bg-surface-hover transition-all text-left"
+        >
+          <span className="text-2xl shrink-0">{free.icon}</span>
+          <div>
+            <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[free.key]}</p>
+            <p className="text-xs text-muted">{free.desc}</p>
+          </div>
+        </button>
+        {/* Other templates — 3-column grid (9 items = 3×3) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {rest.map(t => (
+            <button
+              key={t.key}
+              onClick={() => onPick(t.key)}
+              className="flex flex-col items-start gap-2 p-4 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all text-left"
+            >
+              <span className="text-2xl">{t.icon}</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[t.key]}</p>
+                <p className="text-xs text-muted">{t.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-function ExcerptTextarea({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ExcerptTextarea({ value, onChange, placeholder = 'Resumo (aparece na listagem e no Google)...', maxLength = 600 }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number
+}) {
   const ref = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     const el = ref.current; if (!el) return
     el.style.height = 'auto'
-    el.style.height = `${Math.max(el.scrollHeight, 72)}px`
+    el.style.height = `${Math.max(el.scrollHeight, 60)}px`
   }, [value])
   return (
     <textarea ref={ref} value={value} onChange={e => onChange(e.target.value)}
-      placeholder="Resumo (aparece na listagem e no Google)..."
-      maxLength={600} rows={3}
+      placeholder={placeholder} maxLength={maxLength} rows={2}
       className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
       style={{ overflow: 'hidden' }} />
   )
@@ -100,15 +116,21 @@ function WritePageContent() {
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [focusKeyword, setFocusKeyword] = useState('')
+  const [focusKeyword, setFocusKeyword] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem(`seo_kw_${editId ?? 'new'}`) ?? ''
+  })
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
 
+  const [draftBanner, setDraftBanner] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [autosaving, setAutosaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'error'>('idle')
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [versionCount, setVersionCount] = useState<number | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [focusMode, setFocusMode] = useState(false)
   const [showPublishChecklist, setShowPublishChecklist] = useState(false)
@@ -165,9 +187,18 @@ function WritePageContent() {
       .catch(() => {})
   }, [])
 
-  // Load localStorage draft (new posts only)
+  // Load localStorage draft (new posts only) — show banner instead of auto-applying
   useEffect(() => {
     if (editId) return
+    const saved = localStorage.getItem(AUTOSAVE_KEY)
+    if (!saved) return
+    try {
+      const parsed = JSON.parse(saved)
+      if (parsed.title || parsed.blocks?.length || parsed.content) setDraftBanner(true)
+    } catch { /* ignore */ }
+  }, [editId])
+
+  function restoreDraft() {
     const saved = localStorage.getItem(AUTOSAVE_KEY)
     if (!saved) return
     try {
@@ -176,9 +207,10 @@ function WritePageContent() {
       if (parsed.content) setContent(parsed.content)
       if (parsed.excerpt) setExcerpt(parsed.excerpt)
       if (parsed.tags) setTags(parsed.tags)
-      if (parsed.blocks) { setBlocks(parsed.blocks); setTemplatePicked(true); setEditorMode('blocks') }
+      if (parsed.blocks?.length) { setBlocks(parsed.blocks); setTemplatePicked(true); setEditorMode('blocks') }
     } catch { /* ignore */ }
-  }, [editId])
+    setDraftBanner(false)
+  }
 
   // Load existing post
   useEffect(() => {
@@ -209,7 +241,22 @@ function WritePageContent() {
       .catch(() => {})
   }, [editId])
 
-  // Auto-save to localStorage
+  // Persist focus keyword per post
+  useEffect(() => {
+    if (!focusKeyword) return
+    localStorage.setItem(`seo_kw_${postId ?? editId ?? 'new'}`, focusKeyword)
+  }, [focusKeyword, postId, editId])
+
+  // Fetch version count when postId changes
+  useEffect(() => {
+    if (!postId) return
+    fetch(`/api/blog/posts/${postId}/versions`)
+      .then(r => r.json())
+      .then(data => setVersionCount(Array.isArray(data) ? data.length : null))
+      .catch(() => {})
+  }, [postId])
+
+  // Auto-save to localStorage (new posts)
   useEffect(() => {
     if (editId || (!title && !content && blocks.length === 0)) return
     const timer = setTimeout(() => {
@@ -217,6 +264,39 @@ function WritePageContent() {
     }, 1000)
     return () => clearTimeout(timer)
   }, [title, content, excerpt, tags, blocks, editId])
+
+  // Server autosave every 30s for existing posts
+  const lastAutosaveRef = useRef<string>('')
+  useEffect(() => {
+    if (!postId || saving) return
+    const timer = setTimeout(async () => {
+      const hasContent = editorMode === 'blocks' ? blocks.length > 0 : content.trim().length > 0
+      if (!title.trim() || !hasContent) return
+      const payload = JSON.stringify({ title, excerpt, blocks, contentMd: content || ' ' })
+      if (payload === lastAutosaveRef.current) return
+      lastAutosaveRef.current = payload
+      setAutosaving(true)
+      try {
+        const res = await fetch(`/api/blog/posts/${postId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, excerpt: excerpt || undefined, contentMd: content || ' ',
+            blocks: editorMode === 'blocks' ? blocks : null, noSnapshot: true }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.slug) setPostSlug(data.slug)
+          setLastSavedAt(new Date())
+          setSaveState('saved')
+          setTimeout(() => setSaveState('idle'), 3000)
+        }
+      } catch { /* silent */ } finally {
+        setAutosaving(false)
+      }
+    }, 30000)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, excerpt, blocks, content, postId, saving, editorMode])
 
   function pickTemplate(t: BlogTemplate) {
     setTemplate(t)
@@ -257,9 +337,13 @@ function WritePageContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data))
-      if (!postId) setPostId(data.id)
+      if (!postId) {
+        setPostId(data.id)
+        window.history.replaceState(null, '', `/write?edit=${data.id}`)
+      }
       if (data.slug) setPostSlug(data.slug)
       setPostStatus(data.status)
+      setVersionCount(c => (c ?? 0) + 1)
       setSaveState('saved')
       setSaveError(null)
       setLastSavedAt(new Date())
@@ -378,6 +462,15 @@ function WritePageContent() {
         />
       )}
 
+      {/* Draft restore banner */}
+      {draftBanner && (
+        <div className="sticky top-0 z-[60] flex items-center gap-3 px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-xs">
+          <span className="flex-1">Você tem um rascunho salvo localmente.</span>
+          <button onClick={restoreDraft} className="font-bold hover:underline shrink-0">Restaurar</button>
+          <button onClick={() => { localStorage.removeItem(AUTOSAVE_KEY); setDraftBanner(false) }} className="text-amber-400/60 hover:text-amber-400 shrink-0">Descartar</button>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className={`sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl px-4 flex items-center gap-2 h-12 ${focusMode ? 'bg-background/95' : ''}`}>
         {!focusMode && (
@@ -402,7 +495,13 @@ function WritePageContent() {
           }`}>{statusLabels[postStatus] ?? postStatus}</span>
 
           {/* Autosave indicator */}
-          {saveState === 'saved' && lastSavedAt && (
+          {autosaving && (
+            <span className="hidden lg:flex items-center gap-1 text-[11px] text-muted/60 mr-2">
+              <Loader2 size={10} className="animate-spin" />
+              salvando…
+            </span>
+          )}
+          {!autosaving && saveState === 'saved' && lastSavedAt && (
             <span className="hidden lg:flex items-center gap-1 text-[11px] text-muted mr-2">
               <CheckCircle size={11} className="text-green-500" />
               {formatTimestamp(lastSavedAt)}
@@ -710,14 +809,7 @@ function WritePageContent() {
           {postId && (
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted uppercase tracking-wider">Nota da versão</label>
-              <textarea
-                value={versionNote}
-                onChange={e => setVersionNote(e.target.value)}
-                placeholder="Descreva o que mudou nesta versão (opcional)…"
-                maxLength={300}
-                rows={2}
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:border-[#ff2d78]/40 resize-none transition-colors"
-              />
+              <ExcerptTextarea value={versionNote} onChange={setVersionNote} placeholder="Descreva o que mudou nesta versão (opcional)…" maxLength={300} />
               <p className="text-xs text-muted text-right">{versionNote.length}/300</p>
             </div>
           )}
@@ -732,12 +824,21 @@ function WritePageContent() {
                 <div className="flex items-center gap-2">
                   <History className="w-3.5 h-3.5 text-muted" />
                   <span className="text-xs font-black uppercase tracking-wider text-foreground">Versões</span>
+                  {versionCount !== null && versionCount > 0 && (
+                    <span className="text-[10px] font-bold tabular-nums bg-surface-hover px-1.5 py-0.5 rounded-full text-muted">{versionCount}</span>
+                  )}
                 </div>
                 <span className="text-[10px] text-muted">{showVersionHistory ? 'fechar' : 'ver'}</span>
               </button>
               {showVersionHistory && (
                 <div className="border-t border-border">
-                  <VersionHistoryPanel postId={postId} onRestore={v => { setBlocksWithHistory(v.blocks); setShowVersionHistory(false) }} />
+                  <VersionHistoryPanel postId={postId} onRestore={v => {
+                setTitle(v.title)
+                if (v.excerpt) setExcerpt(v.excerpt)
+                if (v.blocks?.length) { setBlocksWithHistory(v.blocks); setEditorMode('blocks') }
+                else if (v.contentMd?.trim()) { setContent(v.contentMd); setEditorMode('markdown') }
+                setShowVersionHistory(false)
+              }} />
                 </div>
               )}
             </div>

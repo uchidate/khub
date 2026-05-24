@@ -3,6 +3,7 @@ import { requireContributorOrAbove } from '@/lib/admin-helpers'
 import { calcReadingTime } from '@/lib/utils/slug'
 import prisma from '@/lib/prisma'
 import { syncBlogPostEntityLinks } from '@/lib/services/blog-entity-links'
+import { snapshotPost } from '@/lib/services/blog-version'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +20,9 @@ const updateSchema = z.object({
   isPrivate: z.boolean().optional(),
   featured: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional().nullable(),
-  versionNote: z.string().max(300).optional().nullable(), // nota editorial opcional
+  status: z.string().optional(),
+  versionNote: z.string().max(300).optional().nullable(),
+  noSnapshot: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -61,7 +64,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const body = await request.json()
   const validated = updateSchema.parse(body)
-  const { versionNote, ...postFields } = validated
+  const { versionNote, noSnapshot, ...postFields } = validated
 
   const data: Record<string, unknown> = { ...postFields }
   const shouldSyncLinks = Object.prototype.hasOwnProperty.call(postFields, 'blocks')
@@ -76,38 +79,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   // Only admins/editors can set featured
   if (!isAdmin) delete data.featured
 
-  // Snapshot do estado atual antes de salvar (somente se há mudança de conteúdo)
   const isContentChange = postFields.title || postFields.contentMd || postFields.blocks !== undefined || postFields.excerpt !== undefined
-  const [updated] = await prisma.$transaction([
-    prisma.blogPost.update({ where: { id }, data }),
-    ...(isContentChange ? [prisma.blogPostVersion.create({
-      data: {
-        blogPostId: id,
-        title: postFields.title ?? post.title,
-        excerpt: postFields.excerpt ?? post.excerpt,
-        contentMd: postFields.contentMd ?? post.contentMd,
-        blocks: postFields.blocks !== undefined ? (postFields.blocks as object) : (post.blocks as object ?? undefined),
-        savedById: session!.user.id,
-        note: versionNote ?? null,
-      },
-    })] : []),
-  ])
+  const isPublishing = postFields.status === 'PUBLISHED' && post.status !== 'PUBLISHED'
+  const isUnpublishing = postFields.status === 'DRAFT' && post.status === 'PUBLISHED'
+
+  // Snapshot do estado atual ANTES de salvar (skip em autosave silencioso)
+  if (!noSnapshot && (isContentChange || isPublishing || isUnpublishing)) {
+    await snapshotPost(id, {
+      savedById: session!.user.id,
+      note: versionNote ?? (isPublishing ? 'pre-publicação' : isUnpublishing ? 'pre-despublicação' : undefined),
+      // Snapshot pinado na publicação — estado exato do que foi ao ar
+      ...(isPublishing ? { label: 'Publicado', pinned: true } : {}),
+    })
+  }
+
+  const updated = await prisma.blogPost.update({ where: { id }, data })
 
   if (shouldSyncLinks) {
     await syncBlogPostEntityLinks(id, postFields.blocks)
-  }
-
-  // Limite: manter no máximo 50 versões não-pinadas por post
-  if (isContentChange) {
-    const excess = await prisma.blogPostVersion.findMany({
-      where: { blogPostId: id, pinned: false },
-      orderBy: { savedAt: 'desc' },
-      skip: 50,
-      select: { id: true },
-    })
-    if (excess.length > 0) {
-      await prisma.blogPostVersion.deleteMany({ where: { id: { in: excess.map(v => v.id) } } })
-    }
   }
 
   return NextResponse.json(updated)

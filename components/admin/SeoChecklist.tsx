@@ -25,22 +25,32 @@ interface Check {
 
 function blocksToText(blocks: BlogBlock[]): string {
     return blocks.map(b => {
+        const bb = b as Record<string, unknown>
         switch (b.type) {
-            case 'blog_paragraph': return b.text
-            case 'blog_heading': return b.text
-            case 'blog_quote': return b.text
-            case 'blog_stats_row': return b.items.map(i => `${i.label} ${i.value}`).join(' ')
-            case 'blog_rating': return b.summary || ''
+            case 'blog_paragraph':  return b.text
+            case 'blog_heading':    return b.text
+            case 'blog_quote':      return b.text
+            case 'blog_callout':    return `${bb.title ?? ''} ${bb.text ?? ''}`
+            case 'blog_curiosity':  return String(bb.text ?? '')
+            case 'blog_highlight':  return String(bb.text ?? '')
+            case 'blog_list':       return (bb.items as string[] | undefined)?.join(' ') ?? ''
+            case 'blog_pros_cons':  return [...((bb.pros as string[] | undefined) ?? []), ...((bb.cons as string[] | undefined) ?? [])].join(' ')
+            case 'blog_steps':      return ((bb.steps as { title: string; text: string }[] | undefined) ?? []).map(s => `${s.title} ${s.text}`).join(' ')
+            case 'blog_stats_row':  return b.items.map(i => `${i.label} ${i.value}`).join(' ')
+            case 'blog_rating':     return b.summary || ''
+            case 'blog_accordion':  return ((bb.items as { question: string; answer: string }[] | undefined) ?? []).map(i => `${i.question} ${i.answer}`).join(' ')
+            case 'blog_tabs':       return ((bb.tabs as { label: string; content: string }[] | undefined) ?? []).map(t => `${t.label} ${t.content}`).join(' ')
+            case 'blog_ranking':    return ((bb.items as { name: string; description?: string }[] | undefined) ?? []).map(i => `${i.name} ${i.description ?? ''}`).join(' ')
             default: return ''
         }
-    }).join(' ')
+    }).filter(Boolean).join(' ')
 }
 
 export function SeoChecklist({
     title, excerpt, contentMd, blocks, focusKeyword,
     onFocusKeywordChange, coverImageUrl, tags,
 }: SeoChecklistProps) {
-    const [open, setOpen] = useState(true)
+    const [open, setOpen] = useState(false)
 
     const bodyText = useMemo(() => {
         const fromBlocks = blocksToText(blocks)
