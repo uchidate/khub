@@ -102,7 +102,7 @@ function getStaticIssues(input: HealthInput): ArticleIssue[] {
                 issues.push({ id: `video-invalid-${i}`, severity: 'error', title: 'URL de vídeo inválida', detail: `Bloco ${i + 1} — use youtube.com ou youtu.be`, field: 'blocks', blockIndex: i })
             }
         }
-        if (block.type === 'blog_paragraph' && 'text' in block && !(block as { text: string }).text?.trim()) {
+        if (block.type === 'blog_paragraph' && 'text' in block && !(block as { text: string }).text?.trim() && input.title.trim()) {
             issues.push({ id: `empty-para-${i}`, severity: 'warning', title: 'Parágrafo vazio', detail: `Bloco ${i + 1}`, field: 'blocks', blockIndex: i })
         }
     })

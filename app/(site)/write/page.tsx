@@ -38,27 +38,42 @@ function TemplatePicker({ onPick }: { onPick: (template: BlogTemplate) => void }
     { key: 'ranking',   desc: 'Lista ordenada Top N', icon: '🏆' },
     { key: 'listicle',  desc: 'Listagem numerada com conclusão', icon: '📋' },
   ]
+  const [free, ...rest] = templates
   return (
-    <div className="py-12 flex flex-col items-center gap-6">
+    <div className="py-12 flex flex-col items-center gap-5">
       <div className="text-center">
         <Layout className="w-8 h-8 text-[#ff2d78] mx-auto mb-3" />
         <h2 className="text-xl font-black text-foreground mb-1">Escolha um template</h2>
         <p className="text-sm text-muted">Os blocos podem ser editados livremente depois</p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
-        {templates.map(t => (
-          <button
-            key={t.key}
-            onClick={() => onPick(t.key)}
-            className="flex flex-col items-start gap-2 p-4 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all text-left"
-          >
-            <span className="text-2xl">{t.icon}</span>
-            <div>
-              <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[t.key]}</p>
-              <p className="text-xs text-muted">{t.desc}</p>
-            </div>
-          </button>
-        ))}
+      <div className="w-full max-w-2xl space-y-3">
+        {/* Free — full-width */}
+        <button
+          onClick={() => onPick(free.key)}
+          className="w-full flex items-center gap-4 p-4 rounded-xl border border-dashed border-border hover:border-[#ff2d78]/50 bg-surface hover:bg-surface-hover transition-all text-left"
+        >
+          <span className="text-2xl shrink-0">{free.icon}</span>
+          <div>
+            <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[free.key]}</p>
+            <p className="text-xs text-muted">{free.desc}</p>
+          </div>
+        </button>
+        {/* Other templates — 3-column grid (9 items = 3×3) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {rest.map(t => (
+            <button
+              key={t.key}
+              onClick={() => onPick(t.key)}
+              className="flex flex-col items-start gap-2 p-4 rounded-xl border border-border hover:border-[#ff2d78]/40 bg-surface hover:bg-surface-hover transition-all text-left"
+            >
+              <span className="text-2xl">{t.icon}</span>
+              <div>
+                <p className="text-sm font-bold text-foreground">{BLOG_TEMPLATE_LABELS[t.key]}</p>
+                <p className="text-xs text-muted">{t.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

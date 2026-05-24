@@ -65,6 +65,7 @@ const ICONS: Record<BlogBlockType, React.ReactNode> = {
     blog_mv_breakdown:    <Video className="w-3.5 h-3.5" />,
     blog_flashcard:       <AlignLeft className="w-3.5 h-3.5" />,
     blog_idol_facts:      <User className="w-3.5 h-3.5" />,
+    blog_ad:              <BarChart2 className="w-3.5 h-3.5" />,
 }
 
 const COLORS: Record<BlogBlockType, string> = {
@@ -118,6 +119,7 @@ const COLORS: Record<BlogBlockType, string> = {
     blog_mv_breakdown:    'bg-red-500/20 text-red-300 border-red-500/30',
     blog_flashcard:       'bg-slate-500/20 text-slate-300 border-slate-500/30',
     blog_idol_facts:      'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    blog_ad:              'bg-amber-500/20 text-amber-300 border-amber-500/30',
 }
 
 // ─── Block groups for the type selector ───────────────────────────────────────
@@ -125,7 +127,7 @@ const COLORS: Record<BlogBlockType, string> = {
 const TYPE_GROUPS: { label: string; types: BlogBlockType[] }[] = [
     { label: 'Texto',     types: ['blog_heading', 'blog_paragraph', 'blog_quote', 'blog_list', 'blog_callout', 'blog_curiosity', 'blog_highlight', 'blog_divider'] },
     { label: 'Mídia',     types: ['blog_image', 'blog_gallery', 'blog_video', 'blog_twitter', 'blog_instagram', 'blog_tiktok', 'blog_spotify'] },
-    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert'] },
+    { label: 'Layout',    types: ['blog_timeline', 'blog_steps', 'blog_pros_cons', 'blog_comparison', 'blog_accordion', 'blog_tabs', 'blog_ranking', 'blog_alert', 'blog_ad'] },
     { label: 'HallyuHub', types: ['blog_artist_card', 'blog_group_card', 'blog_production_card', 'blog_stats_row', 'blog_rating', 'blog_product_card', 'blog_member_grid', 'blog_setlist', 'blog_comeback_card', 'blog_trivia', 'blog_idol_facts'] },
     { label: 'Interativo', types: ['blog_vs', 'blog_poll', 'blog_quiz', 'blog_flashcard', 'blog_countdown', 'blog_before_after'] },
     { label: 'K-Pop', types: ['blog_lyrics', 'blog_lyrics_parallel', 'blog_era_card', 'blog_chart_history', 'blog_fandom', 'blog_lightstick', 'blog_positions', 'blog_discography_grid', 'blog_achievement', 'blog_mv_breakdown'] },
@@ -152,6 +154,7 @@ function defaultBlock(type: BlogBlockType): BlogBlock {
         case 'blog_stats_row':       return { type, items: [{ label: '', value: '' }] }
         case 'blog_rating':          return { type, score: 8, label: '', summary: '' }
         case 'blog_divider':         return { type }
+        case 'blog_ad':              return { type, label: '' }
         case 'blog_callout':         return { type, variant: 'fact', title: '', text: '' }
         case 'blog_curiosity':       return { type, text: '', emoji: '💡' }
         case 'blog_highlight':       return { type, text: '', attribution: '' }
@@ -670,6 +673,19 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_divider':
             return <div className="h-px bg-border my-1 rounded" />
 
+        case 'blog_ad':
+            return (
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-amber-400/40 bg-amber-400/[.04]">
+                        <span className="text-amber-500 text-xs font-bold uppercase tracking-wide shrink-0">AD</span>
+                        <span className="text-xs text-muted flex-1">Slot de anúncio — exibido automaticamente na renderização</span>
+                    </div>
+                    <input value={block.label || ''} onChange={e => onChange({ ...block, label: e.target.value })}
+                        placeholder="Rótulo interno (ex: entre parágrafos 3 e 4)..."
+                        className={inputCls} />
+                </div>
+            )
+
         case 'blog_callout':
             return (
                 <div className="space-y-2">
@@ -1113,6 +1129,7 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_stats_row':       return `${block.items.length} campo(s)`
         case 'blog_rating':          return `Nota: ${block.score}/10${block.label ? ` — ${block.label}` : ''}`
         case 'blog_divider':         return '───✦───'
+        case 'blog_ad':              return block.label || 'Slot de anúncio'
         case 'blog_callout':         return block.title || block.text.slice(0, 60) || '(vazio)'
         case 'blog_curiosity':       return block.text.slice(0, 60) || '(vazio)'
         case 'blog_highlight':       return block.text.slice(0, 60) || '(vazio)'

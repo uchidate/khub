@@ -181,6 +181,12 @@ export type BlogDividerBlock = {
     type: 'blog_divider'
 }
 
+// Slot de anúncio editorial
+export type BlogAdBlock = {
+    type: 'blog_ad'
+    label?: string
+}
+
 // Embed do Spotify (track, álbum, playlist, artista)
 export type BlogSpotifyBlock = {
     type: 'blog_spotify'
@@ -518,6 +524,7 @@ export type BlogBlock =
     | BlogMvBreakdownBlock
     | BlogFlashcardBlock
     | BlogIdolFactsBlock
+    | BlogAdBlock
 
 export type BlogBlockType = BlogBlock['type']
 
@@ -572,6 +579,7 @@ export const BLOG_BLOCK_TYPE_LABELS: Record<BlogBlockType, string> = {
     blog_mv_breakdown:     'Análise de MV',
     blog_flashcard:        'Flashcards',
     blog_idol_facts:       'Ficha do Idol',
+    blog_ad:               'Slot de Anúncio',
 }
 
 export type BlogTemplate = 'free' | 'idol_bio' | 'review' | 'ranking' | 'group_bio' | 'comeback' | 'interview' | 'guide' | 'news' | 'listicle'
