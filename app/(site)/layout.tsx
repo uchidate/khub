@@ -159,6 +159,8 @@ export default async function RootLayout({
                         <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
+                        {/* Consent default inline — deve rodar ANTES do AdSense carregar */}
+                        <script key="gtag-consent-default" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{analytics_storage:'denied',ad_storage:'granted',ad_personalization:'granted'});` }} />
                         <script
                             key="adsense-auto-ads"
                             async
