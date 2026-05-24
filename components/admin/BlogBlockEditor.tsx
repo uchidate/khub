@@ -1179,18 +1179,18 @@ function BlockRow({
     }, [forceCollapsed])
 
     return (
-        <div className={`group relative bg-surface border rounded-xl transition-colors ${collapsed ? 'border-border' : 'border-border hover:border-border/80'}`}>
+        <div className={`group/row relative bg-surface border rounded-xl transition-all ${collapsed ? 'border-border' : 'border-border hover:border-accent/20 hover:shadow-sm'}`}>
             {/* Header bar */}
-            <div className="flex items-center gap-2 px-3 py-2.5">
-                {/* Reorder controls */}
-                <div className="flex flex-col items-center gap-0 shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2">
+                {/* Reorder controls — visible only on hover */}
+                <div className="flex flex-col items-center gap-0 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
                     <button onClick={onMoveUp} disabled={index === 0}
                         className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
-                        <ChevronUp className="w-3.5 h-3.5" />
+                        <ChevronUp className="w-3 h-3" />
                     </button>
                     <button onClick={onMoveDown} disabled={index === total - 1}
                         className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
-                        <ChevronDown className="w-3.5 h-3.5" />
+                        <ChevronDown className="w-3 h-3" />
                     </button>
                 </div>
 
@@ -1202,22 +1202,22 @@ function BlockRow({
                         {ICONS[block.type]}
                         {BLOG_BLOCK_TYPE_LABELS[block.type]}
                     </span>
-                    <span className="text-[10px] text-muted shrink-0">#{index + 1}</span>
+                    <span className="text-[10px] text-muted/40 shrink-0 group-hover/row:text-muted/70 transition-colors">#{index + 1}</span>
                     {collapsed && (
                         <span className="text-xs text-muted truncate ml-1 italic">{blockPreview(block)}</span>
                     )}
-                    <ChevronRight className={`w-3.5 h-3.5 text-muted ml-auto shrink-0 transition-transform ${collapsed ? '' : 'rotate-90'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 text-muted/40 ml-auto shrink-0 transition-transform ${collapsed ? '' : 'rotate-90'}`} />
                 </button>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
+                {/* Actions — visible only on hover */}
+                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
                     <button onClick={onDuplicate} title="Duplicar"
-                        className="p-1 text-muted hover:text-foreground transition-colors">
-                        <Copy className="w-3.5 h-3.5" />
+                        className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition-colors">
+                        <Copy className="w-3 h-3" />
                     </button>
                     <button onClick={onDelete} title="Remover"
-                        className="p-1 text-muted hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
+                        className="p-1.5 rounded-md text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors">
+                        <Trash2 className="w-3 h-3" />
                     </button>
                 </div>
             </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Cookie, Shield, BarChart2 } from 'lucide-react'
 import { useCookieConsent } from '@/hooks/useCookieConsent'
+import { usePathname } from 'next/navigation'
 
 const categories = [
     {
@@ -23,8 +24,11 @@ const categories = [
 
 export function CookieBanner() {
     const { consent, loaded, acceptAll, acceptNecessary } = useCookieConsent()
+    const pathname = usePathname()
 
     if (!loaded || consent !== null) return null
+    // Suppress on admin/editor routes — no tracking needed there
+    if (pathname.startsWith('/write') || pathname.startsWith('/admin')) return null
 
     return (
         <>
