@@ -608,6 +608,71 @@ function GalleryBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { t
     )
 }
 
+function StringListInput({ items, onChange, placeholder, addLabel, accentClass }: {
+    items: string[]; onChange: (items: string[]) => void
+    placeholder: (i: number) => string; addLabel: string; accentClass: string
+}) {
+    const refs = useRef<(HTMLInputElement | null)[]>([])
+    return (
+        <div className="space-y-1.5">
+            {items.map((item, i) => (
+                <div key={i} className="flex gap-1.5 items-center">
+                    <input
+                        ref={el => { refs.current[i] = el }}
+                        value={item}
+                        onChange={e => { const next = [...items]; next[i] = e.target.value; onChange(next) }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const next = [...items]; next.splice(i + 1, 0, ''); onChange(next)
+                                setTimeout(() => refs.current[i + 1]?.focus(), 0)
+                            }
+                            if (e.key === 'Backspace' && !item && items.length > 1) {
+                                e.preventDefault()
+                                onChange(items.filter((_, j) => j !== i))
+                                setTimeout(() => refs.current[Math.max(0, i - 1)]?.focus(), 0)
+                            }
+                        }}
+                        placeholder={placeholder(i)}
+                        className={`${inputCls} flex-1`}
+                    />
+                    <button onClick={() => onChange(items.filter((_, j) => j !== i))}
+                        className="text-muted hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
+                </div>
+            ))}
+            <button onClick={() => { onChange([...items, '']); setTimeout(() => refs.current[items.length]?.focus(), 0) }}
+                className={`text-xs text-muted ${accentClass} flex items-center gap-1`}>
+                <Plus className="w-3 h-3" /> {addLabel}
+            </button>
+        </div>
+    )
+}
+
+function ProsConsBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_pros_cons' }>; onChange: (b: BlogBlock) => void }) {
+    return (
+        <div className="space-y-3">
+            <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                placeholder="Título (opcional)..." className={inputCls} />
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                    <p className="text-xs font-semibold text-emerald-400">Prós</p>
+                    <StringListInput
+                        items={block.pros} onChange={pros => onChange({ ...block, pros })}
+                        placeholder={i => `Pró ${i + 1}...`} addLabel="Adicionar" accentClass="hover:text-emerald-400"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <p className="text-xs font-semibold text-red-400">Contras</p>
+                    <StringListInput
+                        items={block.cons} onChange={cons => onChange({ ...block, cons })}
+                        placeholder={i => `Contra ${i + 1}...`} addLabel="Adicionar" accentClass="hover:text-red-400"
+                    />
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function ListBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_list' }>; onChange: (b: BlogBlock) => void }) {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
     return (
@@ -1278,48 +1343,7 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             return <ListBlockEditor block={block} onChange={onChange} />
 
         case 'blog_pros_cons':
-            return (
-                <div className="space-y-3">
-                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
-                        placeholder="Título (opcional)..." className={inputCls} />
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <p className="text-xs font-semibold text-emerald-400">Prós</p>
-                            {block.pros.map((pro, i) => (
-                                <div key={i} className="flex gap-1.5 items-center">
-                                    <input value={pro} onChange={e => {
-                                        const pros = [...block.pros]; pros[i] = e.target.value
-                                        onChange({ ...block, pros })
-                                    }} placeholder={`Pró ${i + 1}...`} className={`${inputCls} flex-1`} />
-                                    <button onClick={() => onChange({ ...block, pros: block.pros.filter((_, j) => j !== i) })}
-                                        className="text-muted hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
-                                </div>
-                            ))}
-                            <button onClick={() => onChange({ ...block, pros: [...block.pros, ''] })}
-                                className="text-xs text-muted hover:text-emerald-400 flex items-center gap-1">
-                                <Plus className="w-3 h-3" /> Adicionar
-                            </button>
-                        </div>
-                        <div className="space-y-2">
-                            <p className="text-xs font-semibold text-red-400">Contras</p>
-                            {block.cons.map((con, i) => (
-                                <div key={i} className="flex gap-1.5 items-center">
-                                    <input value={con} onChange={e => {
-                                        const cons = [...block.cons]; cons[i] = e.target.value
-                                        onChange({ ...block, cons })
-                                    }} placeholder={`Contra ${i + 1}...`} className={`${inputCls} flex-1`} />
-                                    <button onClick={() => onChange({ ...block, cons: block.cons.filter((_, j) => j !== i) })}
-                                        className="text-muted hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
-                                </div>
-                            ))}
-                            <button onClick={() => onChange({ ...block, cons: [...block.cons, ''] })}
-                                className="text-xs text-muted hover:text-red-400 flex items-center gap-1">
-                                <Plus className="w-3 h-3" /> Adicionar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )
+            return <ProsConsBlockEditor block={block} onChange={onChange} />
 
         case 'blog_steps':
             return (
