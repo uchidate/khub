@@ -6,7 +6,7 @@ import {
     Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
     User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
     ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
-    ChevronsUpDown,
+    ChevronsUpDown, GripVertical,
 } from 'lucide-react'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
@@ -1182,14 +1182,15 @@ function BlockRow({
         <div className={`group/row relative bg-surface border rounded-xl transition-all ${collapsed ? 'border-border' : 'border-border hover:border-accent/20 hover:shadow-sm'}`}>
             {/* Header bar */}
             <div className="flex items-center gap-2 px-3 py-2">
-                {/* Reorder controls — visible only on hover */}
-                <div className="flex flex-col items-center gap-0 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                {/* Drag handle + reorder controls — visible only on hover */}
+                <div className="flex flex-col items-center gap-0 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
+                    <GripVertical className="w-3.5 h-3.5 text-muted/50 mb-0.5" />
                     <button onClick={onMoveUp} disabled={index === 0}
-                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
                         <ChevronUp className="w-3 h-3" />
                     </button>
                     <button onClick={onMoveDown} disabled={index === total - 1}
-                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors">
+                        className="text-muted hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer">
                         <ChevronDown className="w-3 h-3" />
                     </button>
                 </div>
@@ -1203,10 +1204,10 @@ function BlockRow({
                         {BLOG_BLOCK_TYPE_LABELS[block.type]}
                     </span>
                     <span className="text-[10px] text-muted/40 shrink-0 group-hover/row:text-muted/70 transition-colors">#{index + 1}</span>
-                    {collapsed && (
-                        <span className="text-xs text-muted truncate ml-1 italic">{blockPreview(block)}</span>
+                    {collapsed && blockPreview(block) && (
+                        <span className="text-[11px] text-muted/70 truncate ml-2 max-w-xs">{blockPreview(block)}</span>
                     )}
-                    <ChevronRight className={`w-3.5 h-3.5 text-muted/40 ml-auto shrink-0 transition-transform ${collapsed ? '' : 'rotate-90'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 text-muted/40 ml-auto shrink-0 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
                 </button>
 
                 {/* Actions — visible only on hover */}
