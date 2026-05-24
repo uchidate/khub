@@ -68,7 +68,7 @@ export function HomeDiscoverySection({
     ].filter(Boolean) as { href: string; label: string; title: string; sub?: string | null; img?: string | null }[]
 
     return (
-        <section className="bg-background">
+        <section className="bg-background overflow-hidden">
             <div className="page-wrap border-t border-border py-10">
                 <div className={`grid gap-10 ${cluster ? "lg:grid-cols-[1.2fr_0.8fr] lg:gap-0 lg:divide-x lg:divide-border/40" : ""}`}>
 
@@ -88,7 +88,7 @@ export function HomeDiscoverySection({
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-accent">Destaque relacionado</p>
-                                        <h3 className="mt-1.5 font-serif text-[22px] font-medium leading-[1.05] tracking-[-0.04em] text-foreground transition-colors group-hover:text-accent sm:text-[26px]">
+                                        <h3 className="mt-1.5 font-serif text-[22px] font-medium leading-[1.05] tracking-[-0.04em] text-foreground transition-colors group-hover:text-accent sm:text-[26px] break-words">
                                             {leadClusterItem.title}
                                         </h3>
                                         <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-muted">
