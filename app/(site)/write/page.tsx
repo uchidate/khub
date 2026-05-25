@@ -9,7 +9,7 @@ import {
     Blocks, FileText, Layout, ImageIcon, PanelRightClose, PanelRightOpen,
     Maximize2, Minimize2, Undo2, Redo2, Clock, History,
 } from 'lucide-react'
-import { BlogBlockEditor } from '@/components/admin/BlogBlockEditor'
+import { BlogBlockEditor, BlockOutlinePanel } from '@/components/admin/BlogBlockEditor'
 import { SeoChecklist } from '@/components/admin/SeoChecklist'
 import { MediaPicker } from '@/components/admin/MediaPicker'
 import { ArticleHealthPanel } from '@/components/admin/ArticleHealthPanel'
@@ -684,6 +684,11 @@ function WritePageContent() {
 
         {/* Sidebar */}
         {sidebarOpen && !focusMode && <aside className="space-y-5">
+          {/* Block Outline — topo da sidebar para fácil acesso */}
+          {editorMode === 'blocks' && blocks.length > 1 && (
+            <BlockOutlinePanel blocks={blocks} />
+          )}
+
           {/* Article Health */}
           <ArticleHealthPanel
             issues={issues}
@@ -776,6 +781,17 @@ function WritePageContent() {
                   <ImageIcon className="w-3 h-3" />
                   {coverImageUrl ? 'Trocar' : 'Escolher da biblioteca'}
                 </button>
+                {!coverImageUrl && blocks.some(b => b.type === 'blog_image' && (b as { url?: string }).url) && (
+                  <button
+                    onClick={() => {
+                      const img = blocks.find(b => b.type === 'blog_image' && (b as { url?: string }).url) as { url: string } | undefined
+                      if (img?.url) setCoverImageUrl(img.url)
+                    }}
+                    className="text-[10px] text-muted hover:text-foreground transition-colors"
+                  >
+                    Usar 1ª imagem
+                  </button>
+                )}
                 {coverImageUrl && (
                   <button onClick={() => setCoverImageUrl('')} className="text-[10px] text-muted hover:text-red-500 transition-colors">Remover</button>
                 )}

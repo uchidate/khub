@@ -781,12 +781,15 @@ function isCompactCard(block: BlogBlock): boolean {
     )
 }
 
-function isNonCompactArtistCard(block: BlogBlock): boolean {
-    return block.type === 'blog_artist_card' && !block.compact
+function isNonCompactCard(block: BlogBlock): boolean {
+    return (
+        (block.type === 'blog_artist_card' && !block.compact) ||
+        (block.type === 'blog_group_card' && !block.compact) ||
+        (block.type === 'blog_production_card')
+    )
 }
 
-
-// Internal marker type to differentiate portrait groups from compact groups
+// kept for legacy compat — portrait grid no longer used
 type PortraitGroupMarker = { _portraitGroup: true; items: BlogBlock[] }
 function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
     return typeof item === 'object' && item !== null && '_portraitGroup' in item
@@ -794,19 +797,19 @@ function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
 
 
 export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
+    // Group consecutive non-compact entity cards into a 2-col grid
     // Group consecutive compact cards into a 2-col desktop grid
-    // Group consecutive non-compact artist cards into a portrait editorial grid
     const rows: (BlogBlock | BlogBlock[] | PortraitGroupMarker)[] = []
     let i = 0
     while (i < blocks.length) {
         const block = blocks[i]
-        if (isNonCompactArtistCard(block)) {
+        if (isNonCompactCard(block)) {
             const group: BlogBlock[] = [block]
-            while (i + 1 < blocks.length && isNonCompactArtistCard(blocks[i + 1])) {
+            while (i + 1 < blocks.length && isNonCompactCard(blocks[i + 1])) {
                 i++
                 group.push(blocks[i])
             }
-            rows.push(group.length > 1 ? { _portraitGroup: true, items: group } : block)
+            rows.push(group.length > 1 ? group : block)
         } else if (isCompactCard(block)) {
             const group: BlogBlock[] = [block]
             while (i + 1 < blocks.length && isCompactCard(blocks[i + 1])) {
@@ -848,7 +851,7 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                     )
                     : Array.isArray(item)
                         ? (
-                            <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-1.5 my-3">
+                            <div key={idx} className={`grid gap-2 my-3 ${item.length >= 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                 {item.map((block, j) => (
                                     <BlogBlockItem key={j} block={block} resolvedEntities={resolvedEntities} />
                                 ))}
@@ -1714,35 +1717,38 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
         )
     }
 
-    // Solo expanded card
+    // Solo expanded card — portrait photo column + editorial content side
+    // Card médio horizontal — thumbnail retrato + info
     return (
         <Link href={`/artists/${artistId}`}
-            className="group flex items-start gap-5 my-4 p-4 rounded-2xl border border-border hover:border-accent/40 bg-surface hover:bg-surface-hover transition-all shadow-sm hover:shadow-md">
-            <div className="relative w-28 h-36 rounded-xl overflow-hidden shrink-0 border border-border/60">
+            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            {/* Thumbnail retrato — 105px × 140px = proporção 3:4, object-top mostra o rosto */}
+            <div className="relative w-[105px] shrink-0 overflow-hidden bg-surface-hover">
                 {data?.primaryImageUrl ? (
-                    <Image
-                        src={data.primaryImageUrl}
-                        alt={data?.nameRomanized ?? artistId}
-                        fill
-                        className="object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
-                        sizes="112px"
-                    />
+                    <Image src={data.primaryImageUrl} alt={data?.nameRomanized ?? artistId} fill
+                        className="object-cover object-top" sizes="105px" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/15 to-surface text-3xl font-black text-accent/70">
+                    <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-accent/40 bg-gradient-to-b from-accent/10 to-surface">
                         {data?.nameRomanized?.[0] ?? '?'}
                     </div>
                 )}
             </div>
-            <div className="flex-1 min-w-0 py-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-2">Artista</span>
-                <p className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight">
-                    {data?.nameRomanized ?? artistId}
-                </p>
-                {role && <p className="text-sm text-muted mt-1">{role}</p>}
-                {note && <p className="text-sm text-muted mt-2.5 leading-relaxed">{note}</p>}
-                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
-                    Ver perfil completo
-                    <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+            {/* Info */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
+                <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-1">Artista</p>
+                    <p className="text-lg font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                        {data?.nameRomanized ?? artistId}
+                    </p>
+                    {data?.roles && data.roles.length > 0 && (
+                        <p className="text-[11px] text-muted mt-1 truncate">{data.roles.slice(0, 2).join(' · ')}</p>
+                    )}
+                    {note && <p className="text-xs text-muted mt-1 line-clamp-1 leading-snug">{note}</p>}
+                </div>
+                <p className="text-[10px] text-muted flex items-center gap-1">
+                    Ver perfil no
+                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                    <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>
         </Link>
@@ -1773,35 +1779,39 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
             </Link>
         )
     }
+    // Card compacto horizontal — thumbnail landscape + info
     return (
         <Link href={`/groups/${groupId}`}
-            className="group my-4 rounded-2xl border border-border hover:border-accent/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg block">
-            {/* Banner gradient header */}
-            <div className="relative h-20 bg-gradient-to-r from-accent/15 via-accent/05 to-transparent">
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-[9px] font-bold text-white bg-accent px-2.5 py-1 rounded-full">Ver grupo →</span>
-                </div>
-            </div>
-            {/* Avatar overlapping banner */}
-            <div className="px-5 pb-5">
-                <div className="relative -mt-10 mb-3">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-surface bg-surface overflow-hidden shadow-lg flex items-center justify-center text-2xl font-black text-accent/60">
-                        {data?.profileImageUrl ? (
-                            <Image src={data.profileImageUrl} alt={data.name} width={80} height={80} className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" />
-                        ) : (
-                            <span>{data?.name?.[0] ?? '?'}</span>
-                        )}
+            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            {/* Thumbnail landscape — 16:9 na altura de 140px = ~249px, mas limitado em mobile */}
+            <div className="relative w-[40%] max-w-[200px] shrink-0 overflow-hidden bg-surface-hover">
+                {data?.profileImageUrl ? (
+                    <Image src={data.profileImageUrl} alt={data.name} fill
+                        className="object-cover object-center" sizes="160px" />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-accent/40 bg-gradient-to-br from-accent/10 to-surface">
+                        {data?.name?.[0] ?? '?'}
                     </div>
+                )}
+            </div>
+            {/* Info */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
+                <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-0.5">Grupo</p>
+                    <p className="text-base font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                        {data?.name ?? groupId}
+                    </p>
+                    {data?.fanClubName && (
+                        <p className="text-[11px] text-muted mt-0.5 truncate">
+                            Fandom: <strong className="text-foreground font-semibold">{data.fanClubName}</strong>
+                        </p>
+                    )}
+                    {note && <p className="text-xs text-muted mt-1 line-clamp-1">{note}</p>}
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-1.5">Grupo</span>
-                <p className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight">
-                    {data?.name ?? groupId}
-                </p>
-                {data?.fanClubName && <p className="text-sm text-muted mt-1">Fandom: <strong className="text-foreground font-semibold">{data.fanClubName}</strong></p>}
-                {note && <p className="text-sm text-muted mt-2 leading-relaxed">{note}</p>}
-                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
-                    Ver perfil do grupo
-                    <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+                <p className="text-[10px] text-muted flex items-center gap-1">
+                    Ver perfil no
+                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                    <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>
         </Link>
@@ -1813,34 +1823,33 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
     const typeLabel = data?.type ? (TYPE_LABELS[data.type] ?? data.type) : null
     return (
         <Link href={`/productions/${productionId}`}
-            className="group flex my-4 rounded-2xl border border-border hover:border-accent/60 bg-surface hover:bg-surface-hover overflow-hidden transition-all shadow-sm hover:shadow-lg">
-            {/* Poster */}
-            <div className="relative w-28 shrink-0 bg-surface-hover min-h-[160px]">
+            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            {/* Poster — 93px wide × 140px tall = proporção 2:3 exata */}
+            <div className="relative w-[93px] shrink-0 overflow-hidden bg-surface-hover">
                 {data?.imageUrl ? (
-                    <Image src={data.imageUrl} alt={data?.titlePt ?? ''} fill className="object-cover group-hover:scale-[1.04] transition-transform duration-500" sizes="112px" />
+                    <Image src={data.imageUrl} alt={data?.titlePt ?? ''} fill
+                        className="object-cover" sizes="67px" />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-accent/30">
+                    <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-accent/30 bg-gradient-to-b from-accent/10 to-surface">
                         {data?.titlePt?.slice(0, 2).toUpperCase() ?? '?'}
-                    </div>
-                )}
-                {data?.year && (
-                    <div className="absolute bottom-2 inset-x-0 flex justify-center">
-                        <span className="text-[10px] font-bold text-white bg-black/60 px-1.5 py-0.5 rounded">{data.year}</span>
                     </div>
                 )}
             </div>
             {/* Info */}
-            <div className="flex-1 min-w-0 p-4 py-5">
-                <span className="text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-0.5 rounded-full inline-block mb-2">
-                    {typeLabel ?? 'Produção'}
-                </span>
-                <p className="text-lg font-black text-foreground group-hover:text-accent transition-colors leading-tight">
-                    {data?.titlePt ?? productionId}
-                </p>
-                {note && <p className="text-sm text-muted mt-2 leading-relaxed">{note}</p>}
-                <p className="text-xs text-accent mt-3 font-bold flex items-center gap-1">
-                    Ver detalhes
-                    <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
+                <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-0.5">
+                        {typeLabel ?? 'Produção'}{data?.year ? ` · ${data.year}` : ''}
+                    </p>
+                    <p className="text-base font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                        {data?.titlePt ?? productionId}
+                    </p>
+                    {note && <p className="text-xs text-muted mt-1 line-clamp-1">{note}</p>}
+                </div>
+                <p className="text-[10px] text-muted flex items-center gap-1">
+                    Ver detalhes no
+                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                    <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>
         </Link>
