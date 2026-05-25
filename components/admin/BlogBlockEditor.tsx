@@ -852,6 +852,194 @@ function ListBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type
     )
 }
 
+function LyricsBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_lyrics' }>; onChange: (b: BlogBlock) => void }) {
+    const lyricsOrigRefs = useRef<(HTMLInputElement | null)[]>([])
+    const lyricsTranRefs = useRef<(HTMLInputElement | null)[]>([])
+    return (
+        <div className="space-y-2">
+            <div className="flex gap-2">
+                <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                    placeholder="Título da música..." className={`${inputCls} flex-1`} />
+                <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
+                    placeholder="Artista / álbum..." className={`${inputCls} w-44`} />
+            </div>
+            <div className="grid grid-cols-2 gap-2 px-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Original (🇰🇷)</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Tradução (🇧🇷)</span>
+            </div>
+            {block.lines.map((line, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2 items-center group/line">
+                    <input
+                        ref={el => { lyricsOrigRefs.current[i] = el }}
+                        value={line.original}
+                        onChange={e => {
+                            const lines = [...block.lines]; lines[i] = { ...line, original: e.target.value }
+                            onChange({ ...block, lines })
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const lines = [...block.lines]
+                                lines.splice(i + 1, 0, { original: '', translation: '' })
+                                onChange({ ...block, lines })
+                                setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
+                            }
+                            if (e.key === 'Tab') {
+                                e.preventDefault()
+                                lyricsTranRefs.current[i]?.focus()
+                            }
+                            if (e.key === 'Backspace' && !line.original && !line.translation && block.lines.length > 1) {
+                                e.preventDefault()
+                                onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })
+                                setTimeout(() => lyricsOrigRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                            }
+                        }}
+                        placeholder="가사..."
+                        className={`${inputCls} text-sm`}
+                    />
+                    <div className="flex gap-1 items-center">
+                        <input
+                            ref={el => { lyricsTranRefs.current[i] = el }}
+                            value={line.translation || ''}
+                            onChange={e => {
+                                const lines = [...block.lines]; lines[i] = { ...line, translation: e.target.value }
+                                onChange({ ...block, lines })
+                            }}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    const lines = [...block.lines]
+                                    lines.splice(i + 1, 0, { original: '', translation: '' })
+                                    onChange({ ...block, lines })
+                                    setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
+                                }
+                                if (e.key === 'Tab' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    lyricsOrigRefs.current[i + 1]?.focus()
+                                }
+                            }}
+                            placeholder="tradução..."
+                            className={`${inputCls} flex-1 text-sm`}
+                        />
+                        <button onClick={() => onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })}
+                            className="opacity-0 group-hover/line:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+            ))}
+            <button onClick={() => {
+                onChange({ ...block, lines: [...block.lines, { original: '', translation: '' }] })
+                setTimeout(() => lyricsOrigRefs.current[block.lines.length]?.focus(), 0)
+            }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Adicionar linha
+            </button>
+        </div>
+    )
+}
+
+function FandomBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_fandom' }>; onChange: (b: BlogBlock) => void }) {
+    const fandomRefs = useRef<(HTMLInputElement | null)[]>([])
+    return (
+        <div className="space-y-2">
+            <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
+            {block.quotes.map((q, i) => (
+                <div key={i} className="flex gap-2 items-center group/quote">
+                    <input
+                        ref={el => { fandomRefs.current[i] = el }}
+                        value={q.text}
+                        onChange={e => {
+                            const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
+                            onChange({ ...block, quotes })
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault()
+                                const quotes = [...block.quotes]; quotes.splice(i + 1, 0, { text: '' })
+                                onChange({ ...block, quotes })
+                                setTimeout(() => fandomRefs.current[i + 1]?.focus(), 0)
+                            }
+                            if (e.key === 'Backspace' && !q.text && block.quotes.length > 1) {
+                                e.preventDefault()
+                                onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })
+                                setTimeout(() => fandomRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                            }
+                        }}
+                        placeholder={`Citação ${i + 1}...`}
+                        className={`${inputCls} flex-1`}
+                    />
+                    <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
+                        className="opacity-0 group-hover/quote:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            ))}
+            <button onClick={() => {
+                onChange({ ...block, quotes: [...block.quotes, { text: '' }] })
+                setTimeout(() => fandomRefs.current[block.quotes.length]?.focus(), 0)
+            }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Adicionar citação
+            </button>
+        </div>
+    )
+}
+
+function SetlistBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_setlist' }>; onChange: (b: BlogBlock) => void }) {
+    const setlistRefs = useRef<(HTMLInputElement | null)[]>([])
+    return (
+        <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+                <input value={block.event || ''} onChange={e => onChange({ ...block, event: e.target.value })}
+                    placeholder="Evento..." className={inputCls} />
+                <input value={block.date || ''} onChange={e => onChange({ ...block, date: e.target.value })}
+                    placeholder="Data (ex: 2024-01-20)..." className={inputCls} />
+                <input value={block.venue || ''} onChange={e => onChange({ ...block, venue: e.target.value })}
+                    placeholder="Local..." className={inputCls} />
+            </div>
+            {block.tracks.map((track, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                    <span className="text-xs text-muted shrink-0 w-5 text-right tabular-nums">{track.number}.</span>
+                    <input
+                        ref={el => { setlistRefs.current[i] = el }}
+                        value={track.title} onChange={e => {
+                        const tracks = [...block.tracks]; tracks[i] = { ...track, title: e.target.value }
+                        onChange({ ...block, tracks })
+                    }} onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const tracks = [...block.tracks]
+                            tracks.splice(i + 1, 0, { number: i + 2, title: '' })
+                            const renum = tracks.map((t, j) => ({ ...t, number: j + 1 }))
+                            onChange({ ...block, tracks: renum })
+                            setTimeout(() => setlistRefs.current[i + 1]?.focus(), 0)
+                        }
+                        if (e.key === 'Backspace' && !track.title && block.tracks.length > 1) {
+                            e.preventDefault()
+                            const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
+                            onChange({ ...block, tracks })
+                            setTimeout(() => setlistRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                        }
+                    }}
+                    placeholder="Título da música..." className={`${inputCls} flex-1`} />
+                    <input value={track.note || ''} onChange={e => {
+                        const tracks = [...block.tracks]; tracks[i] = { ...track, note: e.target.value }
+                        onChange({ ...block, tracks })
+                    }} placeholder="Nota (encore, remix...)" className={`${inputCls} w-36`} />
+                    <button onClick={() => {
+                        const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
+                        onChange({ ...block, tracks })
+                    }} className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                </div>
+            ))}
+            <button onClick={() => onChange({ ...block, tracks: [...block.tracks, { number: block.tracks.length + 1, title: '' }] })}
+                className="text-xs text-muted hover:text-green-400 flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Adicionar faixa
+            </button>
+        </div>
+    )
+}
+
 function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b: BlogBlock) => void }) {
     switch (block.type) {
         case 'blog_heading': {
@@ -1243,93 +1431,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_lyrics': {
-            const lyricsOrigRefs = useRef<(HTMLInputElement | null)[]>([])
-            const lyricsTranRefs = useRef<(HTMLInputElement | null)[]>([])
-            return (
-                <div className="space-y-2">
-                    <div className="flex gap-2">
-                        <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
-                            placeholder="Título da música..." className={`${inputCls} flex-1`} />
-                        <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
-                            placeholder="Artista / álbum..." className={`${inputCls} w-44`} />
-                    </div>
-                    {/* Column headers */}
-                    <div className="grid grid-cols-2 gap-2 px-1">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Original (🇰🇷)</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Tradução (🇧🇷)</span>
-                    </div>
-                    {/* Lines */}
-                    {block.lines.map((line, i) => (
-                        <div key={i} className="grid grid-cols-2 gap-2 items-center group/line">
-                            <input
-                                ref={el => { lyricsOrigRefs.current[i] = el }}
-                                value={line.original}
-                                onChange={e => {
-                                    const lines = [...block.lines]; lines[i] = { ...line, original: e.target.value }
-                                    onChange({ ...block, lines })
-                                }}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault()
-                                        const lines = [...block.lines]
-                                        lines.splice(i + 1, 0, { original: '', translation: '' })
-                                        onChange({ ...block, lines })
-                                        setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
-                                    }
-                                    if (e.key === 'Tab') {
-                                        e.preventDefault()
-                                        lyricsTranRefs.current[i]?.focus()
-                                    }
-                                    if (e.key === 'Backspace' && !line.original && !line.translation && block.lines.length > 1) {
-                                        e.preventDefault()
-                                        onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })
-                                        setTimeout(() => lyricsOrigRefs.current[Math.max(0, i - 1)]?.focus(), 0)
-                                    }
-                                }}
-                                placeholder="가사..."
-                                className={`${inputCls} text-sm`}
-                            />
-                            <div className="flex gap-1 items-center">
-                                <input
-                                    ref={el => { lyricsTranRefs.current[i] = el }}
-                                    value={line.translation || ''}
-                                    onChange={e => {
-                                        const lines = [...block.lines]; lines[i] = { ...line, translation: e.target.value }
-                                        onChange({ ...block, lines })
-                                    }}
-                                    onKeyDown={e => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault()
-                                            const lines = [...block.lines]
-                                            lines.splice(i + 1, 0, { original: '', translation: '' })
-                                            onChange({ ...block, lines })
-                                            setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
-                                        }
-                                        if (e.key === 'Tab' && !e.shiftKey) {
-                                            e.preventDefault()
-                                            lyricsOrigRefs.current[i + 1]?.focus()
-                                        }
-                                    }}
-                                    placeholder="tradução..."
-                                    className={`${inputCls} flex-1 text-sm`}
-                                />
-                                <button onClick={() => onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })}
-                                    className="opacity-0 group-hover/line:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                    <button onClick={() => {
-                        onChange({ ...block, lines: [...block.lines, { original: '', translation: '' }] })
-                        setTimeout(() => lyricsOrigRefs.current[block.lines.length]?.focus(), 0)
-                    }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1 transition-colors">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar linha
-                    </button>
-                </div>
-            )
-        }
+        case 'blog_lyrics':
+            return <LyricsBlockEditor block={block} onChange={onChange} />
 
         case 'blog_era_card':
             return (
@@ -1415,52 +1518,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_fandom': {
-            const fandomRefs = useRef<(HTMLInputElement | null)[]>([])
-            return (
-                <div className="space-y-2">
-                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
-                        placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
-                    {block.quotes.map((q, i) => (
-                        <div key={i} className="flex gap-2 items-center group/quote">
-                            <input
-                                ref={el => { fandomRefs.current[i] = el }}
-                                value={q.text}
-                                onChange={e => {
-                                    const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
-                                    onChange({ ...block, quotes })
-                                }}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault()
-                                        const quotes = [...block.quotes]; quotes.splice(i + 1, 0, { text: '' })
-                                        onChange({ ...block, quotes })
-                                        setTimeout(() => fandomRefs.current[i + 1]?.focus(), 0)
-                                    }
-                                    if (e.key === 'Backspace' && !q.text && block.quotes.length > 1) {
-                                        e.preventDefault()
-                                        onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })
-                                        setTimeout(() => fandomRefs.current[Math.max(0, i - 1)]?.focus(), 0)
-                                    }
-                                }}
-                                placeholder={`Citação ${i + 1}...`}
-                                className={`${inputCls} flex-1`}
-                            />
-                            <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
-                                className="opacity-0 group-hover/quote:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
-                                <X className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    ))}
-                    <button onClick={() => {
-                        onChange({ ...block, quotes: [...block.quotes, { text: '' }] })
-                        setTimeout(() => fandomRefs.current[block.quotes.length]?.focus(), 0)
-                    }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar citação
-                    </button>
-                </div>
-            )
-        }
+        case 'blog_fandom':
+            return <FandomBlockEditor block={block} onChange={onChange} />
 
         case 'blog_lightstick':
             return (
@@ -2129,60 +2188,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_setlist': {
-            const setlistRefs = useRef<(HTMLInputElement | null)[]>([])
-            return (
-                <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
-                        <input value={block.event || ''} onChange={e => onChange({ ...block, event: e.target.value })}
-                            placeholder="Evento..." className={inputCls} />
-                        <input value={block.date || ''} onChange={e => onChange({ ...block, date: e.target.value })}
-                            placeholder="Data (ex: 2024-01-20)..." className={inputCls} />
-                        <input value={block.venue || ''} onChange={e => onChange({ ...block, venue: e.target.value })}
-                            placeholder="Local..." className={inputCls} />
-                    </div>
-                    {block.tracks.map((track, i) => (
-                        <div key={i} className="flex gap-2 items-center">
-                            <span className="text-xs text-muted shrink-0 w-5 text-right tabular-nums">{track.number}.</span>
-                            <input
-                                ref={el => { setlistRefs.current[i] = el }}
-                                value={track.title} onChange={e => {
-                                const tracks = [...block.tracks]; tracks[i] = { ...track, title: e.target.value }
-                                onChange({ ...block, tracks })
-                            }} onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault()
-                                    const tracks = [...block.tracks]
-                                    tracks.splice(i + 1, 0, { number: i + 2, title: '' })
-                                    const renum = tracks.map((t, j) => ({ ...t, number: j + 1 }))
-                                    onChange({ ...block, tracks: renum })
-                                    setTimeout(() => setlistRefs.current[i + 1]?.focus(), 0)
-                                }
-                                if (e.key === 'Backspace' && !track.title && block.tracks.length > 1) {
-                                    e.preventDefault()
-                                    const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
-                                    onChange({ ...block, tracks })
-                                    setTimeout(() => setlistRefs.current[Math.max(0, i - 1)]?.focus(), 0)
-                                }
-                            }}
-                            placeholder="Título da música..." className={`${inputCls} flex-1`} />
-                            <input value={track.note || ''} onChange={e => {
-                                const tracks = [...block.tracks]; tracks[i] = { ...track, note: e.target.value }
-                                onChange({ ...block, tracks })
-                            }} placeholder="Nota (encore, remix...)" className={`${inputCls} w-36`} />
-                            <button onClick={() => {
-                                const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
-                                onChange({ ...block, tracks })
-                            }} className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
-                        </div>
-                    ))}
-                    <button onClick={() => onChange({ ...block, tracks: [...block.tracks, { number: block.tracks.length + 1, title: '' }] })}
-                        className="text-xs text-muted hover:text-green-400 flex items-center gap-1">
-                        <Plus className="w-3.5 h-3.5" /> Adicionar faixa
-                    </button>
-                </div>
-            )
-        }
+        case 'blog_setlist':
+            return <SetlistBlockEditor block={block} onChange={onChange} />
 
         case 'blog_idol_facts':
             return (
