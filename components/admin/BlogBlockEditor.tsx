@@ -514,8 +514,9 @@ function AutoTextarea({ value, onChange, placeholder, minRows = 3, className = '
 
 function ParagraphBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_paragraph' }>; onChange: (b: BlogBlock) => void }) {
     const [showSlash, setShowSlash] = useState(false)
+    const wc = block.text ? block.text.split(/\s+/).filter(Boolean).length : 0
     return (
-        <div className="relative">
+        <div className="relative space-y-1">
             {showSlash && (
                 <div className="absolute z-20 top-full mt-1 left-0">
                     <TypeSelector
@@ -534,6 +535,11 @@ function ParagraphBlockEditor({ block, onChange }: { block: Extract<BlogBlock, {
                 placeholder="Escreva um parágrafo... (/ para transformar em outro bloco)"
                 minRows={3}
             />
+            {wc >= 30 && (
+                <p className={`text-[10px] text-right tabular-nums ${wc > 150 ? 'text-orange-400' : 'text-muted/40'}`}>
+                    {wc} palavras{wc > 150 ? ' — parágrafo longo' : ''}
+                </p>
+            )}
         </div>
     )
 }
@@ -566,8 +572,14 @@ function ImageBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { typ
                         onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                 </div>
             )}
-            <input value={block.alt || ''} onChange={e => onChange({ ...block, alt: e.target.value })}
-                placeholder="Texto alternativo (alt) — descreva a imagem para SEO e acessibilidade..." className={inputCls} />
+            <div className="space-y-1">
+                <input value={block.alt || ''} onChange={e => onChange({ ...block, alt: e.target.value })}
+                    placeholder="Texto alternativo (alt) — descreva a imagem para SEO e acessibilidade..."
+                    className={`${inputCls} ${block.url && !block.alt ? 'border-orange-500/40 focus:border-orange-500/60' : ''}`} />
+                {block.url && !block.alt && (
+                    <p className="text-[11px] text-orange-400">Alt text vazio — importante para SEO e acessibilidade</p>
+                )}
+            </div>
             <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
                 placeholder="Legenda (opcional)..." className={inputCls} />
             <div className="flex items-center gap-3">
@@ -587,8 +599,26 @@ function ImageBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { typ
 
 function GalleryBlockEditor({ block, onChange }: { block: Extract<BlogBlock, { type: 'blog_gallery' }>; onChange: (b: BlogBlock) => void }) {
     const [galleryPickerIdx, setGalleryPickerIdx] = useState<number | null>(null)
+    const filledUrls = block.urls.filter(Boolean)
     return (
         <div className="space-y-2">
+            {/* Strip preview — only when 2+ images */}
+            {filledUrls.length >= 2 && (
+                <div className={`grid gap-1 rounded-lg overflow-hidden border border-border ${filledUrls.length === 2 ? 'grid-cols-2' : filledUrls.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}
+                    style={{ height: '80px' }}>
+                    {filledUrls.slice(0, 4).map((url, i) => (
+                        <div key={i} className="relative overflow-hidden bg-surface">
+                            <img src={url} alt="" className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            {filledUrls.length > 4 && i === 3 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-sm font-bold">
+                                    +{filledUrls.length - 4}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
             {galleryPickerIdx !== null && (
                 <MediaPicker
                     value={block.urls[galleryPickerIdx] ?? null}
@@ -701,6 +731,8 @@ function StatsRowEditor({ block, onChange }: { block: Extract<BlogBlock, { type:
                         const items = [...block.items]
                         items[i] = { ...item, emoji: e.target.value } as typeof item
                         onChange({ ...block, items })
+                    }} onKeyDown={e => {
+                        if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); labelRefs.current[i]?.focus() }
                     }} placeholder="🌟" className={`${inputCls} w-12 text-center`} />
                     <input
                         ref={el => { labelRefs.current[i] = el }}
@@ -851,6 +883,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Texto da citação..." minRows={3} />
                     <input value={block.author || ''} onChange={e => onChange({ ...block, author: e.target.value })}
                         placeholder="Autor (opcional)..." className={inputCls} />
+                    {block.text && (
+                        <div className="flex gap-3 rounded-lg px-4 py-3 bg-amber-500/10 border-l-4 border-amber-400/60">
+                            <div className="min-w-0">
+                                <p className="text-xs text-muted/80 italic leading-relaxed">"{block.text.slice(0, 140)}{block.text.length > 140 ? '…' : ''}"</p>
+                                {block.author && <p className="text-[10px] text-amber-400/80 mt-1">— {block.author}</p>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )
 
@@ -860,27 +900,70 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_gallery':
             return <GalleryBlockEditor block={block} onChange={onChange} />
 
-        case 'blog_video':
+        case 'blog_video': {
+            const ytMatch = block.url.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/)
+            const ytId = ytMatch?.[1] ?? null
+            return (
+                <div className="space-y-2">
+                    <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
+                        placeholder="URL do YouTube (incluindo /shorts/...)"
+                        className={inputCls} />
+                    {ytId && (
+                        <div className="relative rounded-lg overflow-hidden border border-border h-36 bg-surface group/thumb cursor-pointer"
+                            onClick={() => window.open(`https://www.youtube.com/watch?v=${ytId}`, '_blank')}>
+                            <img
+                                src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+                                alt="thumbnail"
+                                className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                                <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+                                    <Video className="w-5 h-5 text-white" />
+                                </div>
+                            </div>
+                            <span className="absolute bottom-1 right-1 text-[10px] font-mono bg-black/70 text-white px-1.5 py-0.5 rounded">{ytId}</span>
+                        </div>
+                    )}
+                    {!ytId && block.url && (
+                        <p className="text-[11px] text-orange-400">URL inválida — use um link youtube.com/watch?v=... ou youtu.be/...</p>
+                    )}
+                    <input value={block.caption || ''} onChange={e => onChange({ ...block, caption: e.target.value })}
+                        placeholder="Legenda (opcional)..." className={inputCls} />
+                </div>
+            )
+        }
+
         case 'blog_twitter':
         case 'blog_instagram':
-        case 'blog_tiktok':
+        case 'blog_tiktok': {
+            const domain = block.url ? (() => { try { return new URL(block.url).hostname.replace('www.', '') } catch { return null } })() : null
+            const expectedDomains: Record<string, string[]> = {
+                blog_twitter: ['twitter.com', 'x.com'],
+                blog_instagram: ['instagram.com'],
+                blog_tiktok: ['tiktok.com'],
+            }
+            const isValid = domain ? expectedDomains[block.type]?.some(d => domain.includes(d)) : false
             return (
                 <div className="space-y-2">
                     <input value={block.url} onChange={e => onChange({ ...block, url: e.target.value })}
                         placeholder={
-                            block.type === 'blog_video' ? 'URL do YouTube (incluindo /shorts/...)' :
-                            block.type === 'blog_twitter' ? 'URL do tweet (x.com ou twitter.com)' :
-                            block.type === 'blog_instagram' ? 'URL do post do Instagram...' :
-                            'URL do vídeo no TikTok...'
+                            block.type === 'blog_twitter' ? 'URL do tweet (x.com ou twitter.com/...)' :
+                            block.type === 'blog_instagram' ? 'URL do post do Instagram (instagram.com/p/...)' :
+                            'URL do vídeo no TikTok (tiktok.com/@.../video/...)'
                         }
                         className={inputCls} />
-                    {'caption' in block && (
-                        <input value={(block as { caption?: string }).caption || ''}
-                            onChange={e => onChange({ ...block, caption: e.target.value } as BlogBlock)}
-                            placeholder="Legenda (opcional)..." className={inputCls} />
+                    {block.url && (
+                        <div className={`flex items-center gap-1.5 text-[11px] ${isValid ? 'text-green-400' : 'text-orange-400'}`}>
+                            {isValid
+                                ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />{domain}</>
+                                : <><span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />Domínio inesperado: {domain ?? 'URL inválida'}</>
+                            }
+                        </div>
                     )}
                 </div>
             )
+        }
 
         case 'blog_spotify':
             return (
@@ -994,7 +1077,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_callout':
+        case 'blog_callout': {
+            const calloutStyles = {
+                fact:    { bar: 'bg-pink-500',   bg: 'bg-pink-500/10',   text: 'text-pink-300',   emoji: '✨' },
+                stat:    { bar: 'bg-amber-500',  bg: 'bg-amber-500/10',  text: 'text-amber-300',  emoji: '📊' },
+                info:    { bar: 'bg-blue-500',   bg: 'bg-blue-500/10',   text: 'text-blue-300',   emoji: 'ℹ️' },
+                warning: { bar: 'bg-orange-500', bg: 'bg-orange-500/10', text: 'text-orange-300', emoji: '⚠️' },
+            } as const
+            const cs = calloutStyles[block.variant ?? 'fact']
             return (
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
@@ -1017,13 +1107,26 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título (opcional)..." className={inputCls} />
                     <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
                         placeholder="Texto do destaque... (**negrito** suportado)" minRows={2} />
+                    {(block.title || block.text) && (
+                        <div className={`flex gap-3 rounded-lg p-3 ${cs.bg} border border-current/10 border-opacity-20`}>
+                            <div className={`w-1 rounded-full shrink-0 self-stretch ${cs.bar}`} />
+                            <div className="min-w-0 space-y-0.5">
+                                {block.title && <p className={`text-xs font-bold ${cs.text}`}>{cs.emoji} {block.title}</p>}
+                                {block.text && <p className="text-xs text-muted/80 leading-relaxed">{block.text.slice(0, 120)}{block.text.length > 120 ? '…' : ''}</p>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )
+        }
         case 'blog_curiosity':
             return (
                 <div className="space-y-2">
-                    <input value={block.emoji || ''} onChange={e => onChange({ ...block, emoji: e.target.value })}
-                        placeholder="Emoji (ex: 🎤)" className={inputCls} />
+                    <div className="flex items-center gap-2">
+                        <label className={labelCls + ' mb-0'}>Emoji</label>
+                        <input value={block.emoji || ''} onChange={e => onChange({ ...block, emoji: e.target.value })}
+                            placeholder="💡" className={`${inputCls} w-16 text-center text-lg`} />
+                    </div>
                     <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
                         placeholder="Curiosidade... (**negrito** e [links](/url) suportados)" minRows={3} />
                 </div>
@@ -1035,6 +1138,12 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Texto em destaque visual grande..." minRows={2} />
                     <input value={block.attribution || ''} onChange={e => onChange({ ...block, attribution: e.target.value })}
                         placeholder="Atribuição (opcional)..." className={inputCls} />
+                    {block.text && (
+                        <div className="rounded-lg p-3 bg-amber-400/10 border border-amber-400/20 text-center">
+                            <p className="text-sm font-bold text-amber-300 leading-snug">"{block.text.slice(0, 100)}{block.text.length > 100 ? '…' : ''}"</p>
+                            {block.attribution && <p className="text-[10px] text-muted/60 mt-1">— {block.attribution}</p>}
+                        </div>
+                    )}
                 </div>
             )
 
@@ -1051,6 +1160,12 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                 <input value={item.year} onChange={e => {
                                     const items = [...block.items]; items[i] = { ...item, year: e.target.value }
                                     onChange({ ...block, items })
+                                }} onKeyDown={e => {
+                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        const next = (e.currentTarget as HTMLInputElement).nextElementSibling as HTMLElement | null
+                                        next?.focus()
+                                    }
                                 }} placeholder="2020" className={`${inputCls} w-24`} />
                                 <input value={item.title} onChange={e => {
                                     const items = [...block.items]; items[i] = { ...item, title: e.target.value }
@@ -1061,6 +1176,10 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                         const items = [...block.items]
                                         items.splice(i + 1, 0, { year: '', title: '', text: '', emoji: '' })
                                         onChange({ ...block, items })
+                                    }
+                                    if (e.key === 'Backspace' && !item.title && !item.year && block.items.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, items: block.items.filter((_, j) => j !== i) })
                                     }
                                 }} placeholder="Marco da carreira..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
@@ -1086,11 +1205,25 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.question || ''} onChange={e => onChange({ ...block, question: e.target.value })}
                         placeholder="Pergunta (ex: Quem é melhor?)" className={inputCls} />
-                    <div className="grid grid-cols-2 gap-2">
-                        <input value={block.optionA.label} onChange={e => onChange({ ...block, optionA: { ...block.optionA, label: e.target.value } })}
-                            placeholder="Opção A" className={inputCls} />
-                        <input value={block.optionB.label} onChange={e => onChange({ ...block, optionB: { ...block.optionB, label: e.target.value } })}
-                            placeholder="Opção B" className={inputCls} />
+                    <div className="grid grid-cols-2 gap-3">
+                        {(['optionA', 'optionB'] as const).map((side, si) => {
+                            const opt = block[side] as { label: string; imageUrl?: string }
+                            return (
+                                <div key={side} className="space-y-1.5">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{si === 0 ? 'Opção A' : 'Opção B'}</p>
+                                    {opt.imageUrl && (
+                                        <div className="h-24 rounded-lg border border-border overflow-hidden bg-surface">
+                                            <img src={opt.imageUrl} alt="" className="w-full h-full object-cover"
+                                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                        </div>
+                                    )}
+                                    <input value={opt.label} onChange={e => onChange({ ...block, [side]: { ...opt, label: e.target.value } })}
+                                        placeholder="Rótulo..." className={inputCls} />
+                                    <input value={opt.imageUrl || ''} onChange={e => onChange({ ...block, [side]: { ...opt, imageUrl: e.target.value } })}
+                                        placeholder="Foto URL (opcional)..." className={inputCls} />
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             )
@@ -1110,24 +1243,93 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_lyrics':
+        case 'blog_lyrics': {
+            const lyricsOrigRefs = useRef<(HTMLInputElement | null)[]>([])
+            const lyricsTranRefs = useRef<(HTMLInputElement | null)[]>([])
             return (
                 <div className="space-y-2">
-                    <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
-                        placeholder="Título da música..." className={inputCls} />
-                    <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
-                        placeholder="Fonte (artista, álbum)..." className={inputCls} />
-                    <AutoTextarea value={block.lines.map(l => l.original).join('\n')}
-                        onChange={v => onChange({ ...block, lines: v.split('\n').map(original => ({ original, translation: '' })) })}
-                        minRows={4} placeholder="Letras originais (coreano), uma por linha..." />
-                    <AutoTextarea value={block.lines.map(l => l.translation).join('\n')}
-                        onChange={v => {
-                            const translations = v.split('\n')
-                            onChange({ ...block, lines: block.lines.map((l, i) => ({ ...l, translation: translations[i] ?? '' })) })
-                        }}
-                        minRows={4} placeholder="Traduções (uma por linha)..." />
+                    <div className="flex gap-2">
+                        <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
+                            placeholder="Título da música..." className={`${inputCls} flex-1`} />
+                        <input value={block.source || ''} onChange={e => onChange({ ...block, source: e.target.value })}
+                            placeholder="Artista / álbum..." className={`${inputCls} w-44`} />
+                    </div>
+                    {/* Column headers */}
+                    <div className="grid grid-cols-2 gap-2 px-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Original (🇰🇷)</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Tradução (🇧🇷)</span>
+                    </div>
+                    {/* Lines */}
+                    {block.lines.map((line, i) => (
+                        <div key={i} className="grid grid-cols-2 gap-2 items-center group/line">
+                            <input
+                                ref={el => { lyricsOrigRefs.current[i] = el }}
+                                value={line.original}
+                                onChange={e => {
+                                    const lines = [...block.lines]; lines[i] = { ...line, original: e.target.value }
+                                    onChange({ ...block, lines })
+                                }}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const lines = [...block.lines]
+                                        lines.splice(i + 1, 0, { original: '', translation: '' })
+                                        onChange({ ...block, lines })
+                                        setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
+                                    }
+                                    if (e.key === 'Tab') {
+                                        e.preventDefault()
+                                        lyricsTranRefs.current[i]?.focus()
+                                    }
+                                    if (e.key === 'Backspace' && !line.original && !line.translation && block.lines.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })
+                                        setTimeout(() => lyricsOrigRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                                    }
+                                }}
+                                placeholder="가사..."
+                                className={`${inputCls} text-sm`}
+                            />
+                            <div className="flex gap-1 items-center">
+                                <input
+                                    ref={el => { lyricsTranRefs.current[i] = el }}
+                                    value={line.translation || ''}
+                                    onChange={e => {
+                                        const lines = [...block.lines]; lines[i] = { ...line, translation: e.target.value }
+                                        onChange({ ...block, lines })
+                                    }}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault()
+                                            const lines = [...block.lines]
+                                            lines.splice(i + 1, 0, { original: '', translation: '' })
+                                            onChange({ ...block, lines })
+                                            setTimeout(() => lyricsOrigRefs.current[i + 1]?.focus(), 0)
+                                        }
+                                        if (e.key === 'Tab' && !e.shiftKey) {
+                                            e.preventDefault()
+                                            lyricsOrigRefs.current[i + 1]?.focus()
+                                        }
+                                    }}
+                                    placeholder="tradução..."
+                                    className={`${inputCls} flex-1 text-sm`}
+                                />
+                                <button onClick={() => onChange({ ...block, lines: block.lines.filter((_, j) => j !== i) })}
+                                    className="opacity-0 group-hover/line:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    <button onClick={() => {
+                        onChange({ ...block, lines: [...block.lines, { original: '', translation: '' }] })
+                        setTimeout(() => lyricsOrigRefs.current[block.lines.length]?.focus(), 0)
+                    }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1 transition-colors">
+                        <Plus className="w-3.5 h-3.5" /> Adicionar linha
+                    </button>
                 </div>
             )
+        }
 
         case 'blog_era_card':
             return (
@@ -1138,8 +1340,22 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Período (ex: 2023–2024)" className={inputCls} />
                     <input value={block.concept || ''} onChange={e => onChange({ ...block, concept: e.target.value })}
                         placeholder="Conceito da era..." className={inputCls} />
-                    <input value={(block.colors ?? []).join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
-                        placeholder="Cores hex separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            {(block.colors ?? []).filter(c => /^#[0-9a-fA-F]{3,6}$/.test(c)).map((c, i) => (
+                                <div key={i} className="w-6 h-6 rounded-full border border-border/60 shrink-0"
+                                    style={{ backgroundColor: c }} title={c} />
+                            ))}
+                        </div>
+                        <input value={(block.colors ?? []).join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
+                            placeholder="Cores hex separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    </div>
+                    {block.imageUrl && (
+                        <div className="h-28 rounded-lg border border-border overflow-hidden bg-surface">
+                            <img src={block.imageUrl} alt="" className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                        </div>
+                    )}
                     <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
                         placeholder="URL da imagem representativa (opcional)" className={inputCls} />
                 </div>
@@ -1163,6 +1379,9 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={entry.label || ''} onChange={e => {
                                 const entries = [...block.entries]; entries[i] = { ...entry, label: e.target.value }
                                 onChange({ ...block, entries })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const en = [...block.entries]; en.splice(i + 1, 0, { date: '', position: 1, label: '' }); onChange({ ...block, entries: en }) }
+                                if (e.key === 'Backspace' && !entry.label && !entry.date && block.entries.length > 1) { e.preventDefault(); onChange({ ...block, entries: block.entries.filter((_, j) => j !== i) }) }
                             }} placeholder="Rótulo (música/nota)..." className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, entries: block.entries.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
@@ -1181,6 +1400,12 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     {(['before', 'after'] as const).map(side => (
                         <div key={side} className="space-y-2">
                             <label className={labelCls}>{side === 'before' ? 'Antes' : 'Depois'}</label>
+                            {block[side].url && (
+                                <div className="h-28 rounded-lg border border-border overflow-hidden bg-surface">
+                                    <img src={block[side].url} alt="" className="w-full h-full object-cover"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                </div>
+                            )}
                             <input value={block[side].url} onChange={e => onChange({ ...block, [side]: { ...block[side], url: e.target.value } })}
                                 placeholder="URL da imagem..." className={inputCls} />
                             <input value={block[side].label} onChange={e => onChange({ ...block, [side]: { ...block[side], label: e.target.value } })}
@@ -1190,37 +1415,80 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_fandom':
+        case 'blog_fandom': {
+            const fandomRefs = useRef<(HTMLInputElement | null)[]>([])
             return (
                 <div className="space-y-2">
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Nome do fandom (ex: MYs)" className={inputCls} />
                     {block.quotes.map((q, i) => (
-                        <div key={i} className="flex gap-2 items-start">
-                            <AutoTextarea value={q.text} onChange={v => {
-                                const quotes = [...block.quotes]; quotes[i] = { ...q, text: v }
-                                onChange({ ...block, quotes })
-                            }} minRows={2} placeholder={`Citação ${i + 1}`} className="flex-1" />
+                        <div key={i} className="flex gap-2 items-center group/quote">
+                            <input
+                                ref={el => { fandomRefs.current[i] = el }}
+                                value={q.text}
+                                onChange={e => {
+                                    const quotes = [...block.quotes]; quotes[i] = { ...q, text: e.target.value }
+                                    onChange({ ...block, quotes })
+                                }}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const quotes = [...block.quotes]; quotes.splice(i + 1, 0, { text: '' })
+                                        onChange({ ...block, quotes })
+                                        setTimeout(() => fandomRefs.current[i + 1]?.focus(), 0)
+                                    }
+                                    if (e.key === 'Backspace' && !q.text && block.quotes.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })
+                                        setTimeout(() => fandomRefs.current[Math.max(0, i - 1)]?.focus(), 0)
+                                    }
+                                }}
+                                placeholder={`Citação ${i + 1}...`}
+                                className={`${inputCls} flex-1`}
+                            />
                             <button onClick={() => onChange({ ...block, quotes: block.quotes.filter((_, j) => j !== i) })}
-                                className="text-muted hover:text-red-400 pt-2"><X className="w-4 h-4" /></button>
+                                className="opacity-0 group-hover/quote:opacity-100 text-muted hover:text-red-400 shrink-0 transition-opacity">
+                                <X className="w-3.5 h-3.5" />
+                            </button>
                         </div>
                     ))}
-                    <button onClick={() => onChange({ ...block, quotes: [...block.quotes, { text: '' }] })}
-                        className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
+                    <button onClick={() => {
+                        onChange({ ...block, quotes: [...block.quotes, { text: '' }] })
+                        setTimeout(() => fandomRefs.current[block.quotes.length]?.focus(), 0)
+                    }} className="text-xs text-muted hover:text-purple-400 flex items-center gap-1">
                         <Plus className="w-3.5 h-3.5" /> Adicionar citação
                     </button>
                 </div>
             )
+        }
 
         case 'blog_lightstick':
             return (
                 <div className="space-y-2">
-                    <input value={block.group} onChange={e => onChange({ ...block, group: e.target.value })}
-                        placeholder="Grupo (ex: aespa)" className={inputCls} />
-                    <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
-                        placeholder="Nome do lightstick (ex: MY Stick)" className={inputCls} />
-                    <input value={block.colors.join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
-                        placeholder="Cores separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    <div className="grid grid-cols-2 gap-2">
+                        <input value={block.group} onChange={e => onChange({ ...block, group: e.target.value })}
+                            placeholder="Grupo (ex: aespa)" className={inputCls} />
+                        <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                            placeholder="Nome do lightstick (ex: MY Stick)" className={inputCls} />
+                    </div>
+                    <div className="space-y-1">
+                        {block.colors.filter(c => /^#[0-9a-fA-F]{3,6}$/.test(c)).length > 0 && (
+                            <div className="flex items-center gap-2">
+                                {block.colors.filter(c => /^#[0-9a-fA-F]{3,6}$/.test(c)).map((c, i) => (
+                                    <div key={i} className="w-5 h-5 rounded-full border border-border/60 shrink-0"
+                                        style={{ backgroundColor: c }} title={c} />
+                                ))}
+                            </div>
+                        )}
+                        <input value={block.colors.join(', ')} onChange={e => onChange({ ...block, colors: e.target.value.split(',').map(c => c.trim()) })}
+                            placeholder="Cores separadas por vírgula (ex: #FF6B9D, #9C27B0)" className={inputCls} />
+                    </div>
+                    {block.imageUrl && (
+                        <div className="h-28 rounded-lg border border-border overflow-hidden bg-surface">
+                            <img src={block.imageUrl} alt="" className="w-full h-full object-contain p-2"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                        </div>
+                    )}
                     <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
                         placeholder="URL da imagem (opcional)" className={inputCls} />
                 </div>
@@ -1231,9 +1499,22 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     {block.members.map((member, i) => (
                         <div key={i} className="flex gap-2 items-center">
+                            <div className="w-8 h-8 rounded-full border border-border overflow-hidden shrink-0 bg-surface flex items-center justify-center">
+                                {member.imageUrl
+                                    ? <img src={member.imageUrl} alt="" className="w-full h-full object-cover object-top"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    : <User className="w-3.5 h-3.5 text-muted/40" />}
+                            </div>
+                            <input value={member.imageUrl || ''} onChange={e => {
+                                const members = [...block.members]; members[i] = { ...member, imageUrl: e.target.value }
+                                onChange({ ...block, members })
+                            }} placeholder="Foto URL" className={`${inputCls} w-24`} />
                             <input value={member.name} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, name: e.target.value }
                                 onChange({ ...block, members })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const m = [...block.members]; m.splice(i + 1, 0, { name: '', positions: [''], imageUrl: '' }); onChange({ ...block, members: m }) }
+                                if (e.key === 'Backspace' && !member.name && block.members.length > 1) { e.preventDefault(); onChange({ ...block, members: block.members.filter((_, j) => j !== i) }) }
                             }} placeholder="Nome" className={`${inputCls} flex-1`} />
                             <input value={member.positions.join(', ')} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, positions: e.target.value.split(',').map(p => p.trim()) }
@@ -1276,6 +1557,22 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                         const options = [...q.options]; options[oi] = e.target.value
                                         questions[i] = { ...q, options }
                                         onChange({ ...block, questions })
+                                    }} onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault()
+                                            const questions = [...block.questions]
+                                            const options = [...q.options]; options.splice(oi + 1, 0, '')
+                                            questions[i] = { ...q, options }
+                                            onChange({ ...block, questions })
+                                        }
+                                        if (e.key === 'Backspace' && !opt && q.options.length > 2) {
+                                            e.preventDefault()
+                                            const questions = [...block.questions]
+                                            const options = q.options.filter((_, j) => j !== oi)
+                                            const correct = q.correct >= oi && q.correct > 0 ? q.correct - 1 : q.correct
+                                            questions[i] = { ...q, options, correct }
+                                            onChange({ ...block, questions })
+                                        }
                                     }} placeholder={`Opção ${oi + 1}`} className={`${inputCls} flex-1`} />
                                 </div>
                             ))}
@@ -1288,17 +1585,28 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_countdown':
+        case 'blog_countdown': {
+            const daysRemaining = block.targetDate
+                ? Math.ceil((new Date(block.targetDate).getTime() - Date.now()) / 86400000)
+                : null
             return (
                 <div className="space-y-2">
                     <input value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título (ex: Comeback de)" className={inputCls} />
                     <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
                         placeholder="Nome do artista/grupo..." className={inputCls} />
-                    <input type="datetime-local" value={block.targetDate} onChange={e => onChange({ ...block, targetDate: e.target.value })}
-                        className={inputCls} />
+                    <div className="space-y-1">
+                        <input type="datetime-local" value={block.targetDate} onChange={e => onChange({ ...block, targetDate: e.target.value })}
+                            className={inputCls} />
+                        {daysRemaining !== null && (
+                            <p className={`text-[11px] ${daysRemaining > 0 ? 'text-orange-400' : daysRemaining === 0 ? 'text-green-400' : 'text-muted'}`}>
+                                {daysRemaining > 0 ? `${daysRemaining} dia(s) restante(s)` : daysRemaining === 0 ? 'Hoje!' : `Encerrado há ${Math.abs(daysRemaining)} dia(s)`}
+                            </p>
+                        )}
+                    </div>
                 </div>
             )
+        }
 
         case 'blog_discography_grid':
             return (
@@ -1307,17 +1615,33 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Nome do artista/grupo..." className={inputCls} />
                     {block.albums.map((album, i) => (
                         <div key={i} className="flex gap-2 items-center">
+                            <div className="w-10 h-10 rounded-md border border-border overflow-hidden shrink-0 bg-surface flex items-center justify-center">
+                                {album.imageUrl
+                                    ? <img src={album.imageUrl} alt="" className="w-full h-full object-cover"
+                                        onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                                    : <GalleryHorizontal className="w-4 h-4 text-muted/40" />}
+                            </div>
                             <input value={album.imageUrl || ''} onChange={e => {
                                 const albums = [...block.albums]; albums[i] = { ...album, imageUrl: e.target.value }
                                 onChange({ ...block, albums })
-                            }} placeholder="URL da capa" className={`${inputCls} w-32`} />
+                            }} placeholder="URL da capa" className={`${inputCls} w-28`} />
                             <input value={album.title} onChange={e => {
                                 const albums = [...block.albums]; albums[i] = { ...album, title: e.target.value }
                                 onChange({ ...block, albums })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Tab' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    const next = (e.currentTarget as HTMLInputElement).nextElementSibling as HTMLElement | null
+                                    next?.focus()
+                                }
+                                if (e.key === 'Enter') { e.preventDefault(); const a = [...block.albums]; a.splice(i + 1, 0, { title: '', year: '', imageUrl: '', type: 'Album' }); onChange({ ...block, albums: a }) }
+                                if (e.key === 'Backspace' && !album.title && block.albums.length > 1) { e.preventDefault(); onChange({ ...block, albums: block.albums.filter((_, j) => j !== i) }) }
                             }} placeholder="Título" className={`${inputCls} flex-1`} />
                             <input value={album.year || ''} onChange={e => {
                                 const albums = [...block.albums]; albums[i] = { ...album, year: e.target.value }
                                 onChange({ ...block, albums })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const a = [...block.albums]; a.splice(i + 1, 0, { title: '', year: '', imageUrl: '', type: 'Album' }); onChange({ ...block, albums: a }) }
                             }} placeholder="Ano" className={`${inputCls} w-20`} />
                             <button onClick={() => onChange({ ...block, albums: block.albums.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
@@ -1338,14 +1662,30 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={item.icon} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, icon: e.target.value }
                                 onChange({ ...block, items })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Tab' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    const next = (e.currentTarget as HTMLInputElement).nextElementSibling as HTMLElement | null
+                                    next?.focus()
+                                }
                             }} className={`${inputCls} w-14 text-center`} />
                             <input value={item.title} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, title: e.target.value }
                                 onChange({ ...block, items })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Tab' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    const next = (e.currentTarget as HTMLInputElement).nextElementSibling as HTMLElement | null
+                                    next?.focus()
+                                }
+                                if (e.key === 'Enter') { e.preventDefault(); onChange({ ...block, items: [...block.items.slice(0, i + 1), { icon: '🏆', title: '', description: '' }, ...block.items.slice(i + 1)] }) }
+                                if (e.key === 'Backspace' && !item.title && block.items.length > 1) { e.preventDefault(); onChange({ ...block, items: block.items.filter((_, j) => j !== i) }) }
                             }} placeholder="Conquista..." className={`${inputCls} flex-1`} />
                             <input value={item.description} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, description: e.target.value }
                                 onChange({ ...block, items })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); onChange({ ...block, items: [...block.items.slice(0, i + 1), { icon: '🏆', title: '', description: '' }, ...block.items.slice(i + 1)] }) }
                             }} placeholder="Descrição/detalhe" className={`${inputCls} w-40`} />
                             <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
@@ -1366,6 +1706,20 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         const match = raw.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/)
                         onChange({ ...block, videoId: match ? match[1] : raw })
                     }} placeholder="YouTube URL ou video ID (ex: dQw4w9WgXcQ)" className={inputCls} />
+                    {block.videoId && block.videoId.length === 11 && (
+                        <div className="relative rounded-lg overflow-hidden border border-border h-24 bg-surface group/mvthumb cursor-pointer"
+                            onClick={() => window.open(`https://www.youtube.com/watch?v=${block.videoId}`, '_blank')}>
+                            <img src={`https://img.youtube.com/vi/${block.videoId}/hqdefault.jpg`}
+                                alt="thumbnail" className="w-full h-full object-cover"
+                                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover/mvthumb:opacity-100 transition-opacity">
+                                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center">
+                                    <Video className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
+                            <span className="absolute bottom-1 right-1 text-[10px] font-mono bg-black/70 text-white px-1.5 py-0.5 rounded">{block.videoId}</span>
+                        </div>
+                    )}
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título do MV..." className={inputCls} />
                     {block.scenes.map((scene, i) => (
@@ -1377,6 +1731,9 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={scene.label} onChange={e => {
                                 const scenes = [...block.scenes]; scenes[i] = { ...scene, label: e.target.value }
                                 onChange({ ...block, scenes })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const s = [...block.scenes]; s.splice(i + 1, 0, { time: '0:00', label: '', description: '' }); onChange({ ...block, scenes: s }) }
+                                if (e.key === 'Backspace' && !scene.label && block.scenes.length > 1) { e.preventDefault(); onChange({ ...block, scenes: block.scenes.filter((_, j) => j !== i) }) }
                             }} placeholder="Título da cena..." className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, scenes: block.scenes.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400"><X className="w-4 h-4" /></button>
@@ -1394,20 +1751,27 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 <div className="space-y-2">
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título do deck..." className={inputCls} />
+                    {/* Column headers */}
+                    <div className="grid grid-cols-2 gap-2 px-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Frente</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Verso</span>
+                    </div>
                     {block.cards.map((card, i) => (
-                        <div key={i} className="grid grid-cols-2 gap-2 p-2 rounded-lg border border-border">
+                        <div key={i} className="grid grid-cols-2 gap-2 items-start group/card">
                             <AutoTextarea value={card.front} onChange={v => {
                                 const cards = [...block.cards]; cards[i] = { ...card, front: v }
                                 onChange({ ...block, cards })
-                            }} minRows={2} placeholder="Frente" />
-                            <AutoTextarea value={card.back} onChange={v => {
-                                const cards = [...block.cards]; cards[i] = { ...card, back: v }
-                                onChange({ ...block, cards })
-                            }} minRows={2} placeholder="Verso" />
-                            <button onClick={() => onChange({ ...block, cards: block.cards.filter((_, j) => j !== i) })}
-                                className="col-span-2 text-xs text-muted hover:text-red-400 text-right">
-                                remover card
-                            </button>
+                            }} minRows={2} placeholder="Pergunta / termo..." />
+                            <div className="flex gap-1 items-start">
+                                <AutoTextarea value={card.back} onChange={v => {
+                                    const cards = [...block.cards]; cards[i] = { ...card, back: v }
+                                    onChange({ ...block, cards })
+                                }} minRows={2} placeholder="Resposta / definição..." className="flex-1" />
+                                <button onClick={() => onChange({ ...block, cards: block.cards.filter((_, j) => j !== i) })}
+                                    className="opacity-0 group-hover/card:opacity-100 text-muted hover:text-red-400 pt-2 shrink-0 transition-opacity">
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     ))}
                     <button onClick={() => onChange({ ...block, cards: [...block.cards, { front: '', back: '' }] })}
@@ -1429,18 +1793,27 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título da sequência (opcional)..." className={inputCls} />
                     {block.steps.map((step, i) => (
-                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                        <div key={i} className="step-item p-3 rounded-lg border border-border bg-background space-y-1.5">
                             <div className="flex gap-2 items-center">
                                 <span className="text-xs font-bold text-orange-400 shrink-0 w-5">{i + 1}</span>
                                 <input value={step.title} onChange={e => {
                                     const steps = [...block.steps]; steps[i] = { ...step, title: e.target.value }
                                     onChange({ ...block, steps })
                                 }} onKeyDown={e => {
+                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        const ta = (e.currentTarget as HTMLInputElement).closest('.step-item')?.querySelector('textarea')
+                                        ;(ta as HTMLElement | null)?.focus()
+                                    }
                                     if (e.key === 'Enter') {
                                         e.preventDefault()
                                         const steps = [...block.steps]
                                         steps.splice(i + 1, 0, { title: '', text: '' })
                                         onChange({ ...block, steps })
+                                    }
+                                    if (e.key === 'Backspace' && !step.title && !step.text && block.steps.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, steps: block.steps.filter((_, j) => j !== i) })
                                     }
                                 }} placeholder="Título do passo..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, steps: block.steps.filter((_, j) => j !== i) })}
@@ -1465,17 +1838,26 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título do acordeão (opcional)..." className={inputCls} />
                     {block.items.map((item, i) => (
-                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                        <div key={i} className="accordion-item p-3 rounded-lg border border-border bg-background space-y-1.5">
                             <div className="flex gap-2 items-center">
                                 <input value={item.question} onChange={e => {
                                     const items = [...block.items]; items[i] = { ...item, question: e.target.value }
                                     onChange({ ...block, items })
                                 }} onKeyDown={e => {
+                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        const ta = (e.currentTarget as HTMLInputElement).closest('.accordion-item')?.querySelector('textarea')
+                                        ;(ta as HTMLElement | null)?.focus()
+                                    }
                                     if (e.key === 'Enter') {
                                         e.preventDefault()
                                         const items = [...block.items]
                                         items.splice(i + 1, 0, { question: '', answer: '' })
                                         onChange({ ...block, items })
+                                    }
+                                    if (e.key === 'Backspace' && !item.question && !item.answer && block.items.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, items: block.items.filter((_, j) => j !== i) })
                                     }
                                 }} placeholder="Pergunta / título da seção..." className={`${inputCls} flex-1`} />
                                 <button onClick={() => onChange({ ...block, items: block.items.filter((_, j) => j !== i) })}
@@ -1498,11 +1880,27 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
             return (
                 <div className="space-y-2">
                     {block.tabs.map((tab, i) => (
-                        <div key={i} className="p-3 rounded-lg border border-border bg-background space-y-1.5">
+                        <div key={i} className="tab-item p-3 rounded-lg border border-border bg-background space-y-1.5">
                             <div className="flex gap-2 items-center">
                                 <input value={tab.label} onChange={e => {
                                     const tabs = [...block.tabs]; tabs[i] = { ...tab, label: e.target.value }
                                     onChange({ ...block, tabs })
+                                }} onKeyDown={e => {
+                                    if (e.key === 'Tab' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        const ta = (e.currentTarget as HTMLInputElement).closest('.tab-item')?.querySelector('textarea')
+                                        ;(ta as HTMLElement | null)?.focus()
+                                    }
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const tabs = [...block.tabs]
+                                        tabs.splice(i + 1, 0, { label: `Aba ${block.tabs.length + 1}`, content: '' })
+                                        onChange({ ...block, tabs })
+                                    }
+                                    if (e.key === 'Backspace' && !tab.label && !tab.content && block.tabs.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, tabs: block.tabs.filter((_, j) => j !== i) })
+                                    }
                                 }} placeholder="Nome da aba..." className={`${inputCls} w-40 shrink-0`} />
                                 <button onClick={() => onChange({ ...block, tabs: block.tabs.filter((_, j) => j !== i) })}
                                     className="text-muted hover:text-red-400 ml-auto"><X className="w-4 h-4" /></button>
@@ -1520,61 +1918,115 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_comparison':
+        case 'blog_comparison': {
+            const cols = block.columns
+            const LABEL_W = 140
+            // grid: label col + N value cols + delete col
+            const gridStyle = {
+                display: 'grid',
+                gridTemplateColumns: `${LABEL_W}px repeat(${cols.length}, 1fr) 28px`,
+                gap: '4px',
+                alignItems: 'center',
+            }
             return (
                 <div className="space-y-2">
                     <input value={block.title || ''} onChange={e => onChange({ ...block, title: e.target.value })}
                         placeholder="Título da tabela (opcional)..." className={inputCls} />
-                    <div className="flex gap-2 items-center">
-                        {block.columns.map((col, ci) => (
-                            <div key={ci} className="flex gap-1 flex-1 items-center">
-                                <input value={col} onChange={e => {
-                                    const columns = [...block.columns]; columns[ci] = e.target.value
-                                    onChange({ ...block, columns })
-                                }} placeholder={`Coluna ${ci + 1}`} className={`${inputCls} flex-1`} />
-                                {block.columns.length > 2 && (
+
+                    {/* Header row */}
+                    <div style={gridStyle}>
+                        {/* Critério label */}
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted px-1">Critério</span>
+                        {/* Column name inputs */}
+                        {cols.map((col, ci) => (
+                            <div key={ci} className="flex items-center gap-1">
+                                <input
+                                    value={col}
+                                    onChange={e => {
+                                        const columns = [...cols]; columns[ci] = e.target.value
+                                        onChange({ ...block, columns })
+                                    }}
+                                    placeholder={`Coluna ${ci + 1}`}
+                                    className={`${inputCls} flex-1 text-center font-semibold text-xs`}
+                                />
+                                {cols.length > 2 && (
                                     <button onClick={() => {
-                                        const columns = block.columns.filter((_, j) => j !== ci)
+                                        const columns = cols.filter((_, j) => j !== ci)
                                         const rows = block.rows.map(r => ({ ...r, values: r.values.filter((_, j) => j !== ci) }))
                                         onChange({ ...block, columns, rows })
-                                    }} className="text-muted hover:text-red-400 shrink-0"><X className="w-3.5 h-3.5" /></button>
+                                    }} className="text-muted hover:text-red-400 shrink-0 p-0.5">
+                                        <X className="w-3 h-3" />
+                                    </button>
                                 )}
                             </div>
                         ))}
-                        {block.columns.length < 5 && (
-                            <button onClick={() => {
-                                const columns = [...block.columns, `Coluna ${block.columns.length + 1}`]
-                                const rows = block.rows.map(r => ({ ...r, values: [...r.values, ''] }))
-                                onChange({ ...block, columns, rows })
-                            }} className="shrink-0 text-xs text-muted hover:text-cyan-400 flex items-center gap-0.5 whitespace-nowrap">
-                                <Plus className="w-3.5 h-3.5" /> col
-                            </button>
-                        )}
+                        {/* Add column button */}
+                        <div>
+                            {cols.length < 5 && (
+                                <button onClick={() => {
+                                    const columns = [...cols, `Opção ${cols.length + 1}`]
+                                    const rows = block.rows.map(r => ({ ...r, values: [...r.values, ''] }))
+                                    onChange({ ...block, columns, rows })
+                                }} title="Adicionar coluna"
+                                    className="w-7 h-7 flex items-center justify-center rounded-md border border-dashed border-border text-muted hover:text-cyan-400 hover:border-cyan-500/40 transition-colors text-xs">
+                                    <Plus className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-border/60" />
+
+                    {/* Data rows */}
                     {block.rows.map((row, ri) => (
-                        <div key={ri} className="flex gap-2 items-center">
-                            <input value={row.label} onChange={e => {
-                                const rows = [...block.rows]; rows[ri] = { ...row, label: e.target.value }
-                                onChange({ ...block, rows })
-                            }} placeholder="Critério..." className={`${inputCls} w-28 shrink-0`} />
+                        <div key={ri} style={gridStyle}>
+                            <input
+                                value={row.label}
+                                onChange={e => {
+                                    const rows = [...block.rows]; rows[ri] = { ...row, label: e.target.value }
+                                    onChange({ ...block, rows })
+                                }}
+                                placeholder="Critério..."
+                                className={`${inputCls} text-xs font-medium`}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        const rows = [...block.rows]
+                                        rows.splice(ri + 1, 0, { label: '', values: cols.map(() => '') })
+                                        onChange({ ...block, rows })
+                                    }
+                                    if (e.key === 'Backspace' && !row.label && block.rows.length > 1) {
+                                        e.preventDefault()
+                                        onChange({ ...block, rows: block.rows.filter((_, j) => j !== ri) })
+                                    }
+                                }}
+                            />
                             {row.values.map((val, vi) => (
                                 <input key={vi} value={val} onChange={e => {
                                     const rows = [...block.rows]
                                     const values = [...row.values]; values[vi] = e.target.value
                                     rows[ri] = { ...row, values }
                                     onChange({ ...block, rows })
-                                }} placeholder={block.columns[vi] || `Col ${vi + 1}`} className={`${inputCls} flex-1`} />
+                                }}
+                                placeholder="—"
+                                className={`${inputCls} text-xs text-center`}
+                                />
                             ))}
-                            <button onClick={() => onChange({ ...block, rows: block.rows.filter((_, j) => j !== ri) })}
-                                className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
+                            <button tabIndex={-1} onClick={() => onChange({ ...block, rows: block.rows.filter((_, j) => j !== ri) })}
+                                className="flex items-center justify-center text-muted hover:text-red-400 transition-colors">
+                                <X className="w-3.5 h-3.5" />
+                            </button>
                         </div>
                     ))}
-                    <button onClick={() => onChange({ ...block, rows: [...block.rows, { label: '', values: block.columns.map(() => '') }] })}
-                        className="text-xs text-muted hover:text-cyan-400 flex items-center gap-1">
+
+                    <button onClick={() => onChange({ ...block, rows: [...block.rows, { label: '', values: cols.map(() => '') }] })}
+                        className="text-xs text-muted hover:text-cyan-400 flex items-center gap-1 transition-colors">
                         <Plus className="w-3.5 h-3.5" /> Adicionar linha
                     </button>
                 </div>
             )
+        }
 
         case 'blog_ranking':
             return (
@@ -1597,7 +2049,24 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={item.name} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, name: e.target.value }
                                 onChange({ ...block, items })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    const items = [...block.items]
+                                    items.splice(i + 1, 0, { position: i + 2, name: '' })
+                                    const renum = items.map((it, j) => ({ ...it, position: j + 1 }))
+                                    onChange({ ...block, items: renum })
+                                }
+                                if (e.key === 'Backspace' && !item.name && block.items.length > 1) {
+                                    e.preventDefault()
+                                    const items = block.items.filter((_, j) => j !== i).map((it, j) => ({ ...it, position: j + 1 }))
+                                    onChange({ ...block, items })
+                                }
                             }} placeholder="Nome..." className={`${inputCls} flex-1`} />
+                            <input value={(item as { description?: string }).description || ''} onChange={e => {
+                                const items = [...block.items]; items[i] = { ...item, description: e.target.value } as typeof item
+                                onChange({ ...block, items })
+                            }} placeholder="Descrição..." className={`${inputCls} w-36`} />
                             <input value={item.badge || ''} onChange={e => {
                                 const items = [...block.items]; items[i] = { ...item, badge: e.target.value }
                                 onChange({ ...block, items })
@@ -1633,6 +2102,17 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                             <input value={member.name} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, name: e.target.value }
                                 onChange({ ...block, members })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    const members = [...block.members]
+                                    members.splice(i + 1, 0, { name: '' })
+                                    onChange({ ...block, members })
+                                }
+                                if (e.key === 'Backspace' && !member.name && block.members.length > 1) {
+                                    e.preventDefault()
+                                    onChange({ ...block, members: block.members.filter((_, j) => j !== i) })
+                                }
                             }} placeholder="Nome..." className={`${inputCls} flex-1`} />
                             <input value={member.role || ''} onChange={e => {
                                 const members = [...block.members]; members[i] = { ...member, role: e.target.value }
@@ -1649,7 +2129,8 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_setlist':
+        case 'blog_setlist': {
+            const setlistRefs = useRef<(HTMLInputElement | null)[]>([])
             return (
                 <div className="space-y-2">
                     <div className="grid grid-cols-3 gap-2">
@@ -1663,7 +2144,9 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     {block.tracks.map((track, i) => (
                         <div key={i} className="flex gap-2 items-center">
                             <span className="text-xs text-muted shrink-0 w-5 text-right tabular-nums">{track.number}.</span>
-                            <input value={track.title} onChange={e => {
+                            <input
+                                ref={el => { setlistRefs.current[i] = el }}
+                                value={track.title} onChange={e => {
                                 const tracks = [...block.tracks]; tracks[i] = { ...track, title: e.target.value }
                                 onChange({ ...block, tracks })
                             }} onKeyDown={e => {
@@ -1673,18 +2156,15 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                                     tracks.splice(i + 1, 0, { number: i + 2, title: '' })
                                     const renum = tracks.map((t, j) => ({ ...t, number: j + 1 }))
                                     onChange({ ...block, tracks: renum })
-                                    setTimeout(() => {
-                                        const inputs = document.querySelectorAll<HTMLInputElement>(`[data-setlist-track]`)
-                                        inputs[i + 1]?.focus()
-                                    }, 0)
+                                    setTimeout(() => setlistRefs.current[i + 1]?.focus(), 0)
                                 }
                                 if (e.key === 'Backspace' && !track.title && block.tracks.length > 1) {
                                     e.preventDefault()
                                     const tracks = block.tracks.filter((_, j) => j !== i).map((t, j) => ({ ...t, number: j + 1 }))
                                     onChange({ ...block, tracks })
+                                    setTimeout(() => setlistRefs.current[Math.max(0, i - 1)]?.focus(), 0)
                                 }
                             }}
-                            data-setlist-track="1"
                             placeholder="Título da música..." className={`${inputCls} flex-1`} />
                             <input value={track.note || ''} onChange={e => {
                                 const tracks = [...block.tracks]; tracks[i] = { ...track, note: e.target.value }
@@ -1702,25 +2182,43 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                     </button>
                 </div>
             )
+        }
 
         case 'blog_idol_facts':
             return (
                 <div className="space-y-2">
-                    <div className="flex gap-2">
-                        <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
-                            placeholder="Nome do idol..." className={`${inputCls} flex-1`} />
-                        <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
-                            placeholder="Foto URL (opcional)..." className={`${inputCls} flex-1`} />
+                    <div className="flex gap-3">
+                        {block.imageUrl && (
+                            <div className="w-16 h-16 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
+                                <img src={block.imageUrl} alt="" className="w-full h-full object-cover object-top"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            </div>
+                        )}
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                            <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                                placeholder="Nome do idol..." className={inputCls} />
+                            <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                                placeholder="Foto URL (opcional)..." className={inputCls} />
+                        </div>
                     </div>
                     {block.facts.map((fact, i) => (
                         <div key={i} className="flex gap-2 items-center">
                             <input value={fact.label} onChange={e => {
                                 const facts = [...block.facts]; facts[i] = { ...fact, label: e.target.value }
                                 onChange({ ...block, facts })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Tab' && !e.shiftKey) {
+                                    e.preventDefault()
+                                    const next = (e.currentTarget as HTMLInputElement).nextElementSibling as HTMLElement | null
+                                    next?.focus()
+                                }
                             }} placeholder="Rótulo (ex: Altura)..." className={`${inputCls} w-32 shrink-0`} />
                             <input value={fact.value} onChange={e => {
                                 const facts = [...block.facts]; facts[i] = { ...fact, value: e.target.value }
                                 onChange({ ...block, facts })
+                            }} onKeyDown={e => {
+                                if (e.key === 'Enter') { e.preventDefault(); const f = [...block.facts]; f.splice(i + 1, 0, { label: '', value: '' }); onChange({ ...block, facts: f }) }
+                                if (e.key === 'Backspace' && !fact.value && !fact.label && block.facts.length > 1) { e.preventDefault(); onChange({ ...block, facts: block.facts.filter((_, j) => j !== i) }) }
                             }} placeholder="Valor (ex: 182cm)..." className={`${inputCls} flex-1`} />
                             <button onClick={() => onChange({ ...block, facts: block.facts.filter((_, j) => j !== i) })}
                                 className="text-muted hover:text-red-400 shrink-0"><X className="w-4 h-4" /></button>
@@ -1736,11 +2234,19 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_product_card':
             return (
                 <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                        <input value={block.imageUrl} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
-                            placeholder="URL da imagem..." className={inputCls} />
-                        <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
-                            placeholder="Nome do produto..." className={inputCls} />
+                    <div className="flex gap-3">
+                        {block.imageUrl && (
+                            <div className="w-20 h-20 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
+                                <img src={block.imageUrl} alt="" className="w-full h-full object-cover"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            </div>
+                        )}
+                        <div className="flex-1 space-y-2 min-w-0">
+                            <input value={block.imageUrl} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
+                                placeholder="URL da imagem..." className={inputCls} />
+                            <input value={block.name} onChange={e => onChange({ ...block, name: e.target.value })}
+                                placeholder="Nome do produto..." className={inputCls} />
+                        </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                         <input value={block.price} onChange={e => onChange({ ...block, price: e.target.value })}
@@ -1780,17 +2286,29 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
         case 'blog_comeback_card':
             return (
                 <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                        <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
-                            placeholder="Artista / grupo..." className={inputCls} />
-                        <input value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
-                            placeholder="Título do lançamento..." className={inputCls} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <input value={block.date} onChange={e => onChange({ ...block, date: e.target.value })}
-                            placeholder="Data (ex: 2025-06-15)..." className={inputCls} />
-                        <input value={block.type_label || ''} onChange={e => onChange({ ...block, type_label: e.target.value })}
-                            placeholder="Tipo (Mini Album, Single...)" className={inputCls} />
+                    <div className="flex gap-3">
+                        {block.imageUrl && (
+                            <div className="w-20 h-20 rounded-lg border border-border overflow-hidden shrink-0 bg-surface">
+                                <img src={block.imageUrl} alt="" className="w-full h-full object-cover"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                            </div>
+                        )}
+                        <div className="flex-1 space-y-2 min-w-0">
+                            <div className="grid grid-cols-2 gap-2">
+                                <input value={block.artist} onChange={e => onChange({ ...block, artist: e.target.value })}
+                                    onKeyDown={e => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus() } }}
+                                    placeholder="Artista / grupo..." className={inputCls} />
+                                <input value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
+                                    placeholder="Título do lançamento..." className={inputCls} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <input value={block.date} onChange={e => onChange({ ...block, date: e.target.value })}
+                                    onKeyDown={e => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus() } }}
+                                    placeholder="Data (ex: 2025-06-15)..." className={inputCls} />
+                                <input value={block.type_label || ''} onChange={e => onChange({ ...block, type_label: e.target.value })}
+                                    placeholder="Tipo (Mini Album, Single...)" className={inputCls} />
+                            </div>
+                        </div>
                     </div>
                     <input value={block.imageUrl || ''} onChange={e => onChange({ ...block, imageUrl: e.target.value })}
                         placeholder="URL da capa (opcional)..." className={inputCls} />
@@ -1799,7 +2317,14 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                 </div>
             )
 
-        case 'blog_alert':
+        case 'blog_alert': {
+            const alertStyles = {
+                info:    { bar: 'bg-blue-500',    bg: 'bg-blue-500/10',    text: 'text-blue-300',    emoji: 'ℹ️' },
+                tip:     { bar: 'bg-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-300', emoji: '💡' },
+                warning: { bar: 'bg-orange-500',  bg: 'bg-orange-500/10',  text: 'text-orange-300',  emoji: '⚠️' },
+                spoiler: { bar: 'bg-purple-500',  bg: 'bg-purple-500/10',  text: 'text-purple-300',  emoji: '🔮' },
+            } as const
+            const as = alertStyles[block.variant ?? 'info']
             return (
                 <div className="space-y-2">
                     <div className="flex gap-1">
@@ -1819,8 +2344,18 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
                         placeholder="Título (opcional)..." className={inputCls} />
                     <AutoTextarea value={block.text} onChange={v => onChange({ ...block, text: v })}
                         minRows={2} placeholder="Texto do alerta..." />
+                    {(block.title || block.text) && (
+                        <div className={`flex gap-3 rounded-lg p-3 ${as.bg}`}>
+                            <div className={`w-1 rounded-full shrink-0 self-stretch ${as.bar}`} />
+                            <div className="min-w-0 space-y-0.5">
+                                {block.title && <p className={`text-xs font-bold ${as.text}`}>{as.emoji} {block.title}</p>}
+                                {block.text && <p className="text-xs text-muted/80 leading-relaxed">{block.text.slice(0, 120)}{block.text.length > 120 ? '…' : ''}</p>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )
+        }
 
         case 'blog_lyrics_parallel':
             return (
@@ -1881,6 +2416,63 @@ function BlockFieldEditor({ block, onChange }: { block: BlogBlock; onChange: (b:
     }
 }
 
+// ─── Block Outline panel (exported for sidebar use) ──────────────────────────
+
+export function BlockOutlinePanel({ blocks }: { blocks: BlogBlock[] }) {
+    const [open, setOpen] = useState(true)
+    const [highlighted, setHighlighted] = useState<number | null>(null)
+
+    function scrollToBlock(i: number) {
+        const el = document.querySelector<HTMLElement>(`[data-block-index="${i}"]`)
+        if (!el) return
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // Flash highlight
+        setHighlighted(i)
+        el.style.transition = 'box-shadow 0.15s'
+        el.style.boxShadow = '0 0 0 3px rgba(139,92,246,0.5)'
+        setTimeout(() => {
+            el.style.boxShadow = ''
+            setHighlighted(null)
+        }, 900)
+    }
+
+    if (blocks.length === 0) return null
+
+    return (
+        <div className="space-y-1">
+            <button
+                onClick={() => setOpen(v => !v)}
+                className="flex items-center gap-1.5 w-full text-left"
+            >
+                <span className="text-xs font-semibold text-muted uppercase tracking-wider flex-1">
+                    Estrutura do artigo
+                </span>
+                <span className="text-[10px] text-muted/50 tabular-nums">{blocks.length}</span>
+                <ChevronRight className={`w-3.5 h-3.5 text-muted/50 transition-transform duration-150 ${open ? 'rotate-90' : ''}`} />
+            </button>
+            {open && (
+                <div className="space-y-0.5 max-h-80 overflow-y-auto rounded-lg border border-border p-1 bg-surface/50">
+                    {blocks.map((block, i) => (
+                        <button
+                            key={i}
+                            onClick={() => scrollToBlock(i)}
+                            className={`flex items-center gap-2 w-full px-2 py-1 rounded-md transition-colors text-left group ${highlighted === i ? 'bg-purple-500/15 text-foreground' : 'hover:bg-surface-hover'}`}
+                        >
+                            <span className={`inline-flex items-center justify-center w-4 h-4 rounded border shrink-0 ${COLORS[block.type]}`}>
+                                {ICONS[block.type]}
+                            </span>
+                            <span className="text-[10px] text-muted/40 tabular-nums shrink-0 w-4">{i + 1}</span>
+                            <span className="text-[11px] text-muted group-hover:text-foreground truncate leading-tight">
+                                {blockPreview(block)}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
 // ─── Block preview (collapsed state) ─────────────────────────────────────────
 
 function blockPreview(block: BlogBlock): string {
@@ -1890,7 +2482,10 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_quote':           return block.text ? `"${block.text.slice(0, 60)}"` : '(vazio)'
         case 'blog_image':           return block.caption || block.url.split('/').pop() || block.url.slice(0, 50) || '(sem URL)'
         case 'blog_gallery':         return `${block.urls.length} imagem(ns)`
-        case 'blog_video':           return block.url || '(sem URL)'
+        case 'blog_video': {
+            const m = block.url?.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/)
+            return m ? `youtube.com/watch?v=${m[1]}` : block.url || '(sem URL)'
+        }
         case 'blog_twitter':         return block.url || '(sem URL)'
         case 'blog_instagram':       return block.url || '(sem URL)'
         case 'blog_tiktok':          return block.url || '(sem URL)'
@@ -1899,7 +2494,10 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_artist_card':     return block._label || (block.artistId ? block.artistId.slice(0, 24) + '…' : '(sem artista)')
         case 'blog_group_card':      return block._label || (block.groupId ? block.groupId.slice(0, 24) + '…' : '(sem grupo)')
         case 'blog_production_card': return block._label || (block.productionId ? block.productionId.slice(0, 24) + '…' : '(sem produção)')
-        case 'blog_stats_row':       return `${block.items.length} campo(s)`
+        case 'blog_stats_row': {
+            const first = block.items[0]
+            return first?.label ? `${first.label}: ${first.value}${block.items.length > 1 ? ` +${block.items.length - 1}` : ''}` : `${block.items.length} campo(s)`
+        }
         case 'blog_rating':          return `Nota: ${block.score}/10${block.label ? ` — ${block.label}` : ''}`
         case 'blog_divider':         return '───✦───'
         case 'blog_ad':              return block.label || 'Slot de anúncio'
@@ -1935,7 +2533,10 @@ function blockPreview(block: BlogBlock): string {
         case 'blog_achievement':     return `${block.items.length} conquista(s)`
         case 'blog_mv_breakdown':    return `${block.title || block.videoId} — ${block.scenes.length} cena(s)`
         case 'blog_flashcard':       return `${block.title || ''} ${block.cards.length} card(s)`
-        case 'blog_idol_facts':      return block.name ? `${block.name} — ${block.facts.length} fato(s)` : '(sem nome)'
+        case 'blog_idol_facts': {
+            const firstFact = block.facts[0]
+            return block.name ? `${block.name}${firstFact?.label ? ` · ${firstFact.label}: ${firstFact.value}` : ` — ${block.facts.length} fato(s)`}` : '(sem nome)'
+        }
         default:                     return '(bloco)'
     }
 }
@@ -1989,7 +2590,35 @@ function BlockRow({
     onFreshHandled?: () => void
 }) {
     const [collapsed, setCollapsed] = useState(false)
+    const [showTypeSwitcher, setShowTypeSwitcher] = useState(false)
     const fieldRef = useRef<HTMLDivElement>(null)
+
+    // Extract text content for smart type conversion
+    function extractText(b: BlogBlock): string {
+        const bx = b as Record<string, unknown>
+        if (typeof bx.text === 'string') return bx.text
+        if (typeof bx.title === 'string') return bx.title
+        if (Array.isArray(bx.items) && typeof (bx.items as unknown[])[0] === 'string') return (bx.items as string[]).join('\n')
+        return ''
+    }
+
+    const TEXT_TYPES = new Set<BlogBlockType>(['blog_paragraph', 'blog_heading', 'blog_quote', 'blog_curiosity', 'blog_highlight', 'blog_callout', 'blog_list', 'blog_alert'])
+
+    function switchType(newType: BlogBlockType) {
+        const newBlock = defaultBlock(newType)
+        // Preserve text when switching between text-based blocks
+        if (TEXT_TYPES.has(block.type) && TEXT_TYPES.has(newType)) {
+            const text = extractText(block)
+            if (text) {
+                const nb = newBlock as Record<string, unknown>
+                if ('text' in nb) nb.text = text
+                else if ('title' in nb) nb.title = text
+                else if ('items' in nb && Array.isArray(nb.items) && typeof (nb.items as unknown[])[0] === 'string') nb.items = text.split('\n').filter(Boolean)
+            }
+        }
+        onChange(newBlock as BlogBlock)
+        setShowTypeSwitcher(false)
+    }
 
     useEffect(() => {
         if (forceCollapsed !== undefined) setCollapsed(forceCollapsed)
@@ -2024,7 +2653,18 @@ function BlockRow({
                 </div>
 
                 {/* Type badge + collapse toggle */}
-                <button onClick={() => setCollapsed(v => !v)}
+                <button onClick={() => {
+                    setCollapsed(v => {
+                        if (v) {
+                            // expanding — focus first field after render
+                            setTimeout(() => {
+                                const first = fieldRef.current?.querySelector<HTMLElement>('input, textarea')
+                                first?.focus()
+                            }, 30)
+                        }
+                        return !v
+                    })
+                }}
                     className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
                 >
                     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-bold shrink-0 ${COLORS[block.type]}`}>
@@ -2046,6 +2686,26 @@ function BlockRow({
                                     ) : null)}
                                 </div>
                             )}
+                            {(block.type === 'blog_video' && block.url) && (() => {
+                                const m = block.url.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/)
+                                return m ? <img src={`https://img.youtube.com/vi/${m[1]}/default.jpg`} alt="" className="w-10 h-7 rounded object-cover shrink-0 ml-2 border border-border/60"
+                                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} /> : null
+                            })()}
+                            {(block.type === 'blog_rating') && (
+                                <span className={`ml-2 shrink-0 text-sm font-black tabular-nums ${block.score >= 9 ? 'text-emerald-400' : block.score >= 7 ? 'text-yellow-400' : block.score >= 5 ? 'text-orange-400' : 'text-red-400'}`}>
+                                    {block.score}<span className="text-[10px] font-normal text-muted">/10</span>
+                                </span>
+                            )}
+                            {(block.type === 'blog_era_card' || block.type === 'blog_lightstick') && (() => {
+                                const colors = (block as { colors?: string[] }).colors?.filter(c => /^#[0-9a-fA-F]{3,6}$/.test(c)) ?? []
+                                return colors.length > 0 ? (
+                                    <div className="flex gap-0.5 ml-2 shrink-0">
+                                        {colors.slice(0, 4).map((c, i) => (
+                                            <div key={i} className="w-3.5 h-3.5 rounded-full border border-border/60" style={{ backgroundColor: c }} />
+                                        ))}
+                                    </div>
+                                ) : null
+                            })()}
                             {blockPreview(block) && (
                                 <span className="text-[11px] text-muted/70 truncate ml-2 max-w-xs">{blockPreview(block)}</span>
                             )}
@@ -2056,6 +2716,18 @@ function BlockRow({
 
                 {/* Actions — visible only on hover */}
                 <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    {/* Type switcher */}
+                    <div className="relative">
+                        <button onClick={() => setShowTypeSwitcher(v => !v)} title="Trocar tipo do bloco"
+                            className="p-1.5 rounded-md text-muted hover:text-purple-400 hover:bg-surface-hover transition-colors text-[10px] font-bold">
+                            <ChevronsUpDown className="w-3 h-3" />
+                        </button>
+                        {showTypeSwitcher && (
+                            <div className="absolute right-0 top-full mt-1 z-40">
+                                <TypeSelector onSelect={switchType} onClose={() => setShowTypeSwitcher(false)} />
+                            </div>
+                        )}
+                    </div>
                     <button onClick={onDuplicate} title="Duplicar"
                         className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition-colors">
                         <Copy className="w-3 h-3" />
