@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { GroupMembersModal } from '@/components/admin/GroupMembersModal'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { adminApi, ApiError } from '@/lib/admin-api'
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminBadge } from '@/components/admin/AdminBadge'
 import { SocialBadges } from '@/components/admin/SocialBadges'
 import { StatCard } from '@/components/admin'
 import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
@@ -53,9 +53,9 @@ const MAX_MVS = 6
 // ─── Status Badge helper ───────────────────────────────────────────────────────
 
 function GroupStatusBadge({ group }: { group: MusicalGroup }) {
-  if (group.isHidden)    return <AdminStatusBadge label="Oculto"     color="bg-surface text-muted"                       icon={<EyeOff size={10} />} />
-  if (group.disbandDate) return <AdminStatusBadge label="Disbandado" color="bg-red-900/40 text-red-400 border-red-800/30" />
-  return                        <AdminStatusBadge label="Ativo"      color="bg-green-900/40 text-green-400 border-green-800/30" />
+  if (group.isHidden)    return <AdminBadge variant="custom" color="bg-surface text-muted"><EyeOff size={10} />Oculto</AdminBadge>
+  if (group.disbandDate) return <AdminBadge variant="custom" color="bg-red-900/40 text-red-400 border-red-800/30">Disbandado</AdminBadge>
+  return                        <AdminBadge variant="custom" color="bg-green-900/40 text-green-400 border-green-800/30">Ativo</AdminBadge>
 }
 
 // ─── Form fields ──────────────────────────────────────────────────────────────

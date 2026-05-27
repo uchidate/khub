@@ -10,7 +10,7 @@ import {
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
   TrendingUp, BarChart3, Layers, Tv, Database, Globe, FolderOpen, ServerIcon, ChevronDown,
-  ShoppingBag,
+  ShoppingBag, Image as ImageIcon,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -37,39 +37,26 @@ type NavItem = {
 
 type NavSection = {
   label: string | null
-  fixed?: boolean   // se true, não colapsa
+  collapsible?: boolean  // se true, seção pode ser recolhida
   items: NavItem[]
 }
 
-// ─── Definição da nav (3 grupos) ──────────────────────────────────────────────
+// ─── Definição da nav (4 grupos) ──────────────────────────────────────────────
 
 const navSections: NavSection[] = [
-  // ── CENTRO ──
+  // ── HOJE — uso diário ──
   {
-    label: 'Centro',
-    fixed: true,
+    label: 'Hoje',
     items: [
       { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard, exact: true },
       { href: '/admin/pipeline', label: 'Pipeline',  icon: Workflow },
-      { href: '/admin/trending', label: 'Trending',  icon: TrendingUp },
-      { href: '/admin/analytics',    label: 'Analytics', icon: BarChart3 },
-      { href: '/admin/analytics/ga4', label: 'GA4',       icon: BarChart3 },
-    ],
-  },
-
-  // ── CONTEÚDO ──
-  {
-    label: 'Conteúdo',
-    fixed: true,
-    items: [
       {
         href: '/admin/blog', label: 'Blog', icon: FileText, exact: true,
         subItems: [
-          { href: '/admin/blog/inspiration', label: 'Inspiração', icon: Sparkles },
-          { href: '/admin/blog/homepage',   label: 'Homepage Editorial', icon: Layers },
-          { href: '/admin/home-clusters',   label: 'Inteligência da Home', icon: Sparkles },
-          { href: '/admin/blog/categories', label: 'Categorias',         icon: Tag },
-          { href: '/admin/seo',             label: 'SEO',                icon: Globe },
+          { href: '/admin/blog/inspiration', label: 'Inspiração',        icon: Sparkles },
+          { href: '/admin/blog/homepage',    label: 'Homepage Editorial', icon: Layers   },
+          { href: '/admin/blog/categories',  label: 'Categorias',        icon: Tag       },
+          { href: '/admin/blog/import',      label: 'Importar post',     icon: Download  },
         ],
       },
       {
@@ -79,93 +66,108 @@ const navSections: NavSection[] = [
           { href: '/admin/news/reprocess', label: 'Reprocessar', icon: RotateCcw },
         ],
       },
-      { href: '/admin/tags', label: 'Tags', icon: Tag },
     ],
   },
 
-  // ── CATÁLOGO ──
+  // ── CATÁLOGO — entidades principais ──
   {
     label: 'Catálogo',
-    fixed: true,
     items: [
       {
         href: '/admin/artists', label: 'Artistas', icon: Mic2, exact: true,
         subItems: [
           { href: '/admin/artists/enrich',       label: 'Enriquecimento', icon: Sparkles },
-          { href: '/admin/artists/fix-names',    label: 'Enriq. TMDB',   icon: Sparkles },
-          { href: '/admin/artists/duplicates',   label: 'Enriq. MB',     icon: GitMerge },
-          { href: '/admin/artists/social-links', label: 'Redes Sociais', icon: Share2 },
-          { href: '/admin/music-catalog',         label: 'Catálogo Musical', icon: Disc3 },
-          { href: '/admin/instagram',            label: 'Instagram',      icon: Instagram },
-          { href: '/admin/instagram/status',     label: 'Status do Sync', icon: Activity },
-          { href: '/admin/artists/moderation',   label: 'Moderação',     icon: AlertTriangle },
-          { href: '/admin/artists/visibility',   label: 'Visibilidade',  icon: EyeOff },
+          { href: '/admin/artists/social-links', label: 'Redes Sociais',  icon: Share2   },
+          { href: '/admin/artists/visibility',   label: 'Visibilidade',   icon: EyeOff   },
         ],
       },
       {
         href: '/admin/groups', label: 'Grupos', icon: UsersRound, exact: true,
         subItems: [
           { href: '/admin/artists/groups', label: 'Sync Artista↔Grupo', icon: RefreshCw },
-          { href: '/admin/kpopping',       label: 'Curadoria Kpopping', icon: Link2 },
         ],
       },
       {
         href: '/admin/productions', label: 'Produções', icon: Film, exact: true,
         subItems: [
-          { href: '/admin/filmography',             label: 'Filmografias', icon: Clapperboard },
-          { href: '/admin/productions/sync',        label: 'Sync TMDB',    icon: RefreshCw },
-          { href: '/admin/productions/moderation',  label: 'Moderação',    icon: AlertTriangle },
-          { href: '/admin/productions/takedowns',   label: 'Takedowns',    icon: ShieldAlert },
-          { href: '/admin/productions/enrich',      label: 'Enriquecimento', icon: Sparkles },
+          { href: '/admin/productions/sync',   label: 'Sync TMDB',      icon: RefreshCw },
+          { href: '/admin/productions/enrich', label: 'Enriquecimento', icon: Sparkles  },
         ],
       },
-      { href: '/admin/albums', label: 'Álbuns', icon: Disc3 },
-      { href: '/admin/hidden', label: 'Ocultos', icon: EyeOff },
-      { href: '/admin/agencies',  label: 'Agências',  icon: Building2 },
-      { href: '/admin/streaming', label: 'Streaming', icon: Tv },
-      { href: '/admin/loja', label: 'Loja', icon: ShoppingBag },
+      { href: '/admin/albums',   label: 'Álbuns',    icon: Disc3      },
+      { href: '/admin/streaming',label: 'Streaming', icon: Tv         },
+      { href: '/admin/loja',     label: 'Loja',      icon: ShoppingBag},
     ],
   },
 
-  // ── AUTOMAÇÃO ──
+  // ── COMUNIDADE — usuários e moderação ──
   {
-    label: 'Automação',
-    fixed: true,
+    label: 'Comunidade',
     items: [
-      { href: '/admin/translations', label: 'Traduções',      icon: Languages },
-      { href: '/admin/enrichment',   label: 'Enriquecimento', icon: Sparkles },
-      {
-        href: '/admin/ai', label: 'IA', icon: Bot, exact: true,
-        subItems: [
-          { href: '/admin/ai/config', label: 'Config Providers', icon: Settings },
-        ],
-      },
-    ],
-  },
-
-  // ── PLATAFORMA ──
-  {
-    label: 'Plataforma',
-    fixed: true,
-    items: [
-      { href: '/admin/users',    label: 'Usuários',    icon: Users },
-      { href: '/admin/activity', label: 'Atividade',   icon: Activity },
+      { href: '/admin/users',    label: 'Usuários',    icon: Users                              },
       { href: '/admin/reports',  label: 'Reportes',    icon: Flag,          badgeKey: 'reports' },
-      { href: '/admin/comments', label: 'Comentários', icon: MessageSquare, badgeKey: 'comments' },
+      { href: '/admin/comments', label: 'Comentários', icon: MessageSquare, badgeKey: 'comments'},
+      { href: '/admin/activity', label: 'Atividade',   icon: Activity                          },
       {
         href: '/admin/emails', label: 'Emails', icon: Mail,
         subItems: [
           { href: '/admin/emails/templates', label: 'Templates', icon: FolderOpen },
         ],
       },
+    ],
+  },
+
+  // ── SISTEMA — manutenção e ferramentas ──
+  {
+    label: 'Sistema',
+    collapsible: true,
+    items: [
+      { href: '/admin/translations', label: 'Traduções',      icon: Languages },
+      { href: '/admin/enrichment',   label: 'Enriquecimento', icon: Sparkles  },
       {
-        href: '/admin/settings', label: 'Sistema', icon: Settings,
+        href: '/admin/ai', label: 'IA', icon: Bot, exact: true,
         subItems: [
-          { href: '/admin/bot-logs',    label: 'Robôs',       icon: Bot },
-          { href: '/admin/server-logs', label: 'Server Logs', icon: AlertTriangle },
-          { href: '/admin/cron',           label: 'Cron Jobs',      icon: RefreshCw },
-          { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon },
-          { href: '/admin/database',       label: 'Database',       icon: Database },
+          { href: '/admin/ai/config', label: 'Configuração', icon: Settings },
+        ],
+      },
+      {
+        href: '/admin/analytics', label: 'Analytics', icon: BarChart3, exact: true,
+        subItems: [
+          { href: '/admin/analytics/ga4', label: 'GA4', icon: BarChart3 },
+        ],
+      },
+      { href: '/admin/trending',      label: 'Trending',        icon: TrendingUp },
+      { href: '/admin/seo',           label: 'SEO',             icon: Globe      },
+      { href: '/admin/tags',          label: 'Tags',            icon: Tag        },
+      { href: '/admin/agencies',      label: 'Agências',        icon: Building2  },
+      { href: '/admin/home-clusters', label: 'Home Clusters',   icon: Layers     },
+      { href: '/admin/hidden',        label: 'Conteúdo Oculto', icon: EyeOff     },
+      // Blog
+      { href: '/admin/blog/agent',    label: 'Agente de Blog',  icon: Bot        },
+      { href: '/admin/image-audit',   label: 'Auditoria Imagens', icon: ImageIcon },
+      // Artistas
+      { href: '/admin/artists/fix-names',  label: 'Nomes via TMDB',  icon: Sparkles     },
+      { href: '/admin/artists/duplicates', label: 'MusicBrainz',     icon: GitMerge     },
+      { href: '/admin/artists/mb-import',  label: 'Import MB',       icon: Download     },
+      { href: '/admin/music-catalog',      label: 'Catálogo Musical', icon: Disc3        },
+      { href: '/admin/instagram',          label: 'Instagram Sync',   icon: Instagram    },
+      { href: '/admin/kpopping',           label: 'Kpopping',         icon: Link2        },
+      // Moderação
+      { href: '/admin/artists/moderation',     label: 'Moderação Artistas',  icon: AlertTriangle },
+      { href: '/admin/productions/moderation', label: 'Moderação Produções', icon: AlertTriangle },
+      { href: '/admin/productions/takedowns',  label: 'Takedowns',           icon: ShieldAlert   },
+      { href: '/admin/filmography',            label: 'Filmografias',        icon: Clapperboard  },
+      // Traduções
+      { href: '/admin/translations/log', label: 'Log de Traduções', icon: FileText },
+      // Infraestrutura
+      {
+        href: '/admin/settings', label: 'Configurações', icon: Settings,
+        subItems: [
+          { href: '/admin/bot-logs',       label: 'Robôs',          icon: Bot           },
+          { href: '/admin/server-logs',    label: 'Server Logs',    icon: AlertTriangle },
+          { href: '/admin/cron',           label: 'Cron Jobs',      icon: RefreshCw     },
+          { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon    },
+          { href: '/admin/database',       label: 'Database',       icon: Database      },
         ],
       },
     ],
@@ -199,16 +201,17 @@ const SECTION_LABELS: Record<string, string> = {
   artists: 'Artistas', groups: 'Grupos', productions: 'Produções', news: 'Notícias',
   translations: 'Traduções', enrichment: 'Enriquecimento', albums: 'Álbuns', tags: 'Tags',
   comments: 'Comentários', reports: 'Reportes', emails: 'Emails', ai: 'IA', users: 'Usuários',
-  hidden: 'Ocultos', agencies: 'Agências', instagram: 'Instagram', activity: 'Atividade',
-  'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Cron Jobs', infrastructure: 'Infraestrutura', settings: 'Sistema',
+  hidden: 'Conteúdo Oculto', agencies: 'Agências', instagram: 'Instagram Sync', activity: 'Atividade',
+  'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Cron Jobs', infrastructure: 'Infraestrutura', settings: 'Configurações',
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
-  analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Enriq. TMDB', duplicates: 'Enriq. MB',
+  analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Nomes via TMDB', duplicates: 'MusicBrainz',
   'social-links': 'Redes Sociais', moderation: 'Moderação', import: 'Importar',
-  reprocess: 'Reprocessar', templates: 'Templates', config: 'Config', sync: 'Sync TMDB', status: 'Status',
+  reprocess: 'Reprocessar', templates: 'Templates', config: 'Configuração', sync: 'Sync TMDB', status: 'Status',
   discography: 'Discografia', log: 'Log', pipeline: 'Pipeline', takedowns: 'Takedowns',
   streaming: 'Streaming', seo: 'SEO', categories: 'Categorias', homepage: 'Homepage Editorial',
   visibility: 'Visibilidade', 'mb-import': 'Import MB', 'music-catalog': 'Catálogo Musical',
-  'home-clusters': 'Inteligência da Home',
+  'home-clusters': 'Home Clusters', loja: 'Loja',
+  agent: 'Agente de Blog', 'image-audit': 'Auditoria Imagens',
 }
 
 function isIdSegment(s: string) {
@@ -408,6 +411,7 @@ function NavItemBlock({
 
 function NavSectionBlock({
   section, pathname, onNav, counts, compact, expandedSubnav, onToggleSubnav,
+  sectionCollapsed, onToggleSectionCollapsed,
 }: {
   section: NavSection
   pathname: string | null
@@ -416,6 +420,8 @@ function NavSectionBlock({
   compact: boolean
   expandedSubnav: Set<string>
   onToggleSubnav: (href: string) => void
+  sectionCollapsed?: boolean
+  onToggleSectionCollapsed?: () => void
 }) {
   // Seção sem label (legado / inline)
   if (!section.label) {
@@ -457,13 +463,33 @@ function NavSectionBlock({
     )
   }
 
+  const isCollapsible = !!section.collapsible
+  const isCollapsed   = isCollapsible && !!sectionCollapsed
+
   return (
     <div className="space-y-0.5">
       {/* Label de seção */}
-      <p className="px-3 pt-3 pb-1 text-[9px] font-black uppercase tracking-widest text-muted select-none">
-        {section.label}
-      </p>
-      {section.items.map(item => (
+      {isCollapsible ? (
+        <button
+          type="button"
+          onClick={onToggleSectionCollapsed}
+          className="w-full flex items-center justify-between px-3 pt-3 pb-1 group"
+        >
+          <span className="text-[9px] font-black uppercase tracking-widest text-muted group-hover:text-foreground transition-colors select-none">
+            {section.label}
+          </span>
+          <ChevronDown
+            size={11}
+            className={`text-muted group-hover:text-foreground transition-all duration-200 ${isCollapsed ? '' : 'rotate-180'}`}
+          />
+        </button>
+      ) : (
+        <p className="px-3 pt-3 pb-1 text-[9px] font-black uppercase tracking-widest text-muted select-none">
+          {section.label}
+        </p>
+      )}
+
+      {!isCollapsed && section.items.map(item => (
         <NavItemBlock
           key={item.href}
           item={item}
@@ -483,6 +509,7 @@ function NavSectionBlock({
 
 function SidebarContent({
   pathname, onNav, counts, compact, onToggleCompact, expandedSubnav, onToggleSubnav,
+  collapsedSections, onToggleSectionCollapsed,
 }: {
   pathname: string | null
   onNav?: () => void
@@ -491,6 +518,8 @@ function SidebarContent({
   onToggleCompact: () => void
   expandedSubnav: Set<string>
   onToggleSubnav: (href: string) => void
+  collapsedSections: Set<string>
+  onToggleSectionCollapsed: (label: string) => void
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -540,6 +569,8 @@ function SidebarContent({
             compact={compact}
             expandedSubnav={expandedSubnav}
             onToggleSubnav={onToggleSubnav}
+            sectionCollapsed={section.label ? collapsedSections.has(section.label) : false}
+            onToggleSectionCollapsed={section.label ? () => onToggleSectionCollapsed(section.label!) : undefined}
           />
         ))}
       </nav>
@@ -649,17 +680,27 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
   const [compact,       setCompact]       = useState(false)
   const [searchOpen,    setSearchOpen]    = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
-  const [expandedSubnav, setExpandedSubnav] = useState<Set<string>>(new Set())
+  const [expandedSubnav,    setExpandedSubnav]    = useState<Set<string>>(new Set())
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set(['Sistema']))
   const counts = usePendingCounts()
 
   useEffect(() => {
     const saved = localStorage.getItem('admin-compact')
     if (saved === 'true') setCompact(true)
+
     const savedSubnav = localStorage.getItem('admin-expanded-subnav')
     if (savedSubnav) {
       try {
         const arr = JSON.parse(savedSubnav) as string[]
         if (Array.isArray(arr)) setExpandedSubnav(new Set(arr))
+      } catch { /* ignore */ }
+    }
+
+    const savedCollapsed = localStorage.getItem('admin-collapsed-sections')
+    if (savedCollapsed) {
+      try {
+        const arr = JSON.parse(savedCollapsed) as string[]
+        if (Array.isArray(arr)) setCollapsedSections(new Set(arr))
       } catch { /* ignore */ }
     }
   }, [])
@@ -678,6 +719,16 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
       if (next.has(href)) next.delete(href)
       else next.add(href)
       localStorage.setItem('admin-expanded-subnav', JSON.stringify(Array.from(next)))
+      return next
+    })
+  }, [])
+
+  const toggleSectionCollapsed = useCallback((label: string) => {
+    setCollapsedSections(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      localStorage.setItem('admin-collapsed-sections', JSON.stringify(Array.from(next)))
       return next
     })
   }, [])
@@ -760,6 +811,8 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
             onToggleCompact={toggleCompact}
             expandedSubnav={expandedSubnav}
             onToggleSubnav={toggleSubnav}
+            collapsedSections={collapsedSections}
+            onToggleSectionCollapsed={toggleSectionCollapsed}
           />
         </aside>
 
@@ -783,6 +836,8 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
                 onToggleCompact={() => {}}
                 expandedSubnav={expandedSubnav}
                 onToggleSubnav={toggleSubnav}
+                collapsedSections={collapsedSections}
+                onToggleSectionCollapsed={toggleSectionCollapsed}
               />
             </aside>
           </div>

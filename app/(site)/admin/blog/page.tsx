@@ -6,7 +6,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useToast } from '@/lib/hooks/useToast'
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
@@ -1040,7 +1040,7 @@ function AdminBlogPageContent() {
             className: 'min-w-[140px]',
             render: (post) => {
                 const s = STATUS_LABELS[post.status] ?? { label: post.status, color: 'bg-surface text-muted' }
-                return <AdminStatusBadge label={s.label} color={s.color} variant="pill" />
+                return <AdminBadge variant="custom" color={s.color} shape="pill">{s.label}</AdminBadge>
             },
         },
         {

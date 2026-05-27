@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { ArrowRight, Library, Plus } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
 
@@ -196,12 +196,14 @@ export default function AlbumsPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="álbum"
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        title={`Excluir ${selectedIds.length} álbum${selectedIds.length !== 1 ? 'ns' : ''}`}
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        onConfirm={async () => { await handleDeleteConfirm(); setDeleteOpen(false) }}
+        onCancel={() => setDeleteOpen(false)}
       />
     </AdminLayout>
   )

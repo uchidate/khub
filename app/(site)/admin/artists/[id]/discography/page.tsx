@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
 import { AdminModalOverlay, ConfirmDialog, AdminButton } from '@/components/admin'
 import { Plus, RefreshCw, Trash2, ArrowLeft, Music, CheckCircle, Pencil, X, Check, ExternalLink, Sparkles } from 'lucide-react'
 import { adminApi, ApiError } from '@/lib/admin-api'
@@ -582,12 +581,14 @@ export default function ArtistDiscographyPage() {
       />
 
       {/* Delete selected */}
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="álbum"
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        title={`Excluir ${selectedIds.length} álbum${selectedIds.length !== 1 ? 'ns' : ''}`}
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        onConfirm={async () => { await handleDeleteConfirm(); setDeleteOpen(false) }}
+        onCancel={() => setDeleteOpen(false)}
       />
 
       {/* Clear all confirmation */}

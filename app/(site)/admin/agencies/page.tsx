@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { AdminButton, AdminIconButton } from '@/components/admin'
 import { Plus, Users, Loader2, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
@@ -334,12 +334,14 @@ export default function AgenciesPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="agência"
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        title={`Excluir ${selectedIds.length} agência${selectedIds.length !== 1 ? 's' : ''}`}
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        onConfirm={async () => { await handleDeleteConfirm(); setDeleteOpen(false) }}
+        onCancel={() => setDeleteOpen(false)}
       />
     </AdminLayout>
   )

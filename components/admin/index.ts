@@ -6,7 +6,6 @@ export { AdminIconButton, AdminIconLink } from './AdminIconButton'
 export type { AdminIconButtonVariant, AdminIconButtonSize } from './AdminIconButton'
 
 // ─── Layout / Containers ─────────────────────────────────────────────────────
-export { AdminCard } from './AdminCard'
 export { AdminModalOverlay } from './AdminModalOverlay'
 
 // ─── Filtros / Busca ─────────────────────────────────────────────────────────
@@ -26,7 +25,6 @@ export { BulkActionBar } from './BulkActionBar'
 // ─── Feedback / Estado ───────────────────────────────────────────────────────
 export { AdminBadge, AdminBadgeCount } from './AdminBadge'
 export type { AdminBadgeVariant } from './AdminBadge'
-export { AdminStatusBadge } from './AdminStatusBadge'
 export { AdminEmptyState } from './AdminEmptyState'
 export { ConfirmDialog } from './ConfirmDialog'
 

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
-import { DeleteConfirm } from '@/components/admin/DeleteConfirm'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { Plus, Shield, Users, CheckCircle, UserPlus, Heart } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
 import { FilterPills } from '@/components/admin/FilterPills'
@@ -266,12 +266,14 @@ export default function UsersAdminPage() {
         onSubmit={handleFormSubmit}
       />
 
-      <DeleteConfirm
+      <ConfirmDialog
         open={deleteOpen}
-        count={selectedIds.length}
-        entityName="usuário"
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        title={`Excluir ${selectedIds.length} usuário${selectedIds.length !== 1 ? 's' : ''}`}
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        onConfirm={async () => { await handleDeleteConfirm(); setDeleteOpen(false) }}
+        onCancel={() => setDeleteOpen(false)}
       />
     </AdminLayout>
   )

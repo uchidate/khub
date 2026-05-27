@@ -10,7 +10,7 @@ import {
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton, BulkActionBar } from '@/components/admin'
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminBadge } from '@/components/admin/AdminBadge'
 import { StatCard } from '@/components/admin'
 
 interface Comment {
@@ -79,11 +79,9 @@ function CommentCard({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs font-bold text-foreground truncate">{comment.user.name ?? comment.user.email}</span>
-                        <AdminStatusBadge
-                            label={STATUS_LABEL[comment.status] ?? comment.status}
-                            color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
-                            variant="pill"
-                        />
+                        <AdminBadge variant="custom" color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'} shape="pill">
+                            {STATUS_LABEL[comment.status] ?? comment.status}
+                        </AdminBadge>
                         <span className="text-[10px] text-muted ml-auto flex-shrink-0">
                             {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                         </span>
@@ -512,11 +510,9 @@ export default function AdminCommentsPage() {
 
                             {/* Status badge */}
                             <div>
-                                <AdminStatusBadge
-                                    label={STATUS_LABEL[comment.status] ?? comment.status}
-                                    color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
-                                    variant="pill"
-                                />
+                                <AdminBadge variant="custom" color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'} shape="pill">
+                                    {STATUS_LABEL[comment.status] ?? comment.status}
+                                </AdminBadge>
                             </div>
 
                             {/* Actions */}
