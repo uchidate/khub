@@ -1493,7 +1493,7 @@ export default function KpoppingCurationPage() {
   ]
 
   return (
-    <AdminLayout title="Curadoria Kpopping">
+    <AdminLayout title="Curadoria Kpopping" subtitle="Importe e sincronize dados do banco externo Kpopping">
       <div className="space-y-6">
         {/* Actions */}
         <div className="flex items-start justify-between -mt-6">
