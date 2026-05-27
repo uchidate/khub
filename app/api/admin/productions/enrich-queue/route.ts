@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { PRODUCTION_CURATION_MISSING_FIELDS } from '@/lib/admin/curation-queue'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,12 +37,7 @@ export async function GET(req: Request) {
         where.AND = [
             {
                 OR: [
-                    { synopsis: null },
-                    { tagline: null },
-                    { whyWatch: null },
-                    { editorialReview: null },
-                    { editorialRating: null },
-                    { curiosidades: { isEmpty: true } },
+                    ...PRODUCTION_CURATION_MISSING_FIELDS,
                 ],
             },
         ]

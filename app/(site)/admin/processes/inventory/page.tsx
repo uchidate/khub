@@ -43,6 +43,8 @@ const AREAS: InventoryArea[] = [
       { name: 'Gemini (enriquecimento)', type: 'manual' },
       { name: 'TMDB (nomes/fotos)', type: 'manual' },
       { name: 'MusicBrainz (import)', type: 'manual' },
+      { name: 'Wikidata (redes sociais)', type: 'cron', schedule: 'Diário 23:00 BRT' },
+      { name: 'Visibilidade automática', type: 'cron', schedule: 'Diário 23:00 BRT' },
     ],
     query: async () => {
       const [total, agg] = await Promise.all([
@@ -121,7 +123,7 @@ const AREAS: InventoryArea[] = [
     description: 'Feed de notícias importadas e curadas do K-Pop.',
     sources: [
       { name: 'Fetch automático de feeds', type: 'cron', schedule: 'A cada 5min' },
-      { name: 'Gemini (tagging)', type: 'cron', schedule: 'A cada 5min' },
+      { name: 'Tagging por regras locais', type: 'cron', schedule: 'A cada 5min' },
     ],
     query: async () => {
       const [total, agg] = await Promise.all([
@@ -152,7 +154,7 @@ const AREAS: InventoryArea[] = [
     sources: [
       { name: 'Cadastro manual', type: 'manual' },
       { name: 'Sinais de streaming', type: 'cron', schedule: 'A cada 15min' },
-      { name: 'Atualização de top shows', type: 'cron', schedule: 'A cada 6h' },
+      { name: 'Atualização de top shows', type: 'cron', schedule: 'Diário 00:00 BRT' },
     ],
     query: async () => {
       const [total, agg] = await Promise.all([
@@ -200,12 +202,15 @@ export default async function DataInventoryPage() {
   )
 
   return (
-    <AdminLayout title="Inventário de dados" subtitle="Fontes e frescura de cada conjunto de dados">
+    <AdminLayout title="Inventário de dados" subtitle="Fontes e recência de alteração de cada conjunto de dados">
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Link href="/admin/processes" className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors">
             <ArrowLeft size={13} /> Processos
           </Link>
+        </div>
+        <div className="rounded-xl border border-border bg-surface px-4 py-3 text-[11px] text-muted">
+          A recência abaixo representa a última criação ou edição observada nos registros. Um cron pode executar sem alterar dados; a confirmação de execução e falhas fica na Central de automação.
         </div>
 
         {/* Summary cards */}
@@ -224,7 +229,7 @@ export default async function DataInventoryPage() {
               color: 'text-green-400',
             },
             {
-              label: 'Atualizadas hoje',
+              label: 'Alteradas hoje',
               value: results.filter(r => {
                 const d = r.data.lastUpdated ?? r.data.lastCreated
                 return d && (Date.now() - d.getTime()) < 86_400_000
@@ -233,7 +238,7 @@ export default async function DataInventoryPage() {
               color: 'text-green-400',
             },
             {
-              label: 'Com atraso (>30d)',
+              label: 'Sem alteração (>30d)',
               value: results.filter(r => {
                 const d = r.data.lastUpdated ?? r.data.lastCreated
                 return d && (Date.now() - d.getTime()) > 30 * 86_400_000

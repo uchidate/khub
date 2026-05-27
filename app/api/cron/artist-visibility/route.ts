@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service'
 import { createLogger } from '@/lib/utils/logger'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 
 const log = createLogger('CRON_ARTIST_VISIBILITY')
 
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
   const requestId = await acquireCronLock(lockKey)
   if (!requestId) {
     log.warn('Artist visibility reconciliation already running, skipping')
+    await logCronRun('artist-visibility', 'skipped', 'Execução ignorada: job já estava ativo')
     return NextResponse.json({ skipped: true, reason: 'lock_active' })
   }
 
@@ -51,6 +53,12 @@ export async function POST(request: NextRequest) {
     log.info(`Starting artist visibility reconciliation (limit: ${limit})`)
     const result = await getArtistVisibilityService().reconcileAll(limit)
     log.info('Artist visibility reconciliation complete', result)
+    await logCronRun(
+      'artist-visibility',
+      'success',
+      `${result.hidden} artista(s) ocultado(s), ${result.shown} exibido(s)`,
+      result,
+    )
     // Invalida cache ISR da listagem se houve mudanças
     if (result.shown > 0 || result.hidden > 0) {
       revalidatePath('/artists')
@@ -59,6 +67,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     log.error('Artist visibility reconciliation failed', { error: message })
+    await logCronRun('artist-visibility', 'failed', 'Reconciliação de visibilidade falhou')
     return NextResponse.json({ error: message }, { status: 500 })
   } finally {
     await releaseCronLock(lockKey, requestId)

@@ -23,6 +23,11 @@ interface CronJob {
   nextRuns: string[]
   manualTriggerEnabled: boolean
   manualReviewReason: string | null
+  lastExecution: {
+    at: string
+    message: string
+    status: 'success' | 'partial' | 'failed' | 'skipped'
+  } | null
 }
 
 interface Stats {
@@ -82,6 +87,28 @@ interface EnrichmentData {
 
 type TriggerState = Record<string, 'idle' | 'running' | 'ok' | 'error'>
 
+const ADMIN_TIME_ZONE = 'America/Sao_Paulo'
+const ADMIN_TIME_ZONE_LABEL = 'BRT'
+const BRT_UTC_OFFSET_HOURS = -3
+
+function formatAdminTime(value: string): string {
+  return new Date(value).toLocaleTimeString('pt-BR', {
+    timeZone: ADMIN_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatAdminDateTime(value: string): string {
+  return new Date(value).toLocaleString('pt-BR', {
+    timeZone: ADMIN_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 const COLOR_MAP: Record<string, { badge: string; dot: string; ring: string }> = {
   blue:   { badge: 'bg-blue-500/15 text-blue-300 border-blue-500/20',   dot: 'bg-blue-400',   ring: 'ring-blue-500/30' },
   purple: { badge: 'bg-purple-500/15 text-purple-300 border-purple-500/20', dot: 'bg-purple-400', ring: 'ring-purple-500/30' },
@@ -103,8 +130,8 @@ const MANUAL_RECOVERY_TOOLS = [
     title: 'Filmografias',
     href: '/admin/filmography',
     icon: Wrench,
-    badge: 'Manual / legado',
-    description: 'Pode criar ou associar produções por TMDB e fallback de IA. Não possui job dedicado ativo no workflow atual.',
+    badge: 'Revisão controlada',
+    description: 'O job semanal via TMDB está ativo; abra a ferramenta para revisar associações e recuperações pontuais.',
   },
   {
     title: 'Redes sociais',
@@ -118,16 +145,20 @@ const MANUAL_RECOVERY_TOOLS = [
 function TimelineBar({ jobs }: { jobs: CronJob[] }) {
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
-  // Map job to UTC hours it runs
-  function getRunHours(schedule: string): number[] {
+  function toBrtHour(utcHour: number): number {
+    return (utcHour + BRT_UTC_OFFSET_HOURS + 24) % 24
+  }
+
+  // Cron schedules are stored in UTC; the operational timeline is shown in BRT.
+  function getRunHoursInBrt(schedule: string): number[] {
     const [_minPart, hourPart] = schedule.split(' ')
     if (!hourPart) return []
     if (_minPart.startsWith('*/') && hourPart === '*') return hours
     if (hourPart.startsWith('*/')) {
       const interval = parseInt(hourPart.slice(2))
-      return hours.filter(h => h % interval === 0)
+      return hours.filter(h => h % interval === 0).map(toBrtHour)
     }
-    if (!isNaN(parseInt(hourPart))) return [parseInt(hourPart)]
+    if (!isNaN(parseInt(hourPart))) return [toBrtHour(parseInt(hourPart))]
     return []
   }
 
@@ -141,7 +172,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
       </div>
       {/* One row per job */}
       {jobs.map(job => {
-        const runHours = getRunHours(job.schedule)
+        const runHours = getRunHoursInBrt(job.schedule)
         const colors = COLOR_MAP[job.color] ?? COLOR_MAP.blue
         return (
           <div key={job.id} className="flex items-center gap-2">
@@ -153,7 +184,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
                   <div
                     key={h}
                     className={`flex-1 h-4 mx-px rounded-sm ${active ? `${colors.dot} opacity-80` : 'bg-surface'}`}
-                    title={active ? `${job.name} às ${h.toString().padStart(2,'0')}:00 UTC` : undefined}
+                    title={active ? `${job.name} às ${h.toString().padStart(2,'0')}:00 ${ADMIN_TIME_ZONE_LABEL}` : undefined}
                   />
                 )
               })}
@@ -244,7 +275,7 @@ export default function AdminCronPage() {
             <h1 className="text-2xl lg:text-3xl font-black text-foreground mt-1">Central de automação</h1>
             {data && (
               <p className="text-sm text-muted mt-1">
-                {jobs.length} jobs configurados · atualizado {new Date(data.timestamp).toLocaleString('pt-BR')}
+                {jobs.length} jobs configurados · atualizado {formatAdminDateTime(data.timestamp)} {ADMIN_TIME_ZONE_LABEL}
               </p>
             )}
           </div>
@@ -433,7 +464,7 @@ export default function AdminCronPage() {
             <div className="flex items-center justify-between gap-3 mb-4">
               <div className="flex items-center justify-between mb-2">
                 <Clock className="w-4 h-4 text-muted mr-2" />
-                <h2 className="text-sm font-bold text-foreground">Agenda 24h (UTC)</h2>
+                <h2 className="text-sm font-bold text-foreground">Agenda 24h ({ADMIN_TIME_ZONE_LABEL})</h2>
               </div>
               <span className="text-[10px] text-muted">blocos coloridos indicam execução prevista</span>
             </div>
@@ -471,7 +502,7 @@ export default function AdminCronPage() {
                       <p className="text-[10px] text-muted mt-0.5 leading-tight">{job.description}</p>
                       {activeRun && (
                         <p className="text-[10px] text-blue-500 mt-1">
-                          Em execução desde {new Date(activeRun.startedAt).toLocaleTimeString('pt-BR')}
+                          Em execução desde {formatAdminTime(activeRun.startedAt)} {ADMIN_TIME_ZONE_LABEL}
                         </p>
                       )}
                     </div>
@@ -498,7 +529,7 @@ export default function AdminCronPage() {
 
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono border ${colors.badge}`}>
-                    {job.schedule}
+                    cron UTC: {job.schedule}
                   </span>
                   <span className="text-[10px] text-muted">{job.frequencyLabel}</span>
                 </div>
@@ -513,7 +544,21 @@ export default function AdminCronPage() {
                         : `${Math.floor(nextRunDelta / 60)}h${nextRunDelta % 60 > 0 ? `${nextRunDelta % 60}m` : ''}`}
                     </span>
                     <span className="text-muted">·</span>
-                    <span>{new Date(nextRun!).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC</span>
+                    <span>{formatAdminTime(nextRun!)} {ADMIN_TIME_ZONE_LABEL}</span>
+                  </div>
+                )}
+                {job.lastExecution && (
+                  <div className="flex items-start gap-1.5 mt-2.5 text-[10px] text-muted">
+                    <CheckCircle2 className={`w-3 h-3 shrink-0 mt-px ${
+                      job.lastExecution.status === 'success' ? 'text-emerald-500'
+                      : job.lastExecution.status === 'partial' ? 'text-amber-500'
+                      : job.lastExecution.status === 'failed' ? 'text-red-500'
+                      : 'text-muted'
+                    }`} />
+                    <span>
+                      Ultimo resultado ({formatAdminDateTime(job.lastExecution.at)} {ADMIN_TIME_ZONE_LABEL}):{' '}
+                      <strong className="font-semibold text-foreground">{job.lastExecution.message}</strong>
+                    </span>
                   </div>
                 )}
                 {job.manualReviewReason && (
@@ -539,7 +584,7 @@ export default function AdminCronPage() {
                   <span className="text-[10px] text-muted tabular-nums w-4 shrink-0">{i + 1}</span>
                   <p className="text-xs text-foreground truncate flex-1">{news.title}</p>
                   <span className="text-[10px] text-muted shrink-0">
-                    {new Date(news.createdAt).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
+                    {formatAdminDateTime(news.createdAt)} {ADMIN_TIME_ZONE_LABEL}
                   </span>
                 </div>
               ))}

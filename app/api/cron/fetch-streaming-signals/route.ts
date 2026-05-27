@@ -18,6 +18,8 @@ import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
 import { getErrorMessage } from '@/lib/utils/error'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 import {
     getSignalProviders,
     rankToScore,
@@ -178,8 +180,26 @@ export async function POST(request: NextRequest) {
     log.info('Fetch streaming signals started', { requestId })
 
     runFetchStreamingSignals()
-        .then(result => log.info('Fetch streaming signals completed', { requestId, ...result }))
-        .catch(onCronError(log, 'cron-fetch-streaming-signals', 'Fetch streaming signals failed'))
+        .then(result => {
+            log.info('Fetch streaming signals completed', { requestId, ...result })
+            const errorCount = result.ingestion.reduce((sum, source) => sum + source.errors.length, 0)
+            logCronRun(
+                'fetch-streaming-signals',
+                errorCount > 0 ? 'partial' : 'success',
+                `${result.trendingUpdated} sinal(is) aplicado(s), ${errorCount} erro(s)`,
+                { requestId, trendingUpdated: result.trendingUpdated, errorCount },
+            ).catch(() => {})
+            if (errorCount > 0) {
+                logSystemEvent('ERROR', 'cron-fetch-streaming-signals', `Sinais de streaming concluídos com ${errorCount} erro(s)`, {
+                    requestId,
+                    errorCount,
+                }).catch(() => {})
+            }
+        })
+        .catch(err => {
+            logCronRun('fetch-streaming-signals', 'failed', 'Busca de sinais de streaming falhou', { requestId }).catch(() => {})
+            onCronError(log, 'cron-fetch-streaming-signals', 'Fetch streaming signals failed')(err)
+        })
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
 }

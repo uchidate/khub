@@ -17,6 +17,7 @@ import { sendBlogDigest } from '@/lib/services/blog-notification-service';
 import { createLogger } from '@/lib/utils/logger'
 import { logSystemEvent } from '@/lib/services/system-event-service';
 import { getErrorMessage } from '@/lib/utils/error';
+import { logCronRun } from '@/lib/services/cron-execution-service';
 
 const log = createLogger('DIGEST');
 
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
         if (users.length === 0) {
             const duration = Date.now() - startTime;
             log.info('No users to notify', { duration });
+            await logCronRun('digest', 'success', 'Nenhum assinante para notificar', { frequency, duration });
             return NextResponse.json({
                 success: true,
                 result,
@@ -128,6 +130,12 @@ export async function GET(request: NextRequest) {
         const duration = Date.now() - startTime;
 
         log.info('Digest job completed', { duration, sent: result.sent, skipped: result.skipped, failed: result.failed });
+        await logCronRun(
+            'digest',
+            result.failed > 0 ? 'partial' : 'success',
+            `${result.sent} email(s) enviado(s), ${result.failed} falha(s), ${result.skipped} ignorado(s)`,
+            { duration, ...result },
+        );
 
         return NextResponse.json({
             success: true,
@@ -138,6 +146,7 @@ export async function GET(request: NextRequest) {
         const duration = Date.now() - startTime;
         log.error('Digest job failed', { error: getErrorMessage(error), duration });
         logSystemEvent('ERROR', 'cron-digest', `Digest job failed: ${getErrorMessage(error)}`, { duration }).catch(() => {});
+        await logCronRun('digest', 'failed', 'Envio de digest falhou', { duration });
 
         return NextResponse.json(
             {

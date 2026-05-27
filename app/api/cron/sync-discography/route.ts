@@ -3,6 +3,8 @@ import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getDiscographySyncService } from '@/lib/services/discography-sync-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
+import { logSystemEvent } from '@/lib/services/system-event-service';
+import { logCronRun } from '@/lib/services/cron-execution-service';
 
 /**
  * Cron Job - Sync Artist Discography
@@ -102,6 +104,19 @@ async function runDiscographySync(
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         log.info('Discography sync job completed', { result, duration_s: duration });
+        await logCronRun(
+            'discography',
+            result.failureCount > 0 ? 'partial' : 'success',
+            `${result.successCount}/${result.processed} artista(s) sincronizado(s), ${result.totalAdded} álbum(ns) adicionado(s)`,
+            { ...result, durationSeconds: duration },
+        );
+        if (result.failureCount > 0) {
+            await logSystemEvent('ERROR', 'cron-sync-discography', `Discografia concluída com ${result.failureCount} falha(s)`, {
+                processed: result.processed,
+                successCount: result.successCount,
+                failureCount: result.failureCount,
+            });
+        }
     } catch (error: any) {
         const duration = Math.round((Date.now() - startTime) / 1000);
         log.error('Discography sync job failed', {
@@ -109,6 +124,8 @@ async function runDiscographySync(
             stack: error.stack,
             duration_s: duration,
         });
+        await logCronRun('discography', 'failed', 'Sincronização de discografia falhou', { durationSeconds: duration });
+        throw error;
     } finally {
         await releaseCronLock('cron-sync-discography', lockId);
     }

@@ -3,6 +3,8 @@ import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto'
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service'
 import { syncSpotifyCatalogForGroup } from '@/lib/services/spotify-catalog-sync-service'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -39,7 +41,10 @@ export async function POST(request: NextRequest) {
         error: (msg: string, ctx?: any) => console.error(JSON.stringify({ level: 'error', service: 'CRON_SYNC_GROUPS_DISCOGRAPHY', message: msg, ...ctx })),
     }
 
-    runSync(lockId, log).catch(onCronError(log, 'cron-sync-groups-discography', 'Unhandled error'))
+    runSync(lockId, log).catch(err => {
+        logCronRun('sync-groups-discography', 'failed', 'Sincronização de grupos falhou').catch(() => {})
+        onCronError(log, 'cron-sync-groups-discography', 'Unhandled error')(err)
+    })
 
     return NextResponse.json({ status: 'accepted', message: 'Group discography sync started' }, { status: 202 })
 }
@@ -75,6 +80,20 @@ async function runSync(lockId: string, log: { info: (m: string, c?: any) => void
 
         const duration = Math.round((Date.now() - start) / 1000)
         log.info('Group discography sync completed', { ok, fail, totalReleases, totalTracks, duration_s: duration })
+        await logCronRun(
+            'sync-groups-discography',
+            fail > 0 ? 'partial' : 'success',
+            `${ok} grupo(s) sincronizado(s), ${totalReleases} lançamento(s), ${fail} falha(s)`,
+            { ok, fail, totalReleases, totalTracks, durationSeconds: duration },
+        )
+        if (fail > 0) {
+            await logSystemEvent('ERROR', 'cron-sync-groups-discography', `Discografia de grupos concluída com ${fail} falha(s)`, {
+                ok,
+                fail,
+                totalReleases,
+                totalTracks,
+            })
+        }
     } finally {
         await releaseCronLock('cron-sync-groups-discography', lockId)
     }

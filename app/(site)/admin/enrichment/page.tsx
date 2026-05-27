@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowRight, Film, RefreshCw, ShieldAlert, Sparkles, Users, UsersRound } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminBadge, AdminButton } from '@/components/admin'
+import type { EnrichmentPriorityItem } from '@/app/api/admin/enrichment/route'
 
 interface QueueCounts {
     artists: number
@@ -41,6 +42,8 @@ const QUEUES = [
 
 export default function EnrichmentPage() {
     const [counts, setCounts] = useState<QueueCounts | null>(null)
+    const [staleCounts, setStaleCounts] = useState<QueueCounts | null>(null)
+    const [priorityItems, setPriorityItems] = useState<EnrichmentPriorityItem[]>([])
     const [loading, setLoading] = useState(true)
     const [failed, setFailed] = useState(false)
 
@@ -50,8 +53,14 @@ export default function EnrichmentPage() {
         try {
             const response = await fetch('/api/admin/enrichment')
             if (!response.ok) throw new Error('failed')
-            const data = await response.json() as { detailedQueues: QueueCounts }
+            const data = await response.json() as {
+                detailedQueues: QueueCounts
+                staleQueues: QueueCounts
+                priorityItems: EnrichmentPriorityItem[]
+            }
             setCounts(data.detailedQueues)
+            setStaleCounts(data.staleQueues)
+            setPriorityItems(data.priorityItems ?? [])
         } catch {
             setFailed(true)
         } finally {
@@ -62,6 +71,7 @@ export default function EnrichmentPage() {
     useEffect(() => { void load() }, [load])
 
     const total = counts ? Object.values(counts).reduce((sum, value) => sum + value, 0) : null
+    const staleTotal = staleCounts ? Object.values(staleCounts).reduce((sum, value) => sum + value, 0) : null
 
     return (
         <AdminLayout title="Central de enriquecimento" hideTitle>
@@ -109,6 +119,18 @@ export default function EnrichmentPage() {
                     </div>
                 </div>
 
+                {staleTotal != null && staleTotal > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3">
+                        <div>
+                            <p className="text-sm font-bold text-foreground">{staleTotal} pendencia{staleTotal !== 1 ? 's' : ''} em registro{staleTotal !== 1 ? 's' : ''} criado{staleTotal !== 1 ? 's' : ''} ha mais de 7 dias</p>
+                            <p className="mt-1 text-[11px] text-muted">
+                                Artistas: {staleCounts?.artists ?? 0} · Grupos: {staleCounts?.groups ?? 0} · Producoes: {staleCounts?.productions ?? 0}
+                            </p>
+                        </div>
+                        <AdminBadge variant="warning" shape="pill">Prioridade alta</AdminBadge>
+                    </div>
+                )}
+
                 <div className="grid gap-3 lg:grid-cols-3">
                     {QUEUES.map(({ key, label, href, icon: Icon, prompt, description }) => {
                         const count = counts?.[key]
@@ -130,6 +152,48 @@ export default function EnrichmentPage() {
                         )
                     })}
                 </div>
+
+                <section className="rounded-xl border border-border bg-surface p-4">
+                    <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+                        <div>
+                            <h2 className="text-sm font-bold text-foreground">Comecar por aqui</h2>
+                            <p className="mt-1 text-[11px] text-muted">
+                                Itens visiveis com mais campos ausentes, priorizados por relevancia dentro de cada catalogo.
+                            </p>
+                        </div>
+                        <AdminBadge variant="info" shape="pill">{priorityItems.length} prioridades</AdminBadge>
+                    </div>
+                    {priorityItems.length > 0 ? (
+                        <div className="space-y-1.5">
+                            {priorityItems.map(item => (
+                                <Link
+                                    key={`${item.type}-${item.id}`}
+                                    href={item.href}
+                                    className="flex flex-col gap-2 rounded-lg border border-border bg-background/30 px-3 py-2.5 transition-colors hover:border-accent/35 sm:flex-row sm:items-center"
+                                >
+                                    <AdminBadge variant="neutral" shape="pill" className="w-fit shrink-0">
+                                        {item.type === 'artist' ? 'Artista' : item.type === 'group' ? 'Grupo' : 'Producao'}
+                                    </AdminBadge>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-semibold text-foreground">{item.name}</p>
+                                        {item.subtitle && <p className="truncate text-[10px] text-muted">{item.subtitle}</p>}
+                                    </div>
+                                    <p className="text-[10px] text-muted sm:max-w-[42%] sm:text-right">
+                                        Falta: {item.missingFields.join(', ')}
+                                    </p>
+                                    {item.stale && (
+                                        <AdminBadge variant="warning" shape="pill" className="w-fit shrink-0">
+                                            Criado ha {item.ageDays}d
+                                        </AdminBadge>
+                                    )}
+                                    <ArrowRight className="hidden h-3 w-3 shrink-0 text-accent sm:block" />
+                                </Link>
+                            ))}
+                        </div>
+                    ) : !loading && (
+                        <p className="py-5 text-center text-xs text-muted">Nenhuma pendencia de curadoria encontrada.</p>
+                    )}
+                </section>
             </div>
         </AdminLayout>
     )

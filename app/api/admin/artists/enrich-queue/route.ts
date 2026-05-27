@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { ARTIST_CURATION_MISSING_FIELDS } from '@/lib/admin/curation-queue'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,19 +38,10 @@ export async function GET(req: Request) {
     }
 
     if (filter === 'incomplete') {
-        const incompleteOr = [
-            { bio:              null },
-            { analiseEditorial: null },
-            { curiosidades:     { isEmpty: true } },
-            { height:           null },
-            { bloodType:        null },
-            { fanInfo:          { equals: Prisma.JsonNull } },
-            { awards:           { equals: Prisma.JsonNull } },
-        ]
         if (where.AND) {
-            (where.AND as Prisma.ArtistWhereInput[]).push({ OR: incompleteOr })
+            (where.AND as Prisma.ArtistWhereInput[]).push({ OR: ARTIST_CURATION_MISSING_FIELDS })
         } else {
-            where.OR = incompleteOr
+            where.OR = ARTIST_CURATION_MISSING_FIELDS
         }
     } else if (filter === 'enriched') {
         where.enrichedAt = { not: null }

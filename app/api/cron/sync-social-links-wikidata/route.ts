@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto'
 import { findArtistSocialLinks } from '@/lib/services/wikidata-social-links'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 import prisma from '@/lib/prisma'
 
 /**
@@ -68,7 +70,10 @@ export async function POST(request: NextRequest) {
     log.info('Starting Wikidata social links sync in background', { limit })
 
     // Fire-and-forget
-    runWikidataSync(limit, requestId, log).catch(onCronError(log, 'cron-sync-wikidata', 'Unhandled error in background Wikidata social links sync'))
+    runWikidataSync(limit, requestId, log).catch(err => {
+        logCronRun('social-links', 'failed', 'Sincronização de redes sociais falhou', { requestId }).catch(() => {})
+        onCronError(log, 'cron-sync-wikidata', 'Unhandled error in background Wikidata social links sync')(err)
+    })
 
     return NextResponse.json({
         status: 'accepted',
@@ -155,6 +160,20 @@ async function runWikidataSync(
         errors,
         duration_s: duration,
     })
+    await logCronRun(
+        'social-links',
+        errors > 0 ? 'partial' : 'success',
+        `${found} artista(s) com links encontrados, ${errors} falha(s)`,
+        { requestId, processed: artists.length, found, notFound, errors, durationSeconds: duration },
+    )
+    if (errors > 0) {
+        await logSystemEvent('ERROR', 'cron-sync-wikidata', `Redes sociais concluídas com ${errors} falha(s)`, {
+            processed: artists.length,
+            found,
+            notFound,
+            errors,
+        })
+    }
 }
 
 export async function GET() {

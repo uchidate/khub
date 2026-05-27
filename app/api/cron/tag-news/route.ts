@@ -19,6 +19,7 @@ import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
 import { getNewsTaggingService } from '@/lib/services/news-tagging-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 
 export const maxDuration = 120
 
@@ -56,14 +57,24 @@ export async function POST(request: NextRequest) {
 
   if (dryRun) {
     const pending = await prisma.news.count({ where: { status: 'draft' } })
+    await logCronRun('tag-news', 'skipped', `Dry-run: ${pending} rascunho(s) pendente(s)`, { requestId, pending })
     return NextResponse.json({ success: true, status: 'dry-run', pending, requestId })
   }
 
   runTagNews(limit)
     .then(result => {
       log.info('News tagging completed', { requestId, ...result })
+      logCronRun(
+        'tag-news',
+        result.failed > 0 ? 'partial' : 'success',
+        `${result.tagged} tagueada(s), ${result.failed} falha(s), ${result.skipped} ignorada(s)`,
+        { requestId, ...result },
+      ).catch(() => {})
     })
-    .catch(onCronError(log, 'cron-tag-news', 'News tagging fatal error'))
+    .catch(err => {
+      logCronRun('tag-news', 'failed', 'Tagging de notícias falhou', { requestId }).catch(() => {})
+      onCronError(log, 'cron-tag-news', 'News tagging fatal error')(err)
+    })
 
   return NextResponse.json({
     success: true,

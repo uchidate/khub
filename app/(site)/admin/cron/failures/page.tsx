@@ -32,6 +32,7 @@ export default function CronFailuresPage() {
     try {
       const res = await fetch('/api/admin/cron/failures')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Falha ao carregar')
       setFailures(data.failures ?? [])
       setTotal(data.total ?? 0)
       setSince(data.since ?? null)
@@ -57,10 +58,10 @@ export default function CronFailuresPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`${entry.jobName ?? entry.jobId} disparado`)
+        toast.success(`Reexecução de ${entry.jobName ?? entry.jobId} solicitada`)
         setRetriggered(prev => new Set([...prev, key]))
       } else {
-        toast.error(data.error ?? 'Falha ao disparar job')
+        toast.error(data.error ?? data.message ?? 'Falha ao disparar job')
       }
     } catch {
       toast.error('Erro ao disparar job')
@@ -90,6 +91,11 @@ export default function CronFailuresPage() {
             </AdminButton>
           </div>
         </div>
+        {!loading && failures.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface px-4 py-3 text-[11px] text-muted">
+            Reexecutar solicita uma nova execução; não remove erros já registrados. As ocorrências permanecem neste histórico por 48h para apoiar a investigação.
+          </div>
+        )}
 
         {/* Summary */}
         {!loading && (
@@ -152,6 +158,11 @@ export default function CronFailuresPage() {
                               {entry.count}×
                             </span>
                             <span className="text-[10px] text-muted">{timeAgo(entry.lastAt)}</span>
+                            {entry.recoveredAt && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">
+                                Recuperado {timeAgo(entry.recoveredAt)}
+                              </span>
+                            )}
                           </div>
                           {entry.lastMessage && (
                             <p className="text-[11px] text-muted font-mono truncate max-w-lg" title={entry.lastMessage}>
@@ -160,7 +171,9 @@ export default function CronFailuresPage() {
                           )}
                           <p className="text-[10px] text-muted/60">{entry.label}</p>
                         </div>
-                        {entry.canRetrigger ? (
+                        {entry.recoveredAt ? (
+                          <span className="text-[10px] text-green-400 px-2 py-1 border border-green-500/20 rounded-lg">Resolvido</span>
+                        ) : entry.canRetrigger ? (
                           <AdminButton
                             onClick={() => retrigger(entry)}
                             disabled={!!retriggering || wasRetriggered}
@@ -168,7 +181,7 @@ export default function CronFailuresPage() {
                             size="sm"
                           >
                             {wasRetriggered ? (
-                              <><CheckCircle2 size={12} /> Disparado</>
+                              <><CheckCircle2 size={12} /> Solicitado</>
                             ) : (
                               <><RotateCcw size={12} className={isRunning ? 'animate-spin' : ''} /> Reexecutar</>
                             )}
@@ -206,6 +219,11 @@ export default function CronFailuresPage() {
                               {entry.count}×
                             </span>
                             <span className="text-[10px] text-muted">{timeAgo(entry.lastAt)}</span>
+                            {entry.recoveredAt && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">
+                                Recuperado {timeAgo(entry.recoveredAt)}
+                              </span>
+                            )}
                           </div>
                           {entry.lastMessage && (
                             <p className="text-[11px] text-muted font-mono truncate max-w-lg" title={entry.lastMessage}>
@@ -216,7 +234,9 @@ export default function CronFailuresPage() {
                             <p className="text-[10px] text-muted/60">via {entry.jobName}</p>
                           )}
                         </div>
-                        {entry.canRetrigger ? (
+                        {entry.recoveredAt ? (
+                          <span className="text-[10px] text-green-400 px-2 py-1 border border-green-500/20 rounded-lg">Resolvido</span>
+                        ) : entry.canRetrigger ? (
                           <AdminButton
                             onClick={() => retrigger(entry)}
                             disabled={!!retriggering || wasRetriggered}
@@ -224,7 +244,7 @@ export default function CronFailuresPage() {
                             size="sm"
                           >
                             {wasRetriggered ? (
-                              <><CheckCircle2 size={12} /> Disparado</>
+                              <><CheckCircle2 size={12} /> Solicitado</>
                             ) : (
                               <><Zap size={12} className={isRunning ? 'animate-spin' : ''} /> Reexecutar</>
                             )}

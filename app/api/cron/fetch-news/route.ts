@@ -29,6 +29,8 @@ import { timingSafeEqual } from 'crypto'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
 import { WP_API_BASES, discoverViaWPAPI, importOne } from '@/lib/services/news-import-service'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 
 export const maxDuration = 300
 
@@ -153,8 +155,26 @@ export async function POST(request: NextRequest) {
             const totalImported = results.reduce((s, r) => s + r.imported, 0)
             const totalErrors   = results.reduce((s, r) => s + r.errors,  0)
             log.info('News fetch completed', { requestId, totalImported, totalErrors, results })
+            logCronRun(
+                'fetch-news',
+                totalErrors > 0 ? 'partial' : 'success',
+                totalErrors > 0
+                    ? `${totalImported} notícia(s) importada(s), ${totalErrors} erro(s)`
+                    : `${totalImported} notícia(s) importada(s)`,
+                { requestId, totalImported, totalErrors },
+            ).catch(() => {})
+            if (totalErrors > 0) {
+                logSystemEvent('ERROR', 'cron-fetch-news', `Busca de notícias concluída com ${totalErrors} erro(s) de importação`, {
+                    requestId,
+                    totalImported,
+                    totalErrors,
+                }).catch(() => {})
+            }
         })
-        .catch(onCronError(log, 'cron-fetch-news', 'News fetch fatal error'))
+        .catch(err => {
+            logCronRun('fetch-news', 'failed', 'Busca de notícias falhou', { requestId }).catch(() => {})
+            onCronError(log, 'cron-fetch-news', 'News fetch fatal error')(err)
+        })
 
     return NextResponse.json({
         success: true,

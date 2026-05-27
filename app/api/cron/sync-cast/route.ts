@@ -3,6 +3,8 @@ import { onCronError } from '@/lib/utils/cron-logger'
 import { timingSafeEqual } from 'crypto';
 import { getProductionCastService } from '@/lib/services/production-cast-service';
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service';
+import { logSystemEvent } from '@/lib/services/system-event-service';
+import { logCronRun } from '@/lib/services/cron-execution-service';
 
 /**
  * Cron Job - Sync Production Cast
@@ -115,6 +117,20 @@ async function runCastSync(
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         log.info('Cast sync job completed', { result, duration_s: duration });
+        await logCronRun(
+            'cast-sync',
+            result.failureCount > 0 ? 'partial' : 'success',
+            `${result.totalSynced} artista(s) associado(s), ${result.failureCount} falha(s)`,
+            { ...result, durationSeconds: duration },
+        );
+        if (result.failureCount > 0) {
+            await logSystemEvent('ERROR', 'cron-sync-cast', `Sync de elenco concluído com ${result.failureCount} falha(s)`, {
+                processed: result.processed,
+                totalSynced: result.totalSynced,
+                totalSkipped: result.totalSkipped,
+                failureCount: result.failureCount,
+            });
+        }
     } catch (error: any) {
         const duration = Math.round((Date.now() - startTime) / 1000);
         log.error('Cast sync job failed', {
@@ -122,6 +138,8 @@ async function runCastSync(
             stack: error.stack,
             duration_s: duration,
         });
+        await logCronRun('cast-sync', 'failed', 'Sincronização de elenco falhou', { durationSeconds: duration });
+        throw error;
     } finally {
         await releaseCronLock('cron-sync-cast', lockId);
     }
