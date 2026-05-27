@@ -168,9 +168,10 @@ const automationBacklog = [
   },
   {
     title: 'Reexecução orientada por falhas',
-    value: 'Automação',
-    description: 'Expor somente jobs com falha ou pendência relevante em vez de exigir inspeção manual.',
+    value: 'Implementado',
+    description: 'Página dedicada lista apenas jobs com erros nas últimas 48h; botão de reexecução direto para cada falha.',
     icon: Bot,
+    href: '/admin/cron/failures',
   },
   {
     title: 'Inventário com última atualização',

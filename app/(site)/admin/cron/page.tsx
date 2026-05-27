@@ -271,21 +271,29 @@ export default function AdminCronPage() {
         )}
 
         {data && data.incidents.total > 0 && (
-          <Link
-            href="/admin/inbox#operacao"
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
-          >
-            <div className="flex items-center gap-3">
-              <Activity className="h-4 w-4 shrink-0 text-red-500" />
-              <div>
-                <p className="text-sm font-bold text-foreground">{data.incidents.total} incidente{data.incidents.total !== 1 ? 's' : ''} nas últimas 24h</p>
-                <p className="text-[11px] text-muted">{data.incidents.systemErrors} sistema · {data.incidents.aiFailures} IA</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link
+              href="/admin/cron/failures"
+              className="flex-1 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
+            >
+              <div className="flex items-center gap-3">
+                <Activity className="h-4 w-4 shrink-0 text-red-500" />
+                <div>
+                  <p className="text-sm font-bold text-foreground">{data.incidents.total} incidente{data.incidents.total !== 1 ? 's' : ''} nas últimas 24h</p>
+                  <p className="text-[11px] text-muted">{data.incidents.systemErrors} sistema · {data.incidents.aiFailures} IA</p>
+                </div>
               </div>
-            </div>
-            <span className="flex items-center gap-1 text-xs font-bold text-red-500">
-              Revisar na Caixa <ArrowRight size={12} />
-            </span>
-          </Link>
+              <span className="flex items-center gap-1 text-xs font-bold text-red-500">
+                Reexecutar falhas <ArrowRight size={12} />
+              </span>
+            </Link>
+            <Link
+              href="/admin/inbox#operacao"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Ver na Caixa <ArrowRight size={11} />
+            </Link>
+          </div>
         )}
 
         {/* Operational overview */}
