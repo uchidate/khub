@@ -68,7 +68,7 @@ export function HomeDiscoverySection({
     ].filter(Boolean) as { href: string; label: string; title: string; sub?: string | null; img?: string | null }[]
 
     return (
-        <section className="bg-background overflow-x-clip">
+        <section className="bg-background overflow-x-hidden">
             <div className="page-wrap border-t border-border py-10">
                 <div className={`grid gap-10 ${cluster ? "lg:grid-cols-[1.2fr_0.8fr] lg:gap-0 lg:divide-x lg:divide-border/40" : ""}`}>
 

@@ -224,7 +224,7 @@ export default async function RootLayout({
                 <SessionProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
-                    <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto border-x-2 border-x-accent/30 overflow-x-clip">
+                    <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto border-x-2 border-x-accent/30 overflow-x-hidden">
                         <NavBar tickerItems={tickerItems} />
                         <ErrorBoundary>
                             <main className="flex-grow">{children}</main>

@@ -93,14 +93,14 @@
 }
 
 html {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body {
   color: var(--color-fg);
   background-color: var(--color-bg);
   min-height: 100vh;
-  overflow-x: clip;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
