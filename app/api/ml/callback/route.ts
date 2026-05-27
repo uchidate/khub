@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import path from 'path'
+import prisma from '@/lib/prisma'
 
 const ML_TOKEN = 'https://api.mercadolibre.com/oauth/token'
 const APP_ID     = process.env.ML_APP_ID!
@@ -36,24 +35,32 @@ export async function GET(req: NextRequest) {
     }
 
     const token = await resp.json()
-    token.expires_at = Date.now() / 1000 + (token.expires_in ?? 21600)
+    const expiresAt = new Date(Date.now() + (token.expires_in ?? 21600) * 1000)
 
-    // Salvar token em arquivo local (só funciona em dev — em prod use env var ou DB)
-    try {
-        const tokenPath = path.join(process.cwd(), 'scripts', 'mercadolivre', 'token.json')
-        await writeFile(tokenPath, JSON.stringify(token, null, 2))
-    } catch {
-        // Em produção não tem acesso ao filesystem do repo — exibir token na tela
-    }
+    await prisma.systemSettings.upsert({
+        where: { id: 'singleton' },
+        create: {
+            id: 'singleton',
+            mlAccessToken:   token.access_token,
+            mlRefreshToken:  token.refresh_token,
+            mlTokenExpiresAt: expiresAt,
+            mlUserId:        String(token.user_id),
+        },
+        update: {
+            mlAccessToken:   token.access_token,
+            mlRefreshToken:  token.refresh_token,
+            mlTokenExpiresAt: expiresAt,
+            mlUserId:        String(token.user_id),
+        },
+    })
 
     return new NextResponse(`
-        <html><body style="font-family:sans-serif;padding:2rem">
-        <h2>✅ Autorizado com sucesso!</h2>
+        <html><body style="font-family:sans-serif;padding:2rem;max-width:600px">
+        <h2>✅ Mercado Livre autorizado!</h2>
+        <p>Token salvo no banco com sucesso. O cron de sync vai renovar automaticamente antes de expirar.</p>
         <p><b>User ID:</b> ${token.user_id}</p>
-        <p><b>Access Token:</b> <code>${token.access_token}</code></p>
-        <p><b>Refresh Token:</b> <code>${token.refresh_token}</code></p>
-        <p>Copie esses valores e salve em <code>scripts/mercadolivre/token.json</code></p>
-        <pre>${JSON.stringify(token, null, 2)}</pre>
+        <p><b>Expira em:</b> ${expiresAt.toLocaleString('pt-BR')}</p>
+        <p><a href="/admin/loja">→ Ir para a loja</a></p>
         </body></html>
     `, { headers: { 'Content-Type': 'text/html' } })
 }
