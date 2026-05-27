@@ -6,6 +6,11 @@ import {
   Languages, MessageSquare, Newspaper, RefreshCw, Sparkles,
 } from 'lucide-react'
 import { AdminBadge, AdminLayout, AdminLinkButton } from '@/components/admin'
+import {
+  ARTIST_CURATION_PENDING_WHERE,
+  GROUP_CURATION_PENDING_WHERE,
+  PRODUCTION_CURATION_PENDING_WHERE,
+} from '@/lib/admin/curation-queue'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -62,20 +67,22 @@ export default async function AdminInboxPage() {
 
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const now = new Date()
+  const translationStaleCutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
   const [
     pendingReports,
     recentReports,
     flaggedComments,
     recentComments,
     publishingQueue,
+    stalePublishingQueue,
     recentPublishingQueue,
     translationDrafts,
+    staleTranslationDrafts,
     translationFailures,
     productionTranslationsPending,
     artistsIncomplete,
     groupsIncomplete,
     productionsIncomplete,
-    newsIncomplete,
     systemErrors,
     recentSystemErrors,
     aiFailures,
@@ -102,6 +109,7 @@ export default async function AdminInboxPage() {
       },
     }),
     prisma.news.count({ where: { status: { in: ['draft', 'ready'] }, isHidden: false } }),
+    prisma.news.count({ where: { status: { in: ['draft', 'ready'] }, isHidden: false, createdAt: { lt: since24h } } }),
     prisma.news.findMany({
       where: { status: { in: ['draft', 'ready'] }, isHidden: false },
       orderBy: { createdAt: 'desc' },
@@ -109,28 +117,14 @@ export default async function AdminInboxPage() {
       select: { id: true, title: true, status: true, source: true, createdAt: true },
     }),
     prisma.contentTranslation.count({ where: { locale: 'pt-BR', status: 'draft' } }),
+    prisma.contentTranslation.count({ where: { locale: 'pt-BR', status: 'draft', createdAt: { lt: translationStaleCutoff } } }),
     prisma.production.count({ where: { isHidden: false, translationStatus: 'failed' } }),
     prisma.production.count({
       where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' },
     }),
-    prisma.artist.count({
-      where: {
-        isHidden: false,
-        flaggedAsNonKorean: false,
-        OR: [{ bio: null }, { analiseEditorial: null }, { curiosidades: { isEmpty: true } }],
-      },
-    }),
-    prisma.musicalGroup.count({ where: { isHidden: false, bio: null } }),
-    prisma.production.count({
-      where: { isHidden: false, flaggedAsNonKorean: false, editorialReview: null },
-    }),
-    prisma.news.count({
-      where: {
-        isHidden: false,
-        status: 'published',
-        OR: [{ editorialNote: null }, { blogPostGeneratedAt: null }],
-      },
-    }),
+    prisma.artist.count({ where: ARTIST_CURATION_PENDING_WHERE }),
+    prisma.musicalGroup.count({ where: GROUP_CURATION_PENDING_WHERE }),
+    prisma.production.count({ where: PRODUCTION_CURATION_PENDING_WHERE }),
     prisma.systemEvent.count({ where: { level: 'ERROR', createdAt: { gte: since24h } } }),
     prisma.systemEvent.findMany({
       where: { level: 'ERROR', createdAt: { gte: since24h } },
@@ -156,7 +150,7 @@ export default async function AdminInboxPage() {
 
   const moderationTotal = pendingReports + flaggedComments
   const translationTotal = translationDrafts + translationFailures + productionTranslationsPending
-  const enrichmentTotal = artistsIncomplete + groupsIncomplete + productionsIncomplete + newsIncomplete
+  const enrichmentTotal = artistsIncomplete + groupsIncomplete + productionsIncomplete
   const operationalTotal = systemErrors + aiFailures
 
   return (
@@ -332,8 +326,10 @@ export default async function AdminInboxPage() {
             <h2 className="text-sm font-bold text-foreground mb-3">Revisão editorial</h2>
             {[
               { label: 'Traduções em rascunho para aprovar', value: translationDrafts, href: '/admin/translations?status=draft' },
+              { label: 'Rascunhos parados há mais de 3 dias', value: staleTranslationDrafts, href: '/admin/translations?status=draft' },
               { label: 'Produções sem tradução', value: productionTranslationsPending, href: '/admin/translations?tab=production&status=pending' },
               { label: 'Falhas de tradução', value: translationFailures, href: '/admin/translations?tab=production' },
+              { label: 'Notícias paradas há mais de 24h', value: stalePublishingQueue, href: '/admin/pipeline?tab=news' },
             ].map(item => (
               <Link key={item.label} href={item.href} className="flex items-center justify-between py-2.5 border-b border-border last:border-0 group">
                 <span className="text-xs text-muted group-hover:text-foreground">{item.label}</span>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { GROUP_CURATION_MISSING_FIELDS } from '@/lib/admin/curation-queue'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,18 +31,10 @@ export async function GET(req: Request) {
     }
 
     if (filter === 'incomplete') {
-        const incompleteOr: Prisma.MusicalGroupWhereInput[] = [
-            { bio: null },
-            { analiseEditorial: null },
-            { curiosidades: { isEmpty: true } },
-            { fanClubName: null },
-            { officialColor: null },
-            { socialLinks: { equals: Prisma.JsonNull } },
-        ]
         if (where.AND) {
-            (where.AND as Prisma.MusicalGroupWhereInput[]).push({ OR: incompleteOr })
+            (where.AND as Prisma.MusicalGroupWhereInput[]).push({ OR: GROUP_CURATION_MISSING_FIELDS })
         } else {
-            where.OR = incompleteOr
+            where.OR = GROUP_CURATION_MISSING_FIELDS
         }
     } else if (filter === 'enriched') {
         where.editorialGeneratedAt = { not: null }

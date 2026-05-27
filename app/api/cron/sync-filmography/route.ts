@@ -12,6 +12,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { getFilmographySyncService } from '@/lib/services/filmography-sync-service'
 import { createLogger } from '@/lib/utils/logger'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 
 export const maxDuration = 300
 
@@ -52,6 +54,19 @@ export async function POST(request: NextRequest) {
             failures: result.failureCount,
             duration: result.duration,
         })
+        if (result.failureCount > 0) {
+            await logSystemEvent('ERROR', 'cron-sync-filmography', `Filmografias concluídas com ${result.failureCount} falha(s)`, {
+                total: result.total,
+                successCount: result.successCount,
+                failureCount: result.failureCount,
+            })
+        }
+        await logCronRun(
+            'sync-filmography',
+            result.failureCount > 0 ? 'partial' : 'success',
+            `${result.successCount}/${result.total} filmografia(s) sincronizada(s), ${result.failureCount} falha(s)`,
+            { total: result.total, successCount: result.successCount, failureCount: result.failureCount, durationMs: result.duration },
+        )
 
         return NextResponse.json({
             ok: true,
@@ -62,6 +77,8 @@ export async function POST(request: NextRequest) {
         })
     } catch (error: any) {
         log.error('Erro no sync de filmografias', { error: error.message })
+        await logSystemEvent('ERROR', 'cron-sync-filmography', `Sync de filmografias falhou: ${error.message}`)
+        await logCronRun('sync-filmography', 'failed', 'Sincronização de filmografias falhou')
         return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
     }
 }

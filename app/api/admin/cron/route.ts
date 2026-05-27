@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 import { getErrorMessage } from '@/lib/utils/error'
+import type { CronRunStatus } from '@/lib/services/cron-execution-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,7 +90,7 @@ export const CRON_JOBS = [
     name: 'Redes sociais de artistas',
     emoji: '🔗',
     schedule: '0 2 * * *',
-    frequencyLabel: 'Diário 02:00 UTC',
+    frequencyLabel: 'Diário 23:00 BRT',
     description: 'Busca links sociais de artistas no Wikidata',
     endpoint: '/api/cron/sync-social-links-wikidata',
     defaultLimit: null,
@@ -100,7 +101,7 @@ export const CRON_JOBS = [
     name: 'Visibilidade de artistas',
     emoji: '👁️',
     schedule: '0 2 * * *',
-    frequencyLabel: 'Diário 02:00 UTC',
+    frequencyLabel: 'Diário 23:00 BRT',
     description: 'Reavalia auto-ocultação e liberação de artistas',
     endpoint: '/api/cron/artist-visibility',
     defaultLimit: null,
@@ -111,7 +112,7 @@ export const CRON_JOBS = [
     name: 'Email digest do blog',
     emoji: '📬',
     schedule: '0 2 * * *',
-    frequencyLabel: 'Diário 02:00 UTC',
+    frequencyLabel: 'Diário 23:00 BRT',
     description: 'Envia o resumo editorial para assinantes',
     endpoint: '/api/cron/digest',
     defaultLimit: null,
@@ -122,7 +123,7 @@ export const CRON_JOBS = [
     name: 'Top shows de streaming',
     emoji: '🎬',
     schedule: '0 3 * * *',
-    frequencyLabel: 'Diário 03:00 UTC',
+    frequencyLabel: 'Diário 00:00 BRT',
     description: 'Atualiza títulos em destaque nas plataformas',
     endpoint: '/api/cron/fetch-streaming-shows',
     defaultLimit: null,
@@ -133,15 +134,26 @@ export const CRON_JOBS = [
     name: 'Discografia de grupos',
     emoji: '🎵',
     schedule: '0 6 * * 0',
-    frequencyLabel: 'Domingo 06:00 UTC',
+    frequencyLabel: 'Domingo 03:00 BRT',
     description: 'Sincroniza catálogos Spotify dos grupos vinculados',
     endpoint: '/api/cron/sync-groups-discography',
     defaultLimit: null,
     color: 'pink',
   },
+  {
+    id: 'sync-filmography',
+    name: 'Filmografias desatualizadas',
+    emoji: '🎬',
+    schedule: '0 7 * * 0',
+    frequencyLabel: 'Domingo 04:00 BRT',
+    description: 'Sincroniza vínculos de produções e artistas via TMDB',
+    endpoint: '/api/cron/sync-filmography',
+    defaultLimit: null,
+    color: 'purple',
+  },
 ] as const
 
-type CronJobId = typeof CRON_JOBS[number]['id']
+export type CronJobId = typeof CRON_JOBS[number]['id']
 
 const MANUAL_TRIGGER_REVIEW: Partial<Record<CronJobId, string>> = {
   'tag-news': 'Altera tags editoriais; revisar antes de executar manualmente.',
@@ -150,6 +162,12 @@ const MANUAL_TRIGGER_REVIEW: Partial<Record<CronJobId, string>> = {
   'artist-visibility': 'Altera visibilidade; trate exceções na Central de Visibilidade.',
   digest: 'Configurado no workflow, mas a rota ainda requer revisão de método antes de ativar.',
   'sync-groups-discography': 'Atualiza catálogo musical; executar após revisão da estratégia de catálogo.',
+  'sync-filmography': 'Pode criar ou associar produções via TMDB; executar a partir da revisão de filmografias.',
+}
+
+export function canManuallyTriggerJob(jobId: string | null): jobId is CronJobId {
+  const job = CRON_JOBS.find(candidate => candidate.id === jobId)
+  return !!job && !MANUAL_TRIGGER_REVIEW[job.id]
 }
 
 const LOCK_JOB_IDS: Record<string, CronJobId> = {
@@ -231,7 +249,7 @@ export async function GET(_req: NextRequest) {
     const oneDayAgo = new Date(now.getTime() - 86400000)
     const oneWeekAgo = new Date(now.getTime() - 7 * 86400000)
 
-    const [totalNews, newsLast24h, newsLast7days, totalArtists, artistsLast24h, totalProductions, productionsLast24h, recentNews, locks, systemErrors, aiFailures] = await Promise.all([
+    const [totalNews, newsLast24h, newsLast7days, totalArtists, artistsLast24h, totalProductions, productionsLast24h, recentNews, locks, systemErrors, aiFailures, runEvents] = await Promise.all([
       prisma.news.count(),
       prisma.news.count({ where: { createdAt: { gte: oneDayAgo } } }),
       prisma.news.count({ where: { createdAt: { gte: oneWeekAgo } } }),
@@ -248,13 +266,37 @@ export async function GET(_req: NextRequest) {
       prisma.aiUsageLog.count({
         where: { status: { in: ['error', 'circuit_open'] }, createdAt: { gte: oneDayAgo } },
       }),
+      prisma.systemEvent.findMany({
+        where: { source: 'CRON_RUN', level: 'INFO' },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: { createdAt: true, message: true, metadata: true },
+      }),
     ])
+
+    const latestRunByJob = new Map<string, { at: Date; message: string; status: CronRunStatus }>()
+    for (const event of runEvents) {
+      const metadata = event.metadata as { jobId?: unknown; status?: unknown } | null
+      if (
+        metadata
+        && typeof metadata.jobId === 'string'
+        && ['success', 'partial', 'failed', 'skipped'].includes(String(metadata.status))
+        && !latestRunByJob.has(metadata.jobId)
+      ) {
+        latestRunByJob.set(metadata.jobId, {
+          at: event.createdAt,
+          message: event.message,
+          status: metadata.status as CronRunStatus,
+        })
+      }
+    }
 
     const jobs = CRON_JOBS.map(job => ({
       ...job,
       nextRuns: getNextRuns(job.schedule),
       manualTriggerEnabled: !MANUAL_TRIGGER_REVIEW[job.id],
       manualReviewReason: MANUAL_TRIGGER_REVIEW[job.id] ?? null,
+      lastExecution: latestRunByJob.get(job.id) ?? null,
     }))
 
     return NextResponse.json({
@@ -312,7 +354,15 @@ export async function POST(req: NextRequest) {
     })
 
     const data = await res.json().catch(() => ({}))
-    return NextResponse.json({ ok: res.ok, status: res.status, requestId: data.requestId ?? null, message: res.ok ? 'Job disparado com sucesso' : 'Falha ao disparar job' })
+    return NextResponse.json(
+      {
+        ok: res.ok,
+        status: res.status,
+        requestId: data.requestId ?? null,
+        message: res.ok ? 'Job disparado com sucesso' : (data.error ?? data.message ?? 'Falha ao disparar job'),
+      },
+      { status: res.ok ? 200 : res.status },
+    )
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
   }

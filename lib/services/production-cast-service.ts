@@ -318,6 +318,7 @@ export class ProductionCastService {
     processed: number
     totalSynced: number
     totalSkipped: number
+    failureCount: number
   }> {
     const productions = await prisma.production.findMany({
       where: {
@@ -332,6 +333,7 @@ export class ProductionCastService {
 
     let totalSynced = 0
     let totalSkipped = 0
+    let failureCount = 0
 
     for (const production of productions) {
       try {
@@ -342,10 +344,11 @@ export class ProductionCastService {
       } catch (err) {
         console.error(`Failed to sync cast for production ${production.id}:`, err)
         totalSkipped++
+        failureCount++
       }
     }
 
-    return { processed: productions.length, totalSynced, totalSkipped }
+    return { processed: productions.length, totalSynced, totalSkipped, failureCount }
   }
 
   /**
@@ -374,4 +377,3 @@ export function getProductionCastService(): ProductionCastService {
   }
   return instance
 }
-

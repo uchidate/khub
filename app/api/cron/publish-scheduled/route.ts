@@ -14,6 +14,8 @@ import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { createLogger } from '@/lib/utils/logger'
 import { notifyUsersAboutBlogPost } from '@/lib/services/blog-notification-service'
+import { logSystemEvent } from '@/lib/services/system-event-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 import { HOME_CACHE_TAG } from '@/app/(site)/page'
 
 export const maxDuration = 30
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (posts.length === 0) {
+        await logCronRun('publish-scheduled', 'success', 'Nenhum post aguardando publicação', { published: 0 })
         return NextResponse.json({ published: 0 })
     }
 
@@ -79,6 +82,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (published.length > 0) revalidateTag(HOME_CACHE_TAG, { expire: 0 })
+    if (errors.length > 0) {
+        await logSystemEvent('ERROR', 'cron-publish-scheduled', `Publicação agendada falhou para ${errors.length} post(s)`, {
+            errors,
+            published: published.length,
+        })
+    }
+    await logCronRun(
+        'publish-scheduled',
+        errors.length > 0 ? 'partial' : 'success',
+        `${published.length} post(s) publicado(s), ${errors.length} erro(s)`,
+        { published: published.length, errors: errors.length },
+    )
     return NextResponse.json({ published: published.length, errors: errors.length, ids: published })
 }
 

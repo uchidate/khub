@@ -153,23 +153,24 @@ const assessments: ProcessAssessment[] = [
   },
 ]
 
-const automationBacklog = [
+const automationCapabilities = [
   {
     title: 'Telemetria de processos administrativos',
     value: 'Ativa em todo admin',
-    description: 'Todas as páginas administrativas agora registram abertura uma vez por admin/dia; execução e resultados serão a próxima camada.',
+    description: 'Páginas administrativas registram abertura por admin/dia e a Central de Automação exibe o último resultado dos jobs; ações humanas concluídas são a próxima camada.',
     icon: History,
   },
   {
     title: 'Fila única de curadoria',
     value: 'Consolidada',
-    description: 'Artistas, grupos e producoes incompletos agora partem de uma fila revisada: prompt, Gemini e aplicacao manual do JSON.',
+    description: 'Artistas, grupos e produções incompletos partem de uma fila revisada: prompt, Gemini e aplicação manual do JSON.',
     icon: Sparkles,
+    href: '/admin/enrichment',
   },
   {
     title: 'Reexecução orientada por falhas',
     value: 'Implementado',
-    description: 'Página dedicada lista apenas jobs com erros nas últimas 48h; botão de reexecução direto para cada falha.',
+    description: 'Página dedicada lista erros das últimas 48h, permite reexecução segura e identifica recuperação após sucesso posterior.',
     icon: Bot,
     href: '/admin/cron/failures',
   },
@@ -403,9 +404,12 @@ export default async function AdminProcessesPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-bold text-foreground mb-3">Backlog recomendado de automação</h2>
+          <div className="mb-3">
+            <h2 className="text-sm font-bold text-foreground">Capacidades operacionais implantadas</h2>
+            <p className="text-[11px] text-muted mt-1">Fluxos disponíveis no admin; melhorias futuras devem ser registradas separadamente como backlog.</p>
+          </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            {automationBacklog.map(({ title, value, description, icon: Icon, ...rest }) => {
+            {automationCapabilities.map(({ title, value, description, icon: Icon, ...rest }) => {
               const href = (rest as { href?: string }).href
               const card = (
                 <div className="flex items-start gap-3">
