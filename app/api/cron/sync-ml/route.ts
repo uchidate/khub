@@ -37,8 +37,8 @@ const SYNC_QUERIES = [
 ]
 
 // Mínimo para importar automaticamente
-const MIN_RATING = 3.5
-const MIN_REVIEWS = 5
+const MIN_RATING = 0
+const MIN_REVIEWS = 0
 const MAX_PER_QUERY = 3   // top N por query
 const MAX_TOTAL_ACTIVE = 80 // limite máximo de produtos ativos na loja
 
@@ -141,22 +141,29 @@ async function searchProducts(
     permalink: string
 }>> {
     const res = await fetch(
-        `${ML_API}/sites/MLB/search?q=${encodeURIComponent(q)}&limit=${limit}&condition=new`,
+        `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&status=active`,
         { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) return []
     const data = await res.json()
 
-    return (data.results ?? []).map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        name: r.title as string,
-        price: r.price as number ?? null,
-        thumbnail: (r.thumbnail as string ?? '').replace('http:', 'https:').replace('-I.jpg', '-O.jpg'),
-        rating: (r.seller_reputation as Record<string, unknown>)?.level_id ? 4.0 :
-                ((r as Record<string, unknown>).reviews as Record<string, unknown>)?.rating_average as number ?? 0,
-        reviews: ((r as Record<string, unknown>).reviews as Record<string, unknown>)?.total as number ?? 0,
-        permalink: r.permalink as string ?? `https://www.mercadolivre.com.br/p/${r.id}`,
-    }))
+    return (data.results ?? []).map((r: Record<string, unknown>) => {
+        const pid = (r.catalog_product_id as string) || (r.id as string)
+        const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
+        const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
+        const reviews = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
+        const pictures = r.pictures as { url?: string }[] | undefined
+        const thumbnail = (pictures?.[0]?.url ?? '').replace('http:', 'https:').replace('-I.jpg', '-O.jpg')
+        return {
+            id: pid,
+            name: r.name as string,
+            price: buyBox?.price as number ?? null,
+            thumbnail,
+            rating: rating ?? 0,
+            reviews: reviews ?? 0,
+            permalink: `https://www.mercadolivre.com.br/p/${pid}`,
+        }
+    })
 }
 
 function auth(req: NextRequest): boolean {
