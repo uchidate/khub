@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AlertTriangle, CheckCircle, Loader2, RefreshCw, ExternalLink, Image as ImageIcon, Pencil } from 'lucide-react'
 import Link from 'next/link'
 
@@ -23,20 +24,19 @@ interface AuditResult {
 }
 
 export default function ImageAuditPage() {
+    const toast = useAdminToast()
     const [result, setResult] = useState<AuditResult | null>(null)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
 
     async function runAudit() {
         setLoading(true)
-        setError(null)
         setResult(null)
         try {
             const res = await fetch('/api/admin/image-audit')
             if (!res.ok) throw new Error(`Erro ${res.status}`)
             setResult(await res.json())
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erro desconhecido')
+            toast.error(e instanceof Error ? e.message : 'Erro desconhecido')
         } finally {
             setLoading(false)
         }
@@ -58,12 +58,6 @@ export default function ImageAuditPage() {
             }
         >
             <div className="max-w-4xl space-y-6">
-                {error && (
-                    <div className="p-4 rounded-xl border border-red-400/30 bg-red-500/5 text-red-500 text-sm">
-                        {error}
-                    </div>
-                )}
-
                 {result && (
                     <>
                         <div className="grid grid-cols-3 gap-3">

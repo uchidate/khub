@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Loader2, Save, ArrowLeft, CheckCircle } from 'lucide-react'
 import { AI_FEATURES, FEATURE_LABELS } from '@/lib/ai/ai-features'
 import type { AiFeature } from '@/lib/ai/ai-features'
@@ -32,12 +33,12 @@ const PROVIDER_OPTIONS = [
 
 export default function AiConfigPage() {
     const router = useRouter()
+    const toast = useAdminToast()
     const [_configs, setConfigs]  = useState<AiConfigRow[]>([])
     const [forms,    setForms]    = useState<Record<string, FormState>>({})
     const [saving,   setSaving]   = useState<string | null>(null)
     const [saved,    setSaved]    = useState<string | null>(null)
     const [loading,  setLoading]  = useState(true)
-    const [error,    setError]    = useState<string | null>(null)
 
     useEffect(() => {
         fetch('/api/admin/ai/config')
@@ -56,7 +57,7 @@ export default function AiConfigPage() {
                 }
                 setForms(initial)
             })
-            .catch(() => setError('Erro ao carregar configurações'))
+            .catch(() => toast.error('Erro ao carregar configurações'))
             .finally(() => setLoading(false))
     }, [])
 
@@ -64,7 +65,6 @@ export default function AiConfigPage() {
         const form = forms[feature]
         if (!form) return
         setSaving(feature)
-        setError(null)
         try {
             const res = await fetch('/api/admin/ai/config', {
                 method: 'PUT',
@@ -81,7 +81,7 @@ export default function AiConfigPage() {
             setSaved(feature)
             setTimeout(() => setSaved(null), 2500)
         } catch (e: unknown) {
-            setError(e instanceof Error ? e.message : 'Erro ao salvar')
+            toast.error(e instanceof Error ? e.message : 'Erro ao salvar')
         } finally {
             setSaving(null)
         }
@@ -123,12 +123,6 @@ export default function AiConfigPage() {
                 <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-muted">
                     Geração editorial e traduções automáticas estão desativadas. Salvar configurações históricas aqui não reativa esses fluxos; a curadoria usa Gemini com aplicação manual.
                 </div>
-
-                {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-2 text-sm text-red-400">
-                        {error}
-                    </div>
-                )}
 
                 <div className="space-y-3">
                     {AI_FEATURES.map(feat => {
