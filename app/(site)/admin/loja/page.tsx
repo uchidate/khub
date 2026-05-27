@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminButton, AdminLinkButton, ConfirmDialog } from '@/components/admin'
+import { AdminButton, AdminLinkButton, AdminModalOverlay, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, Star, StarOff,
-    ExternalLink, Package, RefreshCw, X, Check, Download, Tag,
+    ExternalLink, Package, RefreshCw, Check, Download, Tag,
     MousePointerClick, TrendingUp, CircleAlert,
 } from 'lucide-react'
 import Image from 'next/image'
@@ -303,17 +303,14 @@ export default function AdminLojaPage() {
 
             {/* Modal de formulário */}
             {showForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl bg-background border border-border rounded-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
-                        <div className="flex items-center justify-between p-6 border-b border-border">
-                            <h2 className="text-base font-bold text-foreground">
-                                {editingId ? 'Editar produto' : 'Novo produto'}
-                            </h2>
-                            <button onClick={closeForm} className="text-muted hover:text-foreground p-1 rounded-lg">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminModalOverlay
+                    open
+                    onClose={closeForm}
+                    title={editingId ? 'Editar produto' : 'Novo produto'}
+                    maxWidth="2xl"
+                >
+                    <div className="max-h-[70vh] overflow-y-auto -mx-5 px-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Nome */}
                             <div className="sm:col-span-2">
                                 <label className="text-xs font-semibold text-muted uppercase tracking-wide block mb-1">Nome do produto *</label>
@@ -419,19 +416,20 @@ export default function AdminLojaPage() {
                                 </div>
                             </div>
                         )}
-                        <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-                            <button onClick={closeForm} className="text-sm text-muted hover:text-foreground px-4 py-2">
-                                Cancelar
-                            </button>
-                            <AdminButton onClick={save} disabled={saving}>
-                                {saving
-                                    ? <><RefreshCw className="w-4 h-4 animate-spin inline mr-1" />Salvando...</>
-                                    : <><Check className="w-4 h-4 inline mr-1" />{editingId ? 'Atualizar' : 'Criar produto'}</>
-                                }
-                            </AdminButton>
-                        </div>
                     </div>
-                </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-4">
+                        <button onClick={closeForm} className="text-sm text-muted hover:text-foreground px-4 py-2">
+                            Cancelar
+                        </button>
+                        <AdminButton onClick={save} disabled={saving}>
+                            {saving
+                                ? <><RefreshCw className="w-4 h-4 animate-spin inline mr-1" />Salvando...</>
+                                : <><Check className="w-4 h-4 inline mr-1" />{editingId ? 'Atualizar' : 'Criar produto'}</>
+                            }
+                        </AdminButton>
+                    </div>
+                </AdminModalOverlay>
             )}
 
             {/* Lista de produtos agrupada por categoria */}
