@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, TrendingUp, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
@@ -180,10 +180,7 @@ export default function ArtistEnrichQueuePage() {
 
                 {/* Lista */}
                 {loading ? (
-                    <div className="flex items-center justify-center py-16 text-muted gap-2">
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Carregando...</span>
-                    </div>
+                    <AdminTableSkeleton rows={5} />
                 ) : artists.length === 0 ? (
                     <AdminEmptyState
                         title="Nenhum artista encontrado"

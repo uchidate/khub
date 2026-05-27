@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, AdminTableSkeleton } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -1255,7 +1255,7 @@ function IdolsTab() {
         </button>
       </div>
 
-      {loading && <p className="text-center text-muted py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
@@ -1346,7 +1346,7 @@ function GroupsTab() {
         </button>
       </div>
 
-      {loading && <p className="text-center text-muted py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
@@ -1416,7 +1416,7 @@ function MembershipsTab() {
         </button>
       </div>
 
-      {loading && <p className="text-center text-muted py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
