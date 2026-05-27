@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { Suspense, useState, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -193,7 +194,14 @@ const CATEGORY_TABS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
-  const [statusFilter,   setStatusFilter]   = useState('')
+  return <Suspense><ReportsPageContent /></Suspense>
+}
+
+function ReportsPageContent() {
+  const searchParams = useSearchParams()
+  const requestedStatus = searchParams.get('status')
+  const initialStatus = STATUS_TABS.some(tab => tab.key === requestedStatus) ? (requestedStatus ?? '') : ''
+  const [statusFilter,   setStatusFilter]   = useState(initialStatus)
   const [entityFilter,   setEntityFilter]   = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [search,         setSearch]         = useState('')

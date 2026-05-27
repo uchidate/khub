@@ -1,5 +1,4 @@
 import prisma from '../prisma'
-import { getOrchestrator } from '../ai/orchestrator-factory';
 import { getMusicBrainzService, MBRelease } from './musicbrainz-service';
 
 export interface AlbumData {
@@ -16,15 +15,10 @@ export interface AlbumData {
 /**
  * Discography Sync Service
  *
- * Strategy: MusicBrainz first (free, authoritative) → AI fallback (Gemini).
+ * Strategy: MusicBrainz only (free, authoritative).
  * MusicBrainz provides reliable metadata without hallucination risk.
- * AI is used only when the artist is not found in MusicBrainz.
  */
 export class DiscographySyncService {
-    private getOrchestrator() {
-        return getOrchestrator();
-    }
-
     /**
      * Save albums from any source, deduplicating by mbid (if present) or title.
      * Returns count of newly added albums.
@@ -109,54 +103,8 @@ export class DiscographySyncService {
     }
 
     /**
-     * Sync discography via AI (fallback when MusicBrainz has no data).
-     */
-    private async syncViaAI(
-        artistId: string,
-        nameRomanized: string,
-        nameHangul: string | null
-    ): Promise<number> {
-        const prompt = `Gere uma lista da discografia oficial (Álbuns, EPs e Singles principais) do artista coreano "${nameRomanized}" (${nameHangul || ''}).
-
-      Para cada item, forneça:
-      - title: Título do álbum/single
-      - type: "ALBUM", "EP" ou "SINGLE"
-      - releaseDate: Data de lançamento (formato YYYY-MM-DD)
-      - spotifyUrl: Link oficial do Spotify (se disponível)
-      - appleMusicUrl: Link oficial do Apple Music (se disponível)
-      - youtubeUrl: Link oficial do YouTube Music ou MV (se disponível)
-
-      Foque nos lançamentos mais importantes e recentes.`;
-
-        const schema = `{
-        "albums": [
-          {
-            "title": "string",
-            "type": "ALBUM | EP | SINGLE",
-            "releaseDate": "string (YYYY-MM-DD)",
-            "spotifyUrl": "string",
-            "appleMusicUrl": "string",
-            "youtubeUrl": "string"
-          }
-        ]
-      }`;
-
-        const aiResult = await this.getOrchestrator().generateStructured<{ albums: AlbumData[] }>(
-            prompt,
-            schema,
-            { preferredProvider: 'deepseek' }
-        );
-
-        if (!aiResult.parsed.albums || aiResult.parsed.albums.length === 0) {
-            return 0;
-        }
-
-        return await this.saveAlbums(artistId, aiResult.parsed.albums);
-    }
-
-    /**
      * Sync discography for a single artist.
-     * Strategy: MusicBrainz → AI fallback.
+     * Strategy: MusicBrainz only; AI fallback is deliberately disabled.
      */
     async syncArtistDiscography(artistId: string): Promise<{ success: boolean; addedCount: number; source: string; errors: string[] }> {
         const result = { success: false, addedCount: 0, source: 'none', errors: [] as string[] };
@@ -190,11 +138,8 @@ export class DiscographySyncService {
 
                 console.log(`✅ [MusicBrainz] Discography sync for ${artist.nameRomanized}: ${result.addedCount} added.`);
             } else {
-                // Fallback to AI
-                console.log(`ℹ️  [MusicBrainz] Artist not found — using AI fallback for ${artist.nameRomanized}`);
-                result.addedCount = await this.syncViaAI(artist.id, artist.nameRomanized, artist.nameHangul);
-                result.source = 'ai';
-                console.log(`✅ [AI] Discography sync for ${artist.nameRomanized}: ${result.addedCount} added.`);
+                result.source = 'musicbrainz_not_found';
+                console.log(`ℹ️  [MusicBrainz] Artist not found — AI fallback disabled for ${artist.nameRomanized}.`);
             }
 
             // Always update sync timestamp

@@ -1121,7 +1121,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                             </a>
                         </div>
                     </div>
-                    <p className="text-center text-[10px] text-muted/60 pb-2">Comprar pelo nosso link apoia o HallyuHub sem custo extra</p>
+                    <p className="text-center text-[10px] text-muted/70 pb-2">Publicidade afiliada: podemos receber comissão pela compra, sem custo extra para você.</p>
                 </div>
             )
         }

@@ -29,7 +29,7 @@ export type AdminButtonVariant = 'primary' | 'secondary' | 'danger' | 'warning' 
 export type AdminButtonSize = 'sm' | 'md' | 'lg'
 
 const VARIANT: Record<AdminButtonVariant, string> = {
-  primary:   'bg-[#ff2d78] text-white font-bold hover:bg-[#e0256a]',
+  primary:   'bg-accent text-white font-bold hover:bg-accent-strong',
   secondary: 'bg-surface border border-border text-foreground hover:bg-surface-hover',
   danger:    'bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20',
   warning:   'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20',

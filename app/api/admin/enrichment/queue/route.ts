@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
-import { EDITORIAL_COST_ESTIMATES } from '@/lib/ai/generators/editorial-generator'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,13 +103,6 @@ export async function GET(req: Request) {
             const totalFields = 3
             const completenessScore = Math.round((presentFields.length / totalFields) * 100)
 
-            const costMap: Record<string, number> = {
-                bio:          EDITORIAL_COST_ESTIMATES.artist_bio_enrichment,
-                editorial:    EDITORIAL_COST_ESTIMATES.artist_editorial,
-                curiosidades: EDITORIAL_COST_ESTIMATES.artist_curiosidades,
-            }
-            const estimatedCost = missingFields.reduce((sum, f) => sum + (costMap[f] ?? 0), 0)
-
             return {
                 id:               a.id,
                 name:             a.nameRomanized,
@@ -121,7 +113,7 @@ export async function GET(req: Request) {
                 totalFields,
                 completenessScore,
                 priority:         a.trendingScore,
-                estimatedCost,
+                estimatedCost:    0,
             }
         })
 
@@ -176,7 +168,7 @@ export async function GET(req: Request) {
                 totalFields:      1,
                 completenessScore: score,
                 priority:         p.voteAverage ?? 0,
-                estimatedCost:    missing.length ? EDITORIAL_COST_ESTIMATES.production_review : 0,
+                estimatedCost:    0,
             }
         })
 
@@ -233,12 +225,6 @@ export async function GET(req: Request) {
             const totalFields = 2
             const completenessScore = Math.round((presentFields.length / totalFields) * 100)
 
-            const costMap: Record<string, number> = {
-                nota: EDITORIAL_COST_ESTIMATES.news_editorial_note,
-                blog: EDITORIAL_COST_ESTIMATES.blog_post_generation,
-            }
-            const estimatedCost = missingFields.reduce((sum, f) => sum + (costMap[f] ?? 0), 0)
-
             const pubDate = new Date(n.publishedAt)
             const now     = new Date()
             const ageHours = (now.getTime() - pubDate.getTime()) / (1000 * 60 * 60)
@@ -254,7 +240,7 @@ export async function GET(req: Request) {
                 totalFields,
                 completenessScore,
                 priority:         recencyScore,
-                estimatedCost,
+                estimatedCost:    0,
             }
         })
 

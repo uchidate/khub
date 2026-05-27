@@ -113,7 +113,7 @@ export default function GroupEnrichQueuePage() {
 
     return (
         <AdminLayout
-            title="Enriquecimento de Grupos"
+            title="Curadoria Gemini de Grupos"
             subtitle="Gere o JSON no Gemini com prompts/group-enrich.md e aplique aqui."
             actions={
                 <button

@@ -56,7 +56,7 @@ interface ReprocessResult {
     error?: string
 }
 
-type BatchItem = { id: string; title: string; sourceUrl: string; source: string | null }
+type BatchItem = { id: string; title: string; sourceUrl: string; source: string | null; translationStatus: string | null }
 
 // ─── Core reprocess logic ─────────────────────────────────────────────────────
 
@@ -81,14 +81,19 @@ async function reprocessOne(news: BatchItem): Promise<ReprocessResult> {
     const contentType = classifyContentType(news.title, cleanedContent, news.source ?? undefined)
     const blocks = markdownToBlocks(cleanedContent)
 
+    const approvedTranslation = await prisma.contentTranslation.findFirst({
+        where: { entityType: 'news', entityId: news.id, locale: 'pt-BR', status: 'approved' },
+        select: { id: true },
+    })
+    const preserveReviewedText = news.translationStatus === 'completed' || !!approvedTranslation
+
     await prisma.news.update({
         where: { id: news.id },
         data: {
             originalContent: content,
-            contentMd: cleanedContent,
-            blocks,
             readingTimeMin,
             contentType,
+            ...(preserveReviewedText ? {} : { contentMd: cleanedContent, blocks }),
             ...(imageUrl ? { imageUrl } : {}),
         },
     })
@@ -140,7 +145,7 @@ async function selectBatchItems(
             orderBy: { publishedAt: 'desc' },
             skip: offset,
             take: limit,
-            select: { id: true, title: true, sourceUrl: true, source: true },
+            select: { id: true, title: true, sourceUrl: true, source: true, translationStatus: true },
         })
     }
 
@@ -148,7 +153,7 @@ async function selectBatchItems(
         where: baseWhere,
         orderBy: { publishedAt: 'desc' },
         take: limit * 4,
-        select: { id: true, title: true, sourceUrl: true, source: true, originalContent: true },
+        select: { id: true, title: true, sourceUrl: true, source: true, translationStatus: true, originalContent: true },
     })
 
     return candidates
@@ -291,7 +296,7 @@ export async function POST(request: NextRequest) {
 
     const news = await prisma.news.findUnique({
         where: { id: newsId },
-        select: { id: true, title: true, sourceUrl: true, source: true },
+        select: { id: true, title: true, sourceUrl: true, source: true, translationStatus: true },
     })
 
     if (!news) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, ExternalLink, Eye, EyeOff, Languages } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, ExternalLink, Eye, EyeOff } from 'lucide-react'
 import { BlockEditor } from '@/components/admin/BlockEditor'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
@@ -33,7 +33,6 @@ export default function NewsBlockEditPage({
     const [blocks, setBlocks] = useState<NewsBlock[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [translating, setTranslating] = useState(false)
     const [togglingHidden, setTogglingHidden] = useState(false)
     const [showOriginal, setShowOriginal] = useState(true)
 
@@ -85,29 +84,6 @@ export default function NewsBlockEditPage({
             setSaving(false)
         }
     }, [newsId, blocks, toast])
-
-    const handleTranslate = useCallback(async () => {
-        if (!newsId) return
-        setTranslating(true)
-        try {
-            const res = await fetch(`/api/admin/news/${newsId}/translate`, { method: 'POST' })
-            if (!res.ok) {
-                let msg = 'Erro ao traduzir'
-                try { msg = (await res.json()).error || msg } catch { /* body não é JSON */ }
-                toast.error(msg)
-                return
-            }
-            const data = await res.json() as { title: string; blocks: NewsBlock[] }
-            setBlocks(data.blocks)
-            if (news) setNews({ ...news, title: data.title })
-            // Blocks are now dirty — user must save explicitly
-            toast.info('Tradução concluída. Salve para confirmar (⌘S).')
-        } catch (e: unknown) {
-            toast.error(e instanceof Error ? e.message : 'Erro ao traduzir')
-        } finally {
-            setTranslating(false)
-        }
-    }, [newsId, news, toast])
 
     const handleToggleHidden = useCallback(async () => {
         if (!newsId || !news) return
@@ -208,18 +184,8 @@ export default function NewsBlockEditPage({
                 {/* Divider */}
                 <span className="hidden sm:block w-px h-5 bg-white/10 shrink-0" />
 
-                {/* Primary actions — translate / visibility / save */}
+                {/* Primary actions — visibility / save */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                        onClick={handleTranslate}
-                        disabled={translating || saving}
-                        title="Traduzir com DeepSeek-V3"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-foreground border border-border hover:bg-surface-hover disabled:opacity-50 transition-colors"
-                    >
-                        {translating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
-                        <span className="hidden sm:inline">{translating ? 'Traduzindo...' : 'Traduzir'}</span>
-                    </button>
-
                     <button
                         onClick={handleToggleHidden}
                         disabled={togglingHidden}

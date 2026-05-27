@@ -106,7 +106,6 @@ export default function EditProductionPage() {
     const [production, setProduction] = useState<Production | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [generatingEditorial, setGeneratingEditorial] = useState(false)
     const [form, setForm] = useState<Partial<Production>>({})
 
     useEffect(() => {
@@ -1021,61 +1020,27 @@ export default function EditProductionPage() {
                             )}
                         </div>
 
-                        {/* Conteúdo Editorial (IA) */}
+                        {/* Conteudo editorial revisado */}
                         <div className="border border-purple-500/20 rounded-xl p-4 bg-purple-900/5">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-purple-400" />
                                     <span className="text-sm font-semibold text-foreground">Review Editorial</span>
-                                    <span className="text-[10px] text-muted font-mono">DeepSeek-V3</span>
+                                    <span className="text-[10px] text-muted font-mono">Gemini + revisao</span>
                                 </div>
-                                <Link href="/admin/enrichment" className="text-[10px] text-muted hover:text-purple-400 transition-colors">
-                                    Ver lote →
+                                <Link href={`/admin/productions/${id}/enrich`} className="text-[10px] text-muted hover:text-purple-400 transition-colors">
+                                    Abrir curadoria →
                                 </Link>
                             </div>
                             <p className="text-xs text-muted mb-3">
-                                Gera review editorial (350-450 palavras), "por que assistir" e nossa nota (0-10) em PT-BR. ~$0.0025
+                                A geracao automatica foi desativada. Gere o JSON no Gemini, revise e aplique na fila de producoes.
                             </p>
-                            <button
-                                type="button"
-                                disabled={generatingEditorial}
-                                onClick={async () => {
-                                    if (!id) return
-                                    setGeneratingEditorial(true)
-                                    try {
-                                        const res = await fetch(`/api/admin/productions/${id}/generate-editorial`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ overwrite: false }),
-                                        })
-                                        const data = await res.json()
-                                        if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar review'); return }
-                                        toast.success(`Review gerada! Custo: $${data.totalCostUsd.toFixed(4)}`)
-                                        // Reload editorial fields from DB
-                                        fetch(`/api/admin/productions/by-id?id=${id}`)
-                                            .then(r => r.json())
-                                            .then(updated => {
-                                                setForm(prev => ({
-                                                    ...prev,
-                                                    editorialReview: updated.editorialReview,
-                                                    editorialRating: updated.editorialRating,
-                                                    whyWatch: updated.whyWatch,
-                                                }))
-                                            })
-                                            .catch(() => {})
-                                    } catch {
-                                        toast.error('Erro ao gerar review')
-                                    } finally {
-                                        setGeneratingEditorial(false)
-                                    }
-                                }}
+                            <Link
+                                href={`/admin/productions/${id}/enrich`}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/40 disabled:opacity-40 transition-colors"
                             >
-                                {generatingEditorial
-                                    ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                                    : <><Sparkles className="w-3.5 h-3.5" /> Gerar Review</>
-                                }
-                            </button>
+                                <Sparkles className="w-3.5 h-3.5" /> Preparar no Gemini
+                            </Link>
                             {/* Campos editoriais editáveis */}
                             <div className="mt-4 space-y-3">
                                 <div>

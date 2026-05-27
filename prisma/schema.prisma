@@ -1403,11 +1403,27 @@ model StoreProduct {
   clickCount    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  clickEvents   StoreAffiliateClick[]
 
   @@index([category, isActive, position])
   @@index([store, isActive])
   @@index([featured, isActive])
   @@index([externalId])
+}
+
+model StoreAffiliateClick {
+  id        String        @id @default(cuid())
+  productId String?
+  couponId  String?
+  placement String
+  createdAt DateTime      @default(now())
+  product   StoreProduct? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  coupon    StoreCoupon?  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([couponId, createdAt])
+  @@index([placement, createdAt])
+  @@index([createdAt])
 }
 
 model QuizQuestion {
@@ -1441,6 +1457,7 @@ model StoreCoupon {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  clickEvents StoreAffiliateClick[]
 
   @@index([expiresAt, isActive])
 }

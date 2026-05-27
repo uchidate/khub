@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import {
   Search, Music2, UsersRound, Film, Newspaper, X, Clock, ArrowRight,
   LayoutDashboard, Workflow, FileText, Users, Building2, TrendingUp,
-  Languages, Sparkles, Bot, Flag, MessageSquare, ChevronRight, Terminal,
+  Languages, Sparkles, Bot, Flag, MessageSquare, ChevronRight, Terminal, RefreshCw,
+  ShoppingBag, BookOpen, Inbox, ClipboardList,
 } from 'lucide-react'
 import type { AdminSearchResult } from '@/app/api/admin/search/route'
 import Image from 'next/image'
@@ -27,15 +28,20 @@ const MAX_RECENT = 8
 
 const QUICK_NAV: Array<{ href: string; label: string; icon: React.ElementType; shortcut?: string }> = [
   { href: '/admin',              label: 'Dashboard',       icon: LayoutDashboard, shortcut: 'g d' },
+  { href: '/admin/inbox',        label: 'Caixa de trabalho', icon: Inbox,         shortcut: 'g x' },
+  { href: '/admin/processes',    label: 'Processos e melhorias', icon: ClipboardList },
   { href: '/admin/pipeline',     label: 'Pipeline',        icon: Workflow,        shortcut: 'g p' },
+  { href: '/admin/cron',         label: 'Central de Automação', icon: RefreshCw,  shortcut: 'g c' },
   { href: '/admin/artists',      label: 'Artistas',        icon: Music2,          shortcut: 'g a' },
   { href: '/admin/groups',       label: 'Grupos',          icon: UsersRound,      shortcut: 'g g' },
   { href: '/admin/productions',  label: 'Produções',       icon: Film,            shortcut: 'g r' },
   { href: '/admin/blog',         label: 'Blog',            icon: FileText,        shortcut: 'g b' },
+  { href: '/admin/blog/blocks-demo', label: 'Guia de blocos', icon: BookOpen },
   { href: '/admin/news',         label: 'Notícias',        icon: Newspaper,       shortcut: 'g n' },
+  { href: '/admin/loja',         label: 'Loja',            icon: ShoppingBag },
   { href: '/admin/users',        label: 'Usuários',        icon: Users,           shortcut: 'g u' },
   { href: '/admin/translations', label: 'Traduções',       icon: Languages },
-  { href: '/admin/enrichment',   label: 'Enriquecimento',  icon: Sparkles },
+  { href: '/admin/enrichment',   label: 'Curadoria Gemini', icon: Sparkles },
   { href: '/admin/agencies',     label: 'Agências',        icon: Building2 },
   { href: '/admin/ai',           label: 'IA',              icon: Bot,             shortcut: 'g i' },
   { href: '/admin/reports',      label: 'Reportes',        icon: Flag },
@@ -46,12 +52,16 @@ const QUICK_NAV: Array<{ href: string; label: string; icon: React.ElementType; s
 // Comandos rápidos (prefixo ">")
 const COMMANDS: Array<{ label: string; icon: React.ElementType; action: (router: ReturnType<typeof useRouter>) => void }> = [
   { label: 'Ir para Dashboard', icon: LayoutDashboard, action: r => r.push('/admin') },
+  { label: 'Abrir Caixa de Trabalho', icon: Inbox,     action: r => r.push('/admin/inbox') },
+  { label: 'Abrir Processos e Melhorias', icon: ClipboardList, action: r => r.push('/admin/processes') },
   { label: 'Ir para Pipeline',  icon: Workflow,        action: r => r.push('/admin/pipeline') },
+  { label: 'Central de Automação', icon: RefreshCw,    action: r => r.push('/admin/cron') },
   { label: 'Abrir Analytics',   icon: TrendingUp,      action: r => r.push('/admin/analytics') },
   { label: 'Ver Artistas',      icon: Music2,          action: r => r.push('/admin/artists') },
   { label: 'Ver Grupos',        icon: UsersRound,      action: r => r.push('/admin/groups') },
   { label: 'Ver Produções',     icon: Film,            action: r => r.push('/admin/productions') },
-  { label: 'Abrir Enriquecimento', icon: Sparkles,     action: r => r.push('/admin/enrichment') },
+  { label: 'Abrir Guia de Blocos', icon: BookOpen, action: r => r.push('/admin/blog/blocks-demo') },
+  { label: 'Abrir Curadoria Gemini', icon: Sparkles,    action: r => r.push('/admin/enrichment') },
 ]
 
 function getRecentItems(): AdminSearchResult[] {

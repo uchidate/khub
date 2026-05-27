@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { AdminProcessTelemetry } from '@/components/admin/AdminProcessTelemetry'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,5 +13,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const session = await auth()
     if (!session) redirect('/')
     if (session.user.role?.toLowerCase() !== 'admin') redirect('/')
-    return <>{children}</>
+    return (
+        <>
+            {children}
+            <AdminProcessTelemetry />
+        </>
+    )
 }

@@ -15,7 +15,6 @@ import prisma from '../prisma'
 import { getTMDBFilmographyService, NotFoundError } from './tmdb-filmography-service'
 import { TMDBProductionData } from '../types/tmdb'
 import { getSlackService } from './slack-notification-service'
-import { getOrchestrator } from '../ai/orchestrator-factory'
 import { createLogger } from '../utils/logger'
 import { getArtistVisibilityService } from './artist-visibility-service'
 
@@ -153,7 +152,7 @@ export class FilmographySyncService {
       )
 
       if (!tmdbPerson) {
-        log.warn(`Artist ${artist.nameRomanized} not found on TMDB. Attempting AI fallback...`)
+        log.warn(`Artist ${artist.nameRomanized} not found on TMDB. AI fallback is disabled.`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -165,9 +164,9 @@ export class FilmographySyncService {
 
       log.info(`Found ${productions.length} productions for ${artist.nameRomanized}`)
 
-      // If no productions found on TMDB even after finding person, try AI as fallback
+      // Do not fill missing credits through generative AI: this workflow is reviewed manually.
       if (productions.length === 0) {
-        log.warn(`No productions found on TMDB for ${artist.nameRomanized}. Attempting AI fallback...`)
+        log.warn(`No productions found on TMDB for ${artist.nameRomanized}. AI fallback is disabled.`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
 
@@ -219,8 +218,7 @@ export class FilmographySyncService {
           data: { tmdbSyncStatus: 'NOT_FOUND' },
         })
 
-        // Try AI fallback even on error
-        log.warn(`TMDB error for ${artistId}. Attempting AI fallback...`)
+        log.warn(`TMDB error for ${artistId}. AI fallback is disabled.`)
         return await this.syncArtistFilmographyWithAI(artistId, strategy)
       }
     } finally {
@@ -231,7 +229,7 @@ export class FilmographySyncService {
   }
 
   /**
-   * AI Fallback: Sync filmography using AI when TMDB fails
+   * Disabled AI fallback retained as a compatibility boundary for existing callers.
    */
   async syncArtistFilmographyWithAI(
     artistId: string,
@@ -250,111 +248,8 @@ export class FilmographySyncService {
       duration: 0,
     }
 
-    try {
-      const artist = await prisma.artist.findUnique({
-        where: { id: artistId },
-      })
-
-      if (!artist) throw new Error(`Artist not found: ${artistId}`)
-      result.artistName = artist.nameRomanized
-
-      const orchestrator = getOrchestrator()
-
-      const prompt = `Gere uma lista da filmografia oficial (Dramas, Filmes, Programas de Variedades) do artista coreano "${artist.nameRomanized}" (${artist.nameHangul || ''}).
-      
-      Forneça para cada item:
-      - title: Título da obra
-      - titleKr: Título original (Hangul)
-      - type: "SERIE", "FILME" ou "PROGRAMA"
-      - year: Ano de lançamento (number)
-      - synopsis: Sinopse curta em português
-      - streamingPlatforms: Onde assistir (Netflix, Viki, Disney+, etc) - array de strings
-
-      Foque nos trabalhos mais relevantes e recentes.`
-
-      const schema = `{
-        "productions": [
-          {
-            "title": "string",
-            "titleKr": "string",
-            "type": "SERIE | FILME | PROGRAMA",
-            "year": "number",
-            "synopsis": "string",
-            "streamingPlatforms": ["string"]
-          }
-        ]
-      }`
-
-      const aiResult = await orchestrator.generateStructured<{ productions: any[] }>(
-        prompt,
-        schema,
-        { preferredProvider: 'deepseek' }
-      )
-
-      if (!aiResult.parsed.productions || aiResult.parsed.productions.length === 0) {
-        result.success = true
-        return result
-      }
-
-      for (const prodData of aiResult.parsed.productions) {
-        try {
-          // Check for existing production to avoid duplicates
-          let production = await prisma.production.findFirst({
-            where: {
-              OR: [
-                { titlePt: { equals: prodData.title, mode: 'insensitive' } },
-                { titleKr: { equals: prodData.titleKr, mode: 'insensitive' } }
-              ]
-            }
-          })
-
-          if (!production) {
-            production = await prisma.production.create({
-              data: {
-                titlePt: prodData.title,
-                titleKr: prodData.titleKr,
-                type: prodData.type,
-                year: prodData.year,
-                synopsis: prodData.synopsis,
-                streamingPlatforms: prodData.streamingPlatforms || [],
-              }
-            })
-          }
-
-          // Check relationship
-          const existingRelation = await prisma.artistProduction.findUnique({
-            where: {
-              artistId_productionId: {
-                artistId,
-                productionId: production.id,
-              },
-            },
-          })
-
-          if (!existingRelation) {
-            await prisma.artistProduction.create({
-              data: {
-                artistId,
-                productionId: production.id,
-              },
-            })
-            result.addedCount++
-          } else {
-            result.skippedCount++
-          }
-        } catch (e: any) {
-          result.errors.push(e.message)
-        }
-      }
-
-      result.success = true
-      // Reavaliar visibilidade após sync via AI
-      void getArtistVisibilityService().evaluate(artistId).catch(() => {})
-    } catch (error: any) {
-      result.errors.push(error.message)
-    } finally {
-      result.duration = Date.now() - startTime
-    }
+    result.errors.push('AI fallback desativado; revise a filmografia manualmente quando o TMDB nao retornar dados.')
+    result.duration = Date.now() - startTime
 
     return result
   }

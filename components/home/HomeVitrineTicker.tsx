@@ -1,5 +1,8 @@
 'use client'
 
+import { TrackedAffiliateLink } from '@/components/ui/TrackedAffiliateLink'
+import type { AffiliatePlacement } from '@/lib/store/affiliate-placements'
+
 const STORE_CONFIG: Record<string, { label: string; bg: string; dark: boolean }> = {
     shopee:       { label: 'Shopee',        bg: 'bg-orange-500',  dark: false },
     amazon:       { label: 'Amazon',        bg: 'bg-[#232F3E]',   dark: false },
@@ -18,11 +21,7 @@ interface Product {
     badge?: string | null
 }
 
-function trackClick(id: string) {
-    fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
-}
-
-export function HomeVitrineTicker({ products, compact = false }: { products: Product[]; compact?: boolean }) {
+export function HomeVitrineTicker({ products, compact = false, placement = 'home_store' }: { products: Product[]; compact?: boolean; placement?: AffiliatePlacement }) {
     if (products.length === 0) return null
 
     const items = [...products, ...products, ...products]
@@ -40,12 +39,11 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
                     {items.map((p, idx) => {
                         const cfg = STORE_CONFIG[p.store] ?? FALLBACK
                         return (
-                            <a
+                            <TrackedAffiliateLink
                                 key={`vticker-${p.id}-${idx}`}
+                                productId={p.id}
                                 href={p.affiliateUrl}
-                                target="_blank"
-                                rel="noopener noreferrer sponsored"
-                                onClick={() => trackClick(p.id)}
+                                placement={placement}
                                 title={p.name}
                                 className={`${compact ? 'w-[66px] sm:w-[88px]' : 'w-[96px]'} flex-shrink-0 flex flex-col gap-1.5 group`}
                             >
@@ -72,7 +70,7 @@ export function HomeVitrineTicker({ products, compact = false }: { products: Pro
                                 <p className={`${compact ? 'text-[9px] sm:text-[10px]' : 'text-[10px]'} w-full text-muted transition-colors duration-200 line-clamp-2 group-hover:text-foreground leading-snug`}>
                                     {p.name}
                                 </p>
-                            </a>
+                            </TrackedAffiliateLink>
                         )
                     })}
                 </div>

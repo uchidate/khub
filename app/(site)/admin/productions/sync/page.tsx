@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { RefreshCw, Film, Wand2, Square } from 'lucide-react'
+import { RefreshCw, Film, Wand2, Square, ShieldAlert } from 'lucide-react'
 import { AdminButton, StatCard } from '@/components/admin'
 
 const SYNC_BATCH_SIZE = 100  // 100 × ~300ms + 3 TMDB calls ≈ 1-2min por lote
@@ -86,6 +86,7 @@ export default function SyncProductionsTmdbPage() {
     const [totalGlobal, setTotalGlobal] = useState(0)
     const [processed, setProcessed] = useState(0)
     const [stats, setStats] = useState<{ enriched: number; noData: number; errors: number } | null>(null)
+    const [allowFullOverwrite, setAllowFullOverwrite] = useState(false)
     const abortRef = useRef(false)
     const logEndRef = useRef<HTMLDivElement>(null)
 
@@ -100,7 +101,7 @@ export default function SyncProductionsTmdbPage() {
         logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [log])
 
-    const runBatches = useCallback(async (mode: 'empty_only' | 'smart' | 'all', resume?: SavedProgress) => {
+    const runBatches = useCallback(async (mode: 'empty_only' | 'smart' | 'all', resume?: SavedProgress, confirmOverwrite = false) => {
         abortRef.current = false
         setRunning(true)
         setSavedProgress(null)
@@ -132,7 +133,7 @@ export default function SyncProductionsTmdbPage() {
                 const res = await fetch('/api/admin/sync-tmdb-productions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode, limit: SYNC_BATCH_SIZE, offset }),
+                    body: JSON.stringify({ mode, limit: SYNC_BATCH_SIZE, offset, confirmOverwrite }),
                 })
 
                 if (!res.ok || !res.body) {
@@ -257,6 +258,25 @@ export default function SyncProductionsTmdbPage() {
                     </Link>
                 </div>
 
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-start gap-3">
+                    <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="space-y-2">
+                        <p className="text-sm font-bold text-foreground">Recuperação manual com risco de sobrescrita</p>
+                        <p className="text-xs text-muted leading-relaxed">
+                            O fluxo editorial principal agora é a fila de enriquecimento com prompt e retorno do Gemini. Prefira <strong>Preencher vazios</strong>; o modo completo pode substituir metadados previamente curados.
+                        </p>
+                        <label className="inline-flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={allowFullOverwrite}
+                                onChange={event => setAllowFullOverwrite(event.target.checked)}
+                                className="accent-amber-500"
+                            />
+                            Liberar temporariamente o modo “Forçar todos” nesta sessão
+                        </label>
+                    </div>
+                </div>
+
                 {/* Retomar progresso salvo */}
                 {savedProgress && !running && (
                     <div className="flex items-center justify-between p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
@@ -271,7 +291,8 @@ export default function SyncProductionsTmdbPage() {
                             <AdminButton
                                 variant="warning"
                                 size="md"
-                                onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress)}
+                                disabled={savedProgress.mode === 'all' && !allowFullOverwrite}
+                                onClick={() => runBatches((savedProgress.mode as 'empty_only' | 'smart' | 'all') ?? 'empty_only', savedProgress, savedProgress.mode === 'all' && allowFullOverwrite)}
                             >
                                 ▶️ Retomar
                             </AdminButton>
@@ -298,7 +319,7 @@ export default function SyncProductionsTmdbPage() {
                     />
                     <ModeCard
                         title="Smart sync"
-                        description="Atualiza tudo, exceto sinopse marcada como 'manual'."
+                        description="Preenche dados faltantes e preserva sinopse manual ou já revisada."
                         color="teal"
                         disabled={running}
                         onClick={() => runBatches('smart')}
@@ -306,10 +327,10 @@ export default function SyncProductionsTmdbPage() {
                     />
                     <ModeCard
                         title="Forçar todos"
-                        description="Sobrescreve absolutamente todos os campos com TMDB."
+                        description="Sobrescreve metadados com TMDB. Exige liberação explícita acima."
                         color="amber"
-                        disabled={running}
-                        onClick={() => runBatches('all')}
+                        disabled={running || !allowFullOverwrite}
+                        onClick={() => runBatches('all', undefined, true)}
                         icon={<RefreshCw className="w-4 h-4" />}
                     />
                 </div>

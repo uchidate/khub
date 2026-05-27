@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info, Loader2 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
@@ -59,9 +59,7 @@ export default function FilmographyAdminPage() {
   const [confirmSyncOutdated, setConfirmSyncOutdated] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => { loadData() }, [])
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [statsRes, artistsRes] = await Promise.all([
@@ -75,7 +73,9 @@ export default function FilmographyAdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => { loadData() }, [loadData])
 
   async function syncArtist(artistId: string) {
     if (syncing) return
@@ -144,7 +144,7 @@ export default function FilmographyAdminPage() {
       <div className="space-y-4">
         <p className="text-muted text-xs -mt-6 flex items-center gap-1.5">
           <Info size={12} />
-          Sync automático a cada 15 min via cron · Use para forçar manualmente
+          Rotina manual de recuperação; não há job dedicado ativo no workflow atual. Revise antes de executar para não reintroduzir dados fora da curadoria.
         </p>
 
         {/* Stats */}

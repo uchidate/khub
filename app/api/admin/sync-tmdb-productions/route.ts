@@ -6,15 +6,16 @@
  * Parâmetros body:
  *   mode: 'empty_only' (padrão) | 'smart' | 'all'
  *     - empty_only: só atualiza campos nulos/vazios
- *     - smart: atualiza tudo exceto sinopse marcada como 'manual'
- *     - all: sobrescreve tudo, ignora qualquer estado atual
+ *     - smart: preenche campos vazios e preserva sinopse manual/traduzida
+ *     - all: sobrescreve metadados e exige confirmOverwrite=true
  *   limit: number — máximo de produções por lote (padrão 100, max 300)
  *   offset: number — pular N produções (paginação de lotes)
+ *   confirmOverwrite: boolean — confirmação obrigatória para mode='all'
  *
  * Retorna stream de texto com progresso linha a linha.
  */
 
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
 
@@ -51,11 +52,13 @@ export async function POST(req: NextRequest) {
     let mode: 'empty_only' | 'smart' | 'all' = 'empty_only'
     let limit = 100
     let offset = 0
+    let confirmOverwrite = false
 
     try {
         const body = await req.json()
         if (body?.mode === 'all') mode = 'all'
         else if (body?.mode === 'smart') mode = 'smart'
+        confirmOverwrite = body?.confirmOverwrite === true
         if (body?.limit && typeof body.limit === 'number') {
             limit = Math.min(Math.max(body.limit, 1), 300)
         }
@@ -64,6 +67,13 @@ export async function POST(req: NextRequest) {
         }
     } catch {
         // usa padrão
+    }
+
+    if (mode === 'all' && !confirmOverwrite) {
+        return NextResponse.json(
+            { error: 'Modo all bloqueado: confirme explicitamente a sobrescrita de metadados curados.' },
+            { status: 409 },
+        )
     }
 
     const baseWhere = {
@@ -120,7 +130,7 @@ export async function POST(req: NextRequest) {
         take: limit,
     })
 
-    // Sinopses já traduzidas por IA: busca em lote antes de processar
+    // Sinopses já traduzidas e revisadas: busca em lote antes de processar
     // Protege contra sobrescrita — tokens já foram gastos, só permissão individual para reprocessar
     const productionIds = productions.map(p => p.id)
     const existingCTs = await prisma.contentTranslation.findMany({
@@ -199,7 +209,7 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Sinopse — smart respeita synopsisSource=manual
-                    // Não sobrescrever se já foi traduzida por IA (tokens foram gastos)
+                    // Não sobrescrever se já houver tradução revisada
                     const synopsisPt = (pt?.overview as string) || null
                     const synopsisEn = (en?.overview as string) || null
                     const synopsisValue = synopsisPt || synopsisEn

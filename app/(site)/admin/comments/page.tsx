@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
     MessageSquare, Search, X, Trash2, Flag, CheckCircle,
@@ -126,6 +127,13 @@ function CommentCard({
 
 
 export default function AdminCommentsPage() {
+    return <Suspense><AdminCommentsPageContent /></Suspense>
+}
+
+function AdminCommentsPageContent() {
+    const searchParams = useSearchParams()
+    const requestedStatus = searchParams.get('status')
+    const initialStatus = STATUS_OPTS.some(option => option.value === requestedStatus) ? (requestedStatus ?? '') : ''
     const [comments, setComments]     = useState<Comment[]>([])
     const [stats, setStats]           = useState<Stats>({ total: 0, active: 0, flagged: 0, removed: 0 })
     const [isLoading, setIsLoading]   = useState(true)
@@ -143,7 +151,7 @@ export default function AdminCommentsPage() {
 
     // Filters
     const [search,  setSearch]  = useState('')
-    const [status,  setStatus]  = useState('')
+    const [status,  setStatus]  = useState(initialStatus)
     const [sortBy,  setSortBy]  = useState('newest')
     const [page,    setPage]    = useState(1)
 

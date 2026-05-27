@@ -1,8 +1,8 @@
 /**
  * POST /api/cron/tag-news
  *
- * Cron para enriquecimento de tags de notícias via Ollama.
- * Processa notícias com translationStatus='pending' e gera tags semânticas.
+ * Cron para completar tags de notícias por regras locais.
+ * Processa rascunhos e gera tags sem alterar o estado de tradução.
  *
  * Query params:
  *   ?limit=N    → máximo de notícias por execução (padrão: 20)
@@ -40,8 +40,7 @@ function verifyToken(request: NextRequest): boolean {
 
 async function runTagNews(limit: number): Promise<{ tagged: number; failed: number; skipped: number }> {
   const service = getNewsTaggingService(prisma)
-  const result = await service.translatePendingNews(limit)
-  return { tagged: result.translated, failed: result.failed, skipped: result.skipped }
+  return service.tagDraftNews(limit)
 }
 
 export async function POST(request: NextRequest) {
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
   log.info('News tagging cron started', { limit, dryRun, requestId })
 
   if (dryRun) {
-    const pending = await prisma.news.count({ where: { translationStatus: 'pending' } })
+    const pending = await prisma.news.count({ where: { status: 'draft' } })
     return NextResponse.json({ success: true, status: 'dry-run', pending, requestId })
   }
 
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     status: 'accepted',
-    message: `Enriquecendo tags de até ${limit} notícias pendentes`,
+    message: `Enriquecendo tags de até ${limit} notícias em rascunho sem alterar traduções`,
     requestId,
   }, { status: 202 })
 }

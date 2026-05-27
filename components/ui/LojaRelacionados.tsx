@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { ArrowRight, ShoppingBag, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { HomeVitrineTicker } from '@/components/home/HomeVitrineTicker'
+import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
+import { TrackedAffiliateLink } from '@/components/ui/TrackedAffiliateLink'
 
 const FALLBACK_CATEGORIES = ['kpop_album', 'lightstick', 'photocard', 'acessorios', 'kbeauty', 'alimenta', 'clothing', 'kdrama', 'outros']
 
@@ -25,6 +27,7 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
 
     const base = {
         isActive: true,
+        isHidden: false,
         ...(excludeId ? { id: { not: excludeId } } : {}),
     }
 
@@ -64,13 +67,15 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
                     </Link>
                 </div>
 
+                <AffiliateNotice compact className="border-x-0 border-t-0" />
+
                 <div className="grid grid-cols-2 gap-px bg-border/40">
                     {featured.map((p) => (
-                        <a
+                        <TrackedAffiliateLink
                             key={p.id}
+                            productId={p.id}
                             href={p.affiliateUrl}
-                            target="_blank"
-                            rel="noopener noreferrer sponsored"
+                            placement="related_store"
                             className="group relative aspect-square overflow-hidden bg-surface"
                         >
                             <img
@@ -91,7 +96,7 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
                                     {p.badge}
                                 </div>
                             )}
-                        </a>
+                        </TrackedAffiliateLink>
                     ))}
                 </div>
 
@@ -127,8 +132,9 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
                         <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>
+                <AffiliateNotice compact className="border-x-0 border-t-0" />
                 <div className="px-3 py-3">
-                    <HomeVitrineTicker products={products} />
+                    <HomeVitrineTicker products={products} placement="related_store" />
                 </div>
             </div>
         </section>

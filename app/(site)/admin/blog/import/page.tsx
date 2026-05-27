@@ -300,11 +300,11 @@ export default function BlogImportPage() {
         <AdminLayout title="Importar Artigo" subtitle="Cole o JSON gerado pelo Gemini, valide e insira como rascunho">
             <div className="max-w-5xl mx-auto">
 
-                {/* Link galeria de blocos */}
+                {/* Referência editorial de blocos */}
                 <div className="mb-4 flex justify-end">
                     <Link href="/admin/blog/blocks-demo"
                         className="flex items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-accent transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-accent/30">
-                        <Eye className="w-3 h-3" /> Galeria de blocos
+                        <Eye className="w-3 h-3" /> Guia de blocos
                     </Link>
                 </div>
 

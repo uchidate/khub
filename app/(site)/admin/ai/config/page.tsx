@@ -25,7 +25,7 @@ interface FormState {
 }
 
 const PROVIDER_OPTIONS = [
-    { value: '',         label: 'Auto (DeepSeek → Ollama)' },
+    { value: '',         label: 'Automático (legado)' },
     { value: 'deepseek', label: 'DeepSeek-V3' },
     { value: 'ollama',   label: 'Ollama (local)' },
 ]
@@ -118,6 +118,10 @@ export default function AiConfigPage() {
                         <h1 className="text-xl font-bold text-foreground">Configuração de IA</h1>
                         <p className="text-xs text-muted mt-0.5">Provider preferido, limites de orçamento e habilitação por feature</p>
                     </div>
+                </div>
+
+                <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-muted">
+                    Geração editorial e traduções automáticas estão desativadas. Salvar configurações históricas aqui não reativa esses fluxos; a curadoria usa Gemini com aplicação manual.
                 </div>
 
                 {error && (

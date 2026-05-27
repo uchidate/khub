@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Cake, CalendarDays, Film, Search, ShoppingBag, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
+import { TrackedAffiliateLink } from '@/components/ui/TrackedAffiliateLink'
 
 export interface StoreProductCard {
     id: string; name: string; price?: string | null; originalPrice?: string | null
@@ -153,7 +155,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
     const [search, setSearch] = useState('')
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
 
-    const today = new Date(todayStr + 'T00:00:00Z')
+    const today = useMemo(() => new Date(todayStr + 'T00:00:00Z'), [todayStr])
     const todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
     const todayReleases = releases.filter(r => r.daysUntil === 0)
     const hasToday = todayBirthdays.length > 0 || todayReleases.length > 0
@@ -197,7 +199,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
             for (const r of releases) { const d = new Date(r.date); if (d.getUTCFullYear() === year && d.getUTCMonth() === month) relDays.add(d.getUTCDate()) }
             return { year, month, bdDays, relDays }
         })
-    }, [birthdays, releases, todayStr])
+    }, [birthdays, releases, today])
 
     const nextSevenDays = useMemo(() => [
         ...birthdays.filter(b => b.daysUntil >= 0 && b.daysUntil <= 7).map(b => ({ id: `b-${b.artistId}`, href: `/artists/${b.artistSlug ?? b.artistId}`, title: b.nameRomanized, subtitle: `${b.age} anos`, date: b.date, daysUntil: b.daysUntil, kind: 'birthday' as const, imageUrl: b.primaryImageUrl })),
@@ -474,16 +476,17 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                                     Ver <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>
                             </div>
+                            <AffiliateNotice compact className="border-x-0 border-t-0" />
                             <div className="grid grid-cols-2 gap-3 p-3">
                                 {storeProducts.slice(0, 4).map(p => (
-                                    <a key={p.id} href={p.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored" className="group">
+                                    <TrackedAffiliateLink key={p.id} productId={p.id} href={p.affiliateUrl} placement="calendar_store" className="group">
                                         <div className="relative mb-1.5 aspect-square overflow-hidden rounded-lg border border-border bg-background transition-colors group-hover:border-accent/40">
                                             <Image src={p.imageUrl} alt={p.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
                                             {p.badge && <span className="absolute left-1.5 top-1.5 rounded bg-accent px-1.5 py-0.5 text-[8px] font-mono font-black text-white">{p.badge}</span>}
                                         </div>
                                         <p className="line-clamp-2 text-[10px] font-semibold leading-tight text-foreground">{p.name}</p>
                                         {p.price && <p className="mt-0.5 text-[11px] font-black text-foreground">{p.price}</p>}
-                                    </a>
+                                    </TrackedAffiliateLink>
                                 ))}
                             </div>
                         </div>

@@ -1,6 +1,8 @@
 import { ShoppingBag } from 'lucide-react'
 import { HomeVitrineTicker } from '@/components/home/HomeVitrineTicker'
 import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
+import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
+import type { AffiliatePlacement } from '@/lib/store/affiliate-placements'
 
 interface Product {
     id: string
@@ -14,7 +16,7 @@ interface Product {
     soldCount?: string | null
 }
 
-export function HomeLojaDestaque({ products }: { products: Product[] }) {
+export function HomeLojaDestaque({ products, placement = 'home_store' }: { products: Product[]; placement?: AffiliatePlacement }) {
     if (products.length === 0) return null
 
     return (
@@ -26,8 +28,9 @@ export function HomeLojaDestaque({ products }: { products: Product[] }) {
                     href="/loja"
                     linkText="Ver loja →"
                 />
+                <AffiliateNotice compact className="border-x-0 border-t-0" />
                 <div className="border-b border-border py-3">
-                    <HomeVitrineTicker products={products} />
+                    <HomeVitrineTicker products={products} placement={placement} />
                 </div>
             </div>
         </section>

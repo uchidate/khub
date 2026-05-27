@@ -55,7 +55,7 @@ export default async function CalendarioPage() {
             take: 12,
         }),
         prisma.storeProduct.findMany({
-            where: { isActive: true },
+            where: { isActive: true, isHidden: false },
             orderBy: [{ featured: 'desc' }, { position: 'asc' }],
             take: 8,
             select: { id: true, name: true, price: true, originalPrice: true, imageUrl: true, affiliateUrl: true, store: true, badge: true, rating: true, soldCount: true },

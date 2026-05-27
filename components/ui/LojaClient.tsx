@@ -290,6 +290,7 @@ export function LojaClient({ products }: { products: Product[] }) {
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                                     {items.map(product => (
                                         <ShopeeCard key={product.id} {...product}
+                                            placement="store_catalog"
                                             rating={product.rating ?? undefined}
                                             badge={product.badge ?? undefined}
                                             soldCount={product.soldCount ?? undefined}
@@ -302,6 +303,7 @@ export function LojaClient({ products }: { products: Product[] }) {
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                             {filtered.map(product => (
                                 <ShopeeCard key={product.id} {...product}
+                                    placement="store_catalog"
                                     rating={product.rating ?? undefined}
                                     badge={product.badge ?? undefined}
                                     soldCount={product.soldCount ?? undefined}

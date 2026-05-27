@@ -118,7 +118,7 @@ export default function ArtistEnrichQueuePage() {
 
     return (
         <AdminLayout
-            title="Enriquecimento de Artistas"
+            title="Curadoria Gemini de Artistas"
             subtitle="Gere o JSON no Gemini com prompts/idol-enrich.md e aplique aqui."
             actions={
                 <button

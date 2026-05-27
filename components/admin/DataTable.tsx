@@ -78,7 +78,7 @@ function PageNumbers({
             onClick={() => onChange(page)}
             className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
               page === current
-                ? 'bg-purple-600 text-white'
+                ? 'bg-accent text-white'
                 : 'text-muted hover:text-foreground hover:bg-surface-hover'
             }`}
           >
@@ -281,7 +281,7 @@ export function DataTable<T extends { id: string }>({
                     type="checkbox"
                     checked={visibleData.length > 0 && selected.size === visibleData.length}
                     onChange={toggleSelectAll}
-                    className="rounded border-border bg-surface accent-purple-500"
+                    className="rounded border-border bg-surface accent-accent"
                   />
                 </th>
               )}
@@ -298,7 +298,7 @@ export function DataTable<T extends { id: string }>({
                     {col.sortable && (
                       <ArrowUpDown
                         size={12}
-                        className={sortBy === col.key ? 'text-purple-400' : 'text-muted'}
+                        className={sortBy === col.key ? 'text-accent' : 'text-muted'}
                       />
                     )}
                   </span>
@@ -352,14 +352,14 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               visibleData.map((item) => (
-                <tr key={item.id} className={`group border-b border-border/70 last:border-0 transition-colors ${selected.has(item.id) ? 'bg-blue-500/10' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
+                <tr key={item.id} className={`group border-b border-border/70 last:border-0 transition-colors ${selected.has(item.id) ? 'bg-accent-soft' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
                   {onDelete && (
                     <td className={cellPad}>
                       <input
                         type="checkbox"
                         checked={selected.has(item.id)}
                         onChange={() => toggleSelect(item.id)}
-                        className="rounded border-border bg-surface accent-purple-500"
+                        className="rounded border-border bg-surface accent-accent"
                       />
                     </td>
                   )}

@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         take: limit,
     })
 
-    // Campos já traduzidos por IA: busca em lote antes de processar
+    // Campos já traduzidos e revisados: busca em lote antes de processar
     // Protege contra sobrescrita — tokens já foram gastos, só permissão individual para reprocessar
     const artistIds = artists.map(a => a.id)
     const existingCTs = await prisma.contentTranslation.findMany({
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         },
         select: { entityId: true, field: true },
     })
-    // Set de "entityId:field" com tradução IA existente
+    // Set de "entityId:field" com tradução revisada existente
     const aiTranslatedFields = new Set(existingCTs.map(ct => `${ct.entityId}:${ct.field}`))
     const hasAiTranslation = (artistId: string, field: string) => aiTranslatedFields.has(`${artistId}:${field}`)
 
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
                     const bioEn = tmdb.biography?.trim() || null
                     const bioValue = bioPt || bioEn || null
                     const bioLang = bioPt ? 'pt-BR' : 'en'
-                    // Não sobrescrever bio se já foi traduzida por IA (tokens foram gastos)
+                    // Não sobrescrever bio se já houver tradução revisada
                     const bioAiProtected = hasAiTranslation(artist.id, 'bio')
                     if (bioValue && canUpdate(!artist.bio, 'bio') && !bioAiProtected) {
                         updates.bio = bioValue

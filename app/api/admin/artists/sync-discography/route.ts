@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/artists/sync-discography
  *
- * Sincroniza a discografia de um único artista via MusicBrainz (com fallback AI).
+ * Sincroniza a discografia de um único artista somente via MusicBrainz.
  * Replica a lógica do sync em lote, mas para um artista por vez.
  *
  * Body: { artistId: string, clearFirst?: boolean, clearOnly?: boolean }

@@ -2,6 +2,8 @@
 
 import Image from 'next/image'
 import { ExternalLink, Star } from 'lucide-react'
+import { TrackedAffiliateLink } from '@/components/ui/TrackedAffiliateLink'
+import type { AffiliatePlacement } from '@/lib/store/affiliate-placements'
 
 export const STORE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     shopee:        { label: 'Shopee',         color: 'text-orange-500', bg: 'bg-orange-500' },
@@ -60,11 +62,7 @@ interface ShopeeCardProps {
     badge?: string
     compact?: boolean
     store?: string
-}
-
-function trackClick(id?: string) {
-    if (!id) return
-    fetch(`/api/store/${id}/click`, { method: 'POST' }).catch(() => {})
+    placement?: AffiliatePlacement
 }
 
 export function ShopeeCard({
@@ -81,17 +79,17 @@ export function ShopeeCard({
     badge,
     compact = false,
     store = 'shopee',
+    placement = 'store_catalog',
 }: ShopeeCardProps) {
     const vendidos = soldCount ?? sold
     const cfg = STORE_CONFIG[store] ?? STORE_CONFIG.outro
 
     if (compact) {
         return (
-            <a
+            <TrackedAffiliateLink
+                productId={id ?? ''}
                 href={affiliateUrl}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                onClick={() => trackClick(id)}
+                placement={placement}
                 className="flex gap-3 p-3 bg-background hover:bg-surface/55 border border-border hover:border-accent/40 transition-colors group"
             >
                 <div className="relative w-16 h-16 overflow-hidden flex-shrink-0 bg-muted/10">
@@ -107,16 +105,15 @@ export function ShopeeCard({
                         <StoreLogo store={store} className="w-3 h-3" />
                     </span>
                 </div>
-            </a>
+            </TrackedAffiliateLink>
         )
     }
 
     return (
-        <a
+        <TrackedAffiliateLink
+            productId={id ?? ''}
             href={affiliateUrl}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            onClick={() => trackClick(id)}
+            placement={placement}
             title={`Ver no ${cfg.label} (link externo)`}
             className="flex h-full flex-col overflow-hidden border border-border bg-background transition-colors hover:border-accent/40 group"
         >
@@ -165,7 +162,7 @@ export function ShopeeCard({
                     </div>
                 </div>
             </div>
-        </a>
+        </TrackedAffiliateLink>
     )
 }
 

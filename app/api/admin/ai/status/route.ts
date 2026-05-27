@@ -149,7 +149,7 @@ function generateRecommendations(
     }
 
     if (!providers.deepseek?.configured) {
-        recs.push('🚨 DeepSeek não configurado. Configure DEEPSEEK_API_KEY para usar geração de conteúdo.')
+        recs.push('DeepSeek não configurado. A moderação automatizada de conteúdo adulto fica indisponível; curadoria e traduções usam o fluxo manual com Gemini.')
     }
 
     if (test && !test.success && test.latencyMs > 45000) {

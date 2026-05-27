@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminButton } from '@/components/admin/AdminButton'
-import { ConfirmDialog } from '@/components/admin'
+import { AdminButton, AdminLinkButton, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, Star, StarOff,
-    ExternalLink, Package, RefreshCw, X, Check,
+    ExternalLink, Package, RefreshCw, X, Check, Download, Tag,
+    MousePointerClick, TrendingUp, CircleAlert,
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -27,11 +27,18 @@ interface StoreProduct {
     rating: number | null
     soldCount: string | null
     isActive: boolean
+    isHidden: boolean
     featured: boolean
     position: number
     tags: string[]
     clickCount: number
     createdAt: string
+}
+
+interface StorePerformance {
+    periodDays: number
+    clicks: number
+    placements: Array<{ placement: string; label: string; clicks: number }>
 }
 
 const CATEGORIES: Record<string, string> = {
@@ -73,6 +80,7 @@ export default function AdminLojaPage() {
     const [form, setForm] = useState(EMPTY_FORM)
     const [confirmRemove, setConfirmRemove] = useState<StoreProduct | null>(null)
     const [saving, setSaving] = useState(false)
+    const [performance, setPerformance] = useState<StorePerformance | null>(null)
     const toast = useAdminToast()
 
     const load = useCallback(async () => {
@@ -80,8 +88,12 @@ export default function AdminLojaPage() {
         const params = new URLSearchParams()
         if (filterCategory) params.set('category', filterCategory)
         if (filterStore) params.set('store', filterStore)
-        const res = await fetch(`/api/admin/store?${params}`)
-        if (res.ok) setProducts(await res.json())
+        const [productsResponse, performanceResponse] = await Promise.all([
+            fetch(`/api/admin/store?${params}`),
+            fetch('/api/admin/store/performance'),
+        ])
+        if (productsResponse.ok) setProducts(await productsResponse.json())
+        if (performanceResponse.ok) setPerformance(await performanceResponse.json())
         setLoading(false)
     }, [filterCategory, filterStore])
 
@@ -162,20 +174,32 @@ export default function AdminLojaPage() {
             return acc
         }, {})
     ).sort(([a], [b]) => a.localeCompare(b))
+    const visibleProducts = products.filter(product => product.isActive && !product.isHidden)
+    const featuredProducts = visibleProducts.filter(product => product.featured)
+    const totalClicks = visibleProducts.reduce((total, product) => total + product.clickCount, 0)
+    const productsWithoutClicks = visibleProducts.filter(product => product.clickCount === 0)
+    const hiddenProducts = products.filter(product => product.isHidden)
+    const topClicked = [...visibleProducts]
+        .filter(product => product.clickCount > 0)
+        .sort((a, b) => b.clickCount - a.clickCount)
+        .slice(0, 5)
 
     return (
         <AdminLayout title="Loja — Produtos Afiliados">
             {/* Barra de ações */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
-                <AdminButton onClick={openNew}>
+                <AdminButton variant="primary" onClick={openNew}>
                     <Plus className="w-4 h-4 inline mr-1" />Novo produto
                 </AdminButton>
-                <a href="/admin/loja/importar" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-foreground hover:border-accent/50 transition-colors">
-                    🛒 Importar ML
-                </a>
-                <a href="/admin/loja/cupons" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-foreground hover:border-orange-400/50 transition-colors">
-                    🏷️ Cupons do dia
-                </a>
+                <AdminLinkButton href="/admin/loja/import" size="sm">
+                    <Download className="w-4 h-4" /> Importar Shopee
+                </AdminLinkButton>
+                <AdminLinkButton href="/admin/loja/importar" size="sm">
+                    <Download className="w-4 h-4" /> Importar Mercado Livre
+                </AdminLinkButton>
+                <AdminLinkButton href="/admin/loja/cupons" size="sm">
+                    <Tag className="w-4 h-4" /> Cupons do dia
+                </AdminLinkButton>
                 <select
                     value={filterCategory}
                     onChange={e => setFilterCategory(e.target.value)}
@@ -197,6 +221,85 @@ export default function AdminLojaPage() {
                 </button>
                 <span className="text-xs text-muted ml-auto">{products.length} produto{products.length !== 1 ? 's' : ''}</span>
             </div>
+
+            {!loading && products.length > 0 && (
+                <section className="mb-8 space-y-4">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">Desempenho afiliado</p>
+                        <h2 className="mt-1 text-lg font-bold text-foreground">Decisões para a vitrine</h2>
+                        <p className="mt-1 text-xs text-muted">Cliques acumulados dos produtos no filtro atual. Conversões e comissões dependem do relatório da plataforma afiliada.</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-xl border border-border bg-surface p-4">
+                            <p className="text-xs font-semibold text-muted">Visíveis na vitrine</p>
+                            <p className="mt-2 text-2xl font-black text-foreground">{visibleProducts.length}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-surface p-4">
+                            <p className="text-xs font-semibold text-muted">Em destaque</p>
+                            <p className="mt-2 text-2xl font-black text-foreground">{featuredProducts.length}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-surface p-4">
+                            <p className="flex items-center gap-1.5 text-xs font-semibold text-muted"><MousePointerClick className="h-3.5 w-3.5" /> Cliques acumulados</p>
+                            <p className="mt-2 text-2xl font-black text-accent">{totalClicks}</p>
+                        </div>
+                        <div className="rounded-xl border border-border bg-surface p-4">
+                            <p className="flex items-center gap-1.5 text-xs font-semibold text-muted"><CircleAlert className="h-3.5 w-3.5" /> Sem cliques</p>
+                            <p className="mt-2 text-2xl font-black text-foreground">{productsWithoutClicks.length}</p>
+                        </div>
+                    </div>
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)]">
+                        <div className="rounded-xl border border-border bg-background p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-accent" />
+                                <h3 className="text-sm font-bold text-foreground">Produtos que geram interesse</h3>
+                            </div>
+                            {topClicked.length === 0 ? (
+                                <p className="text-xs text-muted">Ainda não há cliques registrados neste conjunto de produtos.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {topClicked.map((product, index) => (
+                                        <div key={product.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+                                            <p className="min-w-0 truncate text-xs font-medium text-foreground">
+                                                <span className="mr-2 font-mono text-muted">{index + 1}.</span>{product.name}
+                                            </p>
+                                            <span className="shrink-0 text-xs font-bold text-accent">{product.clickCount} clique{product.clickCount !== 1 ? 's' : ''}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="rounded-xl border border-border bg-surface p-4">
+                            <h3 className="text-sm font-bold text-foreground">Atenção operacional</h3>
+                            <div className="mt-3 space-y-2 text-xs text-muted">
+                                <p><strong className="text-foreground">{productsWithoutClicks.length}</strong> produto{productsWithoutClicks.length !== 1 ? 's' : ''} {productsWithoutClicks.length === 1 ? 'visível' : 'visíveis'} sem clique: revise imagem, preço, título ou retire destaque.</p>
+                                <p><strong className="text-foreground">{hiddenProducts.length}</strong> ocultado{hiddenProducts.length !== 1 ? 's' : ''} pelo sync: não aparece{hiddenProducts.length === 1 ? '' : 'm'} mais nos widgets públicos.</p>
+                                <p>A próxima camada útil é importar conversões e comissões das plataformas para medir receita real.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-foreground">Origem dos cliques</h3>
+                                <p className="mt-1 text-xs text-muted">Eventos dos últimos {performance?.periodDays ?? 30} dias em todos os widgets afiliados.</p>
+                            </div>
+                            <p className="text-sm font-black text-accent">{performance?.clicks ?? 0} cliques no período</p>
+                        </div>
+                        {!performance || performance.placements.length === 0 ? (
+                            <p className="mt-4 text-xs text-muted">A atribuição começa a ser registrada a partir desta atualização.</p>
+                        ) : (
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {performance.placements.map(item => (
+                                    <div key={item.placement} className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+                                        <span className="truncate text-xs font-medium text-foreground">{item.label}</span>
+                                        <span className="shrink-0 text-xs font-bold text-accent">{item.clicks}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
 
             {/* Modal de formulário */}
             {showForm && (
@@ -366,7 +469,7 @@ export default function AdminLojaPage() {
                                     </thead>
                                     <tbody>
                                         {items.map(p => (
-                                            <tr key={p.id} className={`border-b border-border/50 last:border-0 hover:bg-surface/50 transition-colors ${!p.isActive ? 'opacity-50' : ''}`}>
+                                            <tr key={p.id} className={`border-b border-border/50 last:border-0 hover:bg-surface/50 transition-colors ${!p.isActive || p.isHidden ? 'opacity-50' : ''}`}>
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-muted/10">
@@ -375,6 +478,7 @@ export default function AdminLojaPage() {
                                                         <div className="min-w-0">
                                                             <p className="text-xs font-medium text-foreground line-clamp-1">{p.name}</p>
                                                             {p.badge && <span className="text-[10px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full">{p.badge}</span>}
+                                                            {p.isHidden && <span className="ml-1 text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded-full">Oculto pelo sync</span>}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -382,6 +486,10 @@ export default function AdminLojaPage() {
                                                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STORES[p.store]?.color || 'bg-muted/10 text-muted'}`}>
                                                         {STORES[p.store]?.label || p.store}
                                                     </span>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <p className="text-xs font-semibold text-foreground">{p.price || '—'}</p>
+                                                    {p.originalPrice && <p className="text-[10px] text-muted line-through">{p.originalPrice}</p>}
                                                 </td>
                                                 <td className="px-3 py-3 hidden md:table-cell">
                                                     <span className="text-xs text-muted">{p.position}</span>

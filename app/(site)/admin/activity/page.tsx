@@ -47,6 +47,7 @@ const LEVEL_CONFIG: Record<string, { label: string; color: string; border: strin
 }
 
 const AUDIT_ACTION_CONFIG: Record<string, { label: string; color: string; border: string; icon: React.ElementType }> = {
+    VIEW:    { label: 'Acesso',    color: 'text-muted bg-surface',         border: 'border-border',    icon: Eye },
     CREATE:  { label: 'Criação',   color: 'text-green-400 bg-green-400/10',   border: 'border-green-500/40',  icon: Plus },
     UPDATE:  { label: 'Edição',    color: 'text-blue-400 bg-blue-400/10',     border: 'border-blue-500/40',   icon: Pencil },
     DELETE:  { label: 'Exclusão',  color: 'text-red-400 bg-red-400/10',       border: 'border-red-500/40',    icon: Trash2 },
@@ -473,6 +474,7 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                 const cfg = AUDIT_ACTION_CONFIG[log.action] ?? { label: log.action, color: 'text-muted bg-surface', border: 'border-border', icon: Activity }
                                 const ActionIcon = cfg.icon
                                 const hasDiff = log.before != null || log.after != null
+                                const isProcessUsage = log.entity === 'AdminProcessUsage'
                                 return (
                                     <div key={log.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-surface transition-colors border-l-2 ${cfg.border}`}>
                                         <Avatar name={log.admin?.name} />
@@ -486,9 +488,12 @@ export default async function AdminActivityPage({ searchParams }: Props) {
                                                     <ActionIcon size={9} />
                                                     {cfg.label}
                                                 </span>
-                                                <span className="text-xs text-muted font-mono">{log.entity}</span>
-                                                {log.entityId && (
+                                                <span className="text-xs text-muted font-mono">{isProcessUsage ? 'Processo admin' : log.entity}</span>
+                                                {log.entityId && !isProcessUsage && (
                                                     <span className="text-[10px] text-muted font-mono">#{log.entityId.slice(-8)}</span>
+                                                )}
+                                                {log.entityId && isProcessUsage && (
+                                                    <span className="text-[10px] text-muted font-mono">{log.entityId}</span>
                                                 )}
                                                 {hasDiff && (
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface text-muted border border-border">diff</span>
