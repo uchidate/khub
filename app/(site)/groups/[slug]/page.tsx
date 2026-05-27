@@ -20,7 +20,7 @@ import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
 
 import { SITE_URL } from '@/lib/constants/site'
-import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { StoreProductsRail } from '@/components/store/StoreProductsRail'
 import { DiscographySection } from '@/components/features/DiscographySection'
 import { GroupSpotifyEmbed } from '@/components/groups/GroupSpotifyEmbed'
 import { GroupMVPlayer } from '@/components/groups/GroupMVPlayer'
@@ -824,10 +824,16 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             groupName={group.name}
                         />
 
-                        <LojaRelacionados
-                            tags={[group.name.toLowerCase(), ...(group.nameHangul ? [group.nameHangul.toLowerCase()] : [])]}
-                            title={`Produtos ${group.name}`}
-                            compact
+                        <StoreProductsRail
+                            entityType="group"
+                            entityId={group.id}
+                            names={[
+                                group.name,
+                                ...(group.nameHangul ? [group.nameHangul] : []),
+                            ]}
+                            contentType="kpop"
+                            title={`Produtos — ${group.name}`}
+                            limit={6}
                         />
 
                         {relatedPosts.length > 0 && (

@@ -1404,11 +1404,31 @@ model StoreProduct {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   clickEvents   StoreAffiliateClick[]
+  links         StoreProductLink[]
 
   @@index([category, isActive, position])
   @@index([store, isActive])
   @@index([featured, isActive])
   @@index([externalId])
+}
+
+// Vínculo explícito entre um produto e uma entidade (artista, grupo ou produção).
+// Permite curadoria manual (admin) e auto-linking (sync ML/scripts).
+// source='auto' pode ser sobrescrito por 'manual' sem perder o override.
+model StoreProductLink {
+  id         String   @id @default(cuid())
+  productId  String
+  entityType String   // 'artist' | 'group' | 'production'
+  entityId   String
+  score      Float    @default(1.0) // 0.0–1.0, maior = prioridade na exibição
+  source     String   @default("manual") // 'manual' | 'auto'
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, entityType, entityId])
+  @@index([entityType, entityId])
+  @@index([productId])
 }
 
 model StoreAffiliateClick {

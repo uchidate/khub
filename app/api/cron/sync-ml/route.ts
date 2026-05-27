@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
+import { StoreProductRepository } from '@/lib/repositories/StoreProductRepository'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -48,6 +49,13 @@ const KPOP_KEYWORDS = [
     'newjeans', 'le sserafim', 'enhypen', 'ateez', 'skincare coreano',
     'cosmetico coreano', 'k-beauty', 'kbeauty',
 ]
+
+// Extrair tags de nomes de artistas/grupos presentes no título do produto
+// Retorna nomes normalizados (lowercase) encontrados
+function extractArtistTags(title: string): string[] {
+    const t = title.toLowerCase()
+    return KPOP_KEYWORDS.filter(k => t.includes(k) && k.length > 3)
+}
 
 function isKpopRelevant(title: string): boolean {
     const t = title.toLowerCase()
@@ -225,8 +233,9 @@ export async function POST(req: NextRequest) {
             const finalCategory = detectedCategory !== 'outros' ? detectedCategory : category
 
             const affiliateUrl = `${r.permalink}${r.permalink.includes('?') ? '&' : '?'}affId=${token.user_id}`
+            const productTags = extractArtistTags(r.name)
 
-            await prisma.storeProduct.create({
+            const created = await prisma.storeProduct.create({
                 data: {
                     name: r.name,
                     imageUrl: r.thumbnail,
@@ -238,8 +247,45 @@ export async function POST(req: NextRequest) {
                     position: 9999,
                     rating: r.rating ? Math.round(r.rating * 10) / 10 : null,
                     reviewCount: r.reviews || null,
+                    tags: productTags,
                 },
             })
+
+            // Auto-link: associar produto a artistas/grupos cujo nome aparece no título
+            if (productTags.length > 0) {
+                const [matchingArtists, matchingGroups] = await Promise.all([
+                    prisma.artist.findMany({
+                        where: {
+                            isHidden: false,
+                            OR: productTags.flatMap(tag => [
+                                { nameRomanized: { contains: tag, mode: 'insensitive' as const } },
+                                { nameHangul: { contains: tag, mode: 'insensitive' as const } },
+                            ]),
+                        },
+                        select: { id: true },
+                        take: 3,
+                    }),
+                    prisma.musicalGroup.findMany({
+                        where: {
+                            isHidden: false,
+                            OR: productTags.flatMap(tag => [
+                                { name: { contains: tag, mode: 'insensitive' as const } },
+                                { nameHangul: { contains: tag, mode: 'insensitive' as const } },
+                            ]),
+                        },
+                        select: { id: true },
+                        take: 3,
+                    }),
+                ])
+                await Promise.all([
+                    ...matchingArtists.map(a =>
+                        StoreProductRepository.upsertLink(created.id, 'artist', a.id, 0.8, 'auto')
+                    ),
+                    ...matchingGroups.map(g =>
+                        StoreProductRepository.upsertLink(created.id, 'group', g.id, 0.8, 'auto')
+                    ),
+                ])
+            }
 
             existingIds.add(r.id)
             imported.push(r.name)
