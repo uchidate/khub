@@ -273,7 +273,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     ]
 
     return (
-        <div className="min-h-screen bg-background overflow-x-clip">
+        <div className="min-h-screen bg-background overflow-x-hidden">
             <ViewTracker productionId={production.id} />
             <JsonLd data={{
                 "@context": "https://schema.org",
