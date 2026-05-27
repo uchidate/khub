@@ -123,7 +123,7 @@ export default function InfrastructurePage() {
     const envConfig = ENV_LABELS[env]
 
     return (
-        <AdminLayout title="Infraestrutura">
+        <AdminLayout title="Infraestrutura" subtitle="Status de deploy, scheduled tasks e configurações de ambiente">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">

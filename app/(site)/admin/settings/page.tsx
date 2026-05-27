@@ -216,7 +216,7 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Configurações do Sistema">
+      <AdminLayout title="Configurações do Sistema" subtitle="Configurações globais da plataforma, manutenção e revalidação manual de cache">
         <div className="flex items-center justify-center py-20">
           <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
         </div>

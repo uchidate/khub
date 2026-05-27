@@ -368,7 +368,7 @@ function ReportsPageContent() {
   }
 
   return (
-    <AdminLayout title="Reportes">
+    <AdminLayout title="Reportes" subtitle="Conteúdo sinalizado pelos usuários para revisão ou remoção">
       <ConfirmDialog
         open={confirmModal.open}
         title={confirmModal.message}

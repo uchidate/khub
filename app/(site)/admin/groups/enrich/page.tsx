@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
 import Image from 'next/image'
@@ -69,12 +70,24 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 export default function GroupEnrichQueuePage() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
     const [data, setData] = useState<QueueResponse | null>(null)
     const [loading, setLoading] = useState(true)
-    const [search, setSearch] = useState('')
-    const [filter, setFilter] = useState<FilterMode>('incomplete')
-    const [page, setPage] = useState(1)
+    const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
+    const [filter, setFilter] = useState<FilterMode>(() => (searchParams.get('filter') as FilterMode) ?? 'incomplete')
+    const [page, setPage] = useState(() => Number(searchParams.get('page') ?? '1'))
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const updateUrl = useCallback((q: string, f: FilterMode, p: number) => {
+        const params = new URLSearchParams()
+        if (f !== 'incomplete') params.set('filter', f)
+        if (q.trim()) params.set('q', q.trim())
+        if (p > 1) params.set('page', String(p))
+        const qs = params.toString()
+        router.replace(qs ? `/admin/groups/enrich?${qs}` : '/admin/groups/enrich', { scroll: false })
+    }, [router])
 
     const load = useCallback(async (q: string, f: FilterMode, p: number) => {
         setLoading(true)
@@ -96,6 +109,7 @@ export default function GroupEnrichQueuePage() {
 
     useEffect(() => {
         load(search, filter, page)
+        updateUrl(search, filter, page)
     }, [filter, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -103,6 +117,7 @@ export default function GroupEnrichQueuePage() {
         debounceRef.current = setTimeout(() => {
             setPage(1)
             load(search, filter, 1)
+            updateUrl(search, filter, 1)
         }, search ? 400 : 0)
         return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
     }, [search]) // eslint-disable-line react-hooks/exhaustive-deps

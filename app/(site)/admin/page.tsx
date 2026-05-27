@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
+import { LastVisitBanner } from '@/components/admin/LastVisitBanner'
 import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
 import { AdminStatsGrid } from '@/components/admin/AdminStatsGrid'
 import prisma from '@/lib/prisma'
@@ -227,6 +228,7 @@ export default async function AdminPage() {
             <p className="text-xs font-semibold text-accent">{greet}, {name}</p>
             <h1 className="text-2xl lg:text-3xl font-black text-foreground mt-1">Central de operação</h1>
             <p className="text-sm text-muted capitalize mt-1">{dateStr} · atualizado agora</p>
+            <LastVisitBanner />
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <AdminRefreshButton />

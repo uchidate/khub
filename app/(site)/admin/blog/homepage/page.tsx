@@ -508,7 +508,7 @@ export default function HomepageConfigPage() {
 
     if (loading) {
         return (
-            <AdminLayout title="Homepage Editorial">
+            <AdminLayout title="Homepage Editorial" subtitle="Gerencie os destaques editoriais exibidos na página inicial">
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="animate-spin text-muted" size={24} />
                 </div>
