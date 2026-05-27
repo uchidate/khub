@@ -247,13 +247,13 @@ export default function BlogPostHistory() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <Link href="/admin/blog" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Voltar">
+          <Link href="/admin/blog" className="text-muted hover:text-foreground transition-colors" aria-label="Voltar">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <History className="w-6 h-6 text-[#ff2d78]" />
           <div>
             <h1 className="text-xl font-semibold leading-none">Histórico de versões</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted mt-1">
               Snapshots automáticos a cada salvamento · Pin para proteger de deleção automática
             </p>
           </div>
@@ -265,12 +265,12 @@ export default function BlogPostHistory() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <div className="flex items-center justify-center py-20 text-muted">
             <Loader2 className="w-5 h-5 animate-spin mr-2" />
             Carregando histórico…
           </div>
         ) : versions.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
+          <div className="text-center py-20 text-muted">
             <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p>Nenhuma versão salva ainda.</p>
             <p className="text-xs mt-1">Os snapshots são criados automaticamente a cada salvamento.</p>
@@ -287,7 +287,7 @@ export default function BlogPostHistory() {
                     <span className={`w-2 h-2 rounded-full ${v.pinned ? 'bg-[#ff2d78]' : 'bg-[#ff2d78]/70'}`} />
                   </span>
 
-                  <div className={`bg-card border rounded-xl p-4 shadow-sm transition-colors ${v.pinned ? 'border-[#ff2d78]/30' : 'border-border'}`}>
+                  <div className={`bg-surface border rounded-xl p-4 shadow-sm transition-colors ${v.pinned ? 'border-[#ff2d78]/30' : 'border-border'}`}>
                     <div className="flex items-start gap-3">
                       {/* Info */}
                       <div className="min-w-0 flex-1">
@@ -300,7 +300,7 @@ export default function BlogPostHistory() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(v.savedAt).toLocaleString('pt-BR', {
@@ -323,7 +323,7 @@ export default function BlogPostHistory() {
 
                         {/* Nota da versão */}
                         {v.note && (
-                          <p className="mt-2 text-xs text-muted-foreground italic border-l-2 border-[#ff2d78]/30 pl-2">
+                          <p className="mt-2 text-xs text-muted italic border-l-2 border-[#ff2d78]/30 pl-2">
                             {v.note}
                           </p>
                         )}
