@@ -10,7 +10,7 @@ import {
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ConfirmDialog, AdminEmptyState, AdminModalOverlay, AdminIconButton, AdminButton, BulkActionBar } from '@/components/admin'
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminBadge } from '@/components/admin/AdminBadge'
 import { StatCard } from '@/components/admin'
 
 interface Comment {
@@ -79,11 +79,9 @@ function CommentCard({
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs font-bold text-foreground truncate">{comment.user.name ?? comment.user.email}</span>
-                        <AdminStatusBadge
-                            label={STATUS_LABEL[comment.status] ?? comment.status}
-                            color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
-                            variant="pill"
-                        />
+                        <AdminBadge variant="custom" color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'} shape="pill">
+                            {STATUS_LABEL[comment.status] ?? comment.status}
+                        </AdminBadge>
                         <span className="text-[10px] text-muted ml-auto flex-shrink-0">
                             {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                         </span>
@@ -290,7 +288,15 @@ export default function AdminCommentsPage() {
     const handleStatus = (v: string) => { setStatus(v); setPage(1) }
 
     return (
-        <AdminLayout title="Comentários">
+        <AdminLayout
+            title="Comentários"
+            subtitle="Gerencie e modere os comentários dos usuários"
+            actions={
+                <AdminButton onClick={fetchComments} variant="secondary" size="sm">
+                    <RefreshCw className="w-3.5 h-3.5" /> Atualizar
+                </AdminButton>
+            }
+        >
         <ConfirmDialog
             open={confirmModal.open}
             title={confirmModal.message}
@@ -299,13 +305,6 @@ export default function AdminCommentsPage() {
             onCancel={() => setConfirmModal(m => ({ ...m, open: false }))}
         />
         <div className="space-y-6">
-            {/* Header row: description + refresh */}
-            <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
-                <p className="text-sm text-muted">Gerencie e modere os comentários dos usuários</p>
-                <AdminButton onClick={fetchComments} variant="secondary" size="sm">
-                    <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-                </AdminButton>
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -512,11 +511,9 @@ export default function AdminCommentsPage() {
 
                             {/* Status badge */}
                             <div>
-                                <AdminStatusBadge
-                                    label={STATUS_LABEL[comment.status] ?? comment.status}
-                                    color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'}
-                                    variant="pill"
-                                />
+                                <AdminBadge variant="custom" color={STATUS_BADGE[comment.status] ?? 'bg-surface text-muted'} shape="pill">
+                                    {STATUS_LABEL[comment.status] ?? comment.status}
+                                </AdminBadge>
                             </div>
 
                             {/* Actions */}

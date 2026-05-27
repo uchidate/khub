@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { Mail, CheckCircle, XCircle, Clock, FileText } from 'lucide-react'
 import { AdminEmptyState, AdminLinkButton } from '@/components/admin'
 
@@ -78,21 +80,17 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
     }
 
     return (
-        <AdminLayout title="Histórico de Emails">
-            <div className="p-6 max-w-7xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
-                            <Mail size={22} className="text-accent" />
-                            Histórico de Emails
-                        </h1>
-                        <p className="text-muted text-sm mt-1">{total} emails nos últimos {days} dias</p>
-                    </div>
-                    <AdminLinkButton href="/admin/emails/templates" variant="secondary" size="sm">
-                        <FileText size={14} />
-                        Templates
-                    </AdminLinkButton>
-                </div>
+        <AdminLayout
+            title="Histórico de Emails"
+            subtitle={`${total} emails nos últimos ${days} dias`}
+            actions={
+                <AdminLinkButton href="/admin/emails/templates" variant="secondary" size="sm">
+                    <FileText size={14} />
+                    Templates
+                </AdminLinkButton>
+            }
+        >
+            <div className="max-w-7xl mx-auto">
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

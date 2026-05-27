@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
-import { useToast } from '@/lib/hooks/useToast'
+import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { STREAMING_CONFIG, STREAMING_TAB_ORDER } from '@/lib/config/streaming-platforms'
 import { Tv, RefreshCw, Trash2, Loader2, ExternalLink, Star, Clock, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
@@ -31,13 +31,14 @@ interface ApiResponse {
 }
 
 export default function StreamingAdminPage() {
-    const { addToast } = useToast()
+    const toast = useAdminToast()
     const [activeSource, setActiveSource] = useState(STREAMING_TAB_ORDER[0])
     const [shows,        setShows]        = useState<StreamingShow[]>([])
     const [total,        setTotal]        = useState(0)
     const [loading,      setLoading]      = useState(true)
     const [refreshing,   setRefreshing]   = useState(false)
     const [deletingId,   setDeletingId]   = useState<string | null>(null)
+    const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null)
 
     const load = useCallback(async (source: string) => {
         setLoading(true)
@@ -48,11 +49,11 @@ export default function StreamingAdminPage() {
             setShows(data.data)
             setTotal(data.total)
         } catch {
-            addToast({ type: 'error', message: 'Erro ao carregar shows' })
+            toast.error('Erro ao carregar shows')
         } finally {
             setLoading(false)
         }
-    }, [addToast])
+    }, [toast])
 
     useEffect(() => { load(activeSource) }, [activeSource, load])
 
@@ -66,26 +67,30 @@ export default function StreamingAdminPage() {
                 body: JSON.stringify({ action: 'refresh' }),
             })
             if (!res.ok) throw new Error()
-            addToast({ type: 'success', message: 'Atualização iniciada — dados disponíveis em instantes' })
+            toast.success('Atualização iniciada — dados disponíveis em instantes')
             setTimeout(() => load(activeSource), 3000)
         } catch {
-            addToast({ type: 'error', message: 'Erro ao iniciar atualização' })
+            toast.error('Erro ao iniciar atualização')
         } finally {
             setRefreshing(false)
         }
     }
 
-    async function handleDelete(id: string, title: string) {
-        if (deletingId || !window.confirm(`Remover "${title}" da lista?`)) return
+    function handleDelete(id: string, title: string) {
+        if (deletingId) return
+        setConfirmDelete({ id, title })
+    }
+
+    async function executeDelete(id: string) {
         setDeletingId(id)
         try {
             const res = await fetch(`/api/admin/streaming?id=${id}`, { method: 'DELETE' })
             if (!res.ok) throw new Error()
-            addToast({ type: 'success', message: 'Show removido' })
+            toast.success('Show removido')
             setShows(prev => prev.filter(s => s.id !== id))
             setTotal(t => t - 1)
         } catch {
-            addToast({ type: 'error', message: 'Erro ao remover' })
+            toast.error('Erro ao remover')
         } finally {
             setDeletingId(null)
         }
@@ -254,6 +259,14 @@ export default function StreamingAdminPage() {
                     </table>
                 </div>
             )}
+            <ConfirmDialog
+                open={!!confirmDelete}
+                title={`Remover "${confirmDelete?.title}" da lista?`}
+                confirmLabel="Remover"
+                variant="danger"
+                onConfirm={async () => { await executeDelete(confirmDelete!.id); setConfirmDelete(null) }}
+                onCancel={() => setConfirmDelete(null)}
+            />
         </AdminLayout>
     )
 }

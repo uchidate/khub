@@ -234,8 +234,12 @@ export function AdminSearch({
     <div
       className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[12vh]"
       onClick={onClose}
+      aria-hidden="false"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Busca do admin"
         className="w-full max-w-xl mx-4 bg-background border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
@@ -259,9 +263,10 @@ export function AdminSearch({
           {query && !loading && (
             <button
               onClick={() => { setQuery(''); setResults([]) }}
+              aria-label="Limpar busca"
               className="text-muted hover:text-foreground transition-colors flex-shrink-0"
             >
-              <X size={14} />
+              <X size={14} aria-hidden="true" />
             </button>
           )}
           <kbd

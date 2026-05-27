@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { AdminEmptyState } from '@/components/admin'
-import { useToast } from '@/lib/hooks/useToast'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import Image from 'next/image'
 import {
     Sparkles, Loader2, RefreshCw, Users, Film, Newspaper,
@@ -238,9 +238,9 @@ export default function EnrichmentPage() {
 }
 
 function EnrichmentPageInner() {
-    const addToast    = useToast(s => s.addToast)
-    const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
-    const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
+    const toast = useAdminToast()
+    const showError   = useCallback((msg: string) => toast.error(msg), [toast])
+    const showSuccess = useCallback((msg: string) => toast.success(msg), [toast])
 
     const searchParams    = useSearchParams()
     const initialQ        = searchParams.get('q') ?? ''
@@ -997,7 +997,7 @@ interface EditorialContent {
 }
 
 function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () => void }) {
-    const addToast   = useToast(s => s.addToast)
+    const toast      = useAdminToast()
     const [loading,  setLoading]  = useState(true)
     const [saving,   setSaving]   = useState(false)
     const [original, setOriginal] = useState<EditorialContent | null>(null)
@@ -1016,7 +1016,7 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                 setLoading(false)
             })
             .catch(() => {
-                addToast({ type: 'error', message: 'Erro ao carregar conteúdo', duration: 4000 })
+                toast.error('Erro ao carregar conteúdo')
                 onClose()
             })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1033,7 +1033,7 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
             if (JSON.stringify(filteredCurio) !== JSON.stringify(origCurio)) body.curiosidades = filteredCurio
 
             if (Object.keys(body).length === 0) {
-                addToast({ type: 'success', message: 'Sem alterações para salvar', duration: 2000 })
+                toast.info('Sem alterações para salvar')
                 onClose()
                 return
             }
@@ -1044,11 +1044,11 @@ function CurationPanel({ entityId, onClose }: { entityId: string; onClose: () =>
                 body:    JSON.stringify(body),
             })
             if (res.ok) {
-                addToast({ type: 'success', message: 'Conteúdo curado salvo', duration: 3000 })
+                toast.saved()
                 onClose()
             } else {
                 const d = await res.json()
-                addToast({ type: 'error', message: d.error ?? 'Erro ao salvar', duration: 5000 })
+                toast.error(d.error ?? 'Erro ao salvar')
             }
         } finally {
             setSaving(false)

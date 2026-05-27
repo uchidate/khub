@@ -403,14 +403,12 @@ export default function ArtistGroupsAdminPage() {
   ]
 
   return (
-    <AdminLayout title="Grupos Musicais dos Artistas">
+    <AdminLayout
+      title="Grupos Musicais dos Artistas"
+      subtitle="Sincronize e gerencie vínculos de artistas com grupos K-Pop via MusicBrainz"
+    >
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-3">
-            <p className="text-muted text-sm">Sincronize e gerencie vínculos de artistas com grupos K-Pop via MusicBrainz</p>
-            <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
-          </div>
-        </div>
+        <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
 
         <BatchSyncPanel onDone={handleBatchDone} />
 

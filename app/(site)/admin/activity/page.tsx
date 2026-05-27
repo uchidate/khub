@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, StatCard } from '@/components/admin'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import {
     Activity, Shield, Server, User,
     LogIn, LogOut, UserPlus, Search, Eye, Heart, HeartOff,

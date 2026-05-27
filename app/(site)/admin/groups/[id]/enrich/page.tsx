@@ -196,7 +196,7 @@ export default function GroupEnrichPage() {
     }
 
     return (
-        <AdminLayout title={`Enriquecer: ${current?.name ?? '…'}`}>
+        <AdminLayout title={`Enriquecer: ${current?.name ?? '…'}`} hideTitle>
             <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
                 <div className="flex items-center gap-3">
                     <Link

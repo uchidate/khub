@@ -178,7 +178,10 @@ export default function ArtistVisibilityPage() {
     ]
 
     return (
-        <AdminLayout title="Visibilidade de Artistas">
+        <AdminLayout
+            title="Visibilidade de Artistas"
+            subtitle="Gerencie artistas auto-ocultados por falta de produções coreanas visíveis"
+        >
             <div className="space-y-6">
 
                 {/* Stats */}

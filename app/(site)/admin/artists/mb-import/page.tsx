@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ArrowLeft, RefreshCw, Search, Plus, CheckCircle, ExternalLink } from 'lucide-react'
-import Link from 'next/link'
 import { AdminButton, AdminLinkButton } from '@/components/admin'
 import type { MBArtistCandidate } from '@/lib/services/musicbrainz-service'
 
@@ -65,19 +64,17 @@ export default function MBImportPage() {
     }
 
     return (
-        <AdminLayout title="Importar Artista via MusicBrainz">
-            <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Link
-                        href="/admin/artists/duplicates"
-                        className="flex items-center gap-2 text-muted hover:text-foreground transition-colors text-sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Enriquecimento MB
-                    </Link>
-                </div>
+        <AdminLayout
+            title="Importar Artista via MusicBrainz"
+            subtitle="Busque e importe artistas diretamente do catálogo MusicBrainz"
+            actions={
+                <AdminLinkButton href="/admin/artists/duplicates" variant="secondary" size="sm">
+                    <ArrowLeft className="w-4 h-4" />
+                    Enriquecimento MB
+                </AdminLinkButton>
+            }
+        >
+            <div className="max-w-2xl space-y-6">
 
                 {/* Search */}
                 <form onSubmit={handleSearch} className="flex gap-2">

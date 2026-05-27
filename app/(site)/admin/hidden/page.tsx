@@ -1,9 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminLinkButton, AdminButton } from '@/components/admin'
+import { AdminLinkButton, AdminButton, AdminEmptyState } from '@/components/admin'
+import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
+import { AdminTableSkeleton } from '@/components/admin/AdminTableSkeleton'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import Image from 'next/image'
 import { EyeOff, Eye, Music2, Film, UsersRound, ExternalLink } from 'lucide-react'
 
@@ -35,17 +37,16 @@ interface HiddenGroup {
 type Tab = 'artists' | 'productions' | 'groups'
 
 export default function HiddenItemsPage() {
+    const toast = useAdminToast()
     const [tab, setTab] = useState<Tab>('artists')
     const [artists, setArtists] = useState<HiddenArtist[]>([])
     const [productions, setProductions] = useState<HiddenProduction[]>([])
     const [groups, setGroups] = useState<HiddenGroup[]>([])
     const [loading, setLoading] = useState(true)
     const [restoringId, setRestoringId] = useState<string | null>(null)
-    const [error, setError] = useState('')
 
     const load = useCallback(async () => {
         setLoading(true)
-        setError('')
         try {
             const [a, p, g] = await Promise.all([
                 fetch('/api/admin/hidden?type=artists').then(r => r.json()),
@@ -56,11 +57,11 @@ export default function HiddenItemsPage() {
             setProductions(p.items ?? [])
             setGroups(g.items ?? [])
         } catch {
-            setError('Erro ao carregar itens ocultos')
+            toast.error('Erro ao carregar itens ocultos')
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [toast])
 
     useEffect(() => { load() }, [load])
 
@@ -77,21 +78,22 @@ export default function HiddenItemsPage() {
                 body: JSON.stringify({ isHidden: false }),
             })
             if (!res.ok) throw new Error()
+            toast.success('Item restaurado com sucesso')
             await load()
         } catch {
-            setError('Erro ao restaurar item')
+            toast.error('Erro ao restaurar item')
         } finally {
             setRestoringId(null)
         }
     }
 
-    const tabs: { key: Tab; label: string; icon: React.ElementType; count: number }[] = [
-        { key: 'artists', label: 'Artistas', icon: Music2, count: artists.length },
-        { key: 'productions', label: 'Produções', icon: Film, count: productions.length },
-        { key: 'groups', label: 'Grupos', icon: UsersRound, count: groups.length },
-    ]
-
     const total = artists.length + productions.length + groups.length
+
+    const tabs = [
+        { key: 'artists',     label: 'Artistas',  icon: <Music2 size={14} />,     badge: artists.length     || undefined },
+        { key: 'productions', label: 'Produções',  icon: <Film size={14} />,       badge: productions.length || undefined },
+        { key: 'groups',      label: 'Grupos',     icon: <UsersRound size={14} />, badge: groups.length      || undefined },
+    ]
 
     return (
         <AdminLayout
@@ -99,20 +101,10 @@ export default function HiddenItemsPage() {
             subtitle="Fila de curadoria para artistas, produções e grupos retirados do site público, com revisão e restauração rápida."
             actions={
                 <div className="flex flex-wrap gap-2">
-                    <Link
-                        href="/admin/activity?tab=admin"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-                    >
-                        <Eye className="w-4 h-4" />
+                    <AdminLinkButton href="/admin/activity?tab=admin" variant="secondary" size="sm">
+                        <Eye size={14} />
                         Ver auditoria
-                    </Link>
-                    <Link
-                        href="/admin/settings"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm font-medium text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-                    >
-                        <EyeOff className="w-4 h-4" />
-                        Voltar ao sistema
-                    </Link>
+                    </AdminLinkButton>
                 </div>
             }
         >
@@ -124,49 +116,23 @@ export default function HiddenItemsPage() {
                     </p>
                 </div>
 
-                <p className="text-muted text-sm">
-                    {total === 0 && !loading
-                        ? 'Nenhum item oculto no momento.'
-                        : `${total} item(ns) oculto(s) do site público.`}
-                </p>
-
-                {error && (
-                    <p className="text-sm text-red-400">{error}</p>
+                {!loading && (
+                    <p className="text-muted text-sm">
+                        {total === 0
+                            ? 'Nenhum item oculto no momento.'
+                            : `${total} item(ns) oculto(s) do site público.`}
+                    </p>
                 )}
 
-                {/* Tabs */}
-                <div className="flex gap-1 border-b border-border pb-0">
-                    {tabs.map(t => (
-                        <button
-                            key={t.key}
-                            onClick={() => setTab(t.key)}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
-                                tab === t.key
-                                    ? 'border-accent text-accent bg-accent/5'
-                                    : 'border-transparent text-muted hover:text-foreground'
-                            }`}
-                        >
-                            <t.icon size={14} />
-                            {t.label}
-                            {t.count > 0 && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-red-600/80 text-foreground text-[10px] font-black leading-none">
-                                    {t.count}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                <AdminTabGroup tabs={tabs} active={tab} onChange={k => setTab(k as Tab)} />
 
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    </div>
+                    <AdminTableSkeleton rows={5} />
                 ) : (
                     <>
-                        {/* Artists Tab */}
                         {tab === 'artists' && (
                             artists.length === 0 ? (
-                                <EmptyState icon={Music2} label="Nenhum artista oculto" />
+                                <AdminEmptyState icon={<Music2 size={32} />} title="Nenhum artista oculto" />
                             ) : (
                                 <div className="space-y-2">
                                     {artists.map(a => (
@@ -186,10 +152,9 @@ export default function HiddenItemsPage() {
                             )
                         )}
 
-                        {/* Productions Tab */}
                         {tab === 'productions' && (
                             productions.length === 0 ? (
-                                <EmptyState icon={Film} label="Nenhuma produção oculta" />
+                                <AdminEmptyState icon={<Film size={32} />} title="Nenhuma produção oculta" />
                             ) : (
                                 <div className="space-y-2">
                                     {productions.map(p => (
@@ -208,10 +173,9 @@ export default function HiddenItemsPage() {
                             )
                         )}
 
-                        {/* Groups Tab */}
                         {tab === 'groups' && (
                             groups.length === 0 ? (
-                                <EmptyState icon={UsersRound} label="Nenhum grupo oculto" />
+                                <AdminEmptyState icon={<UsersRound size={32} />} title="Nenhum grupo oculto" />
                             ) : (
                                 <div className="space-y-2">
                                     {groups.map(g => (
@@ -237,15 +201,6 @@ export default function HiddenItemsPage() {
     )
 }
 
-function EmptyState({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-20 text-muted">
-            <Icon size={40} className="mb-3 opacity-40" />
-            <p className="text-sm">{label}</p>
-        </div>
-    )
-}
-
 function HiddenCard({
     imageUrl, name, subtitle, updatedAt, editHref, onRestore, restoring, imageRounded,
 }: {
@@ -259,9 +214,8 @@ function HiddenCard({
     imageRounded?: boolean
 }) {
     return (
-        <div className="flex items-center gap-4 p-4 bg-surface border border-border rounded-xl hover:border-border transition-colors">
-            {/* Image */}
-            <div className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-surface flex items-center justify-center ${imageRounded ? 'rounded-full' : 'rounded-lg'}`}>
+        <div className="flex items-center gap-4 p-4 bg-surface border border-border rounded-xl">
+            <div className={`w-12 h-12 flex-shrink-0 overflow-hidden bg-surface-hover flex items-center justify-center ${imageRounded ? 'rounded-full' : 'rounded-lg'}`}>
                 {imageUrl ? (
                     <Image
                         src={imageUrl}
@@ -275,7 +229,6 @@ function HiddenCard({
                 )}
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
                 <p className="font-bold text-foreground text-sm truncate">{name}</p>
                 {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
@@ -284,7 +237,6 @@ function HiddenCard({
                 </p>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 flex-shrink-0">
                 <AdminLinkButton href={editHref} variant="secondary" size="sm">
                     <ExternalLink size={12} />

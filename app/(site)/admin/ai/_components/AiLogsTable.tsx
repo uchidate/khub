@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton } from '@/components/admin'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { FEATURE_LABELS } from '@/lib/ai/ai-features'
@@ -53,6 +54,7 @@ function fmtDate(iso: string) {
 interface Props { initialLogs: AiLog[] }
 
 export default function AiLogsTable({ initialLogs }: Props) {
+    const toast = useAdminToast()
     const [logs,     setLogs]     = useState<AiLog[]>(initialLogs)
     const [loading,  setLoading]  = useState(false)
     const [provider, setProvider] = useState('')
@@ -69,12 +71,12 @@ export default function AiLogsTable({ initialLogs }: Props) {
             const r    = await fetch(`/api/admin/ai/logs?${p}`)
             const data = await r.json()
             setLogs(data.logs ?? [])
-        } catch (err) {
-            console.error('AiLogsTable fetch error:', err)
+        } catch {
+            toast.error('Erro ao carregar logs de IA')
         } finally {
             setLoading(false)
         }
-    }, [provider, feature, status])
+    }, [provider, feature, status, toast])
 
     function handleFilter(key: 'provider' | 'feature' | 'status', value: string) {
         if (key === 'provider') { setProvider(value); load(value, feature, status) }

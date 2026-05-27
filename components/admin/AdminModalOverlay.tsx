@@ -84,11 +84,14 @@ export function AdminModalOverlay({
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4`}
+      className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       style={{ zIndex }}
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`w-full ${MAX_WIDTH[maxWidth]} bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden ${className ?? ''}`}
         onClick={e => e.stopPropagation()}
       >
@@ -96,7 +99,7 @@ export function AdminModalOverlay({
         {(title || showClose) && (
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
             {icon && (
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-hover flex-shrink-0 text-muted">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-hover flex-shrink-0 text-muted" aria-hidden="true">
                 {icon}
               </div>
             )}
@@ -107,9 +110,10 @@ export function AdminModalOverlay({
             {showClose && (
               <button
                 onClick={onClose}
+                aria-label="Fechar"
                 className="p-1.5 rounded text-muted hover:text-foreground hover:bg-surface-hover transition-colors flex-shrink-0"
               >
-                <X size={15} />
+                <X size={15} aria-hidden="true" />
               </button>
             )}
           </div>

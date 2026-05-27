@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Tag, Plus, Trash2, ToggleLeft, ToggleRight, Copy, Check } from 'lucide-react'
+import { ConfirmDialog } from '@/components/admin'
 
 const STORE_LABELS: Record<string, string> = {
     shopee: 'Shopee',
@@ -35,6 +36,7 @@ export default function CuponsAdminPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [copied, setCopied] = useState<string | null>(null)
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
     const [form, setForm] = useState({
         code: '',
         description: '',
@@ -77,8 +79,7 @@ export default function CuponsAdminPage() {
         await fetchCoupons()
     }
 
-    async function deleteCoupon(id: string) {
-        if (!confirm('Deletar cupom?')) return
+    async function executeDel(id: string) {
         await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' })
         await fetchCoupons()
     }
@@ -194,7 +195,7 @@ export default function CuponsAdminPage() {
                 <section>
                     <h2 className="text-xs font-bold uppercase tracking-widest text-muted mb-3">Ativos hoje</h2>
                     <div className="space-y-2">
-                        {active.map(c => <CouponRow key={c.id} coupon={c} onToggle={toggleActive} onDelete={deleteCoupon} onCopy={copyCode} copied={copied} />)}
+                        {active.map(c => <CouponRow key={c.id} coupon={c} onToggle={toggleActive} onDelete={setConfirmDeleteId} onCopy={copyCode} copied={copied} />)}
                     </div>
                 </section>
             )}
@@ -204,7 +205,7 @@ export default function CuponsAdminPage() {
                 <section>
                     <h2 className="text-xs font-bold uppercase tracking-widest text-muted mb-3">Expirados / Desativados</h2>
                     <div className="space-y-2 opacity-50">
-                        {expired.map(c => <CouponRow key={c.id} coupon={c} onToggle={toggleActive} onDelete={deleteCoupon} onCopy={copyCode} copied={copied} />)}
+                        {expired.map(c => <CouponRow key={c.id} coupon={c} onToggle={toggleActive} onDelete={setConfirmDeleteId} onCopy={copyCode} copied={copied} />)}
                     </div>
                 </section>
             )}
@@ -212,6 +213,15 @@ export default function CuponsAdminPage() {
             {!loading && coupons.length === 0 && (
                 <p className="text-center text-muted text-sm py-8">Nenhum cupom cadastrado ainda.</p>
             )}
+
+            <ConfirmDialog
+                open={!!confirmDeleteId}
+                title="Deletar cupom?"
+                confirmLabel="Deletar"
+                variant="danger"
+                onConfirm={async () => { await executeDel(confirmDeleteId!); setConfirmDeleteId(null) }}
+                onCancel={() => setConfirmDeleteId(null)}
+            />
         </div>
     )
 }

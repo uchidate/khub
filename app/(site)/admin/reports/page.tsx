@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
-import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge'
+import { AdminBadge } from '@/components/admin/AdminBadge'
 import { StatCard } from '@/components/admin'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminButton, AdminIconButton, BulkActionBar } from '@/components/admin'
@@ -128,9 +128,9 @@ function ReportCard({ report, selected, onToggle, onUpdate, updatingId }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              {entity && <AdminStatusBadge label={entity.label} color={entity.color} />}
-              <AdminStatusBadge label={STATUS_LABELS[report.status] ?? report.status} color={STATUS_STYLES[report.status] ?? 'bg-surface text-muted'} />
-              <AdminStatusBadge label={CATEGORY_LABELS[report.category] ?? report.category} color={CATEGORY_COLORS[report.category] ?? 'bg-surface text-muted'} />
+              {entity && <AdminBadge variant="custom" color={entity.color}>{entity.label}</AdminBadge>}
+              <AdminBadge variant="custom" color={STATUS_STYLES[report.status] ?? 'bg-surface text-muted'}>{STATUS_LABELS[report.status] ?? report.status}</AdminBadge>
+              <AdminBadge variant="custom" color={CATEGORY_COLORS[report.category] ?? 'bg-surface text-muted'}>{CATEGORY_LABELS[report.category] ?? report.category}</AdminBadge>
             </div>
             <span className="text-[10px] text-muted whitespace-nowrap shrink-0">{formatDate(report.createdAt)}</span>
           </div>
@@ -556,13 +556,13 @@ export default function ReportsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <AdminStatusBadge label={CATEGORY_LABELS[report.category] ?? report.category} color={CATEGORY_COLORS[report.category] ?? 'bg-surface text-muted'} />
+                          <AdminBadge variant="custom" color={CATEGORY_COLORS[report.category] ?? 'bg-surface text-muted'}>{CATEGORY_LABELS[report.category] ?? report.category}</AdminBadge>
                         </td>
                         <td className="px-4 py-3 text-muted max-w-[180px]">
                           <span className="line-clamp-2 text-xs">{report.description || <span className="text-muted italic">—</span>}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <AdminStatusBadge label={STATUS_LABELS[report.status] ?? report.status} color={STATUS_STYLES[report.status] ?? 'bg-surface text-muted'} />
+                          <AdminBadge variant="custom" color={STATUS_STYLES[report.status] ?? 'bg-surface text-muted'}>{STATUS_LABELS[report.status] ?? report.status}</AdminBadge>
                         </td>
                         <td className="px-4 py-3 text-muted text-xs whitespace-nowrap">
                           {formatDate(report.createdAt)}

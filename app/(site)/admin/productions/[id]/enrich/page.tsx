@@ -194,7 +194,7 @@ export default function ProductionEnrichPage() {
     ]
 
     return (
-        <AdminLayout title={`Enriquecer: ${current?.titlePt ?? '…'}`}>
+        <AdminLayout title={`Enriquecer: ${current?.titlePt ?? '…'}`} hideTitle>
             <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
                 <div className="flex items-center gap-3">
                     <Link href="/admin/productions/enrich" className="text-muted hover:text-foreground transition-colors">

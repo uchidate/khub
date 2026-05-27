@@ -8,7 +8,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { CheckCircle, ExternalLink, Save, RefreshCw, Search, Users, Trash2 } from 'lucide-react'
+import { CheckCircle, ExternalLink, Save, RefreshCw, Search, Users, Trash2, Loader2 } from 'lucide-react'
 import { adminApi, ApiError } from '@/lib/admin-api'
 import { AdminEmptyState } from '@/components/admin'
 
@@ -341,7 +341,7 @@ export default function EditGroupPage() {
     const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     return (
-        <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'}>
+        <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'} hideTitle>
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <PageHeader
                     title={group ? group.name : 'Editar Grupo'}
@@ -383,7 +383,7 @@ export default function EditGroupPage() {
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                        <Loader2 className="w-6 h-6 text-muted animate-spin" />
                     </div>
                 )}
 

@@ -12,6 +12,8 @@ import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
 import { AdminStatsGrid } from '@/components/admin/AdminStatsGrid'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const session = await auth()
   if (!session) redirect('/auth/login?callbackUrl=/admin')

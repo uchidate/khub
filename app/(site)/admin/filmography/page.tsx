@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info, Loader2 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
-import { AdminEmptyState, AdminButton, SectionHeader } from '@/components/admin'
+import { AdminEmptyState, AdminButton, SectionHeader, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 interface Artist {
@@ -56,6 +56,7 @@ export default function FilmographyAdminPage() {
   const [batchSyncing, setBatchSyncing] = useState(false)
   const [batchResult, setBatchResult] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterType>('all')
+  const [confirmSyncOutdated, setConfirmSyncOutdated] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => { loadData() }, [])
@@ -69,8 +70,8 @@ export default function FilmographyAdminPage() {
       ])
       if (statsRes.ok) setStats((await statsRes.json()).stats)
       if (artistsRes.ok) setArtists((await artistsRes.json()).items || [])
-    } catch (e) {
-      console.error(e)
+    } catch {
+      toast.error('Erro ao carregar filmografia')
     } finally {
       setLoading(false)
     }
@@ -97,7 +98,6 @@ export default function FilmographyAdminPage() {
 
   async function syncOutdated() {
     if (batchSyncing) return
-    if (!confirm('Sincronizar filmografias desatualizadas?\n\nIsso pode levar alguns minutos.')) return
     try {
       setBatchSyncing(true)
       setBatchResult(null)
@@ -182,7 +182,7 @@ export default function FilmographyAdminPage() {
 
             {/* Batch sync */}
             <AdminButton
-              onClick={syncOutdated}
+              onClick={() => setConfirmSyncOutdated(true)}
               disabled={batchSyncing}
               variant="primary"
             >
@@ -213,7 +213,7 @@ export default function FilmographyAdminPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw className="w-6 h-6 text-accent animate-spin" />
+              <Loader2 className="w-6 h-6 text-muted animate-spin" />
             </div>
           ) : filteredArtists.length === 0 ? (
             <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
@@ -262,6 +262,15 @@ export default function FilmographyAdminPage() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmSyncOutdated}
+        title="Sincronizar filmografias desatualizadas?"
+        description="Isso pode levar alguns minutos."
+        confirmLabel="Sincronizar"
+        variant="default"
+        onConfirm={() => { setConfirmSyncOutdated(false); syncOutdated() }}
+        onCancel={() => setConfirmSyncOutdated(false)}
+      />
     </AdminLayout>
   )
 }

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { ShieldAlert, ExternalLink } from 'lucide-react'
 
 const REASON_LABELS: Record<string, string> = {

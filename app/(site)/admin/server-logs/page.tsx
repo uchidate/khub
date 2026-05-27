@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState, StatCard, SectionHeader } from '@/components/admin'
+import { AdminEmptyState, StatCard, SectionHeader, ConfirmDialog } from '@/components/admin'
 import { AdminButton } from '@/components/admin'
 import {
     RefreshCw, Trash2, CheckCircle2,
@@ -127,6 +127,7 @@ export default function ServerLogsPage() {
     const [expanded, setExpanded] = useState<string | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [clearMenu, setClearMenu] = useState(false)
+const [confirmClear, setConfirmClear] = useState<{ days: number } | null>(null)
     const [autoRefresh, setAutoRefresh] = useState(false)
     const clearMenuRef = useRef<HTMLDivElement>(null)
 
@@ -200,9 +201,12 @@ export default function ServerLogsPage() {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    async function clearLogs(days: number) {
-        if (!confirm(days === 0 ? 'Apagar TODOS os logs?' : `Apagar logs com mais de ${days} dias?`)) return
+    function clearLogs(days: number) {
         setClearMenu(false)
+        setConfirmClear({ days })
+    }
+
+    async function executeClear(days: number) {
         setDeleting(true)
         try {
             const res = await fetch(`/api/admin/server-logs?days=${days}`, { method: 'DELETE' })
@@ -661,6 +665,15 @@ export default function ServerLogsPage() {
                 </>)}
 
             </div>
+            <ConfirmDialog
+                open={!!confirmClear}
+                title={confirmClear?.days === 0 ? 'Apagar TODOS os logs?' : `Apagar logs com mais de ${confirmClear?.days} dias?`}
+                description="Esta ação é irreversível."
+                confirmLabel="Apagar"
+                variant="danger"
+                onConfirm={async () => { const d = confirmClear!.days; setConfirmClear(null); await executeClear(d) }}
+                onCancel={() => setConfirmClear(null)}
+            />
         </AdminLayout>
     )
 }

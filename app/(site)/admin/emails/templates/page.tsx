@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminLinkButton } from '@/components/admin'
 import prisma from '@/lib/prisma'
-import { FileText, Pencil, CheckCircle, XCircle } from 'lucide-react'
+
+import { Pencil, CheckCircle, XCircle } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AdminEmailTemplatesPage() {
     const session = await auth()
@@ -15,14 +18,8 @@ export default async function AdminEmailTemplatesPage() {
     })
 
     return (
-        <AdminLayout title="Templates de Email">
-            <div className="p-6 max-w-4xl mx-auto">
-                <div className="flex items-center gap-3 mb-6">
-                    <FileText size={20} className="text-accent" />
-                    <h1 className="text-2xl font-black text-foreground">Templates de Email</h1>
-                </div>
-
-                <div className="space-y-3">
+        <AdminLayout title="Templates de Email" hideTitle>
+            <div className="space-y-3">
                     {templates.length === 0 && (
                         <div className="glass-card p-8 text-center text-muted rounded-xl">
                             <p>Nenhum template encontrado.</p>
@@ -53,7 +50,6 @@ export default async function AdminEmailTemplatesPage() {
                             </AdminLinkButton>
                         </div>
                     ))}
-                </div>
             </div>
         </AdminLayout>
     )

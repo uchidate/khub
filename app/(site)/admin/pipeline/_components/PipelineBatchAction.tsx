@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Loader2, Zap, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { ConfirmDialog } from '@/components/admin'
 
 type BatchActionType = 'publish' | 'translate' | 'enrich'
 type EntityType      = 'news' | 'artist' | 'production'
@@ -59,16 +60,15 @@ const BATCH_LABELS: Record<BatchActionType, string> = {
 }
 
 export function PipelineBatchAction({ ids, type, action }: Props) {
-    const [state,    setState]    = useState<'idle' | 'running' | 'done'>('idle')
-    const [progress, setProgress] = useState(0)
-    const [errors,   setErrors]   = useState(0)
+    const [state,         setState]         = useState<'idle' | 'running' | 'done'>('idle')
+    const [progress,      setProgress]      = useState(0)
+    const [errors,        setErrors]        = useState(0)
+    const [confirmOpen,   setConfirmOpen]   = useState(false)
     const router = useRouter()
 
     if (ids.length === 0) return null
 
-    async function handleBatch() {
-        if (state === 'running') return
-        if (ids.length > 20 && !window.confirm(`Processar ${ids.length} itens em lote? Isso pode levar alguns minutos.`)) return
+    async function executeBatch() {
         setState('running')
         setProgress(0)
         setErrors(0)
@@ -90,6 +90,12 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
 
         setState('done')
         setTimeout(() => router.refresh(), 800)
+    }
+
+    function handleBatch() {
+        if (state === 'running') return
+        if (ids.length > 20) { setConfirmOpen(true); return }
+        executeBatch()
     }
 
     if (state === 'done') {
@@ -115,6 +121,7 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
     }
 
     return (
+        <>
         <button
             onClick={handleBatch}
             className="flex items-center gap-1 text-[10px] text-muted hover:text-accent transition-colors font-medium"
@@ -123,5 +130,15 @@ export function PipelineBatchAction({ ids, type, action }: Props) {
             <Zap size={10} />
             {BATCH_LABELS[action]} ({ids.length})
         </button>
+        <ConfirmDialog
+            open={confirmOpen}
+            title={`Processar ${ids.length} itens em lote?`}
+            description="Isso pode levar alguns minutos."
+            confirmLabel="Processar"
+            variant="default"
+            onConfirm={() => { setConfirmOpen(false); executeBatch() }}
+            onCancel={() => setConfirmOpen(false)}
+        />
+        </>
     )
 }
