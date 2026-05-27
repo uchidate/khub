@@ -144,7 +144,7 @@ export default function FilmographyAdminPage() {
       <div className="space-y-4">
         <p className="text-muted text-xs -mt-6 flex items-center gap-1.5">
           <Info size={12} />
-          Rotina manual de recuperação; não há job dedicado ativo no workflow atual. Revise antes de executar para não reintroduzir dados fora da curadoria.
+          Sync automático todo domingo 04:00 BRT (INCREMENTAL, até 20 artistas com +30 dias sem atualização). Execute manualmente para casos urgentes.
         </p>
 
         {/* Stats */}
