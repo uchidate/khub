@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { CheckCircle, ExternalLink, Music2, RefreshCw, Search, User } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
-import { AdminEmptyState, StatCard } from '@/components/admin'
+import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 type SpotifyLink = {
@@ -262,18 +262,14 @@ export default function MusicCatalogPage() {
         )}
 
         {activeArtist && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl rounded-lg border border-border bg-background p-5 space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">{activeArtist.nameRomanized}</h2>
-                  <p className="text-sm text-muted">Escolha o perfil oficial do Spotify.</p>
-                </div>
-                <button onClick={() => setActiveArtistId(null)} className="text-sm text-muted hover:text-foreground">
-                  Fechar
-                </button>
-              </div>
-
+          <AdminModalOverlay
+            open
+            onClose={() => setActiveArtistId(null)}
+            title={activeArtist.nameRomanized}
+            subtitle="Escolha o perfil oficial do Spotify."
+            maxWidth="2xl"
+          >
+            <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   value={spotifyQuery}
@@ -336,7 +332,7 @@ export default function MusicCatalogPage() {
                 })}
               </div>
             </div>
-          </div>
+          </AdminModalOverlay>
         )}
       </div>
     </AdminLayout>
