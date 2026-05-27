@@ -143,7 +143,7 @@ export default function MLImportarPage() {
 
     if (!mounted) {
         return (
-            <AdminLayout title="Importar do Mercado Livre">
+            <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos da busca do Mercado Livre para a loja afiliada">
                 <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
                     <Loader2 className="w-8 h-8 animate-spin opacity-40" />
                     <p className="text-sm">Carregando importador...</p>
@@ -153,7 +153,7 @@ export default function MLImportarPage() {
     }
 
     return (
-        <AdminLayout title="Importar do Mercado Livre">
+        <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos da busca do Mercado Livre para a loja afiliada">
             <div className="space-y-6">
 
                 {/* Busca */}

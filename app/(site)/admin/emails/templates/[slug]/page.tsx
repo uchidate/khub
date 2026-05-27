@@ -63,13 +63,13 @@ export default function AdminTemplateEditorPage() {
     }
 
     if (loading) return (
-        <AdminLayout title="Template de Email">
+        <AdminLayout title="Template de Email" subtitle="Edite o conteúdo e variáveis do template de email">
             <AdminTableSkeleton rows={6} />
         </AdminLayout>
     )
 
     if (!template) return (
-        <AdminLayout title="Template de Email">
+        <AdminLayout title="Template de Email" subtitle="Edite o conteúdo e variáveis do template de email">
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <p className="text-muted text-sm">Template não encontrado.</p>
                 <AdminLinkButton href="/admin/emails/templates" variant="secondary" size="sm">

@@ -8,6 +8,7 @@ import {
   ShieldAlert, Flag, FlagOff, CheckSquare, Square, Minus,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
 import { ConfirmDialog, AdminButton } from '@/components/admin'
 import { adminApi } from '@/lib/admin-api'
 
@@ -314,14 +315,13 @@ export default function ArtistModerationPage() {
 
         {/* List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 text-purple-500 animate-spin" />
-          </div>
+          <AdminTableSkeleton rows={6} />
         ) : artists.length === 0 ? (
-          <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <p className="text-muted">Nenhum artista encontrado nesta categoria</p>
-          </div>
+          <AdminEmptyState
+            icon={<CheckCircle className="w-8 h-8 text-green-500" />}
+            title="Nenhum artista encontrado"
+            description="Todos os artistas desta categoria já foram moderados."
+          />
         ) : (
           <div className="space-y-3">
             {artists.map(artist => {

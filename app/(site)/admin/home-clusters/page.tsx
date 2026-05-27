@@ -197,7 +197,7 @@ export default function AdminHomeClustersPage() {
     }
 
     return (
-        <AdminLayout title="Inteligência da Home">
+        <AdminLayout title="Inteligência da Home" subtitle="Clusters editoriais e agrupamentos automáticos exibidos na homepage">
             <div className="space-y-5">
                 <SectionHeader
                     title="Inteligência da Home"

@@ -69,7 +69,7 @@ export default async function AiDashboardPage() {
     const budgetByFeature = Object.fromEntries(configs.map(c => [c.feature, c.monthlyBudgetUsd]))
 
     return (
-        <AdminLayout title="Dashboard de IA">
+        <AdminLayout title="Dashboard de IA" subtitle="Monitoramento de uso, custos e chamadas aos modelos de linguagem">
             <div className="space-y-6">
                 {loadError && (
                     <div className="bg-red-900/20 border border-red-700/40 rounded-xl p-4">

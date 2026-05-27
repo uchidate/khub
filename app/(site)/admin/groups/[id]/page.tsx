@@ -8,9 +8,9 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { CheckCircle, ExternalLink, Save, RefreshCw, Search, Users, Trash2, Loader2 } from 'lucide-react'
+import { CheckCircle, ExternalLink, Save, RefreshCw, Search, Users, Trash2 } from 'lucide-react'
 import { adminApi, ApiError } from '@/lib/admin-api'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
 
 interface MusicalGroup {
     id: string
@@ -381,11 +381,7 @@ export default function EditGroupPage() {
                     onCancel={() => setConfirmDelete(false)}
                 />
 
-                {loading && (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-6 h-6 text-muted animate-spin" />
-                    </div>
-                )}
+                {loading && <AdminTableSkeleton rows={6} />}
 
                 {!loading && !group && (
                     <AdminEmptyState title="Grupo não encontrado." size="lg" />

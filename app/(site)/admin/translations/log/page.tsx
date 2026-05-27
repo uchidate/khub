@@ -73,7 +73,7 @@ export default function TranslationLogPage() {
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   return (
-    <AdminLayout title="Log de Traduções">
+    <AdminLayout title="Log de Traduções" subtitle="Histórico de todas as traduções automáticas e manuais aplicadas">
       <div className="max-w-5xl mx-auto space-y-5">
 
         {/* Header */}

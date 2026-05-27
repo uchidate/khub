@@ -590,7 +590,7 @@ export default function Ga4AnalyticsPage() {
     const nvRSlices    = (data?.newVsReturning ?? []).map(d => ({ label: d.type === 'new' ? 'Novos' : 'Recorrentes', value: d.users, color: nvRColors[d.type] ?? '#888' }))
 
     return (
-        <AdminLayout title="Analytics">
+        <AdminLayout title="Analytics" subtitle="Dados de audiência, tráfego e desempenho via Google Analytics 4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
                 {/* ── Sticky header ───────────────────────────────────── */}

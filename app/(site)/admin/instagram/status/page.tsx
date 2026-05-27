@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminEmptyState } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Instagram, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
 
@@ -216,10 +217,11 @@ export default function InstagramStatusPage() {
           </div>
 
           {artists.length === 0 && (
-            <div className="text-center py-12">
-              <Instagram className="w-16 h-16 text-muted mx-auto mb-4" />
-              <p className="text-muted">Nenhum artista com feed configurado</p>
-            </div>
+            <AdminEmptyState
+              icon={<Instagram className="w-8 h-8" />}
+              title="Nenhum artista com feed configurado"
+              description="Configure o username do Instagram nos perfis de artistas para ativar o sync."
+            />
           )}
         </div>
       </div>

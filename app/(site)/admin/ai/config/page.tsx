@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, AdminTableSkeleton } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Loader2, Save, ArrowLeft, CheckCircle } from 'lucide-react'
 import { AI_FEATURES, FEATURE_LABELS } from '@/lib/ai/ai-features'
@@ -94,15 +94,13 @@ export default function AiConfigPage() {
     if (loading) {
         return (
             <AdminLayout title="Configuração de IA" subtitle="Defina providers e orçamentos por feature de IA">
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 text-muted animate-spin" />
-                </div>
+                <AdminTableSkeleton rows={4} />
             </AdminLayout>
         )
     }
 
     return (
-        <AdminLayout title="Configuração de IA">
+        <AdminLayout title="Configuração de IA" subtitle="Defina providers e orçamentos por feature de IA">
             <div className="space-y-6 max-w-3xl">
                 {/* Header */}
                 <div className="flex items-center gap-3">
