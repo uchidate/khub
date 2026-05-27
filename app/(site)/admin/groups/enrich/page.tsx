@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
+import { HoverCard } from '@/components/admin/HoverCard'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, TrendingUp, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
@@ -195,6 +196,31 @@ export default function GroupEnrichQueuePage() {
                 ) : (
                     <div className="space-y-1.5">
                         {groups.map((g, idx) => (
+                            <HoverCard key={g.id} content={
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-hover shrink-0">
+                                            {g.profileImageUrl ? <Image src={g.profileImageUrl} alt={g.name} width={40} height={40} className="w-full h-full object-cover object-top" /> : <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-black">{g.name.slice(0,2).toUpperCase()}</div>}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-foreground truncate">{g.name}</p>
+                                            {g.nameHangul && <p className="text-xs text-muted">{g.nameHangul}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {FIELD_DOTS.map(f => (
+                                            <div key={f.abbr} className={`flex items-center gap-1.5 text-[10px] ${g[f.key] ? 'text-green-400' : 'text-red-400'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${g[f.key] ? 'bg-green-400' : 'bg-red-400'}`} />
+                                                {f.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-muted border-t border-border pt-2">
+                                        <span>Score</span>
+                                        <span className={`font-black ${g.score >= 80 ? 'text-green-400' : g.score >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{g.score}%</span>
+                                    </div>
+                                </div>
+                            }>
                             <Link
                                 key={g.id}
                                 href={`/admin/groups/${g.id}/enrich`}
@@ -260,6 +286,7 @@ export default function GroupEnrichQueuePage() {
 
                                 <ChevronRight className="w-4 h-4 text-muted group-hover:text-accent transition-colors shrink-0" />
                             </Link>
+                            </HoverCard>
                         ))}
                     </div>
                 )}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
@@ -89,20 +90,32 @@ function ProductionPill({ prod }: { prod: Production }) {
 }
 
 export default function ArtistVisibilityPage() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
     const [items, setItems] = useState<ArtistItem[]>([])
     const [stats, setStats] = useState<Stats | null>(null)
     const [total, setTotal] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
-    const [page, setPage] = useState(1)
+    const [page, setPage] = useState(() => Number(searchParams.get('page') ?? '1'))
     const [loading, setLoading] = useState(true)
-    const [reasonFilter, setReasonFilter] = useState<ReasonFilter>('all')
-    const [q, setQ] = useState('')
+    const [reasonFilter, setReasonFilter] = useState<ReasonFilter>(() => (searchParams.get('reason') as ReasonFilter) ?? 'all')
+    const [q, setQ] = useState(() => searchParams.get('q') ?? '')
     const [selected, setSelected] = useState<Set<string>>(new Set())
     const [showing, setShowing] = useState<Set<string>>(new Set())
     const [showDone, setShowDone] = useState<Set<string>>(new Set())
     const [reconciling, setReconciling] = useState(false)
     const [reconcileResult, setReconcileResult] = useState<string | null>(null)
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+    const updateUrl = useCallback((reason: ReasonFilter, p: number, query: string) => {
+        const params = new URLSearchParams()
+        if (reason !== 'all') params.set('reason', reason)
+        if (p > 1) params.set('page', String(p))
+        if (query.trim()) params.set('q', query.trim())
+        const qs = params.toString()
+        router.replace(qs ? `/admin/artists/visibility?${qs}` : '/admin/artists/visibility', { scroll: false })
+    }, [router])
 
     const fetchData = useCallback(async () => {
         setLoading(true)
@@ -120,7 +133,15 @@ export default function ArtistVisibilityPage() {
     }, [reasonFilter, page, q])
 
     useEffect(() => { fetchData() }, [fetchData])
-    useEffect(() => { setPage(1); setSelected(new Set()) }, [reasonFilter, q])
+    useEffect(() => {
+        setPage(1)
+        setSelected(new Set())
+        updateUrl(reasonFilter, 1, q)
+    }, [reasonFilter, q]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (page > 1) updateUrl(reasonFilter, page, q)
+    }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleShow = async (ids: string[]) => {
         ids.forEach(id => setShowing(prev => { const n = new Set(prev); n.add(id); return n }))

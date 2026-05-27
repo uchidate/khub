@@ -32,9 +32,16 @@ export class DeepSeekProvider extends BaseAIProvider {
             const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
 
             if (options?.systemPrompt) {
-                messages.push({ role: 'system', content: options.systemPrompt })
+                const sys = options.systemPrompt
+                const jsonHint = options?.json_mode && !/json/i.test(sys) ? '\nRespond with valid JSON.' : ''
+                messages.push({ role: 'system', content: sys + jsonHint })
+            } else if (options?.json_mode) {
+                messages.push({ role: 'system', content: 'Respond with valid JSON.' })
             }
-            messages.push({ role: 'user', content: prompt })
+            const userContent = options?.json_mode && !/json/i.test(prompt) && !/json/i.test(options?.systemPrompt ?? '')
+                ? prompt + '\n\nRespond in JSON format.'
+                : prompt
+            messages.push({ role: 'user', content: userContent })
 
             const completion = await this.client.chat.completions.create({
                 model: modelName,

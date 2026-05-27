@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useCallback, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
@@ -199,11 +199,12 @@ export default function ReportsPage() {
 
 function ReportsPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const requestedStatus = searchParams.get('status')
   const initialStatus = STATUS_TABS.some(tab => tab.key === requestedStatus) ? (requestedStatus ?? '') : ''
   const [statusFilter,   setStatusFilter]   = useState(initialStatus)
-  const [entityFilter,   setEntityFilter]   = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [entityFilter,   setEntityFilter]   = useState(() => searchParams.get('entity') ?? '')
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('category') ?? '')
   const [search,         setSearch]         = useState('')
   const [searchInput,    setSearchInput]    = useState('')
   const [reports,        setReports]        = useState<Report[]>([])
@@ -253,7 +254,15 @@ function ReportsPageContent() {
   useEffect(() => { fetchStats() }, [fetchStats])
   useEffect(() => {
     fetchReports(page, statusFilter, entityFilter, categoryFilter, search)
-  }, [fetchReports, page, statusFilter, entityFilter, categoryFilter, search])
+    const params = new URLSearchParams()
+    if (statusFilter)   params.set('status',   statusFilter)
+    if (entityFilter)   params.set('entity',   entityFilter)
+    if (categoryFilter) params.set('category', categoryFilter)
+    if (search)         params.set('q',        search)
+    if (page > 1)       params.set('page',     String(page))
+    const qs = params.toString()
+    router.replace(qs ? `/admin/reports?${qs}` : '/admin/reports', { scroll: false })
+  }, [fetchReports, page, statusFilter, entityFilter, categoryFilter, search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Debounced search
   const handleSearchChange = (value: string) => {

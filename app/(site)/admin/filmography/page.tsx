@@ -214,7 +214,8 @@ export default function FilmographyAdminPage() {
           {loading ? (
             <AdminTableSkeleton rows={5} />
           ) : filteredArtists.length === 0 ? (
-            <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
+            <AdminEmptyState title="Nenhum artista encontrado" size="sm"
+              description={searchQuery ? `Nenhum resultado para "${searchQuery}"` : 'Nenhum artista cadastrado ainda.'} />
           ) : (
             <div className="divide-y divide-border">
               {filteredArtists.map(artist => {
