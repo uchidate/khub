@@ -671,9 +671,11 @@ export interface AdminLayoutProps {
   title: string
   subtitle?: string
   actions?: React.ReactNode
+  /** Oculta o <h1> padrão quando a página gerencia seu próprio cabeçalho (ex: PageHeader) */
+  hideTitle?: boolean
 }
 
-export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutProps) {
+export function AdminLayout({ children, title, subtitle, actions, hideTitle }: AdminLayoutProps) {
   const pathname  = usePathname()
   const router = useRouter()
   const [mobileOpen,    setMobileOpen]    = useState(false)
@@ -871,15 +873,17 @@ export function AdminLayout({ children, title, subtitle, actions }: AdminLayoutP
 
           {/* Content */}
           <div className="p-4 sm:p-5 lg:p-8">
-            <div className={`flex items-start justify-between gap-4 ${subtitle || actions ? 'mb-6' : 'mb-5 lg:mb-7'}`}>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-foreground leading-tight">{title}</h1>
-                {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+            {!hideTitle && (
+              <div className={`flex items-start justify-between gap-4 ${subtitle || actions ? 'mb-6' : 'mb-5 lg:mb-7'}`}>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-foreground leading-tight">{title}</h1>
+                  {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+                </div>
+                {actions && (
+                  <div className="flex items-center gap-2 flex-shrink-0 mt-1">{actions}</div>
+                )}
               </div>
-              {actions && (
-                <div className="flex items-center gap-2 flex-shrink-0 mt-1">{actions}</div>
-              )}
-            </div>
+            )}
             {children}
           </div>
         </main>

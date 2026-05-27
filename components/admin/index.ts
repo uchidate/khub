@@ -1,12 +1,16 @@
 // ─── Ações ───────────────────────────────────────────────────────────────────
 export { AdminButton, AdminLinkButton } from './AdminButton'
 export type { AdminButtonVariant, AdminButtonSize } from './AdminButton'
-
 export { AdminIconButton, AdminIconLink } from './AdminIconButton'
 export type { AdminIconButtonVariant, AdminIconButtonSize } from './AdminIconButton'
 
-// ─── Layout / Containers ─────────────────────────────────────────────────────
+// ─── Layout / Estrutura ──────────────────────────────────────────────────────
+export { AdminLayout } from './AdminLayout'
+export type { AdminLayoutProps } from './AdminLayout'
 export { AdminModalOverlay } from './AdminModalOverlay'
+export { PageHeader } from './PageHeader'
+export { AdminSearch } from './AdminSearch'
+export { SectionHeader } from './SectionHeader'
 
 // ─── Filtros / Busca ─────────────────────────────────────────────────────────
 export { AdminFilters, AdminPagination, useAdminFilter } from './AdminFilters'
@@ -15,11 +19,10 @@ export type { FilterPill } from './FilterPills'
 export { AdminTabGroup } from './AdminTabGroup'
 export { AdminSearchInput } from './AdminSearchInput'
 
-// ─── Métricas ────────────────────────────────────────────────────────────────
-export { StatCard } from './StatCard'
-
-// ─── Tipografia / Estrutura visual ───────────────────────────────────────────
-export { SectionHeader } from './SectionHeader'
+// ─── Tabelas / Listas ────────────────────────────────────────────────────────
+export { DataTable } from './DataTable'
+export { AdminTableRow } from './AdminTableRow'
+export { AdminTableSkeleton } from './AdminTableSkeleton'
 export { BulkActionBar } from './BulkActionBar'
 
 // ─── Feedback / Estado ───────────────────────────────────────────────────────
@@ -28,19 +31,11 @@ export type { AdminBadgeVariant } from './AdminBadge'
 export { AdminEmptyState } from './AdminEmptyState'
 export { ConfirmDialog } from './ConfirmDialog'
 
-// ─── Formulários ─────────────────────────────────────────────────────────────
-export { AdminInputField, ADMIN_INPUT_CLASS, ADMIN_INPUT_ERROR_CLASS } from './AdminInputField'
+// ─── Métricas ────────────────────────────────────────────────────────────────
+export { StatCard } from './StatCard'
 
-// ─── Tabelas / Listas ────────────────────────────────────────────────────────
-export { DataTable } from './DataTable'
-export { AdminTableRow } from './AdminTableRow'
-
-// ─── Estrutura ───────────────────────────────────────────────────────────────
-export { AdminLayout } from './AdminLayout'
-export type { AdminLayoutProps } from './AdminLayout'
-export { PageHeader } from './PageHeader'
-export { AdminSearch } from './AdminSearch'
-export { AdminTableSkeleton, AdminCardSkeleton, AdminStatsSkeleton } from './AdminTableSkeleton'
+// ─── Entidades relacionadas ───────────────────────────────────────────────────
 export { RelatedEntities } from './RelatedEntities'
-export { EntityNav } from './EntityNav'
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
 export { LiveUrgentPanel, AiWidget } from './DashboardLive'

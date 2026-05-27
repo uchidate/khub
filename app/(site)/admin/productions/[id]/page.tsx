@@ -262,7 +262,7 @@ export default function EditProductionPage() {
     const synced = (key: string) => syncedFields.has(key)
 
     return (
-        <AdminLayout title={production ? `Editar: ${production.titlePt}` : 'Editar Produção'}>
+        <AdminLayout title={production ? `Editar: ${production.titlePt}` : 'Editar Produção'} hideTitle>
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <PageHeader
                     title={production ? production.titlePt : 'Editar Produção'}

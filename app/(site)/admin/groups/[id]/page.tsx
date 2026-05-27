@@ -341,7 +341,7 @@ export default function EditGroupPage() {
     const labelCls = "block text-xs font-bold text-muted uppercase tracking-widest mb-1.5"
 
     return (
-        <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'}>
+        <AdminLayout title={group ? `Editar: ${group.name}` : 'Editar Grupo'} hideTitle>
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <PageHeader
                     title={group ? group.name : 'Editar Grupo'}

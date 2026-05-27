@@ -415,7 +415,7 @@ export default function EditArtistPage() {
     )
 
     return (
-        <AdminLayout title={artist ? `Editar: ${artist.nameRomanized}` : 'Editar Artista'}>
+        <AdminLayout title={artist ? `Editar: ${artist.nameRomanized}` : 'Editar Artista'} hideTitle>
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <PageHeader
                     title={artist ? artist.nameRomanized : 'Editar Artista'}

@@ -149,7 +149,7 @@ export default function MusicCatalogPage() {
   const normalizedNames = new Set(knownNames.map(normalizeName))
 
   return (
-    <AdminLayout title="Catálogo Musical">
+    <AdminLayout title="Catálogo Musical" hideTitle>
       <div className="px-4 py-8 space-y-6">
         <PageHeader
           title="Catálogo Musical"
