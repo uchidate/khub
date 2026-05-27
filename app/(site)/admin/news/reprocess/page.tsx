@@ -285,7 +285,7 @@ export default function NewsReprocessPage() {
     }
 
     return (
-        <AdminLayout title="Reprocessar Notícias">
+        <AdminLayout title="Reprocessar Notícias" subtitle="Re-executa o processamento de artigos já importados para atualizar conteúdo">
             <div className="max-w-3xl space-y-8">
 
                 {/* ── Card: Candidatos ──────────────────────────────────── */}

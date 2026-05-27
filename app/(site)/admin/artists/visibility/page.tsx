@@ -7,7 +7,7 @@ import {
     Eye, RefreshCw, Search, Film, Shield,
     CheckCircle, Loader2, ExternalLink, ChevronDown, ChevronRight, UserX,
 } from 'lucide-react'
-import { AdminButton, AdminIconButton, AdminIconLink } from '@/components/admin'
+import { AdminButton, AdminIconButton, AdminIconLink, AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
 
 type HideReason = 'adult_content' | 'hidden_productions' | 'no_productions'
 type ReasonFilter = 'all' | 'no_productions' | 'hidden_productions' | 'adult_content'
@@ -267,11 +267,9 @@ export default function ArtistVisibilityPage() {
                     )}
 
                     {loading ? (
-                        <div className="p-8 text-center text-muted flex items-center justify-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
-                        </div>
+                        <AdminTableSkeleton rows={8} />
                     ) : items.length === 0 ? (
-                        <div className="p-8 text-center text-muted">Nenhum artista encontrado</div>
+                        <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
                     ) : (
                         <ul className="divide-y divide-white/5">
                             {items.map(item => {

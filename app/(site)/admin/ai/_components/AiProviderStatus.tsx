@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { AdminButton } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Loader2, Zap, AlertTriangle, FlaskConical } from 'lucide-react'
 
 interface ProviderStatus {
@@ -36,10 +37,10 @@ function fmtCost(v: number) {
 }
 
 export default function AiProviderStatus() {
+    const toast = useAdminToast()
     const [data,    setData]    = useState<StatusResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [testing, setTesting] = useState(false)
-    const [error,   setError]   = useState<string | null>(null)
 
     const load = useCallback((withTest = false) => {
         if (withTest) setTesting(true); else setLoading(true)
@@ -47,9 +48,9 @@ export default function AiProviderStatus() {
         fetch(url)
             .then(r => r.json())
             .then(setData)
-            .catch(() => setError('Erro ao carregar status'))
+            .catch(() => toast.error('Erro ao carregar status'))
             .finally(() => { setLoading(false); setTesting(false) })
-    }, [])
+    }, [toast])
 
     useEffect(() => { load() }, [load])
 
@@ -72,11 +73,7 @@ export default function AiProviderStatus() {
                 </div>
             </div>
 
-            {error && (
-                <p className="text-xs text-red-400">{error}</p>
-            )}
-
-            {!loading && !error && data && (
+            {!loading && data && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {data.providers.map(p => (
                         <div key={p.name} className="bg-surface rounded-lg p-3 border border-border space-y-2">

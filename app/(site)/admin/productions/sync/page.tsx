@@ -236,7 +236,7 @@ export default function SyncProductionsTmdbPage() {
     const pct = totalGlobal > 0 ? Math.round((processed / totalGlobal) * 100) : 0
 
     return (
-        <AdminLayout title="Sincronizar TMDB — Produções">
+        <AdminLayout title="Sincronizar TMDB — Produções" subtitle="Atualiza dados, elenco e classificação etária a partir do TMDB">
             <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
                 {/* Header */}

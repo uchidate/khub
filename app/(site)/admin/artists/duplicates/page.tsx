@@ -297,7 +297,7 @@ export default function DuplicatesPage() {
     const highCount = pairs.filter(p => p.confidence === 'high').length
 
     return (
-        <AdminLayout title="Enriquecimento MusicBrainz">
+        <AdminLayout title="Duplicatas de Artistas" subtitle="Detecta artistas com nomes similares cadastrados em duplicata">
             <div className="space-y-5">
 
                 {/* Stats */}

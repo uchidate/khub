@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, AdminEmptyState } from '@/components/admin'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { FEATURE_LABELS } from '@/lib/ai/ai-features'
 import type { AiFeature } from '@/lib/ai/ai-features'
@@ -135,7 +135,7 @@ export default function AiLogsTable({ initialLogs }: Props) {
             </div>
 
             {logs.length === 0 ? (
-                <p className="text-xs text-muted py-6 text-center">Nenhum log encontrado</p>
+                <AdminEmptyState title="Nenhum log encontrado" size="sm" />
             ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { AdminButton } from '@/components/admin'
+import { AdminButton, AdminTableSkeleton } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, RotateCcw, Search, Users, Music, Link2, RefreshCw, ChevronLeft, ChevronRight, Star, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -115,7 +115,7 @@ interface PaginatedResponse<T> {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function scoreColor(score?: number | null) {
-  if (!score) return 'text-gray-400'
+  if (!score) return 'text-muted'
   if (score >= 0.95) return 'text-green-400'
   if (score >= 0.85) return 'text-yellow-400'
   return 'text-orange-400'
@@ -189,16 +189,16 @@ function InlineSearch({
         value={q}
         onChange={e => handleChange(e.target.value)}
       />
-      {loading && <span className="absolute right-2 top-2 text-xs text-gray-500">...</span>}
+      {loading && <span className="absolute right-2 top-2 text-xs text-muted">...</span>}
       {results.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-background border border-border rounded shadow-lg max-h-48 overflow-y-auto">
           {results.map(item => (
             <li
               key={item.id}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-700 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-surface cursor-pointer"
               onClick={() => { onSelect(item); setQ(''); setResults([]) }}
             >
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-surface flex-shrink-0">
                 <Image
                   src={(item.primaryImageUrl || item.profileImageUrl) ?? avatarPlaceholder(item.nameRomanized ?? item.name ?? '')}
                   alt=""
@@ -210,7 +210,7 @@ function InlineSearch({
               </div>
               <div>
                 <span className="text-sm text-foreground">{item.nameRomanized ?? item.name}</span>
-                {item.nameHangul && <span className="text-xs text-gray-500 ml-1">{item.nameHangul}</span>}
+                {item.nameHangul && <span className="text-xs text-muted ml-1">{item.nameHangul}</span>}
               </div>
             </li>
           ))}
@@ -266,7 +266,7 @@ function TMDBPanel({
   }
 
   return (
-    <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
+    <div className="mt-3 bg-background border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
@@ -274,25 +274,25 @@ function TMDBPanel({
         </AdminButton>
       </div>
 
-      {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
+      {loading && <p className="text-xs text-muted py-2">Buscando...</p>}
 
       {!loading && searched && results.length === 0 && (
-        <p className="text-xs text-gray-500 py-2">Nenhum resultado encontrado no TMDB.</p>
+        <p className="text-xs text-muted py-2">Nenhum resultado encontrado no TMDB.</p>
       )}
 
       <ul className="space-y-2">
         {results.map(r => (
           <li key={r.tmdbId} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
               {r.profilePath ? (
                 <Image src={r.profilePath} alt={r.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">?</div>
+                <div className="w-full h-full flex items-center justify-center text-muted text-xs">?</div>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-foreground truncate">{r.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {r.knownForDepartment} · ★ {r.popularity.toFixed(1)}
                 {r.knownFor.length > 0 && ` · ${r.knownFor.join(', ')}`}
               </p>
@@ -380,7 +380,7 @@ function TMDBGroupPanel({
   const mediaLabel: Record<string, string> = { tv: 'TV Show', movie: 'Filme', person: 'Pessoa' }
 
   return (
-    <div className="mt-3 bg-gray-900 border border-border rounded-lg p-3">
+    <div className="mt-3 bg-background border border-border rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-accent uppercase tracking-wide">Resultados TMDB</span>
         <AdminButton onClick={doSearch} variant="ghost" size="sm">
@@ -388,25 +388,25 @@ function TMDBGroupPanel({
         </AdminButton>
       </div>
 
-      {loading && <p className="text-xs text-gray-500 py-2">Buscando...</p>}
+      {loading && <p className="text-xs text-muted py-2">Buscando...</p>}
 
       {!loading && searched && results.length === 0 && (
-        <p className="text-xs text-gray-500 py-2">Nenhum resultado encontrado no TMDB.</p>
+        <p className="text-xs text-muted py-2">Nenhum resultado encontrado no TMDB.</p>
       )}
 
       <ul className="space-y-2">
         {results.map(r => (
           <li key={r.tmdbId} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
               {r.imagePath ? (
                 <Image src={r.imagePath} alt={r.name} width={40} height={40} className="object-cover w-full h-full" unoptimized />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">?</div>
+                <div className="w-full h-full flex items-center justify-center text-muted text-xs">?</div>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-foreground truncate">{r.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {mediaLabel[r.mediaType] ?? r.mediaType} · ★ {r.popularity.toFixed(1)}
                 {r.firstAirDate && ` · ${r.firstAirDate.slice(0, 4)}`}
               </p>
@@ -541,24 +541,24 @@ function IdolCard({
             </span>
           )}
           {!localArtistId && !isRejected && (
-            <span className="text-xs text-gray-500">Sem correspondência</span>
+            <span className="text-xs text-muted">Sem correspondência</span>
           )}
         </div>
-        <span className="text-xs text-gray-600">{idol.groupCount} grupo{idol.groupCount !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-muted">{idol.groupCount} grupo{idol.groupCount !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Side-by-side */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+        <div className="bg-background rounded-lg p-3 flex gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-surface flex-shrink-0">
             <Image src={idolImg} alt={idol.idolName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{idol.idolName}</p>
-            {idol.idolNameHangul && <p className="text-xs text-gray-500">{idol.idolNameHangul}</p>}
-            {idol.idolBirthday && <p className="text-xs text-gray-600">{formatDate(idol.idolBirthday)}</p>}
+            {idol.idolNameHangul && <p className="text-xs text-muted">{idol.idolNameHangul}</p>}
+            {idol.idolBirthday && <p className="text-xs text-muted">{formatDate(idol.idolBirthday)}</p>}
             {(idol.idolHeight || idol.idolBloodType) && (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted">
                 {idol.idolHeight ? `${idol.idolHeight}cm` : ''}
                 {idol.idolHeight && idol.idolBloodType ? ' · ' : ''}
                 {idol.idolBloodType ? `Tipo ${idol.idolBloodType}` : ''}
@@ -567,20 +567,20 @@ function IdolCard({
           </div>
         </div>
 
-        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+        <div className="bg-background rounded-lg p-3 flex gap-3">
           {localArtist ? (
             <>
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-surface flex-shrink-0">
                 <Image src={artistImg} alt={localArtist.nameRomanized} width={48} height={48} className="object-cover w-full h-full" unoptimized />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{localArtist.nameRomanized}</p>
-                {localArtist.nameHangul && <p className="text-xs text-gray-500">{localArtist.nameHangul}</p>}
-                {localArtist.birthDate && <p className="text-xs text-gray-600">{formatDate(localArtist.birthDate)}</p>}
+                {localArtist.nameHangul && <p className="text-xs text-muted">{localArtist.nameHangul}</p>}
+                {localArtist.birthDate && <p className="text-xs text-muted">{formatDate(localArtist.birthDate)}</p>}
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center w-full text-gray-600 text-xs">
+            <div className="flex items-center justify-center w-full text-muted text-xs">
               {isRejected ? 'Sem correspondência' : 'Não encontrado'}
             </div>
           )}
@@ -825,39 +825,39 @@ function GroupCard({ group }: { group: GroupItem }) {
             </span>
           )}
           {!localGroupId && !isRejected && (
-            <span className="text-xs text-gray-500">Sem correspondência</span>
+            <span className="text-xs text-muted">Sem correspondência</span>
           )}
         </div>
-        <span className="text-xs text-gray-600">{group.memberCount} membro{group.memberCount !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-muted">{group.memberCount} membro{group.memberCount !== 1 ? 's' : ''}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+        <div className="bg-background rounded-lg p-3 flex gap-3">
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface flex-shrink-0">
             <Image src={groupImg} alt={group.groupName} width={48} height={48} className="object-cover w-full h-full" unoptimized />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{group.groupName}</p>
-            {group.groupNameHangul && <p className="text-xs text-gray-500">{group.groupNameHangul}</p>}
-            {group.groupDebutDate && <p className="text-xs text-gray-600">Debut: {formatDate(group.groupDebutDate)}</p>}
-            {group.groupAgency && <p className="text-xs text-gray-600 truncate">{group.groupAgency}</p>}
+            {group.groupNameHangul && <p className="text-xs text-muted">{group.groupNameHangul}</p>}
+            {group.groupDebutDate && <p className="text-xs text-muted">Debut: {formatDate(group.groupDebutDate)}</p>}
+            {group.groupAgency && <p className="text-xs text-muted truncate">{group.groupAgency}</p>}
           </div>
         </div>
 
-        <div className="bg-gray-900 rounded-lg p-3 flex gap-3">
+        <div className="bg-background rounded-lg p-3 flex gap-3">
           {localGroup ? (
             <>
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-surface flex-shrink-0">
                 <Image src={khubImg} alt={localGroup.name} width={48} height={48} className="object-cover w-full h-full" unoptimized />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{localGroup.name}</p>
-                {localGroup.nameHangul && <p className="text-xs text-gray-500">{localGroup.nameHangul}</p>}
-                {localGroup.agency?.name && <p className="text-xs text-gray-600 truncate">{localGroup.agency.name}</p>}
+                {localGroup.nameHangul && <p className="text-xs text-muted">{localGroup.nameHangul}</p>}
+                {localGroup.agency?.name && <p className="text-xs text-muted truncate">{localGroup.agency.name}</p>}
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center w-full text-gray-600 text-xs">
+            <div className="flex items-center justify-center w-full text-muted text-xs">
               {isRejected ? 'Sem correspondência' : 'Não encontrado'}
             </div>
           )}
@@ -985,11 +985,11 @@ function GroupCard({ group }: { group: GroupItem }) {
       {showMembers && (
         <div className="border-t border-border pt-3 space-y-1.5">
           {membersLoading ? (
-            <div className="text-center py-4 text-gray-500 text-xs flex items-center justify-center gap-2">
+            <div className="text-center py-4 text-muted text-xs flex items-center justify-center gap-2">
               <RefreshCw size={12} className="animate-spin" /> Carregando membros...
             </div>
           ) : !members || members.length === 0 ? (
-            <div className="text-center py-4 text-gray-600 text-xs">Nenhum membro encontrado</div>
+            <div className="text-center py-4 text-muted text-xs">Nenhum membro encontrado</div>
           ) : (
             members.map(member => {
               const matchReason = member.artistMatchReason
@@ -997,25 +997,25 @@ function GroupCard({ group }: { group: GroupItem }) {
               const isAutoMember = matchReason && !isConfirmedMember && matchReason !== 'user_rejected'
               const img = member.idolImageUrl ?? avatarPlaceholder(member.idolName)
               return (
-                <div key={member.kpoppingIdolId} className="flex items-center gap-2.5 p-2 rounded-lg bg-gray-900/70 border border-gray-800/50">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                <div key={member.kpoppingIdolId} className="flex items-center gap-2.5 p-2 rounded-lg bg-background/70 border border-gray-800/50">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-surface flex-shrink-0">
                     <Image src={img} alt={member.idolName} width={32} height={32} className="object-cover w-full h-full" unoptimized />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-semibold text-foreground truncate">{member.idolName}</span>
                       {member.idolNameHangul && (
-                        <span className="text-[10px] text-gray-500">{member.idolNameHangul}</span>
+                        <span className="text-[10px] text-muted">{member.idolNameHangul}</span>
                       )}
                       {member.idolPosition && (
-                        <span className="text-[10px] text-gray-600 italic">{member.idolPosition}</span>
+                        <span className="text-[10px] text-muted italic">{member.idolPosition}</span>
                       )}
                       {!member.idolIsActive && (
                         <span className="text-[9px] px-1 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-800/40">ex</span>
                       )}
                     </div>
                     {member.artist && (
-                      <p className="text-[10px] text-gray-500 truncate">
+                      <p className="text-[10px] text-muted truncate">
                         → {member.artist.nameRomanized}
                         {member.artist.nameHangul ? ` (${member.artist.nameHangul})` : ''}
                       </p>
@@ -1031,7 +1031,7 @@ function GroupCard({ group }: { group: GroupItem }) {
                     ) : member.artistMatchReason === 'user_rejected' ? (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-900/30 text-red-500 border border-red-800/30">rejeitado</span>
                     ) : (
-                      <span className="text-[9px] text-gray-700">sem match</span>
+                      <span className="text-[9px] text-muted">sem match</span>
                     )}
                   </div>
                 </div>
@@ -1087,7 +1087,7 @@ function MembershipCard({
     <div className="bg-background border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">
             <Image
               src={item.artist.primaryImageUrl ?? avatarPlaceholder(item.artist.nameRomanized)}
               alt={item.artist.nameRomanized}
@@ -1098,18 +1098,18 @@ function MembershipCard({
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{item.artist.nameRomanized}</p>
-            {item.artist.nameHangul && <p className="text-xs text-gray-500">{item.artist.nameHangul}</p>}
+            {item.artist.nameHangul && <p className="text-xs text-muted">{item.artist.nameHangul}</p>}
           </div>
         </div>
 
-        <Link2 size={16} className="text-gray-600 flex-shrink-0" />
+        <Link2 size={16} className="text-muted flex-shrink-0" />
 
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           <div className="text-right min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{item.musicalGroup.name}</p>
-            {item.musicalGroup.nameHangul && <p className="text-xs text-gray-500">{item.musicalGroup.nameHangul}</p>}
+            {item.musicalGroup.nameHangul && <p className="text-xs text-muted">{item.musicalGroup.nameHangul}</p>}
           </div>
-          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface flex-shrink-0">
             <Image
               src={item.musicalGroup.profileImageUrl ?? avatarPlaceholder(item.musicalGroup.name)}
               alt={item.musicalGroup.name}
@@ -1123,12 +1123,12 @@ function MembershipCard({
 
       <div className="flex items-center gap-3 flex-wrap">
         <input
-          className="bg-gray-900 border border-border rounded px-2 py-1 text-xs text-gray-300 w-36 focus:outline-none focus:border-accent/50"
+          className="bg-background border border-border rounded px-2 py-1 text-xs text-foreground w-36 focus:outline-none focus:border-accent/50"
           placeholder="Role (vocalist...)"
           value={role}
           onChange={e => setRole(e.target.value)}
         />
-        <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer">
+        <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer">
           <input
             type="checkbox"
             checked={isActive}
@@ -1168,15 +1168,15 @@ function Pagination({
       <button
         onClick={() => onPage(page - 1)}
         disabled={page <= 1}
-        className="p-1.5 rounded bg-background text-gray-400 hover:text-foreground disabled:opacity-30"
+        className="p-1.5 rounded bg-background text-muted hover:text-foreground disabled:opacity-30"
       >
         <ChevronLeft size={16} />
       </button>
-      <span className="text-sm text-gray-400">{page} / {totalPages}</span>
+      <span className="text-sm text-muted">{page} / {totalPages}</span>
       <button
         onClick={() => onPage(page + 1)}
         disabled={page >= totalPages}
-        className="p-1.5 rounded bg-background text-gray-400 hover:text-foreground disabled:opacity-30"
+        className="p-1.5 rounded bg-background text-muted hover:text-foreground disabled:opacity-30"
       >
         <ChevronRight size={16} />
       </button>
@@ -1244,22 +1244,22 @@ function IdolsTab() {
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
                 ? 'bg-accent border-transparent text-white'
-                : 'border-border text-gray-400 hover:text-foreground'
+                : 'border-border text-muted hover:text-foreground'
             }`}
           >
             {f.label}
           </button>
         ))}
-        <button onClick={load} className="ml-auto text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+        <button onClick={load} className="ml-auto text-xs text-muted hover:text-foreground flex items-center gap-1">
           <RefreshCw size={12} /> Recarregar
         </button>
       </div>
 
-      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
-          <p className="text-xs text-gray-600 mb-3">{data.total} idols</p>
+          <p className="text-xs text-muted mb-3">{data.total} idols</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.items.map(idol => (
               <IdolCard key={idol.kpoppingIdolId} idol={idol} />
@@ -1335,22 +1335,22 @@ function GroupsTab() {
             className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
               filter === f.key
                 ? 'bg-accent border-transparent text-white'
-                : 'border-border text-gray-400 hover:text-foreground'
+                : 'border-border text-muted hover:text-foreground'
             }`}
           >
             {f.label}
           </button>
         ))}
-        <button onClick={load} className="ml-auto text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+        <button onClick={load} className="ml-auto text-xs text-muted hover:text-foreground flex items-center gap-1">
           <RefreshCw size={12} /> Recarregar
         </button>
       </div>
 
-      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
-          <p className="text-xs text-gray-600 mb-3">{data.total} grupos</p>
+          <p className="text-xs text-muted mb-3">{data.total} grupos</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.items.map(group => (
               <GroupCard key={group.kpoppingGroupId} group={group} />
@@ -1399,7 +1399,7 @@ function MembershipsTab() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <p className="text-sm text-gray-400 flex-1">
+        <p className="text-sm text-muted flex-1">
           Vínculos prontos — idol e grupo ambos confirmados.
         </p>
         <div className="relative">
@@ -1411,16 +1411,16 @@ function MembershipsTab() {
             className="px-4 pr-10 py-1.5 text-sm bg-background border border-border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:border-accent/50 w-52"
           />
         </div>
-        <button onClick={load} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1">
+        <button onClick={load} className="text-xs text-muted hover:text-foreground flex items-center gap-1">
           <RefreshCw size={12} /> Recarregar
         </button>
       </div>
 
-      {loading && <p className="text-center text-gray-500 py-8">Carregando...</p>}
+      {loading && <AdminTableSkeleton rows={4} />}
 
       {!loading && data && (
         <>
-          <p className="text-xs text-gray-600 mb-3">{data.total} vínculos pendentes</p>
+          <p className="text-xs text-muted mb-3">{data.total} vínculos pendentes</p>
           <div className="space-y-3">
             {data.items.map(item => (
               <MembershipCard key={item.id} item={item} onApplied={load} />
@@ -1493,7 +1493,7 @@ export default function KpoppingCurationPage() {
   ]
 
   return (
-    <AdminLayout title="Curadoria Kpopping">
+    <AdminLayout title="Curadoria Kpopping" subtitle="Importe e sincronize dados do banco externo Kpopping">
       <div className="space-y-6">
         {/* Actions */}
         <div className="flex items-start justify-between -mt-6">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Film, Search, RefreshCw, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react'
@@ -113,7 +113,7 @@ export default function ProductionEnrichQueuePage() {
     const pages = data?.pages ?? 1
 
     return (
-        <AdminLayout title="Curadoria Gemini de Produções">
+        <AdminLayout title="Curadoria Gemini de Produções" subtitle="Gera sinopses em português via IA para produções sem tradução">
             <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
                 <div className="flex items-start justify-between gap-4">
                     <div>
@@ -179,10 +179,7 @@ export default function ProductionEnrichQueuePage() {
                 )}
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-16 text-muted gap-2">
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Carregando...</span>
-                    </div>
+                    <AdminTableSkeleton rows={5} />
                 ) : productions.length === 0 ? (
                     <AdminEmptyState title="Nenhuma produção encontrada"
                         description={search ? `Nenhum resultado para "${search}"` : 'Todas as produções estão completas!'} />

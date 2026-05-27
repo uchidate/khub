@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Instagram, Twitter, Youtube, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 
@@ -177,9 +178,9 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
     onSave: (links: SocialLinks) => Promise<void>
     onFeedSave: (artistId: string, feedUrl: string) => Promise<void>
 }) {
+    const toast = useAdminToast()
     const [links, setLinks] = useState<SocialLinks>(artist.socialLinks || {})
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
     const [feedUrl, setFeedUrl] = useState(artist.instagramFeedUrl || '')
     const [feedSaving, setFeedSaving] = useState(false)
     const [feedSaved, setFeedSaved] = useState(false)
@@ -191,7 +192,7 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
             setFeedSaved(true)
             setTimeout(() => setFeedSaved(false), 2000)
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erro ao salvar feed')
+            toast.error(e instanceof Error ? e.message : 'Erro ao salvar feed')
         } finally {
             setFeedSaving(false)
         }
@@ -199,7 +200,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
 
     const handleSave = async () => {
         setSaving(true)
-        setError('')
         try {
             const cleaned: SocialLinks = Object.fromEntries(
                 Object.entries(links).filter(([, v]) => v && v.trim())
@@ -207,7 +207,7 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
             await onSave(cleaned)
             onClose()
         } catch (e) {
-            setError(e instanceof Error ? e.message : 'Erro ao salvar')
+            toast.error(e instanceof Error ? e.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
         }
@@ -232,9 +232,6 @@ function SocialLinksModal({ artist, onClose, onSave, onFeedSave }: {
             zIndex={200}
         >
             <div className="max-h-[65vh] overflow-y-auto -mx-5 px-5 space-y-4">
-                {error && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
-                )}
                 {PLATFORMS.map(({ key, label, placeholder, icon, color }) => (
                     <div key={key}>
                         <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-2">
