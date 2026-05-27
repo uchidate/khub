@@ -36,9 +36,12 @@ export async function GET(req: Request) {
         where.AND = [
             {
                 OR: [
+                    { synopsis: null },
+                    { tagline: null },
                     { whyWatch: null },
                     { editorialReview: null },
                     { editorialRating: null },
+                    { curiosidades: { isEmpty: true } },
                 ],
             },
         ]

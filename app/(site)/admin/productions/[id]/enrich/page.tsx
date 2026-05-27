@@ -159,7 +159,7 @@ export default function ProductionEnrichPage() {
                 return
             }
             setApplied(data.fieldsUpdated)
-            toast.success('Enriquecimento aplicado!')
+            toast.success('Curadoria aplicada!')
             const r = await fetch(`/api/admin/productions/${id}/enrich`)
             const d = await r.json()
             setCurrent(d.production)
@@ -194,14 +194,14 @@ export default function ProductionEnrichPage() {
     ]
 
     return (
-        <AdminLayout title={`Enriquecer: ${current?.titlePt ?? '…'}`} hideTitle>
+        <AdminLayout title={`Curar no Gemini: ${current?.titlePt ?? '…'}`} hideTitle>
             <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
                 <div className="flex items-center gap-3">
                     <Link href="/admin/productions/enrich" className="text-muted hover:text-foreground transition-colors">
                         <ChevronLeft className="w-5 h-5" />
                     </Link>
                     <PageHeader
-                        title={`Enriquecer: ${current?.titlePt ?? '…'}`}
+                        title={`Curar no Gemini: ${current?.titlePt ?? '…'}`}
                         subtitle={[current?.type, current?.year, current?.network].filter(Boolean).join(' · ')}
                     />
                 </div>
@@ -324,7 +324,7 @@ export default function ProductionEnrichPage() {
                 {applied && (
                     <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
                         <p className="text-sm font-bold text-green-400 flex items-center gap-2 mb-2">
-                            <CheckCircle className="w-4 h-4" /> Enriquecimento aplicado!
+                            <CheckCircle className="w-4 h-4" /> Curadoria aplicada!
                         </p>
                         <p className="text-xs text-muted">
                             Campos atualizados: <span className="text-foreground font-mono">{applied.join(', ')}</span>

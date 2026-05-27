@@ -2,18 +2,29 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminLinkButton, AdminButton, AdminEmptyState } from '@/components/admin'
+import { AdminLinkButton, AdminButton, AdminBadge, AdminEmptyState } from '@/components/admin'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminTableSkeleton } from '@/components/admin/AdminTableSkeleton'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import Image from 'next/image'
-import { EyeOff, Eye, Music2, Film, UsersRound, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
+import { EyeOff, Eye, Music2, Film, UsersRound, ExternalLink, ShieldAlert, ShoppingBag } from 'lucide-react'
+
+interface HiddenSummary {
+    hiddenArtists: number
+    autoHiddenArtists: number
+    hiddenProductions: number
+    activeTakedowns: number
+    hiddenGroups: number
+    hiddenStoreProducts: number
+}
 
 interface HiddenArtist {
     id: string
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
+    autoHidden: boolean
     updatedAt: string
 }
 
@@ -23,6 +34,7 @@ interface HiddenProduction {
     type: string
     year: number | null
     imageUrl: string | null
+    hasActiveTakedown: boolean
     updatedAt: string
 }
 
@@ -39,6 +51,7 @@ type Tab = 'artists' | 'productions' | 'groups'
 export default function HiddenItemsPage() {
     const toast = useAdminToast()
     const [tab, setTab] = useState<Tab>('artists')
+    const [summary, setSummary] = useState<HiddenSummary | null>(null)
     const [artists, setArtists] = useState<HiddenArtist[]>([])
     const [productions, setProductions] = useState<HiddenProduction[]>([])
     const [groups, setGroups] = useState<HiddenGroup[]>([])
@@ -48,11 +61,13 @@ export default function HiddenItemsPage() {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const [a, p, g] = await Promise.all([
+            const [s, a, p, g] = await Promise.all([
+                fetch('/api/admin/hidden?type=summary').then(r => r.json()),
                 fetch('/api/admin/hidden?type=artists').then(r => r.json()),
                 fetch('/api/admin/hidden?type=productions').then(r => r.json()),
                 fetch('/api/admin/hidden?type=groups').then(r => r.json()),
             ])
+            setSummary(s)
             setArtists(a.items ?? [])
             setProductions(p.items ?? [])
             setGroups(g.items ?? [])
@@ -97,8 +112,8 @@ export default function HiddenItemsPage() {
 
     return (
         <AdminLayout
-            title="Itens Ocultos"
-            subtitle="Fila de curadoria para artistas, produções e grupos retirados do site público, com revisão e restauração rápida."
+            title="Central de visibilidade"
+            subtitle="Triagem de conteúdo fora do site público, com encaminhamento seguro para regras automáticas, restrições legais e loja."
             actions={
                 <div className="flex flex-wrap gap-2">
                     <AdminLinkButton href="/admin/activity?tab=admin" variant="secondary" size="sm">
@@ -112,15 +127,60 @@ export default function HiddenItemsPage() {
                 <div className="bg-surface border border-border rounded-xl p-4">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Como usar</p>
                     <p className="text-sm text-muted leading-relaxed">
-                        Esta área serve para revisão editorial de conteúdo oculto. Restaure aqui quando o item puder voltar ao público e use Editar para corrigir o cadastro antes de republicar.
+                        Restaure diretamente apenas ocultações manuais. Itens retirados por regra automática ou takedown precisam passar pela fila especializada antes de voltar ao público.
                     </p>
                 </div>
 
+                {!loading && summary && (
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                        <VisibilityQueueCard
+                            href="/admin/artists/visibility"
+                            icon={<Music2 size={18} />}
+                            title="Auto-ocultos"
+                            value={summary.autoHiddenArtists}
+                            description="Reconciliar artistas"
+                            variant={summary.autoHiddenArtists > 0 ? 'warning' : 'neutral'}
+                        />
+                        <VisibilityQueueCard
+                            href="/admin/productions/takedowns"
+                            icon={<ShieldAlert size={18} />}
+                            title="Takedowns ativos"
+                            value={summary.activeTakedowns}
+                            description="Revisão legal"
+                            variant={summary.activeTakedowns > 0 ? 'error' : 'neutral'}
+                        />
+                        <VisibilityQueueCard
+                            href="/admin/loja"
+                            icon={<ShoppingBag size={18} />}
+                            title="Produtos ocultos"
+                            value={summary.hiddenStoreProducts}
+                            description="Sincronização da loja"
+                            variant={summary.hiddenStoreProducts > 0 ? 'warning' : 'neutral'}
+                        />
+                        <VisibilityQueueCard
+                            href="/admin/productions/moderation?filter=hidden"
+                            icon={<Film size={18} />}
+                            title="Produções ocultas"
+                            value={summary.hiddenProductions}
+                            description="Moderação editorial"
+                            variant="neutral"
+                        />
+                        <VisibilityQueueCard
+                            href="/admin/groups"
+                            icon={<UsersRound size={18} />}
+                            title="Grupos ocultos"
+                            value={summary.hiddenGroups}
+                            description="Cadastro e revisão"
+                            variant="neutral"
+                        />
+                    </div>
+                )}
+
                 {!loading && (
-                    <p className="text-muted text-sm">
+                    <p className="text-muted text-sm font-medium">
                         {total === 0
-                            ? 'Nenhum item oculto no momento.'
-                            : `${total} item(ns) oculto(s) do site público.`}
+                            ? 'Nenhum artista, produção ou grupo oculto no momento.'
+                            : `${total} registro(s) na fila de restauração manual e encaminhamento.`}
                     </p>
                 )}
 
@@ -146,6 +206,9 @@ export default function HiddenItemsPage() {
                                             onRestore={() => restore('artists', a.id)}
                                             restoring={restoringId === a.id}
                                             imageRounded
+                                            restriction={a.autoHidden ? 'Ocultação automática' : undefined}
+                                            reviewHref={a.autoHidden ? '/admin/artists/visibility' : undefined}
+                                            reviewLabel="Revisar regra"
                                         />
                                     ))}
                                 </div>
@@ -167,6 +230,9 @@ export default function HiddenItemsPage() {
                                             editHref={`/admin/productions/${p.id}`}
                                             onRestore={() => restore('productions', p.id)}
                                             restoring={restoringId === p.id}
+                                            restriction={p.hasActiveTakedown ? 'Takedown ativo' : undefined}
+                                            reviewHref={p.hasActiveTakedown ? '/admin/productions/takedowns' : undefined}
+                                            reviewLabel="Revisar restrição"
                                         />
                                     ))}
                                 </div>
@@ -185,7 +251,7 @@ export default function HiddenItemsPage() {
                                             name={g.name}
                                             subtitle={g.nameHangul ?? undefined}
                                             updatedAt={g.updatedAt}
-                                            editHref={`/admin/groups`}
+                                            editHref={`/admin/groups/${g.id}`}
                                             onRestore={() => restore('groups', g.id)}
                                             restoring={restoringId === g.id}
                                             imageRounded
@@ -202,7 +268,7 @@ export default function HiddenItemsPage() {
 }
 
 function HiddenCard({
-    imageUrl, name, subtitle, updatedAt, editHref, onRestore, restoring, imageRounded,
+    imageUrl, name, subtitle, updatedAt, editHref, onRestore, restoring, imageRounded, restriction, reviewHref, reviewLabel,
 }: {
     imageUrl: string | null
     name: string
@@ -212,6 +278,9 @@ function HiddenCard({
     onRestore: () => void
     restoring: boolean
     imageRounded?: boolean
+    restriction?: string
+    reviewHref?: string
+    reviewLabel?: string
 }) {
     return (
         <div className="flex items-center gap-4 p-4 bg-surface border border-border rounded-xl">
@@ -232,6 +301,7 @@ function HiddenCard({
             <div className="flex-1 min-w-0">
                 <p className="font-bold text-foreground text-sm truncate">{name}</p>
                 {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+                {restriction && <AdminBadge variant="warning" className="mt-1">{restriction}</AdminBadge>}
                 <p className="text-[10px] text-muted mt-0.5">
                     Oculto desde {new Date(updatedAt).toLocaleDateString('pt-BR')}
                 </p>
@@ -242,16 +312,45 @@ function HiddenCard({
                     <ExternalLink size={12} />
                     Editar
                 </AdminLinkButton>
-                <AdminButton
-                    onClick={onRestore}
-                    disabled={restoring}
-                    variant="primary"
-                    size="sm"
-                >
-                    <Eye size={12} />
-                    {restoring ? 'Restaurando...' : 'Restaurar'}
-                </AdminButton>
+                {reviewHref ? (
+                    <AdminLinkButton href={reviewHref} variant="primary" size="sm">
+                        <ShieldAlert size={12} />
+                        {reviewLabel ?? 'Revisar'}
+                    </AdminLinkButton>
+                ) : (
+                    <AdminButton
+                        onClick={onRestore}
+                        disabled={restoring}
+                        variant="primary"
+                        size="sm"
+                    >
+                        <Eye size={12} />
+                        {restoring ? 'Restaurando...' : 'Restaurar'}
+                    </AdminButton>
+                )}
             </div>
         </div>
+    )
+}
+
+function VisibilityQueueCard({
+    href, icon, title, value, description, variant,
+}: {
+    href: string
+    icon: React.ReactNode
+    title: string
+    value: number
+    description: string
+    variant: 'warning' | 'error' | 'neutral'
+}) {
+    return (
+        <Link href={href} className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/40">
+            <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="text-muted group-hover:text-accent transition-colors">{icon}</span>
+                <AdminBadge variant={variant} shape="pill">{value}</AdminBadge>
+            </div>
+            <p className="text-sm font-bold text-foreground">{title}</p>
+            <p className="text-xs text-muted mt-1">{description}</p>
+        </Link>
     )
 }

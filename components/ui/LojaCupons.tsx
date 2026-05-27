@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Tag, ExternalLink } from 'lucide-react'
 import prisma from '@/lib/prisma'
+import { TrackedCouponLink } from '@/components/ui/TrackedCouponLink'
 
 const STORE_LABELS: Record<string, string> = {
     shopee: 'Shopee',
@@ -40,11 +41,10 @@ export async function LojaCupons({ compact = false }: Props) {
             </div>
             <div className={compact ? 'flex flex-col gap-2' : 'grid grid-cols-1 sm:grid-cols-2 gap-2'}>
                 {coupons.map(c => (
-                    <a
+                    <TrackedCouponLink
                         key={c.id}
+                        couponId={c.id}
                         href={c.affiliateUrl}
-                        target="_blank"
-                        rel="noopener noreferrer sponsored"
                         className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border hover:border-orange-400/40 hover:bg-orange-500/5 transition-all group"
                     >
                         {/* Code badge */}
@@ -59,7 +59,7 @@ export async function LojaCupons({ compact = false }: Props) {
                             <p className="text-[10px] text-muted mt-0.5">{STORE_LABELS[c.store] ?? c.store}</p>
                         </div>
                         <ExternalLink className="w-3.5 h-3.5 text-muted flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                    </TrackedCouponLink>
                 ))}
             </div>
         </section>

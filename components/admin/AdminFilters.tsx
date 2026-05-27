@@ -122,7 +122,7 @@ function Select({
       <select
         value={value}
         onChange={e => setParam(name, e.target.value || null)}
-        className="h-8 pl-3 pr-7 bg-surface border border-border hover:border-border rounded-lg text-sm text-foreground outline-none focus:border-purple-500/50 transition-colors appearance-none cursor-pointer"
+        className="h-8 pl-3 pr-7 bg-surface border border-border hover:border-border rounded-lg text-sm text-foreground outline-none focus:border-accent/50 transition-colors appearance-none cursor-pointer"
       >
         <option value="">{label}</option>
         {options.map(opt => (
@@ -203,12 +203,12 @@ function ActiveChips({
       {chips.map(chip => (
         <span
           key={chip.key}
-          className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs rounded-full"
+          className="flex items-center gap-1 px-2 py-0.5 bg-accent-soft border border-accent/20 text-accent text-xs rounded-full"
         >
           {chip.label}
           <button
             onClick={() => setParam(chip.key, null)}
-            className="text-purple-400/60 hover:text-purple-200 transition-colors"
+            className="text-accent/70 hover:text-accent transition-colors"
           >
             <X size={11} />
           </button>

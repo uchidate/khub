@@ -539,7 +539,7 @@ export default function ArtistDiscographyPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            Busca a discografia no MusicBrainz (com fallback via IA). Pode demorar até 1 min.
+            Busca a discografia no MusicBrainz, sem preenchimento por IA. Pode demorar até 1 min.
           </p>
           <label className="flex items-center gap-3 cursor-pointer group">
             <input

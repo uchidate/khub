@@ -85,7 +85,7 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
     setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
-  const baseInputClass = "w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-foreground placeholder-muted focus:outline-none focus:border-purple-500/60 focus:bg-surface text-sm transition-all"
+  const baseInputClass = "w-full px-3.5 py-2.5 bg-surface border border-border rounded-lg text-foreground placeholder-muted focus:outline-none focus:border-accent/60 focus:bg-surface text-sm transition-all"
   const selectClass = `${baseInputClass} cursor-pointer`
 
   return (
@@ -235,7 +235,7 @@ export function FormModal({ title, fields, initialData, open, onClose, onSubmit 
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-500 disabled:opacity-60 transition-colors font-bold text-sm flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 bg-accent text-white rounded-xl hover:bg-accent-strong disabled:opacity-60 transition-colors font-bold text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

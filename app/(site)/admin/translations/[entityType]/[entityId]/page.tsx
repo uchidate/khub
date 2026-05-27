@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit } from 'lucide-react'
+import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 
 // Detecção simplificada client-side (sem depender do server)
@@ -79,7 +79,7 @@ const ENTITY_CONFIG: Record<EntityType, { label: string; backLabel: string; fiel
 const STATUS_LABELS: Record<TranslationStatus, string> = {
   draft: 'Rascunho',
   approved: 'Aprovado',
-  ai: 'Traduzido (IA)',
+  ai: 'Legado IA',
 }
 
 export default function TranslationEditorPage() {
@@ -222,7 +222,7 @@ export default function TranslationEditorPage() {
           : null
 
   return (
-    <AdminLayout title={`Traduzir: ${entityName || '...'}`}>
+    <AdminLayout title={`Aplicar tradução: ${entityName || '...'}`}>
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* Breadcrumb / header */}
@@ -249,6 +249,16 @@ export default function TranslationEditorPage() {
               Ver no admin
             </Link>
           )}
+        </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+          <div>
+            <p className="text-sm font-bold text-foreground">Aplicação manual com revisão</p>
+            <p className="mt-1 text-xs text-muted">
+              Copie o original, produza a tradução no Gemini e cole o texto revisado aqui. O DeepSeek não gera nem aplica traduções nesta área.
+            </p>
+          </div>
         </div>
 
         {/* Campos */}

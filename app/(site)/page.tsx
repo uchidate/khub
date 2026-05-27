@@ -72,7 +72,7 @@ export default async function Home() {
     const [publicData, featuredProducts, birthdayArtists] = await Promise.all([
         process.env.NODE_ENV === 'development' ? buildHomeRuntimeData() : getHomePublicData(),
         prisma.storeProduct.findMany({
-            where: { isActive: true },
+            where: { isActive: true, isHidden: false },
             orderBy: [{ featured: 'desc' }, { position: 'asc' }, { createdAt: 'desc' }],
             take: 20,
             select: {

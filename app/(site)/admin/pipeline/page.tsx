@@ -289,14 +289,14 @@ export default async function PipelinePage({ searchParams }: Props) {
                             { label: 'Importado / Rascunho', description: 'Notícia chegou do bot, ainda não publicada', color: 'zinc' },
                             { label: 'Publicar', description: 'Clique em "Publicar" para tornar visível', color: 'blue' },
                             { label: 'Sem tradução PT', description: 'Publicada mas sem versão em português', color: 'yellow' },
-                            { label: 'Traduzir IA', description: 'Gera tradução automática via IA', color: 'purple' },
+                            { label: 'Traduzir no Gemini', description: 'Prepare a versao PT-BR e revise antes de aplicar', color: 'purple' },
                             { label: 'Publicada', description: 'Traduzida e visível para o público', color: 'green' },
                         ]}
                         tips={[
                             { text: 'Use "Publicar todos" no cabeçalho da coluna para processar vários rascunhos de uma vez.' },
                             { text: 'O botão "Ocultar" nas notícias publicadas retira do ar sem apagar o conteúdo.' },
                             { text: 'Clique no ícone de link externo em qualquer card para abrir o editor completo.' },
-                            { text: 'Aba Artistas: foco em bio/editorial via IA. Aba Produções: foco em sinopse.' },
+                            { text: 'Aba Artistas: foco em bio/editorial preparados no Gemini. Aba Produções: foco em sinopse revisada.' },
                         ]}
                     />
 
@@ -345,13 +345,6 @@ export default async function PipelinePage({ searchParams }: Props) {
                             color="yellow"
                             emptyMsg="Tudo traduzido"
                             allLink="/admin/translations"
-                            batchAction={
-                                <PipelineBatchAction
-                                    ids={withoutTranslation.map(n => n.id)}
-                                    type="news"
-                                    action="translate"
-                                />
-                            }
                         >
                             {withoutTranslation.map(n => (
                                 <PipelineCard
@@ -363,7 +356,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                     href={`/admin/news/${n.id}`}
                                     tag="sem tradução"
                                     tagColor="pending"
-                                    actions={<PipelineActions id={n.id} type="news" action="translate" />}
+                                    actions={<Link href={`/admin/translations/news/${n.id}`} className="text-[11px] font-medium text-accent hover:text-foreground">Aplicar traducao</Link>}
                                 />
                             ))}
                         </PipelineColumn>
@@ -540,13 +533,13 @@ export default async function PipelinePage({ searchParams }: Props) {
                         description="Acompanha o enriquecimento editorial de cada artista: da chegada sem conteúdo até ser curado manualmente com bio, projetos e curiosidades em português."
                         steps={[
                             { label: 'Sem conteúdo', description: 'Artista importado sem bio ou editorial', color: 'zinc' },
-                            { label: 'Enriquecer IA', description: 'Gera bio, projetos e curiosidades com IA', color: 'purple' },
+                            { label: 'Preparar no Gemini', description: 'Copie o prompt, revise o JSON e aplique manualmente', color: 'purple' },
                             { label: 'Aguard. curadoria', description: 'IA gerou, aguarda revisão humana', color: 'yellow' },
                             { label: 'Curado', description: 'Revisado e aprovado pelo editor', color: 'green' },
                             { label: 'Oculto', description: 'Artista não-coreano ou flagado', color: 'red' },
                         ]}
                         tips={[
-                            { text: 'Use "Enriquecer todos" para processar a fila de sem-conteúdo em lote — cada artista leva ~10s.' },
+                            { text: 'Abra a fila de artistas para gerar e aplicar o JSON revisado no Gemini.' },
                             { text: 'Artistas ocultos ficam no banco mas não aparecem no site — use "Tornar visível" para reativar.' },
                             { text: 'Após enriquecimento, o artista vai para "Aguard. curadoria" — revise no editor antes de publicar.' },
                         ]}
@@ -561,14 +554,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                             icon={Sparkles}
                             color="zinc"
                             emptyMsg="Todos têm conteúdo"
-                            allLink="/admin/enrichment?tab=artists"
-                            batchAction={
-                                <PipelineBatchAction
-                                    ids={noContent.map(a => a.id)}
-                                    type="artist"
-                                    action="enrich"
-                                />
-                            }
+                            allLink="/admin/artists/enrich"
                         >
                             {noContent.map(a => (
                                 <PipelineCard
@@ -580,7 +566,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                     href={`/admin/artists/${a.id}`}
                                     tag="vazio"
                                     tagColor="draft"
-                                    actions={<PipelineActions id={a.id} type="artist" action="enrich" />}
+                                    actions={<Link href={`/admin/artists/${a.id}/enrich`} className="text-[11px] font-medium text-accent hover:text-foreground">Curar no Gemini</Link>}
                                 />
                             ))}
                         </PipelineColumn>
@@ -596,14 +582,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                             icon={Clock}
                             color="zinc"
                             emptyMsg="Nenhum parcial"
-                            allLink="/admin/enrichment?tab=artists"
-                            batchAction={
-                                <PipelineBatchAction
-                                    ids={partial.map(a => a.id)}
-                                    type="artist"
-                                    action="enrich"
-                                />
-                            }
+                            allLink="/admin/artists/enrich"
                         >
                             {partial.map(a => (
                                 <PipelineCard
@@ -615,7 +594,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                     href={`/admin/artists/${a.id}`}
                                     tag="parcial"
                                     tagColor="draft"
-                                    actions={<PipelineActions id={a.id} type="artist" action="enrich" />}
+                                    actions={<Link href={`/admin/artists/${a.id}/enrich`} className="text-[11px] font-medium text-accent hover:text-foreground">Curar no Gemini</Link>}
                                 />
                             ))}
                         </PipelineColumn>
@@ -631,7 +610,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                             icon={PenLine}
                             color="yellow"
                             emptyMsg="Nenhum aguardando"
-                            allLink="/admin/enrichment?tab=artists"
+                            allLink="/admin/artists/enrich"
                         >
                             {enriched.map(a => (
                                 <PipelineCard
@@ -640,7 +619,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                     subtitle="bio · editorial · curiosidades ✓"
                                     imageUrl={a.primaryImageUrl}
                                     time={a.editorialGeneratedAt ?? a.createdAt}
-                                    href={`/admin/enrichment?q=${encodeURIComponent(a.nameRomanized)}`}
+                                    href={`/admin/artists/${a.id}/enrich`}
                                     tag="curar"
                                     tagColor="pending"
                                     actions={
@@ -813,14 +792,14 @@ export default async function PipelinePage({ searchParams }: Props) {
                     steps={[
                         { label: 'Aguard. curadoria', description: 'Novo import — revisar antes de publicar', color: 'orange' },
                         { label: 'Sem sinopse', description: 'Produção importada sem descrição', color: 'zinc' },
-                        { label: 'Enriquecer IA', description: 'Gera sinopse automática via IA', color: 'purple' },
+                        { label: 'Preparar no Gemini', description: 'Gere e revise o JSON da producao manualmente', color: 'purple' },
                         { label: 'Sem tradução PT', description: 'Sinopse existe mas só em inglês/coreano', color: 'yellow' },
-                        { label: 'Traduzir IA', description: 'Traduz a sinopse para português', color: 'blue' },
+                        { label: 'Traduzir no Gemini', description: 'Aplique a sinopse em portugues apos revisao', color: 'blue' },
                         { label: 'Completa', description: 'Sinopse traduzida, pronta para o público', color: 'green' },
                     ]}
                     tips={[
                         { text: 'Produções "sem sinopse" excluem as flagradas como não-coreanas e as com tradução marcada como skipped.' },
-                        { text: 'Use "Enriquecer todos" para disparar geração de sinopse em lote — ideal para acertar o backlog.' },
+                        { text: 'Use a fila de producoes para copiar o prompt e aplicar apenas respostas revisadas.' },
                         { text: 'Produções ocultas não aparecem no site — use "Tornar visível" para reativar individualmente.' },
                     ]}
                 />
@@ -869,14 +848,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                         icon={Sparkles}
                         color="zinc"
                         emptyMsg="Todas com sinopse"
-                        allLink="/admin/enrichment?tab=productions"
-                        batchAction={
-                            <PipelineBatchAction
-                                ids={withoutSynopsis.map(p => p.id)}
-                                type="production"
-                                action="enrich"
-                            />
-                        }
+                        allLink="/admin/productions/enrich"
                     >
                         {withoutSynopsis.map(p => (
                             <PipelineCard
@@ -889,7 +861,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 publicHref={`/productions/${p.id}`}
                                 tag="sem sinopse"
                                 tagColor="draft"
-                                actions={<PipelineActions id={p.id} type="production" action="enrich" />}
+                                actions={<Link href={`/admin/productions/${p.id}/enrich`} className="text-[11px] font-medium text-accent hover:text-foreground">Curar no Gemini</Link>}
                             />
                         ))}
                     </PipelineColumn>
@@ -906,13 +878,6 @@ export default async function PipelinePage({ searchParams }: Props) {
                         color="yellow"
                         emptyMsg="Tudo traduzido"
                         allLink="/admin/translations"
-                        batchAction={
-                            <PipelineBatchAction
-                                ids={withoutTranslation.map(p => p.id)}
-                                type="production"
-                                action="translate"
-                            />
-                        }
                     >
                         {withoutTranslation.map(p => (
                             <PipelineCard
@@ -925,7 +890,7 @@ export default async function PipelinePage({ searchParams }: Props) {
                                 publicHref={`/productions/${p.id}`}
                                 tag="sem tradução"
                                 tagColor="pending"
-                                actions={<PipelineActions id={p.id} type="production" action="translate" />}
+                                actions={<Link href={`/admin/translations/production/${p.id}`} className="text-[11px] font-medium text-accent hover:text-foreground">Aplicar traducao</Link>}
                             />
                         ))}
                     </PipelineColumn>

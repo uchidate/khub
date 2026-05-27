@@ -180,6 +180,7 @@ export async function searchStoreProductsUnaccent(
         SELECT p.id, p.name, p.description, p.price, p."imageUrl", p.store, p.category, p.badge
         FROM "StoreProduct" p
         WHERE p."isActive" = true
+          AND p."isHidden" = false
           AND (
             unaccent(p.name) ILIKE unaccent(${pattern})
             OR unaccent(COALESCE(p.description, '')) ILIKE unaccent(${pattern})

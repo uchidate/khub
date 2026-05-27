@@ -119,7 +119,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ slug: 
     if (!agency) notFound()
 
     const featuredProducts = await prisma.storeProduct.findMany({
-        where: { isActive: true, featured: true },
+        where: { isActive: true, isHidden: false, featured: true },
         orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
         take: 4,
         select: { id: true, name: true, imageUrl: true, affiliateUrl: true, store: true, category: true, badge: true, rating: true, soldCount: true },
@@ -483,7 +483,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ slug: 
             </div>
         </div>
 
-        <HomeLojaDestaque products={featuredProducts} />
+        <HomeLojaDestaque products={featuredProducts} placement="agency_store" />
 
         </>
     )

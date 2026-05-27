@@ -22,7 +22,7 @@ const SECTIONS = [
       },
       {
         q: 'Em quais idiomas o site está disponível?',
-        a: 'O HallyuHub é inteiramente em português do Brasil. As notícias chegam originalmente em inglês ou coreano e são traduzidas automaticamente para PT-BR antes de serem publicadas.',
+        a: 'O HallyuHub prioriza conteúdo em português do Brasil. Notícias em inglês ou coreano podem receber versão PT-BR após preparação assistida e revisão editorial.',
       },
       {
         q: 'O HallyuHub tem aplicativo?',
@@ -82,11 +82,11 @@ const SECTIONS = [
     items: [
       {
         q: 'De onde vêm as notícias?',
-        a: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. O conteúdo é traduzido automaticamente para português brasileiro.',
+        a: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. Quando há versão em português, ela passa por revisão editorial antes de ser aplicada.',
       },
       {
-        q: 'As traduções são feitas por humanos?',
-        a: 'As traduções são geradas por inteligência artificial e revisadas automaticamente para garantir qualidade. Trabalhamos continuamente para melhorar a precisão, especialmente para nomes de artistas, títulos de obras e expressões idiomáticas do K-Pop.',
+        q: 'Como as traduções são preparadas?',
+        a: 'As versões em português podem ser preparadas com auxílio de inteligência artificial e passam por revisão editorial antes da aplicação. Temos atenção especial a nomes de artistas, títulos e expressões do K-Pop.',
       },
       {
         q: 'Encontrei um erro numa notícia. Como reporto?',

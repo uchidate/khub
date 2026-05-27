@@ -15,6 +15,7 @@ import { MediaPicker } from '@/components/admin/MediaPicker'
 import { ArticleHealthPanel } from '@/components/admin/ArticleHealthPanel'
 import { PublishChecklist } from '@/components/admin/PublishChecklist'
 import { VersionHistoryPanel } from '@/components/admin/VersionHistoryPanel'
+import { AdminProcessTelemetry } from '@/components/admin/AdminProcessTelemetry'
 import { useArticleHealth } from '@/lib/hooks/useArticleHealth'
 import type { BlogBlock, BlogTemplate } from '@/lib/types/blocks'
 import { BLOG_TEMPLATE_BLOCKS, BLOG_TEMPLATE_LABELS } from '@/lib/types/blocks'
@@ -490,6 +491,7 @@ function WritePageContent() {
 
   return (
     <div className={`min-h-screen bg-background text-foreground ${focusMode ? 'fixed inset-0 z-[400] overflow-auto' : ''}`}>
+      {role === 'admin' && <AdminProcessTelemetry />}
       {/* Publish checklist modal */}
       {showPublishChecklist && (
         <PublishChecklist

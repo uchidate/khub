@@ -5,7 +5,7 @@ import { Loader2, Zap, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ConfirmDialog } from '@/components/admin'
 
-type BatchActionType = 'publish' | 'translate' | 'enrich'
+type BatchActionType = 'publish'
 type EntityType      = 'news' | 'artist' | 'production'
 
 interface Props {
@@ -22,41 +22,11 @@ async function processItem(id: string, type: EntityType, action: BatchActionType
             body: JSON.stringify({ status: 'published' }),
         })
     }
-    if (action === 'translate') {
-        if (type === 'news') {
-            return fetch(`/api/admin/news/${id}/translate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            })
-        }
-        const entityType = type === 'artist' ? 'artist' : 'production'
-        return fetch('/api/admin/translations/single', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ entityType, id }),
-        })
-    }
-    if (action === 'enrich' && type === 'artist') {
-        return fetch(`/api/admin/artists/${id}/generate-editorial`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ generate: ['bio', 'editorial', 'curiosidades'] }),
-        })
-    }
-    if (action === 'enrich' && type === 'production') {
-        return fetch('/api/admin/enrichment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target: 'production_synopsis', entityId: id }),
-        })
-    }
     return null
 }
 
 const BATCH_LABELS: Record<BatchActionType, string> = {
     publish:   'Publicar todos',
-    translate: 'Traduzir todos',
-    enrich:    'Enriquecer todos',
 }
 
 export function PipelineBatchAction({ ids, type, action }: Props) {

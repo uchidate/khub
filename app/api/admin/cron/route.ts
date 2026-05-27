@@ -5,88 +5,160 @@ import { getErrorMessage } from '@/lib/utils/error'
 
 export const dynamic = 'force-dynamic'
 
-// Definição canônica de todos os cron jobs do GitHub Actions
+// Espelha os jobs atualmente agendados em .github/workflows/cron-jobs.yml.
 export const CRON_JOBS = [
   {
-    id: 'update-trending',
-    name: 'Update Trending Scores',
-    emoji: '📈',
-    schedule: 'manual',
-    frequencyLabel: 'Manual',
-    description: 'Recalcula scores e ranking de trending para artistas, grupos e notícias',
-    endpoint: '/api/cron/update-trending',
+    id: 'publish-scheduled',
+    name: 'Publicar posts agendados',
+    emoji: '📅',
+    schedule: '*/5 * * * *',
+    frequencyLabel: 'A cada 5 minutos',
+    description: 'Publica artigos e conteúdos editoriais com horário programado',
+    endpoint: '/api/cron/publish-scheduled',
     defaultLimit: null,
-    color: 'rose',
+    color: 'green',
   },
   {
-    id: 'update',
-    name: 'Auto Update Content',
-    emoji: '🔄',
-    schedule: '0 */2 * * *',
-    frequencyLabel: 'A cada 2 horas',
-    description: 'Busca notícias RSS, extrai artistas, sincroniza catálogos, atualiza trending',
-    endpoint: '/api/cron/update',
+    id: 'fetch-news',
+    name: 'Buscar notícias',
+    emoji: '📰',
+    schedule: '*/5 * * * *',
+    frequencyLabel: 'A cada 5 minutos',
+    description: 'Importa novas notícias das fontes configuradas',
+    endpoint: '/api/cron/fetch-news',
     defaultLimit: null,
     color: 'blue',
   },
   {
-    id: 'cast-sync',
-    name: 'Sync Production Cast',
-    emoji: '🎬',
-    schedule: '50 */2 * * *',
-    frequencyLabel: 'A cada 2 horas (:50)',
-    description: 'Sincroniza elenco de produções via TMDB',
-    endpoint: '/api/cron/sync-cast',
-    defaultLimit: 10,
+    id: 'tag-news',
+    name: 'Taguear notícias',
+    emoji: '🏷️',
+    schedule: '*/5 * * * *',
+    frequencyLabel: 'Após busca de notícias',
+    description: 'Completa tags das notícias novas por regras locais, sem IA generativa',
+    endpoint: '/api/cron/tag-news',
+    defaultLimit: null,
     color: 'purple',
   },
   {
-    id: 'match-productions',
-    name: 'Match Productions TMDB',
-    emoji: '🔍',
-    schedule: '20 */6 * * *',
-    frequencyLabel: 'A cada 6 horas (:20)',
-    description: 'Associa produções sem tmdbId usando busca no TMDB',
-    endpoint: '/api/cron/match-productions',
-    defaultLimit: 10,
+    id: 'fetch-streaming-signals',
+    name: 'Sinais de streaming',
+    emoji: '📡',
+    schedule: '*/15 * * * *',
+    frequencyLabel: 'A cada 15 minutos',
+    description: 'Atualiza sinais usados para tendências de streaming',
+    endpoint: '/api/cron/fetch-streaming-signals',
+    defaultLimit: null,
     color: 'amber',
   },
   {
-    id: 'social-links',
-    name: 'Sync Social Links',
-    emoji: '🔗',
-    schedule: '30 0 * * *',
-    frequencyLabel: 'Diário 00:30 UTC',
-    description: 'Atualiza Instagram, Twitter, YouTube etc. dos artistas via TMDB',
-    endpoint: '/api/cron/sync-social-links',
-    defaultLimit: 10,
-    color: 'green',
+    id: 'update-trending',
+    name: 'Atualizar trending',
+    emoji: '📈',
+    schedule: '0 */6 * * *',
+    frequencyLabel: 'A cada 6 horas',
+    description: 'Recalcula scores e rankings de artistas, grupos e notícias',
+    endpoint: '/api/cron/update-trending',
+    defaultLimit: null,
+    color: 'pink',
   },
   {
     id: 'discography',
-    name: 'Sync Artist Discography',
-    emoji: '🎵',
-    schedule: '0 1 * * *',
-    frequencyLabel: 'Diário 01:00 UTC',
-    description: 'Sincroniza discografia via MusicBrainz + IA como fallback',
+    name: 'Discografia de artistas',
+    emoji: '💿',
+    schedule: '0 * * * *',
+    frequencyLabel: 'A cada hora',
+    description: 'Sincroniza discografias pendentes de artistas',
     endpoint: '/api/cron/sync-discography',
     defaultLimit: 5,
     color: 'pink',
   },
   {
-    id: 'backfill-images',
-    name: 'Backfill News Images',
-    emoji: '🖼️',
+    id: 'cast-sync',
+    name: 'Elenco de produções',
+    emoji: '🎭',
+    schedule: '0 * * * *',
+    frequencyLabel: 'A cada hora',
+    description: 'Sincroniza elencos pendentes das produções via TMDB',
+    endpoint: '/api/cron/sync-cast',
+    defaultLimit: 5,
+    color: 'purple',
+  },
+  {
+    id: 'social-links',
+    name: 'Redes sociais de artistas',
+    emoji: '🔗',
+    schedule: '0 2 * * *',
+    frequencyLabel: 'Diário 02:00 UTC',
+    description: 'Busca links sociais de artistas no Wikidata',
+    endpoint: '/api/cron/sync-social-links-wikidata',
+    defaultLimit: null,
+    color: 'green',
+  },
+  {
+    id: 'artist-visibility',
+    name: 'Visibilidade de artistas',
+    emoji: '👁️',
+    schedule: '0 2 * * *',
+    frequencyLabel: 'Diário 02:00 UTC',
+    description: 'Reavalia auto-ocultação e liberação de artistas',
+    endpoint: '/api/cron/artist-visibility',
+    defaultLimit: null,
+    color: 'amber',
+  },
+  {
+    id: 'digest',
+    name: 'Email digest do blog',
+    emoji: '📬',
+    schedule: '0 2 * * *',
+    frequencyLabel: 'Diário 02:00 UTC',
+    description: 'Envia o resumo editorial para assinantes',
+    endpoint: '/api/cron/digest',
+    defaultLimit: null,
+    color: 'blue',
+  },
+  {
+    id: 'fetch-streaming-shows',
+    name: 'Top shows de streaming',
+    emoji: '🎬',
     schedule: '0 3 * * *',
     frequencyLabel: 'Diário 03:00 UTC',
-    description: 'Extrai og:image de páginas de notícias sem imagem',
-    endpoint: '/api/cron/backfill-images',
-    defaultLimit: 20,
+    description: 'Atualiza títulos em destaque nas plataformas',
+    endpoint: '/api/cron/fetch-streaming-shows',
+    defaultLimit: null,
     color: 'orange',
+  },
+  {
+    id: 'sync-groups-discography',
+    name: 'Discografia de grupos',
+    emoji: '🎵',
+    schedule: '0 6 * * 0',
+    frequencyLabel: 'Domingo 06:00 UTC',
+    description: 'Sincroniza catálogos Spotify dos grupos vinculados',
+    endpoint: '/api/cron/sync-groups-discography',
+    defaultLimit: null,
+    color: 'pink',
   },
 ] as const
 
 type CronJobId = typeof CRON_JOBS[number]['id']
+
+const MANUAL_TRIGGER_REVIEW: Partial<Record<CronJobId, string>> = {
+  'tag-news': 'Altera tags editoriais; revisar antes de executar manualmente.',
+  discography: 'Atualiza catálogo musical via fonte externa; revisar antes de disparar manualmente.',
+  'cast-sync': 'Pode criar novos artistas e preencher biografia a partir do TMDB.',
+  'artist-visibility': 'Altera visibilidade; trate exceções na Central de Visibilidade.',
+  digest: 'Configurado no workflow, mas a rota ainda requer revisão de método antes de ativar.',
+  'sync-groups-discography': 'Atualiza catálogo musical; executar após revisão da estratégia de catálogo.',
+}
+
+const LOCK_JOB_IDS: Record<string, CronJobId> = {
+  'cron-sync-cast': 'cast-sync',
+  'cron-sync-social-links': 'social-links',
+  'cron-sync-discography': 'discography',
+  'cron-sync-groups-discography': 'sync-groups-discography',
+  'cron:artist-visibility': 'artist-visibility',
+}
 
 function getNextRuns(schedule: string, count = 3): string[] {
   if (schedule === 'manual') return []
@@ -94,12 +166,25 @@ function getNextRuns(schedule: string, count = 3): string[] {
   const now = new Date()
   const results: string[] = []
   const parts = schedule.split(' ')
-  const [minPart, hourPart] = parts
+  const [minPart, hourPart, , , weekdayPart] = parts
 
   // Handle */N patterns
   const isMinInterval = minPart.startsWith('*/')
   const isHourInterval = hourPart.startsWith('*/')
   const isDailyFixed = !isMinInterval && !isHourInterval && hourPart !== '*'
+
+  if (isMinInterval && hourPart === '*') {
+    const intervalM = parseInt(minPart.slice(2))
+    const next = new Date(now)
+    next.setUTCSeconds(0, 0)
+    next.setUTCMinutes(next.getUTCMinutes() + (intervalM - (next.getUTCMinutes() % intervalM)))
+    if (next <= now) next.setUTCMinutes(next.getUTCMinutes() + intervalM)
+    for (let i = 0; i < count; i++) {
+      results.push(next.toISOString())
+      next.setUTCMinutes(next.getUTCMinutes() + intervalM)
+    }
+    return results
+  }
 
   if (isHourInterval) {
     const intervalH = parseInt(hourPart.slice(2))
@@ -119,10 +204,17 @@ function getNextRuns(schedule: string, count = 3): string[] {
     const min = parseInt(minPart) || 0
     const next = new Date(now)
     next.setUTCHours(hour, min, 0, 0)
-    if (next <= now) next.setUTCDate(next.getUTCDate() + 1)
+    if (weekdayPart && weekdayPart !== '*') {
+      const targetDay = parseInt(weekdayPart)
+      const daysUntilRun = (targetDay - next.getUTCDay() + 7) % 7
+      next.setUTCDate(next.getUTCDate() + daysUntilRun)
+      if (next <= now) next.setUTCDate(next.getUTCDate() + 7)
+    } else if (next <= now) {
+      next.setUTCDate(next.getUTCDate() + 1)
+    }
     for (let i = 0; i < count; i++) {
       results.push(next.toISOString())
-      next.setUTCDate(next.getUTCDate() + 1)
+      next.setUTCDate(next.getUTCDate() + (weekdayPart && weekdayPart !== '*' ? 7 : 1))
     }
   } else {
     results.push(new Date(now.getTime() + 3600000).toISOString())
@@ -139,7 +231,7 @@ export async function GET(_req: NextRequest) {
     const oneDayAgo = new Date(now.getTime() - 86400000)
     const oneWeekAgo = new Date(now.getTime() - 7 * 86400000)
 
-    const [totalNews, newsLast24h, newsLast7days, totalArtists, artistsLast24h, totalProductions, productionsLast24h, recentNews] = await Promise.all([
+    const [totalNews, newsLast24h, newsLast7days, totalArtists, artistsLast24h, totalProductions, productionsLast24h, recentNews, locks, systemErrors, aiFailures] = await Promise.all([
       prisma.news.count(),
       prisma.news.count({ where: { createdAt: { gte: oneDayAgo } } }),
       prisma.news.count({ where: { createdAt: { gte: oneWeekAgo } } }),
@@ -148,11 +240,21 @@ export async function GET(_req: NextRequest) {
       prisma.production.count({ where: { isHidden: false } }),
       prisma.production.count({ where: { isHidden: false, createdAt: { gte: oneDayAgo } } }),
       prisma.news.findMany({ take: 8, orderBy: { createdAt: 'desc' }, select: { id: true, title: true, createdAt: true, source: true } }),
+      prisma.cronLock.findMany({
+        where: { expiresAt: { gt: now } },
+        select: { id: true, lockedAt: true, expiresAt: true },
+      }),
+      prisma.systemEvent.count({ where: { level: 'ERROR', createdAt: { gte: oneDayAgo } } }),
+      prisma.aiUsageLog.count({
+        where: { status: { in: ['error', 'circuit_open'] }, createdAt: { gte: oneDayAgo } },
+      }),
     ])
 
     const jobs = CRON_JOBS.map(job => ({
       ...job,
       nextRuns: getNextRuns(job.schedule),
+      manualTriggerEnabled: !MANUAL_TRIGGER_REVIEW[job.id],
+      manualReviewReason: MANUAL_TRIGGER_REVIEW[job.id] ?? null,
     }))
 
     return NextResponse.json({
@@ -164,6 +266,19 @@ export async function GET(_req: NextRequest) {
         averageNewsPerDay: newsLast7days > 0 ? (newsLast7days / 7).toFixed(1) : '0',
       },
       recentNews,
+      activeLocks: locks
+        .filter(lock => LOCK_JOB_IDS[lock.id])
+        .map(lock => ({
+          jobId: LOCK_JOB_IDS[lock.id],
+          startedAt: lock.lockedAt,
+          expiresAt: lock.expiresAt,
+        })),
+      incidents: {
+        systemErrors,
+        aiFailures,
+        total: systemErrors + aiFailures,
+        since: oneDayAgo.toISOString(),
+      },
       timestamp: now.toISOString(),
     })
   } catch (err) {
@@ -180,6 +295,9 @@ export async function POST(req: NextRequest) {
     const { jobId, limit } = await req.json() as { jobId: CronJobId; limit?: number }
     const job = CRON_JOBS.find(j => j.id === jobId)
     if (!job) return NextResponse.json({ error: 'Job não encontrado' }, { status: 404 })
+    if (MANUAL_TRIGGER_REVIEW[job.id]) {
+      return NextResponse.json({ error: MANUAL_TRIGGER_REVIEW[job.id] }, { status: 409 })
+    }
 
     const secret = process.env.CRON_SECRET || process.env.NEXTAUTH_SECRET
     if (!secret) return NextResponse.json({ error: 'CRON_SECRET não configurado' }, { status: 500 })

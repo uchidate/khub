@@ -638,11 +638,11 @@ export default function BlocksDemoPage() {
     const [filter, setFilter] = useState<'all' | 'existing' | 'new'>('all')
 
     return (
-        <AdminLayout title="Galeria de Blocos">
+        <AdminLayout title="Guia de blocos do Blog">
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <h1 className="text-[24px] font-black text-foreground mb-1">Galeria de Blocos</h1>
-                    <p className="text-muted text-[13px]">Todos os tipos de bloco disponíveis para artigos do HallyuHub</p>
+                    <h1 className="text-[24px] font-black text-foreground mb-1">Guia de blocos do Blog</h1>
+                    <p className="text-muted text-[13px]">Referência visual dos blocos disponíveis e ideias em avaliação para artigos do HallyuHub</p>
                     <div className="flex gap-2 mt-4">
                         {[['all', 'Todos', '44'], ['existing', 'Existentes', '29'], ['new', 'Novos', '15']] .map(([v, label, count]) => (
                             <button key={v} onClick={() => setFilter(v as typeof filter)}

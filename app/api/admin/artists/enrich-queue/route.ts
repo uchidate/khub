@@ -40,6 +40,9 @@ export async function GET(req: Request) {
         const incompleteOr = [
             { bio:              null },
             { analiseEditorial: null },
+            { curiosidades:     { isEmpty: true } },
+            { height:           null },
+            { bloodType:        null },
             { fanInfo:          { equals: Prisma.JsonNull } },
             { awards:           { equals: Prisma.JsonNull } },
         ]

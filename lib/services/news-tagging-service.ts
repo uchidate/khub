@@ -1,15 +1,14 @@
 import { PrismaClient } from '@prisma/client';
-import { getOrchestrator } from '../ai/orchestrator-factory';
 
 /**
  * News Tag Enrichment Service
  *
- * Responsável por enriquecer tags de notícias usando Ollama.
- * A tradução foi removida — artigos ficam no idioma original (EN).
+ * Responsável por completar tags de notícias por regras determinísticas.
+ * Não altera tradução: artigos continuam pendentes até a revisão manual.
  *
  * Fluxo:
- * 1. Discovery (rápido): RSS → salva EN com translationStatus='pending'
- * 2. Tagging (batch): pega 'pending' → gera tags → 'completed' ou 'failed'
+ * 1. Discovery (rápido): RSS salva a notícia como rascunho
+ * 2. Tagging (batch): pega rascunhos, gera tags e libera para revisão
  */
 export class NewsTaggingService {
     private prisma: PrismaClient;
@@ -18,15 +17,11 @@ export class NewsTaggingService {
         this.prisma = prisma;
     }
 
-    private getOrchestrator() {
-        return getOrchestrator();
-    }
-
     /**
-     * Processa notícias pendentes: extrai tags melhoradas via Ollama
+     * Processa notícias pendentes: completa tags por regras locais.
      */
-    async translatePendingNews(limit: number = 10): Promise<{
-        translated: number;
+    async tagDraftNews(limit: number = 10): Promise<{
+        tagged: number;
         failed: number;
         skipped: number;
     }> {
@@ -49,7 +44,7 @@ export class NewsTaggingService {
 
         console.log(`📊 Found ${pendingNews.length} news pending tag enrichment`);
 
-        let translated = 0;
+        let tagged = 0;
         let failed = 0;
         let skipped = 0;
 
@@ -66,69 +61,26 @@ export class NewsTaggingService {
                     where: { id: news.id },
                     data: {
                         tags,
-                        translationStatus: 'completed',
-                        translatedAt: new Date(),
                         status: 'ready',
                     }
                 });
 
                 console.log(`  ✅ Tagged: ${sourceTitle.substring(0, 60)} → [${tags.join(', ')}]`);
-                translated++;
+                tagged++;
 
             } catch (error: any) {
                 console.error(`  ❌ Tagging failed for "${news.title}": ${error.message}`);
-
-                await this.prisma.news.update({
-                    where: { id: news.id },
-                    data: { translationStatus: 'failed' }
-                }).catch(() => {});
 
                 failed++;
             }
         }
 
-        console.log(`✅ Tag enrichment batch complete: ${translated} tagged, ${failed} failed, ${skipped} skipped`);
-        return { translated, failed, skipped };
+        console.log(`✅ Tag enrichment batch complete: ${tagged} tagged, ${failed} failed, ${skipped} skipped`);
+        return { tagged, failed, skipped };
     }
 
     /**
-     * Reprocessa notícias com falha
-     */
-    async retryFailedTranslations(limit: number = 10): Promise<number> {
-        console.log(`🔄 Retrying failed news tag enrichment (limit: ${limit})...`);
-
-        const result = await this.prisma.news.updateMany({
-            where: { translationStatus: 'failed' },
-            data: { translationStatus: 'pending' }
-        });
-
-        console.log(`📊 Reset ${result.count} failed to pending`);
-
-        const stats = await this.translatePendingNews(limit);
-        return stats.translated;
-    }
-
-    /**
-     * Estatísticas de processamento
-     */
-    async getTranslationStats(): Promise<{
-        pending: number;
-        completed: number;
-        failed: number;
-        total: number;
-    }> {
-        const [pending, completed, failed, total] = await Promise.all([
-            this.prisma.news.count({ where: { translationStatus: 'pending' } }),
-            this.prisma.news.count({ where: { translationStatus: 'completed' } }),
-            this.prisma.news.count({ where: { translationStatus: 'failed' } }),
-            this.prisma.news.count(),
-        ]);
-
-        return { pending, completed, failed, total };
-    }
-
-    /**
-     * Extrai/melhora tags usando Ollama com análise semântica do conteúdo EN
+     * Extrai tags por palavras-chave e classificação já conhecida da notícia.
      */
     private async extractTags(
         title: string,
@@ -172,39 +124,6 @@ export class NewsTaggingService {
         };
         if (contentType && contentTypeTagMap[contentType] && !tags.includes(contentTypeTagMap[contentType])) {
             tags.unshift(contentTypeTagMap[contentType]);
-        }
-
-        // Segunda passagem: Ollama para tags semânticas melhoradas (artistas, grupos, tópicos)
-        try {
-            const snippet = content.substring(0, 600);
-            const prompt = `You are a K-pop/K-drama content tagger. Analyze this news article and return 2-4 tags in Portuguese (PT-BR).
-
-Title: ${title}
-Content: ${snippet}
-
-Rules:
-- Tags must be in Portuguese
-- Include the main artist or group name if clearly mentioned (e.g. "BTS", "BLACKPINK", "aespa")
-- Include content category: K-pop, K-drama, Filme, Música, Awards, Comeback, Debut, Variedades, Colaboração, MV, Show, Polêmica, Entrevista
-- Return ONLY 2-4 short tags, comma-separated, nothing else
-- Example output: K-pop, BTS, Awards`;
-
-            const result = await this.getOrchestrator().generateStructured<{ tags: string[] }>(
-                prompt,
-                '{ "tags": ["string"] }',
-                { preferredProvider: 'ollama' }
-            );
-
-            if (result.parsed.tags?.length) {
-                for (const t of result.parsed.tags) {
-                    const clean = t.trim();
-                    if (clean && !tags.some(existing => existing.toLowerCase() === clean.toLowerCase())) {
-                        tags.push(clean);
-                    }
-                }
-            }
-        } catch {
-            // Ollama pode estar offline — tags de keyword já cobrem o básico
         }
 
         if (tags.length === 0) tags.push('K-pop', 'Entretenimento');

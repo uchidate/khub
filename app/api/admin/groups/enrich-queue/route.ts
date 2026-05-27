@@ -33,7 +33,10 @@ export async function GET(req: Request) {
         const incompleteOr: Prisma.MusicalGroupWhereInput[] = [
             { bio: null },
             { analiseEditorial: null },
+            { curiosidades: { isEmpty: true } },
             { fanClubName: null },
+            { officialColor: null },
+            { socialLinks: { equals: Prisma.JsonNull } },
         ]
         if (where.AND) {
             (where.AND as Prisma.MusicalGroupWhereInput[]).push({ OR: incompleteOr })

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Eye, Languages, Sparkles, Globe, EyeOff, AlertCircle, RotateCcw, CheckCircle2, ShieldAlert, Flag } from 'lucide-react'
+import { Loader2, Eye, Globe, EyeOff, AlertCircle, RotateCcw, CheckCircle2, ShieldAlert, Flag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type ActionType = 'publish' | 'translate' | 'enrich' | 'show' | 'hide' | 'approve' | 'flagAdult' | 'flagNonKorean'
+type ActionType = 'publish' | 'show' | 'hide' | 'approve' | 'flagAdult' | 'flagNonKorean'
 type EntityType = 'news' | 'artist' | 'production'
 
 interface Props {
@@ -20,8 +20,6 @@ const ACTION_CONFIG: Record<ActionType, {
     cls:       string
 }> = {
     publish:   { label: 'Publicar',        loadLabel: 'Publicando...',   icon: Globe,     cls: 'text-muted hover:text-foreground hover:bg-surface-hover' },
-    translate: { label: 'Traduzir IA',     loadLabel: 'Traduzindo...',   icon: Languages, cls: 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10' },
-    enrich:    { label: 'Enriquecer IA',   loadLabel: 'Gerando...',      icon: Sparkles,  cls: 'text-blue-400/80 hover:text-blue-300 hover:bg-blue-500/10' },
     show:          { label: 'Tornar visível',  loadLabel: 'Salvando...',     icon: Eye,          cls: 'text-muted hover:text-foreground hover:bg-surface-hover' },
     hide:          { label: 'Ocultar',         loadLabel: 'Ocultando...',    icon: EyeOff,       cls: 'text-red-400/80 hover:text-red-300 hover:bg-red-500/10' },
     approve:       { label: 'Aprovar',          loadLabel: 'Aprovando...',    icon: CheckCircle2, cls: 'text-emerald-400/80 hover:text-emerald-300 hover:bg-emerald-500/10' },
@@ -59,23 +57,6 @@ export function PipelineActions({ id, type, action }: Props) {
                 }
                 method = 'PATCH'
                 body   = { isHidden: action === 'hide' }
-            } else if (action === 'translate') {
-                if (type === 'news') {
-                    url    = `/api/admin/news/${id}/translate`
-                    method = 'POST'
-                } else {
-                    const entityType = type === 'artist' ? 'artist' : 'production'
-                    url  = '/api/admin/translations/single'
-                    body = { entityType, id }
-                }
-            } else if (action === 'enrich') {
-                if (type === 'artist') {
-                    url  = `/api/admin/artists/${id}/generate-editorial`
-                    body = { generate: ['bio', 'editorial', 'curiosidades'] }
-                } else {
-                    url  = '/api/admin/enrichment'
-                    body = { target: 'production_review', entityId: id }
-                }
             } else if (action === 'approve') {
                 url    = `/api/admin/productions?id=${id}`
                 method = 'PATCH'

@@ -8,7 +8,7 @@ import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-servi
  * Cron Job - Sync Artist Discography
  *
  * Syncs discography for artists that don't have data or have stale data (30+ days).
- * Uses MusicBrainz as primary source, AI (Gemini) as fallback.
+ * Uses MusicBrainz only. AI fallback is disabled to protect reviewed content.
  *
  * AUTENTICAÇÃO: Requer CRON_SECRET via header Authorization: Bearer ou ?token=
  * RETORNO: 202 Accepted imediatamente — processamento continua em background.

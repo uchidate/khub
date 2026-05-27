@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { ArrowDownAZ, ExternalLink, Search, ShoppingBag, Sparkles } from 'lucide-react'
+import { ArrowDownAZ, Search, ShoppingBag, Sparkles } from 'lucide-react'
 import prisma from '@/lib/prisma'
 import { LojaClient } from '@/components/ui/LojaClient'
 import { ShopeeCard } from '@/components/ui/ShopeeCard'
 import { LojaCupons } from '@/components/ui/LojaCupons'
+import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 
 async function getData() {
     const products = await prisma.storeProduct.findMany({
-        where: { isActive: true },
+        where: { isActive: true, isHidden: false },
         orderBy: [{ featured: 'desc' }, { category: 'asc' }, { position: 'asc' }, { createdAt: 'desc' }],
         select: {
             id: true, name: true, description: true, price: true, originalPrice: true,
@@ -192,6 +193,8 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
                 {/* ── Conteúdo principal ───────────────────────────────── */}
                 <div className="page-wrap py-6 space-y-8">
 
+                    <AffiliateNotice />
+
                     <LojaCupons />
 
                     {!hasProducts ? (
@@ -226,6 +229,7 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
                                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                                         {featuredProducts.map(p => (
                                             <ShopeeCard key={p.id} {...p}
+                                                placement="store_featured"
                                                 rating={p.rating ?? undefined}
                                                 badge={p.badge ?? undefined}
                                                 soldCount={p.soldCount ?? undefined}
@@ -239,11 +243,6 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
                         </>
                     )}
 
-                    {/* Aviso afiliados */}
-                    <p className="text-[11px] text-muted/60 flex items-center gap-1.5 pt-2 border-t border-border/40">
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                        Produtos abrem em sites parceiros. Comprar pelo nosso link apoia o HallyuHub sem custo extra.
-                    </p>
                 </div>
 
                 <ScrollToTop />

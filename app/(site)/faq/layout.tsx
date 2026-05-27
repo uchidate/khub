@@ -51,7 +51,7 @@ const FAQ_SCHEMA = {
       name: 'De onde vêm as notícias?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. O conteúdo é traduzido automaticamente para português brasileiro.',
+        text: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. Quando há versão em português, ela passa por revisão editorial antes de ser aplicada.',
       },
     },
     {

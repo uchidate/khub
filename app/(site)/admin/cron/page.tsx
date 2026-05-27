@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import {
-  RefreshCw, CheckCircle2, Activity,
+  RefreshCw, CheckCircle2, Activity, Bot,
   Clock, Newspaper, Users, Film, Loader2, ChevronRight,
-  Zap,
+  Zap, Sparkles, PlugZap, ArrowRight, Server, ShieldAlert, Wrench, Share2,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminBadge, AdminLinkButton } from '@/components/admin'
 
 interface CronJob {
   id: string
@@ -19,6 +21,8 @@ interface CronJob {
   defaultLimit: number | null
   color: string
   nextRuns: string[]
+  manualTriggerEnabled: boolean
+  manualReviewReason: string | null
 }
 
 interface Stats {
@@ -43,7 +47,37 @@ interface CronData {
   jobs: CronJob[]
   stats: Stats
   recentNews: RecentNews[]
+  activeLocks: Array<{
+    jobId: string
+    startedAt: string
+    expiresAt: string
+  }>
+  incidents: {
+    systemErrors: number
+    aiFailures: number
+    total: number
+    since: string
+  }
   timestamp: string
+}
+
+interface HealthData {
+  ai: { hasProvider: boolean }
+  monitoring: {
+    tmdb: { configured: boolean; available: boolean }
+    slack: { content: boolean; alerts: boolean; deploys: boolean }
+  }
+}
+
+interface AiWidgetData {
+  lastJobAt: string | null
+  lastJobStatus: 'success' | 'failed' | null
+  totalJobsToday: number
+  activeProviders: string[]
+}
+
+interface EnrichmentData {
+  counts: Record<string, number>
 }
 
 type TriggerState = Record<string, 'idle' | 'running' | 'ok' | 'error'>
@@ -57,6 +91,30 @@ const COLOR_MAP: Record<string, { badge: string; dot: string; ring: string }> = 
   orange: { badge: 'bg-orange-500/15 text-orange-300 border-orange-500/20', dot: 'bg-orange-400', ring: 'ring-orange-500/30' },
 }
 
+const MANUAL_RECOVERY_TOOLS = [
+  {
+    title: 'Metadados de produções',
+    href: '/admin/productions/sync',
+    icon: Film,
+    badge: 'Revisar sobrescrita',
+    description: 'Reparo TMDB em lote. O modo completo pode alterar campos já curados; use somente após conferir a proteção necessária.',
+  },
+  {
+    title: 'Filmografias',
+    href: '/admin/filmography',
+    icon: Wrench,
+    badge: 'Manual / legado',
+    description: 'Pode criar ou associar produções por TMDB e fallback de IA. Não possui job dedicado ativo no workflow atual.',
+  },
+  {
+    title: 'Redes sociais',
+    href: '/admin/artists/social-links',
+    icon: Share2,
+    badge: 'Correção pontual',
+    description: 'Edição e busca de links sociais; o preenchimento automático diário usa Wikidata.',
+  },
+] as const
+
 function TimelineBar({ jobs }: { jobs: CronJob[] }) {
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
@@ -64,6 +122,7 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
   function getRunHours(schedule: string): number[] {
     const [_minPart, hourPart] = schedule.split(' ')
     if (!hourPart) return []
+    if (_minPart.startsWith('*/') && hourPart === '*') return hours
     if (hourPart.startsWith('*/')) {
       const interval = parseInt(hourPart.slice(2))
       return hours.filter(h => h % interval === 0)
@@ -108,14 +167,39 @@ function TimelineBar({ jobs }: { jobs: CronJob[] }) {
 
 export default function AdminCronPage() {
   const [data, setData] = useState<CronData | null>(null)
+  const [health, setHealth] = useState<HealthData | null>(null)
+  const [ai, setAi] = useState<AiWidgetData | null>(null)
+  const [enrichment, setEnrichment] = useState<EnrichmentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [triggerState, setTriggerState] = useState<TriggerState>({})
+  const [loadError, setLoadError] = useState(false)
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
+    setLoadError(false)
     try {
-      const res = await fetch('/api/admin/cron')
-      if (res.ok) setData(await res.json())
+      const responses = await Promise.allSettled([
+        fetch('/api/admin/cron'),
+        fetch('/api/admin/health'),
+        fetch('/api/admin/ai/widget'),
+        fetch('/api/admin/enrichment'),
+      ])
+      const [cronResponse, healthResponse, aiResponse, enrichmentResponse] = responses
+
+      if (cronResponse.status === 'fulfilled' && cronResponse.value.ok) {
+        setData(await cronResponse.value.json())
+      } else {
+        setLoadError(true)
+      }
+      if (healthResponse.status === 'fulfilled' && healthResponse.value.ok) {
+        setHealth(await healthResponse.value.json())
+      }
+      if (aiResponse.status === 'fulfilled' && aiResponse.value.ok) {
+        setAi(await aiResponse.value.json())
+      }
+      if (enrichmentResponse.status === 'fulfilled' && enrichmentResponse.value.ok) {
+        setEnrichment(await enrichmentResponse.value.json())
+      }
     } finally {
       setLoading(false)
     }
@@ -141,70 +225,229 @@ export default function AdminCronPage() {
 
   const jobs = data?.jobs ?? []
   const stats = data?.stats
+  const activeLocks = data?.activeLocks ?? []
+  const enrichmentPending = enrichment
+    ? Object.values(enrichment.counts).reduce((sum, count) => sum + count, 0)
+    : null
+  const integrationsHealthy = health
+    ? Number(health.monitoring.tmdb.available) + Number(health.ai.hasProvider)
+    : null
 
   return (
-    <AdminLayout title="Cron Jobs">
-      <div className="space-y-6">
+    <AdminLayout title="Central de Automação" hideTitle>
+      <div className="space-y-5">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Agendamentos</h1>
+            <p className="text-xs font-semibold text-accent">Automação e eficiência</p>
+            <h1 className="text-2xl lg:text-3xl font-black text-foreground mt-1">Central de automação</h1>
             {data && (
-              <p className="text-xs text-muted mt-0.5">
-                Atualizado {new Date(data.timestamp).toLocaleString('pt-BR')} · {jobs.length} jobs via GitHub Actions
+              <p className="text-sm text-muted mt-1">
+                {jobs.length} jobs configurados · atualizado {new Date(data.timestamp).toLocaleString('pt-BR')}
               </p>
             )}
           </div>
-          <button
-            onClick={fetch_}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-xs font-medium transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </button>
+          <div className="flex items-center gap-2">
+            <AdminLinkButton href="/admin/infrastructure" size="sm">
+              <Server size={13} />
+              Infraestrutura
+            </AdminLinkButton>
+            <button
+              onClick={fetch_}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </button>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Notícias', icon: Newspaper, total: stats?.totalNews, delta: stats?.newsLast24h, sub: `~${stats?.averageNewsPerDay}/dia`, color: 'text-purple-400' },
-            { label: 'Artistas', icon: Users,     total: stats?.totalArtists,     delta: stats?.artistsLast24h,     sub: 'visíveis',    color: 'text-emerald-400' },
-            { label: 'Produções', icon: Film,     total: stats?.totalProductions,  delta: stats?.productionsLast24h, sub: 'visíveis',    color: 'text-blue-400' },
-            { label: 'Notícias 7d', icon: Activity, total: stats?.newsLast7days,  delta: stats?.newsLast24h,        sub: 'últimos 7 dias', color: 'text-amber-400' },
-          ].map(({ label, icon: Icon, total, delta, sub, color }) => (
-            <div key={label} className="bg-surface border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-muted uppercase tracking-widest font-black">{label}</span>
-                <Icon className={`w-3.5 h-3.5 ${color}`} />
+        {loadError && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            Não foi possível carregar os agendamentos. Atualize para tentar novamente.
+          </div>
+        )}
+
+        {data && data.incidents.total > 0 && (
+          <Link
+            href="/admin/inbox#operacao"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
+          >
+            <div className="flex items-center gap-3">
+              <Activity className="h-4 w-4 shrink-0 text-red-500" />
+              <div>
+                <p className="text-sm font-bold text-foreground">{data.incidents.total} incidente{data.incidents.total !== 1 ? 's' : ''} nas últimas 24h</p>
+                <p className="text-[11px] text-muted">{data.incidents.systemErrors} sistema · {data.incidents.aiFailures} IA</p>
               </div>
-              <p className="text-2xl font-black text-foreground tabular-nums">{total ?? '—'}</p>
-              <p className="text-[10px] text-muted mt-0.5">
-                {delta != null && delta > 0 && <span className="text-emerald-400">+{delta} hoje · </span>}
-                {sub}
+            </div>
+            <span className="flex items-center gap-1 text-xs font-bold text-red-500">
+              Revisar na Caixa <ArrowRight size={12} />
+            </span>
+          </Link>
+        )}
+
+        {/* Operational overview */}
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {[
+            {
+              label: 'Em execução', icon: Activity, value: activeLocks.length,
+              sub: activeLocks.length ? 'jobs com lock ativo agora' : 'nenhum job executando',
+              color: activeLocks.length ? 'text-blue-500' : 'text-emerald-500', href: null,
+            },
+            {
+              label: 'Fila editorial', icon: Sparkles, value: enrichmentPending,
+              sub: enrichment ? 'curadoria manual via Gemini' : 'carregando fila',
+              color: enrichmentPending ? 'text-amber-500' : 'text-emerald-500', href: '/admin/enrichment',
+            },
+            {
+              label: 'IA hoje', icon: Bot, value: ai?.totalJobsToday,
+              sub: ai?.lastJobStatus === 'failed' ? 'última chamada falhou' : `${ai?.activeProviders.length ?? 0} providers recentes`,
+              color: ai?.lastJobStatus === 'failed' ? 'text-red-500' : 'text-accent', href: '/admin/ai',
+            },
+            {
+              label: 'Dependências', icon: PlugZap, value: integrationsHealthy == null ? undefined : `${integrationsHealthy}/2`,
+              sub: health?.monitoring.tmdb.available && health?.ai.hasProvider ? 'TMDB disponível e IA configurada' : 'revisar integrações',
+              color: integrationsHealthy === 2 ? 'text-emerald-500' : 'text-amber-500', href: '/admin/infrastructure',
+            },
+          ].map(({ label, icon: Icon, value, sub, color, href }) => {
+            const contents = (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-muted uppercase tracking-widest font-black">{label}</span>
+                  <Icon className={`w-4 h-4 ${color}`} />
+                </div>
+                <p className={`text-2xl font-black tabular-nums ${color}`}>{value ?? '—'}</p>
+                <p className="text-[11px] text-muted mt-1">{sub}</p>
+              </>
+            )
+            return href ? (
+              <Link key={label} href={href} className="group bg-surface border border-border hover:border-accent/30 rounded-xl p-4 transition-colors">
+                {contents}
+              </Link>
+            ) : (
+              <div key={label} className="bg-surface border border-border rounded-xl p-4">
+                {contents}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Work queue and integrations */}
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[10px] text-muted uppercase tracking-widest font-black">Produção automatizada</p>
+                <p className="text-xs text-muted mt-1">Sinais recentes gerados pelos fluxos automáticos.</p>
+              </div>
+              <Link href="/admin/pipeline" className="text-xs text-muted hover:text-accent flex items-center gap-1 transition-colors">
+                Pipeline <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: 'Notícias 24h', icon: Newspaper, total: stats?.newsLast24h, sub: `~${stats?.averageNewsPerDay ?? '—'}/dia`, color: 'text-accent' },
+                { label: 'Artistas 24h', icon: Users, total: stats?.artistsLast24h, sub: 'novos visíveis', color: 'text-emerald-500' },
+                { label: 'Produções 24h', icon: Film, total: stats?.productionsLast24h, sub: 'novas visíveis', color: 'text-blue-500' },
+                { label: 'Notícias 7d', icon: Activity, total: stats?.newsLast7days, sub: 'últimos 7 dias', color: 'text-amber-500' },
+              ].map(({ label, icon: Icon, total, sub, color }) => (
+                <div key={label} className="rounded-lg bg-background border border-border p-3">
+                  <Icon className={`w-3.5 h-3.5 mb-2 ${color}`} />
+                  <p className="text-xl font-black text-foreground tabular-nums">{total ?? '—'}</p>
+                  <p className="text-[10px] text-muted font-semibold">{label}</p>
+                  <p className="text-[10px] text-muted mt-0.5">{sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-4">
+            <p className="text-[10px] text-muted uppercase tracking-widest font-black mb-3">Dependências</p>
+            <div className="space-y-3">
+              {[
+                { label: 'TMDB', ready: health?.monitoring.tmdb.available, configured: health?.monitoring.tmdb.configured },
+                { label: 'Provider de IA', ready: health?.ai.hasProvider, configured: health?.ai.hasProvider, configuredOnly: true },
+                { label: 'Slack alertas', ready: health?.monitoring.slack.alerts, configured: health?.monitoring.slack.alerts },
+              ].map(item => (
+                <div key={item.label} className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted">{item.label}</span>
+                  {!health ? (
+                    <AdminBadge variant="neutral">Verificando</AdminBadge>
+                  ) : item.ready ? (
+                    <AdminBadge variant="success" dot>{item.configuredOnly ? 'Configurado' : 'Disponível'}</AdminBadge>
+                  ) : item.configured ? (
+                    <AdminBadge variant="error" dot>Indisponível</AdminBadge>
+                  ) : (
+                    <AdminBadge variant="warning" dot>Não configurado</AdminBadge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <section className="space-y-3">
+          <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 flex items-start gap-3">
+            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-sm font-bold text-foreground">Proteção da curadoria manual</h2>
+              <p className="text-[11px] text-muted mt-1 leading-relaxed">
+                O fluxo principal de conteúdo é a fila de enriquecimento com prompt e retorno do Gemini. Rotinas que podem alterar catálogo, tags, biografia ou visibilidade permanecem visíveis para monitoramento, mas não podem ser disparadas rapidamente nesta central sem revisão.
               </p>
             </div>
-          ))}
-        </div>
+          </div>
+          <div>
+            <p className="text-[10px] text-muted uppercase tracking-widest font-black">Recuperações manuais controladas</p>
+            <p className="text-xs text-muted mt-1">Abra somente quando houver uma pendência identificada e confirme quais campos podem ser alterados.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            {MANUAL_RECOVERY_TOOLS.map(({ title, href, icon: Icon, badge, description }) => (
+              <Link key={href} href={href} className="rounded-xl border border-border bg-surface p-4 hover:border-amber-500/30 transition-colors">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <Icon className="w-4 h-4 text-muted" />
+                  <AdminBadge variant="warning" shape="pill">{badge}</AdminBadge>
+                </div>
+                <h3 className="text-sm font-bold text-foreground">{title}</h3>
+                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">{description}</p>
+                <span className="inline-flex items-center gap-1 text-[11px] text-accent mt-3">
+                  Abrir ferramenta <ArrowRight size={11} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* Timeline */}
         {jobs.length > 0 && (
           <div className="bg-surface border border-border rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-4 h-4 text-muted" />
-              <h2 className="text-sm font-bold text-foreground">Timeline 24h (UTC)</h2>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <Clock className="w-4 h-4 text-muted mr-2" />
+                <h2 className="text-sm font-bold text-foreground">Agenda 24h (UTC)</h2>
+              </div>
+              <span className="text-[10px] text-muted">blocos coloridos indicam execução prevista</span>
             </div>
             <TimelineBar jobs={jobs} />
-            <p className="text-[10px] text-muted mt-3">Cada bloco colorido = execução agendada naquela hora UTC</p>
           </div>
         )}
 
         {/* Jobs grid */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-muted uppercase tracking-widest font-black">Jobs configurados</p>
+            <p className="text-xs text-muted mt-1">Monitore os jobs ativos; disparos sensíveis exigem revisão antes de qualquer reprocessamento.</p>
+          </div>
+          <Link href="/admin/activity?tab=system" className="text-xs text-muted hover:text-accent transition-colors">
+            Ver eventos do sistema
+          </Link>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {jobs.map(job => {
             const colors = COLOR_MAP[job.color] ?? COLOR_MAP.blue
             const state = triggerState[job.id] ?? 'idle'
+            const activeRun = activeLocks.find(lock => lock.jobId === job.id)
             const nextRun = job.nextRuns?.[0]
             const nextRunDelta = nextRun
               ? Math.round((new Date(nextRun).getTime() - Date.now()) / 60000)
@@ -218,20 +461,27 @@ export default function AdminCronPage() {
                     <div className="min-w-0">
                       <h3 className="text-sm font-bold text-foreground leading-tight">{job.name}</h3>
                       <p className="text-[10px] text-muted mt-0.5 leading-tight">{job.description}</p>
+                      {activeRun && (
+                        <p className="text-[10px] text-blue-500 mt-1">
+                          Em execução desde {new Date(activeRun.startedAt).toLocaleTimeString('pt-BR')}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <button
                     onClick={() => trigger(job.id)}
-                    disabled={state === 'running'}
+                    disabled={state === 'running' || !!activeRun || !job.manualTriggerEnabled}
                     className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                      state === 'running' ? 'bg-surface text-muted cursor-wait' :
+                      state === 'running' || activeRun ? 'bg-blue-500/10 text-blue-500 cursor-wait' :
+                      !job.manualTriggerEnabled ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 cursor-not-allowed' :
                       state === 'ok'      ? `${colors.badge} border` :
                       state === 'error'   ? 'bg-red-500/15 text-red-300 border border-red-500/20' :
                       'bg-surface text-muted hover:bg-surface hover:text-foreground border border-transparent'
                     }`}
                     title="Disparar agora"
                   >
-                    {state === 'running' ? <Loader2 className="w-3 h-3 animate-spin" /> :
+                    {state === 'running' || activeRun ? <><Loader2 className="w-3 h-3 animate-spin" />Executando</> :
+                     !job.manualTriggerEnabled ? <><ShieldAlert className="w-3 h-3" />Revisar</> :
                      state === 'ok'      ? <CheckCircle2 className="w-3 h-3" /> :
                      state === 'error'   ? '✗' :
                      <><Zap className="w-3 h-3" />Disparar</>}
@@ -258,17 +508,22 @@ export default function AdminCronPage() {
                     <span>{new Date(nextRun!).toLocaleTimeString('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })} UTC</span>
                   </div>
                 )}
+                {job.manualReviewReason && (
+                  <p className="mt-2.5 text-[10px] leading-relaxed text-amber-600 dark:text-amber-400">
+                    Disparo manual bloqueado: {job.manualReviewReason}
+                  </p>
+                )}
               </div>
             )
           })}
         </div>
 
-        {/* Recent news */}
+        {/* Recent output */}
         {data?.recentNews && data.recentNews.length > 0 && (
           <div className="bg-surface border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Newspaper className="w-4 h-4 text-muted" />
-              <h2 className="text-sm font-bold text-foreground">Últimas Notícias Criadas</h2>
+              <h2 className="text-sm font-bold text-foreground">Últimas notícias produzidas</h2>
             </div>
             <div className="space-y-1.5">
               {data.recentNews.map((news, i) => (

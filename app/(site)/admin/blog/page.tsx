@@ -8,7 +8,6 @@ import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
-import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
 import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
 import {
@@ -443,48 +442,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 function SuggestionRow({
     item,
-    onGenerated,
-    onError,
-    onSuccess,
 }: {
     item:        NewsSuggestion
-    onGenerated: (id: string) => void
-    onError:     (msg: string) => void
-    onSuccess:   (msg: string) => void
 }) {
-    const [loading, setLoading] = useState(false)
-    const [done,    setDone]    = useState(false)
-
-    async function generate() {
-        if (loading || done) return
-        setLoading(true)
-        try {
-            const res = await fetch('/api/admin/enrichment', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ target: 'news_blog_post', entityId: item.id }),
-            })
-            const data = await res.json()
-            if (res.ok && data.processed > 0) {
-                setDone(true)
-                onSuccess('Blog post gerado como rascunho')
-                onGenerated(item.id)
-            } else {
-                onError(data.error ?? 'Erro ao gerar blog post')
-            }
-        } catch {
-            onError('Erro de rede')
-        } finally {
-            setLoading(false)
-        }
-    }
-
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all group ${
-            done
-                ? 'border-emerald-500/20 bg-emerald-900/5 opacity-60'
-                : 'border-border bg-surface hover:bg-surface-hover'
-        }`}>
+        <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface hover:bg-surface-hover transition-all group">
             <div className="w-12 h-9 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
                 {item.imageUrl ? (
                     <Image src={item.imageUrl} alt={item.name} width={48} height={36} className="object-cover w-full h-full" unoptimized />
@@ -502,25 +464,13 @@ function SuggestionRow({
             </div>
             <ArrowRight className="w-4 h-4 text-muted shrink-0 hidden sm:block" />
             <div className="shrink-0 flex items-center gap-2">
-                {done ? (
-                    <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                        <CheckCircle className="w-3.5 h-3.5" /> Gerado
-                    </span>
-                ) : (
-                    <AdminButton onClick={generate} disabled={loading} size="sm">
-                        {loading
-                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                            : <><Sparkles className="w-3.5 h-3.5" /> Gerar Post</>
-                        }
-                    </AdminButton>
-                )}
-                <a
+                <Link
                     href={`/admin/news/${item.id}/edit`}
-                    className="p-1.5 rounded text-muted hover:text-muted transition-colors opacity-0 group-hover:opacity-100"
-                    title="Ver notícia"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:text-foreground"
                 >
+                    Preparar manualmente
                     <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                </Link>
             </div>
         </div>
     )
@@ -934,8 +884,6 @@ function AdminBlogPageContent() {
     const [activeTab,     setActiveTab]    = useState<Tab>('posts')
     const [suggestions,   setSuggestions]  = useState<NewsSuggestion[]>([])
     const [loading,       setLoading]      = useState(false)
-    const [hiddenIds,     setHiddenIds]    = useState<Set<string>>(new Set())
-    const [generatingAll, setGeneratingAll] = useState(false)
     const [statusFilter,  setStatusFilter] = useState<string>('')
     const [seoFilter,     setSeoFilter]    = useState<string>('')
     const [selectedIds,   setSelectedIds]  = useState<string[]>([])
@@ -1001,35 +949,7 @@ function AdminBlogPageContent() {
         if (activeTab === 'suggestions') fetchSuggestions()
     }, [activeTab, fetchSuggestions])
 
-    const handleGenerated = useCallback((id: string) => {
-        setHiddenIds(prev => { const next = new Set(prev); next.add(id); return next })
-        refreshStats()
-    }, [refreshStats])
-
-    async function generateBatch() {
-        setGeneratingAll(true)
-        try {
-            const res = await fetch('/api/admin/enrichment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target: 'news_blog_post', limit: 5 }),
-            })
-            const data = await res.json()
-            if (res.ok) {
-                showSuccess(`${data.processed} posts gerados como rascunho`)
-                await fetchSuggestions()
-                refreshStats()
-            } else {
-                showError(data.error ?? 'Erro ao gerar posts')
-            }
-        } catch {
-            showError('Erro de rede')
-        } finally {
-            setGeneratingAll(false)
-        }
-    }
-
-    const visibleSuggestions = suggestions.filter(s => !hiddenIds.has(s.id))
+    const visibleSuggestions = suggestions
 
     // ── Columns (Posts tab) ──────────────────────────────────────────────────
 
@@ -1218,7 +1138,7 @@ function AdminBlogPageContent() {
                 {/* Header */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <p className="text-xs text-muted">
-                        Gerencie posts publicados e converta notícias em conteúdo editorial com IA.
+                        Gerencie posts publicados e transforme pautas em conteudo revisado.
                     </p>
                     <div className="flex items-center gap-2">
                         <button
@@ -1246,7 +1166,7 @@ function AdminBlogPageContent() {
                         { key: 'top',         label: 'Top Posts',    icon: <TrendingUp className="w-3.5 h-3.5" /> },
                         { key: 'calendar',    label: 'Calendário',   icon: <CalendarDays className="w-3.5 h-3.5" /> },
                         { key: 'categories',  label: 'Categorias',   icon: <Tag className="w-3.5 h-3.5" /> },
-                        { key: 'suggestions', label: 'Sugestões IA', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
+                        { key: 'suggestions', label: 'Pautas sugeridas', icon: <Sparkles className="w-3.5 h-3.5" />, badge: visibleSuggestions.length },
                     ]}
                     active={activeTab}
                     onChange={v => { setActiveTab(v as Tab); setSelectedIds([]) }}
@@ -1258,7 +1178,7 @@ function AdminBlogPageContent() {
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                             <p className="text-xs text-muted flex-1">
-                                Notícias publicadas sem blog post gerado, ordenadas por recência.
+                                Noticias publicadas sem artigo associado, para avaliacao e escrita manual.
                             </p>
                             <button
                                 onClick={fetchSuggestions}
@@ -1268,16 +1188,6 @@ function AdminBlogPageContent() {
                                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                                 Atualizar
                             </button>
-                            <button
-                                onClick={generateBatch}
-                                disabled={generatingAll || loading || visibleSuggestions.length === 0}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all shadow-lg shadow-blue-500/20"
-                            >
-                                {generatingAll
-                                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                                    : <><Sparkles className="w-3.5 h-3.5" /> Gerar próximos 5</>
-                                }
-                            </button>
                         </div>
 
                         <div className="flex items-center gap-2 text-[11px] text-muted">
@@ -1285,7 +1195,7 @@ function AdminBlogPageContent() {
                             <span>Notícia publicada</span>
                             <ArrowRight className="w-3 h-3" />
                             <Sparkles className="w-3.5 h-3.5 text-blue-400/60" />
-                            <span>Geração IA</span>
+                            <span>Preparacao manual</span>
                             <ArrowRight className="w-3 h-3" />
                             <FileText className="w-3.5 h-3.5 text-muted" />
                             <span>Rascunho</span>
@@ -1308,13 +1218,7 @@ function AdminBlogPageContent() {
                         ) : (
                             <div className="space-y-2">
                                 {visibleSuggestions.map(item => (
-                                    <SuggestionRow
-                                        key={item.id}
-                                        item={item}
-                                        onGenerated={handleGenerated}
-                                        onError={showError}
-                                        onSuccess={showSuccess}
-                                    />
+                                    <SuggestionRow key={item.id} item={item} />
                                 ))}
                             </div>
                         )}

@@ -95,7 +95,6 @@ export default function EditArtistPage() {
     const [artist, setArtist] = useState<Artist | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [generatingEditorial, setGeneratingEditorial] = useState(false)
     const [form, setForm] = useState<Partial<Artist>>({})
     // Social links edit state: array of [key, value] pairs
     const [socialPairs, setSocialPairs] = useState<[string, string][]>([])
@@ -245,31 +244,6 @@ export default function EditArtistPage() {
             toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
         } finally {
             setSaving(false)
-        }
-    }
-
-    const handleGenerateEditorial = async (fields: string[]) => {
-        if (!id) return
-        setGeneratingEditorial(true)
-        try {
-            const res = await fetch(`/api/admin/artists/${id}/generate-editorial`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ generate: fields }),
-            })
-            const data = await res.json()
-            if (!res.ok) { toast.error(data.error ?? 'Erro ao gerar conteúdo editorial'); return }
-            if (data.generated.bio) setForm(prev => ({ ...prev, bio: data.generated.bio }))
-            if (data.generated.editorial) setForm(prev => ({ ...prev, analiseEditorial: data.generated.editorial }))
-            if (data.generated.curiosidades) setForm(prev => ({ ...prev, curiosidades: data.generated.curiosidades }))
-            toast.success(`Conteúdo gerado! Custo: $${data.totalCostUsd.toFixed(4)}`)
-            if (Object.keys(data.errors ?? {}).length > 0) {
-                toast.error('Alguns campos falharam: ' + Object.values(data.errors).join('; '))
-            }
-        } catch {
-            toast.error('Erro ao gerar conteúdo editorial')
-        } finally {
-            setGeneratingEditorial(false)
         }
     }
 
@@ -694,7 +668,7 @@ export default function EditArtistPage() {
                             </div>
                             <div className="space-y-2">
                                 {(form.curiosidades ?? []).length === 0 && (
-                                    <p className="text-xs text-muted py-2">Nenhuma curiosidade. Gere via IA ou adicione manualmente.</p>
+                                    <p className="text-xs text-muted py-2">Nenhuma curiosidade. Prepare no Gemini ou adicione manualmente.</p>
                                 )}
                                 {(form.curiosidades ?? []).map((item, i) => (
                                     <div key={i} className="flex gap-2 items-start">
@@ -939,53 +913,31 @@ export default function EditArtistPage() {
                             )}
                         </div>
 
-                        {/* Conteúdo Editorial (IA) */}
+                        {/* Conteudo editorial revisado */}
                         <div className="border border-accent/20 rounded-xl p-4 bg-accent/5">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-accent" />
-                                    <span className="text-sm font-semibold text-foreground">Conteúdo Editorial</span>
-                                    <span className="text-[10px] text-muted font-mono">DeepSeek-V3</span>
+                                    <span className="text-sm font-semibold text-foreground">Conteudo Editorial</span>
+                                    <span className="text-[10px] text-muted font-mono">Gemini + revisao</span>
                                 </div>
                                 <Link
-                                    href="/admin/enrichment"
+                                    href={`/admin/artists/${id}/enrich`}
                                     className="text-[10px] text-muted hover:text-accent transition-colors"
                                 >
-                                    Ver lote →
+                                    Abrir curadoria →
                                 </Link>
                             </div>
                             <p className="text-xs text-muted mb-3">
-                                Gera conteúdo autoral em PT-BR (bio 400+ palavras, análise editorial, curiosidades). Salve antes de gerar.
+                                A geracao automatica foi desativada. Copie o prompt, gere no Gemini e aplique somente o JSON revisado.
                             </p>
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleGenerateEditorial(['bio'])}
-                                    disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-accent border border-accent/30 hover:border-accent/60 disabled:opacity-40 transition-colors"
-                                >
-                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                    Bio (~$0.002)
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleGenerateEditorial(['editorial', 'curiosidades'])}
-                                    disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-accent border border-accent/30 hover:border-accent/60 disabled:opacity-40 transition-colors"
-                                >
-                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                    Análise + Curiosidades (~$0.003)
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleGenerateEditorial(['bio', 'editorial', 'curiosidades'])}
-                                    disabled={generatingEditorial}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-accent/20 text-accent border border-accent/30 hover:bg-accent/40 disabled:opacity-40 transition-colors"
-                                >
-                                    {generatingEditorial ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                    Tudo (~$0.005)
-                                </button>
-                            </div>
+                            <Link
+                                href={`/admin/artists/${id}/enrich`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-accent/20 text-accent border border-accent/30 hover:bg-accent/40 transition-colors"
+                            >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Preparar no Gemini
+                            </Link>
                         </div>
 
                         {/* TMDB + MBID */}
@@ -1171,7 +1123,7 @@ export default function EditArtistPage() {
                                         <p className="text-sm font-bold text-foreground">Flaggado como não-coreano</p>
                                     </div>
                                     <p className="text-xs text-muted mt-0.5">
-                                        Exclui este artista de enrichment automático e filas de moderação
+                                        Exclui este artista da fila de curadoria e das filas de moderação
                                     </p>
                                 </div>
                             </label>
@@ -1197,7 +1149,7 @@ export default function EditArtistPage() {
                                 href={`/admin/artists/${id}/enrich`}
                                 className="ml-auto px-5 py-2.5 bg-surface border border-accent/30 text-accent hover:bg-accent/10 rounded-lg text-sm font-bold transition-colors"
                             >
-                                ✦ Enriquecer →
+                                Curar no Gemini →
                             </Link>
                             <Link
                                 href={`/admin/artists/${id}/discography`}

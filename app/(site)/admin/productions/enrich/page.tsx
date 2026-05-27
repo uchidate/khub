@@ -113,13 +113,13 @@ export default function ProductionEnrichQueuePage() {
     const pages = data?.pages ?? 1
 
     return (
-        <AdminLayout title="Enriquecimento de Produções">
+        <AdminLayout title="Curadoria Gemini de Produções">
             <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <h1 className="text-xl font-black text-foreground flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-accent" />
-                            Enriquecimento de Produções
+                            Curadoria Gemini de Produções
                         </h1>
                         <p className="text-sm text-muted mt-0.5">
                             Gere o JSON no Gemini com <code className="text-xs bg-surface-hover px-1 rounded">prompts/production-enrich.md</code> e aplique aqui.

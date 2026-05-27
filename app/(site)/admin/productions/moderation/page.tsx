@@ -527,6 +527,10 @@ function AdultPipelinePanel({
               )}
             </div>
 
+            <p className="text-xs text-muted">
+              Esta ação classifica possível conteúdo adulto; não gera sinopses nem traduções. Revise os resultados antes de ocultar itens.
+            </p>
+
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <label className="text-xs text-muted">Qtd:</label>

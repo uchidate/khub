@@ -2,8 +2,8 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Activity, AlertTriangle,
-  Settings, Flag, MessageSquare, Languages, Sparkles, Workflow,
+  Activity, BarChart3, Bot, Clock, ClipboardList, Inbox,
+  Settings, Languages, Sparkles, Workflow,
   ArrowRight, ChevronRight, FileText,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
@@ -26,16 +26,17 @@ export default async function AdminPage() {
 
   const [
     totalUsers, totalArtists, totalProductions, totalNews, totalGroups,
-    newUsers, newArtists, newProductions, newNews,
+    newUsers, newArtists, newProductions, newNews, newGroups,
     newUsers7d,
     // Pipeline de notícias (hoje)
-    newsImportedToday, newsPublishedToday, newsQueueToday, newsHidden,
+    newsImportedToday, newsPublishedToday, newsQueueToday, newsHiddenToday,
     // Traduções pendentes
     pendingProductionTranslations,
     // Enriquecimento pendente
     artistsWithoutBio, artistsWithoutImage, groupsWithoutBio,
     // Alertas urgentes
     pendingReports, flaggedComments,
+    systemErrors24h, aiFailures24h,
     // Atividade recente
     recentUsers, recentNews, recentArtists, recentProductions,
     // Bio traduzida (para calcular pendentes)
@@ -50,12 +51,13 @@ export default async function AdminPage() {
     prisma.artist.count({ where: { createdAt: { gte: ago30 } } }),
     prisma.production.count({ where: { createdAt: { gte: ago30 } } }),
     prisma.news.count({ where: { createdAt: { gte: ago30 } } }),
+    prisma.musicalGroup.count({ where: { createdAt: { gte: ago30 } } }),
     prisma.user.count({ where: { createdAt: { gte: ago7 } } }),
     // Pipeline notícias hoje
     prisma.news.count({ where: { createdAt: { gte: today } } }),
     prisma.news.count({ where: { publishedAt: { gte: today }, isHidden: false } }),
-    prisma.news.count({ where: { createdAt: { gte: today }, isHidden: false, publishedAt: { not: { gt: new Date(0) } } } }),
-    prisma.news.count({ where: { isHidden: true } }),
+    prisma.news.count({ where: { createdAt: { gte: today }, status: { in: ['draft', 'ready'] }, isHidden: false } }),
+    prisma.news.count({ where: { createdAt: { gte: today }, isHidden: true } }),
     // Traduções
     prisma.production.count({ where: { isHidden: false, synopsis: { not: null }, translationStatus: 'pending' } }),
     // Enriquecimento
@@ -65,6 +67,10 @@ export default async function AdminPage() {
     // Alertas
     prisma.report.count({ where: { status: 'PENDING' } }),
     prisma.comment.count({ where: { status: 'FLAGGED' } }),
+    prisma.systemEvent.count({ where: { level: 'ERROR', createdAt: { gte: new Date(Date.now() - 86400_000) } } }),
+    prisma.aiUsageLog.count({
+      where: { status: { in: ['error', 'circuit_open'] }, createdAt: { gte: new Date(Date.now() - 86400_000) } },
+    }),
     // Atividade
     prisma.user.findMany({ orderBy: { createdAt: 'desc' }, take: 4, select: { email: true, name: true, createdAt: true } }),
     prisma.news.findMany({ orderBy: { createdAt: 'desc' }, take: 4, select: { id: true, title: true, createdAt: true } }),
@@ -84,23 +90,25 @@ export default async function AdminPage() {
       return map.get(d.toISOString().slice(0, 10)) ?? 0
     })
   }
-  const [usersSparkRaw, artistsSparkRaw, productionsSparkRaw, newsSparkRaw] = await Promise.all([
+  const [usersSparkRaw, artistsSparkRaw, productionsSparkRaw, newsSparkRaw, groupsSparkRaw] = await Promise.all([
     prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "User"       WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
     prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "Artist"     WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
     prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "Production" WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
     prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "News"       WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
+    prisma.$queryRaw<DayCount[]>`SELECT "createdAt"::date::text as day, count(*)::int as count FROM "MusicalGroup" WHERE "createdAt" >= NOW() - INTERVAL '7 days' GROUP BY 1 ORDER BY 1`,
   ])
   const sparks = {
     users:       toSparkArray(usersSparkRaw),
     artists:     toSparkArray(artistsSparkRaw),
     productions: toSparkArray(productionsSparkRaw),
     news:        toSparkArray(newsSparkRaw),
-    groups:      [0, 0, 0, 0, 0, 0, 0],
+    groups:      toSparkArray(groupsSparkRaw),
   }
 
   const pendingArtistTranslations = Math.max(0, artistsWithBio - artistBioTranslated)
   const totalPendingTranslations  = pendingArtistTranslations + pendingProductionTranslations
   const totalPendingEnrichment    = artistsWithoutBio + artistsWithoutImage + groupsWithoutBio
+  const operationalIncidents      = systemErrors24h + aiFailures24h
 
   function timeAgo(date: Date | string): string {
     const d    = new Date(date)
@@ -126,31 +134,25 @@ export default async function AdminPage() {
     yellow: { dot: 'bg-yellow-500', badge: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
   }
 
-  // Cards de atenção agora (apenas com count > 0)
+  // Filas que demandam execução; moderação ao vivo já aparece no painel urgente.
   const actionCards = [
-    pendingReports > 0 && {
-      label: 'Reportes pendentes', count: pendingReports,
-      href: '/admin/reports?status=PENDING',
-      icon: Flag, color: 'red' as const,
-      desc: 'Precisam de revisão',
-    },
-    flaggedComments > 0 && {
-      label: 'Comentários flagados', count: flaggedComments,
-      href: '/admin/comments?status=FLAGGED',
-      icon: MessageSquare, color: 'red' as const,
-      desc: 'Aguardando moderação',
-    },
-    totalPendingTranslations > 5 && {
+    totalPendingTranslations > 0 && {
       label: 'Sem tradução PT-BR', count: totalPendingTranslations,
       href: '/admin/translations',
       icon: Languages, color: 'yellow' as const,
       desc: 'Conteúdo publicado',
     },
-    totalPendingEnrichment > 10 && {
+    totalPendingEnrichment > 0 && {
       label: 'Aguardando enriquecimento', count: totalPendingEnrichment,
       href: '/admin/enrichment',
       icon: Sparkles, color: 'yellow' as const,
       desc: 'Artistas/grupos incompletos',
+    },
+    operationalIncidents > 0 && {
+      label: 'Incidentes operacionais', count: operationalIncidents,
+      href: '/admin/inbox#operacao',
+      icon: Activity, color: 'red' as const,
+      desc: 'Sistema ou IA nas últimas 24h',
     },
   ].filter(Boolean) as Array<{
     label: string; count: number; href: string;
@@ -171,7 +173,42 @@ export default async function AdminPage() {
     { key: 'artists' as const, label: 'Artistas', value: totalArtists, new: newArtists, href: '/admin/artists', sub: null, spark: sparks.artists, sparkColor: '#ec4899' },
     { key: 'productions' as const, label: 'Produções', value: totalProductions, new: newProductions, href: '/admin/productions', sub: null, spark: sparks.productions, sparkColor: '#f59e0b' },
     { key: 'news' as const, label: 'Notícias', value: totalNews, new: newNews, href: '/admin/news', sub: null, spark: sparks.news, sparkColor: '#06b6d4' },
-    { key: 'groups' as const, label: 'Grupos', value: totalGroups, new: 0, href: '/admin/groups', sub: null, spark: sparks.groups, sparkColor: '#a855f7' },
+    { key: 'groups' as const, label: 'Grupos', value: totalGroups, new: newGroups, href: '/admin/groups', sub: null, spark: sparks.groups, sparkColor: '#a855f7' },
+  ]
+
+  const workspaces = [
+    {
+      label: 'Publicar conteúdo',
+      description: 'Notícias, blog e curadoria editorial',
+      href: '/admin/pipeline',
+      icon: Workflow,
+      metric: newsQueueToday > 0 ? `${newsQueueToday} em fila hoje` : 'Fila de hoje limpa',
+      tone: newsQueueToday > 0 ? 'text-amber-500' : 'text-emerald-500',
+    },
+    {
+      label: 'Completar catálogo',
+      description: 'Bios, imagens e perfis incompletos',
+      href: '/admin/enrichment',
+      icon: Sparkles,
+      metric: `${totalPendingEnrichment.toLocaleString('pt-BR')} pendências`,
+      tone: totalPendingEnrichment > 0 ? 'text-amber-500' : 'text-emerald-500',
+    },
+    {
+      label: 'Automações',
+      description: 'Jobs agendados e execução de IA',
+      href: '/admin/cron',
+      icon: Clock,
+      metric: operationalIncidents > 0 ? `${operationalIncidents} incidentes em 24h` : 'Sem incidentes em 24h',
+      tone: operationalIncidents > 0 ? 'text-red-500' : 'text-emerald-500',
+    },
+    {
+      label: 'Resultados',
+      description: 'Audiência e desempenho do conteúdo',
+      href: '/admin/analytics',
+      icon: BarChart3,
+      metric: 'Abrir analytics',
+      tone: 'text-muted',
+    },
   ]
 
   // Greeting
@@ -181,26 +218,24 @@ export default async function AdminPage() {
   const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <AdminLayout title="Dashboard">
+    <AdminLayout title="Dashboard" hideTitle>
       <div className="space-y-5">
 
         {/* Greeting */}
-        <div className="flex items-center justify-between -mt-2">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black text-foreground">
-              {greet}, <span className="text-blue-300">{name}</span>
-            </h2>
-            <p className="text-xs text-muted capitalize">{dateStr}</p>
-            <p className="text-[10px] text-muted mt-0.5">Atualizado agora</p>
+            <p className="text-xs font-semibold text-accent">{greet}, {name}</p>
+            <h1 className="text-2xl lg:text-3xl font-black text-foreground mt-1">Central de operação</h1>
+            <p className="text-sm text-muted capitalize mt-1">{dateStr} · atualizado agora</p>
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <AdminRefreshButton />
             <Link
-              href="/admin/pipeline"
+              href="/admin/inbox"
               className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border hover:border-border bg-surface hover:bg-surface-hover px-3 py-1.5 rounded-lg transition-all"
             >
-              <Workflow size={13} className="text-blue-400" />
-              Ver pipeline
+              <Inbox size={13} className="text-accent" />
+              Caixa de trabalho
               <ArrowRight size={12} />
             </Link>
           </div>
@@ -209,11 +244,11 @@ export default async function AdminPage() {
         {/* Urgente live */}
         <LiveUrgentPanel initial={{ reports: pendingReports, comments: flaggedComments }} />
 
-        {/* Atenção agora */}
+        {/* Filas de execução (moderação urgente fica acima, sem duplicidade) */}
         {actionCards.length > 0 && (
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Atenção agora</p>
-            <div className={`grid gap-2 ${actionCards.length === 1 ? 'grid-cols-1' : actionCards.length === 2 ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Filas de trabalho</p>
+            <div className="grid gap-2 sm:grid-cols-2">
               {actionCards.map(card => (
                 <Link
                   key={card.label}
@@ -237,9 +272,9 @@ export default async function AdminPage() {
         {actionCards.length === 0 && (
           <div className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted">Atenção agora</p>
-              <p className="text-sm text-foreground font-semibold mt-1">Tudo sob controle no momento</p>
-              <p className="text-[11px] text-muted mt-0.5">Sem pendências urgentes de moderação, tradução ou enriquecimento.</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted">Filas de trabalho</p>
+              <p className="text-sm text-foreground font-semibold mt-1">Nenhuma pendência editorial em fila</p>
+              <p className="text-[11px] text-muted mt-0.5">Traduções e enriquecimentos estão em dia.</p>
             </div>
             <Link
               href="/admin/activity"
@@ -265,7 +300,7 @@ export default async function AdminPage() {
               { label: 'Importadas', count: newsImportedToday, color: 'text-foreground',  dot: 'bg-border' },
               { label: 'Em fila',    count: newsQueueToday,    color: 'text-yellow-400',  dot: 'bg-yellow-500' },
               { label: 'Publicadas', count: newsPublishedToday, color: 'text-emerald-400', dot: 'bg-emerald-500' },
-              { label: 'Ocultas',    count: newsHidden,         color: 'text-muted',       dot: 'bg-red-500/50' },
+              { label: 'Ocultas',    count: newsHiddenToday,    color: 'text-muted',       dot: 'bg-red-500/50' },
             ].map(step => (
               <div key={step.label}>
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -297,9 +332,33 @@ export default async function AdminPage() {
           })()}
         </div>
 
+        {/* Centros de trabalho */}
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Áreas de trabalho</p>
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2">
+            {workspaces.map(({ label, description, href, icon: Icon, metric, tone }) => (
+              <Link
+                key={href}
+                href={href}
+                className="group bg-surface border border-border rounded-xl p-4 hover:border-accent/40 hover:bg-surface-hover transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-accent-soft flex items-center justify-center">
+                    <Icon size={16} className="text-accent" />
+                  </div>
+                  <ArrowRight size={13} className="text-muted group-hover:text-accent transition-colors" />
+                </div>
+                <p className="text-sm font-bold text-foreground">{label}</p>
+                <p className="text-[11px] text-muted mt-0.5 min-h-[32px]">{description}</p>
+                <p className={`text-[11px] font-semibold mt-2 ${tone}`}>{metric}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Stats grid */}
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Totais (30 dias)</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Base cadastrada · novos nos últimos 30 dias</p>
           <AdminStatsGrid stats={stats} />
         </div>
 
@@ -339,11 +398,13 @@ export default async function AdminPage() {
             <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-3">Acesso rápido</p>
             <div className="space-y-1">
               {[
+                { href: '/admin/inbox',       label: 'Caixa de trabalho',   icon: Inbox,      badge: pendingReports + flaggedComments || null },
                 { href: '/admin/pipeline',    label: 'Pipeline de conteúdo', icon: Workflow,   badge: null },
                 { href: '/admin/translations',label: 'Traduções pendentes',  icon: Languages,  badge: totalPendingTranslations > 0 ? totalPendingTranslations : null },
-                { href: '/admin/enrichment',  label: 'Enriquecimento IA',    icon: Sparkles,   badge: null },
+                { href: '/admin/enrichment',  label: 'Curadoria Gemini',     icon: Sparkles,   badge: null },
+                { href: '/admin/processes',   label: 'Processos e melhorias', icon: ClipboardList, badge: null },
                 { href: '/admin/blog',        label: 'Blog posts',           icon: FileText,   badge: null },
-                { href: '/admin/ai',          label: 'Dashboard de IA',      icon: AlertTriangle, badge: null },
+                { href: '/admin/ai',          label: 'Dashboard de IA',      icon: Bot,           badge: null },
                 { href: '/admin/settings',    label: 'Configurações',        icon: Settings,   badge: null },
               ].map(({ href, label, icon: Icon, badge }) => (
                 <Link

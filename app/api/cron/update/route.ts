@@ -15,13 +15,10 @@ import { getFilmographySyncService } from '@/lib/services/filmography-sync-servi
 import { getProductionCastService } from '@/lib/services/production-cast-service';
 import { getSocialLinksSyncService } from '@/lib/services/social-links-sync-service';
 import { getTMDBDiscoveryService } from '@/lib/services/tmdb-discovery-service';
-import { getOrchestrator } from '@/lib/ai/orchestrator-factory';
 import { getSlackService } from '@/lib/services/slack-notification-service';
 import { getNewsNotificationService } from '@/lib/services/news-notification-service';
 import { markdownToBlocks } from '@/lib/utils/markdown-to-blocks';
 import { cleanContentBySource } from '@/lib/utils/content-cleaner';
-// import { getArtistTranslationService } from '@/lib/services/artist-translation-service'
-// import { getProductionTranslationService } from '@/lib/services/production-translation-service'
 
 const log = createLogger('CRON');
 
@@ -426,21 +423,10 @@ async function runCronProcessing(lockId: string) {
         }
         perf.social_links_ms = socialLinksTimer();
 
-        // 2.5. Normalizar conteúdo existente fora do padrão (1-2 itens por execução)
-        // Prioridade: fotos faltantes (rápido, TMDB) > conteúdo em inglês (lento, Ollama)
+        // 2.5. Completar apenas imagens ausentes por fonte estruturada (TMDB).
         const enrichTimer = makeTimer();
         try {
             log.info('Checking for out-of-standard content...');
-
-            // Heurística simples para detectar conteúdo em inglês:
-            // Texto PT-BR tem ~10-20% de chars acentuados por palavra.
-            // Se menos de 3%, provavelmente está em inglês.
-            const isLikelyEnglish = (text: string): boolean => {
-                if (!text || text.length < 30) return false;
-                const accented = (text.match(/[áàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔÕÚÜÇ]/g) || []).length;
-                const words = text.trim().split(/\s+/).length;
-                return words > 8 && accented / words < 0.03;
-            };
 
             let normalizedCount = 0;
 
@@ -497,97 +483,8 @@ async function runCronProcessing(lockId: string) {
                 }
             }
 
-            // Prioridade 3 e 4: Tradução de bios e sinopses
-            // ⚠️ Desativado no cron — tradução consome tokens e deve ser acionada
-            // manualmente pelo admin em /admin/translations.
-            // Os serviços ArtistTranslationService e ProductionTranslationService
-            // estão disponíveis via POST /api/admin/translations/run.
-            //
-            // Para reativar, descomente o bloco abaixo:
-            //
-            // if (normalizedCount < 2) {
-            //     const artistService = getArtistTranslationService(prisma)
-            //     const artistResult = await artistService.translatePendingArtists(1)
-            //     if (artistResult.translated > 0 || artistResult.skipped > 0) {
-            //         normalizedCount++
-            //         log.info(`Translated artist bio (translated: ${artistResult.translated}, skipped: ${artistResult.skipped})`)
-            //     }
-            // }
-            //
-            // if (normalizedCount < 2) {
-            //     const productionService = getProductionTranslationService(prisma)
-            //     const prodResult = await productionService.translatePendingProductions(1)
-            //     if (prodResult.translated > 0 || prodResult.skipped > 0) {
-            //         normalizedCount++
-            //         log.info(`Translated production synopsis (translated: ${prodResult.translated}, skipped: ${prodResult.skipped})`)
-            //     }
-            // }
-
-            // Prioridade 5: Notícias antigas sem markdown ou em inglês → reformatar e traduzir
-            if (normalizedCount < 2) {
-                // Detectar notícias sem formatação markdown (sem **, ##, -, >)
-                const hasMarkdownFormatting = (text: string): boolean => {
-                    if (!text) return false;
-                    return /(\*\*|##|^- |^> )/m.test(text);
-                };
-
-                const oldNewsWithoutMarkdown = await prisma.news.findFirst({
-                    orderBy: { updatedAt: 'asc' }
-                });
-
-                // Verificar se precisa de normalização (em inglês OU sem markdown)
-                if (oldNewsWithoutMarkdown?.contentMd &&
-                    (isLikelyEnglish(oldNewsWithoutMarkdown.contentMd) ||
-                     !hasMarkdownFormatting(oldNewsWithoutMarkdown.contentMd))) {
-
-                    const orchestrator = getOrchestrator();
-
-                    const prompt = `Reformate e traduza a seguinte notícia sobre K-pop/K-drama para português brasileiro:
-
-Título: ${oldNewsWithoutMarkdown.title}
-
-Conteúdo:
-${oldNewsWithoutMarkdown.contentMd}
-
-Requisitos:
-- Tradução natural e fluente em português brasileiro (se em inglês)
-- Manter nomes próprios (artistas, grupos, programas) no original
-- Formato markdown com parágrafos bem estruturados
-- Use **negrito** para destaques importantes (nomes, títulos, datas)
-- 3-5 parágrafos informativos
-- Tom jornalístico mas acessível
-- Se conteúdo muito curto, expanda com contexto relevante`;
-
-                    const result: any = await orchestrator.generateStructured(
-                        prompt,
-                        '{ "content": "string (notícia em português com markdown)" }',
-                        { maxTokens: 500 }
-                    );
-
-                    if (result?.content && result.content.length > 50) {
-                        // Extrair tags se não existirem
-                        let tags = oldNewsWithoutMarkdown.tags || [];
-                        if (tags.length === 0) {
-                            const tagResult: any = await orchestrator.generateStructured(
-                                `Extraia 3-5 tags relevantes desta notícia:\n\nTítulo: ${oldNewsWithoutMarkdown.title}\n\nConteúdo: ${result.content}\n\nRetorne tags como array de strings.`,
-                                '{ "tags": ["string"] }',
-                                { maxTokens: 100 }
-                            );
-                            tags = tagResult?.tags || [];
-                        }
-
-                        await prisma.news.update({
-                            where: { id: oldNewsWithoutMarkdown.id },
-                            data: {
-                                contentMd: result.content,
-                                tags: tags.length > 0 ? tags : undefined,
-                            }
-                        });
-                        normalizedCount++;
-                        log.info(`Fixed old news: ${oldNewsWithoutMarkdown.title}`);
-                    }
-                }
-            }
+            // Traduções e reescritas editoriais foram removidas deste cron.
+            // Textos PT-BR agora entram somente pela revisão manual com Gemini.
 
             if (normalizedCount > 0) {
                 log.info(`Normalized ${normalizedCount} out-of-standard items`);

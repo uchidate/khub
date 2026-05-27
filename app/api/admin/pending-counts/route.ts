@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic'
 export interface PendingCounts {
   reports: number
   comments: number
+  attention: number
+  automation: number
 }
 
 /**
@@ -21,12 +23,22 @@ export async function GET() {
   if (error) return error
 
   try {
-    const [reports, comments] = await Promise.all([
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const [reports, comments, systemErrors, aiFailures] = await Promise.all([
       prisma.report.count({ where: { status: 'PENDING' } }),
       prisma.comment.count({ where: { status: 'FLAGGED' } }),
+      prisma.systemEvent.count({ where: { level: 'ERROR', createdAt: { gte: since24h } } }),
+      prisma.aiUsageLog.count({
+        where: { status: { in: ['error', 'circuit_open'] }, createdAt: { gte: since24h } },
+      }),
     ])
 
-    return NextResponse.json({ reports, comments } satisfies PendingCounts)
+    return NextResponse.json({
+      reports,
+      comments,
+      attention: reports + comments,
+      automation: systemErrors + aiFailures,
+    } satisfies PendingCounts)
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 })
   }

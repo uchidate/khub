@@ -108,7 +108,7 @@ export default function TermosPage() {
               <ul className="list-disc pl-5 space-y-1">
                 <li>Perfis de artistas K-Pop e grupos musicais</li>
                 <li>Catálogo de dramas e filmes coreanos (K-Drama, filmes)</li>
-                <li>Notícias traduzidas automaticamente para português brasileiro</li>
+                <li>Notícias com versões em português preparadas e revisadas editorialmente</li>
                 <li>Sistema de favoritos e feed personalizado para usuários cadastrados</li>
                 <li>Comentários e interação social nas notícias</li>
               </ul>

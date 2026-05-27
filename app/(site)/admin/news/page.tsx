@@ -12,7 +12,7 @@ import { StatCard } from '@/components/admin'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminIconButton, AdminIconLink } from '@/components/admin/AdminIconButton'
 import {
-    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, Loader2, ExternalLink,
+    Plus, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, ExternalLink,
     Download, RotateCcw, Send, Check, X, Sparkles, PenSquare, Link2, FileText, ImageOff, TriangleAlert,
 } from 'lucide-react'
 
@@ -66,24 +66,6 @@ interface NewsStats {
 
 type EditorialFilter = '' | 'blog-ready' | 'translated' | 'with-artists' | 'editorial-note' | 'blog-generated' | 'without-artists'
 type ImageFilter = '' | 'without-image' | 'broken-image'
-
-async function postWithRetry(url: string, init: RequestInit, retries = 1) {
-    let lastError: unknown = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const res = await fetch(url, init)
-            if (res.ok) return res
-            if (attempt < retries && res.status >= 500) continue
-            return res
-        } catch (error) {
-            lastError = error
-            if (attempt === retries) throw error
-        }
-    }
-
-    throw lastError instanceof Error ? lastError : new Error('Falha na requisição')
-}
 
 // ─── Display config ───────────────────────────────────────────────────────────
 
@@ -327,95 +309,6 @@ function ReprocessButton({ newsId, translationStatus, onDone }: {
             }`}
         >
             <RefreshCw size={13} className={state === 'loading' ? 'animate-spin' : ''} />
-        </button>
-    )
-}
-
-function GenerateBlogButton({ newsId, onDone }: { newsId: string; onDone: () => void }) {
-    const toast = useAdminToast()
-    const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
-
-    const handle = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        setState('loading')
-        try {
-            const res = await postWithRetry(`/api/admin/news/${newsId}/generate-blog-post`, { method: 'POST' }, 1)
-            const data = await res.json()
-            if (!res.ok) {
-                toast.error(data.error ?? 'Erro ao gerar blog post')
-                setState('err')
-            } else {
-                toast.success(`Blog post criado como rascunho: "${data.title}"`)
-                setState('ok')
-                onDone()
-            }
-        } catch {
-            setState('err')
-        } finally {
-            setTimeout(() => setState('idle'), 3000)
-        }
-    }
-
-    return (
-        <button
-            onClick={handle}
-            disabled={state === 'loading'}
-            title="Gerar blog post a partir desta notícia (salvo como rascunho)"
-            className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
-                state === 'ok'  ? 'text-emerald-400 bg-emerald-400/10' :
-                state === 'err' ? 'text-red-400 bg-red-400/10' :
-                'text-muted hover:text-foreground hover:bg-surface-hover'
-            }`}
-        >
-            {state === 'loading'
-                ? <Loader2 size={13} className="animate-spin" />
-                : <Sparkles size={13} />
-            }
-        </button>
-    )
-}
-
-function GenerateEditorialButton({ newsId, hasNote, onDone }: { newsId: string; hasNote: boolean; onDone: () => void }) {
-    const toast = useAdminToast()
-    const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle')
-
-    const handle = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        setState('loading')
-        try {
-            const res = await postWithRetry(`/api/admin/news/${newsId}/generate-editorial`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ overwrite: hasNote }),
-            }, 1)
-            const data = await res.json().catch(() => ({})) as { error?: string }
-            if (!res.ok) {
-                toast.error(data.error ?? 'Erro ao gerar nota editorial')
-                setState('err')
-            } else {
-                toast.success(hasNote ? 'Nota editorial atualizada' : 'Nota editorial gerada')
-                setState('ok')
-                onDone()
-            }
-        } catch {
-            setState('err')
-        } finally {
-            setTimeout(() => setState('idle'), 3000)
-        }
-    }
-
-    return (
-        <button
-            onClick={handle}
-            disabled={state === 'loading'}
-            title={hasNote ? 'Regenerar nota editorial' : 'Gerar nota editorial'}
-            className={`p-1.5 rounded transition-colors disabled:cursor-wait ${
-                state === 'ok'  ? 'text-emerald-400 bg-emerald-400/10' :
-                state === 'err' ? 'text-red-400 bg-red-400/10' :
-                hasNote ? 'text-violet-300 hover:bg-violet-500/10' : 'text-muted hover:text-foreground hover:bg-surface-hover'
-            }`}
-        >
-            {state === 'loading' ? <Loader2 size={13} className="animate-spin" /> : <PenSquare size={13} />}
         </button>
     )
 }
@@ -708,12 +601,12 @@ export default function NewsAdminPage() {
                 <PageGuide
                     storageKey="news"
                     title="Como funciona a gestão de Notícias"
-                    description="Central de todas as notícias importadas pelo bot. Aqui você revisa, publica, traduz e gerencia o conteúdo antes que chegue ao público. Notícias passam por rascunho → publicação → tradução."
+                    description="Central de todas as notícias importadas pelo bot. Aqui você revisa, publica e aplica traduções preparadas no Gemini antes que o conteúdo chegue ao público."
                     steps={[
                         { label: 'Importada', description: 'Bot importou, status = draft ou ready', color: 'zinc' },
                         { label: 'Revisar', description: 'Abrir editor, verificar conteúdo e imagem', color: 'blue' },
                         { label: 'Publicar', description: 'Alterar status para "published"', color: 'green' },
-                        { label: 'Traduzir', description: 'Gerar versão PT-BR via IA', color: 'purple' },
+                        { label: 'Traduzir no Gemini', description: 'Aplicar versão PT-BR após revisão manual', color: 'purple' },
                         { label: 'Vincular artistas', description: 'Associar artistas mencionados na notícia', color: 'yellow' },
                     ]}
                     tips={[
@@ -895,10 +788,6 @@ export default function NewsAdminPage() {
                                 translationStatus={news.translationStatus}
                                 onDone={(artists) => setLocalArtistsOverride(prev => ({ ...prev, [news.id]: artists }))}
                             />
-                            <GenerateEditorialButton newsId={news.id} hasNote={!!news.editorialNoteGeneratedAt} onDone={refetchTable} />
-                            {!news.blogPostGeneratedAt && (
-                                <GenerateBlogButton newsId={news.id} onDone={refetchTable} />
-                            )}
                             {news.status !== 'published' && (
                                 <AdminIconButton
                                     onClick={e => { e.stopPropagation(); handlePublish(news) }}
