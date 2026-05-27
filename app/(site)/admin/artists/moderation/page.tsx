@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -50,12 +51,15 @@ function detectAdultKeywords(text: string): string[] {
 }
 
 export default function ArtistModerationPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [artists, setArtists] = useState<Artist[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<Filter>('suspicious')
-  const [hiddenFilter, setHiddenFilter] = useState<'all' | 'visible' | 'hidden'>('all')
-  const [page, setPage] = useState(1)
+  const [filter, setFilter] = useState<Filter>(() => (searchParams.get('filter') as Filter) ?? 'suspicious')
+  const [hiddenFilter, setHiddenFilter] = useState<'all' | 'visible' | 'hidden'>(() => (searchParams.get('hidden') as 'all' | 'visible' | 'hidden') ?? 'all')
+  const [page, setPage] = useState(() => Number(searchParams.get('page') ?? '1'))
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -64,6 +68,15 @@ export default function ArtistModerationPage() {
     open: boolean; title: string; description: string
     confirmLabel: string; variant?: 'danger' | 'default'; onConfirm: () => void
   }>({ open: false, title: '', description: '', confirmLabel: '', onConfirm: () => {} })
+
+  const updateUrl = useCallback((f: Filter, h: 'all' | 'visible' | 'hidden', p: number) => {
+    const params = new URLSearchParams()
+    if (f !== 'suspicious') params.set('filter', f)
+    if (h !== 'all') params.set('hidden', h)
+    if (p > 1) params.set('page', String(p))
+    const qs = params.toString()
+    router.replace(qs ? `/admin/artists/moderation?${qs}` : '/admin/artists/moderation', { scroll: false })
+  }, [router])
 
   const fetchStats = useCallback(async () => {
     try {
@@ -91,8 +104,15 @@ export default function ArtistModerationPage() {
   }, [filter, hiddenFilter, page])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-  useEffect(() => { setPage(1); fetchArtists(1) }, [filter, hiddenFilter, fetchArtists])
-  useEffect(() => { fetchArtists(page) }, [page, fetchArtists])
+  useEffect(() => {
+    setPage(1)
+    fetchArtists(1)
+    updateUrl(filter, hiddenFilter, 1)
+  }, [filter, hiddenFilter, fetchArtists]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchArtists(page)
+    updateUrl(filter, hiddenFilter, page)
+  }, [page, fetchArtists]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openConfirm(opts: typeof modal) { setModal({ ...opts, open: true }) }
   const addActioning = (ids: string[]) => setActioningIds(prev => new Set(Array.from(prev).concat(ids)))

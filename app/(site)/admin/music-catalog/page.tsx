@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { CheckCircle, ExternalLink, Music2, RefreshCw, Search, User } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
-import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
+import { AdminEmptyState, AdminModalOverlay, AdminLinkButton, StatCard } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 type SpotifyLink = {
@@ -196,7 +196,8 @@ export default function MusicCatalogPage() {
             ))}
           </div>
         ) : artists.length === 0 ? (
-          <AdminEmptyState title="Nenhum artista encontrado" size="md" />
+          <AdminEmptyState title="Nenhum artista encontrado" description="Cadastre artistas para vincular seus perfis do Spotify." size="md"
+            action={<AdminLinkButton href="/admin/artists" size="sm">Ver artistas</AdminLinkButton>} />
         ) : (
           <div className="space-y-2">
             {artists.map(artist => (

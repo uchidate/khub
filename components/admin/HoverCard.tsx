@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface HoverCardProps {
     children: React.ReactNode
@@ -8,20 +9,26 @@ interface HoverCardProps {
     delay?: number
 }
 
-export function HoverCard({ children, content, delay = 400 }: HoverCardProps) {
+export function HoverCard({ children, content, delay = 500 }: HoverCardProps) {
     const [visible, setVisible] = useState(false)
-    const [pos, setPos] = useState({ top: 0, left: 0 })
+    const [coords, setCoords] = useState({ top: 0, left: 0, above: false })
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const triggerRef = useRef<HTMLDivElement>(null)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => { setMounted(true) }, [])
 
     const show = useCallback(() => {
         timerRef.current = setTimeout(() => {
             if (!triggerRef.current) return
             const rect = triggerRef.current.getBoundingClientRect()
             const spaceBelow = window.innerHeight - rect.bottom
-            const top = spaceBelow > 200 ? rect.bottom + 6 : rect.top - 6
-            const left = Math.min(rect.left, window.innerWidth - 320 - 8)
-            setPos({ top: top + window.scrollY, left })
+            const above = spaceBelow < 220 && rect.top > 220
+            setCoords({
+                top: above ? rect.top - 8 : rect.bottom + 8,
+                left: Math.min(rect.left, window.innerWidth - 308),
+                above,
+            })
             setVisible(true)
         }, delay)
     }, [delay])
@@ -36,14 +43,22 @@ export function HoverCard({ children, content, delay = 400 }: HoverCardProps) {
             <div ref={triggerRef} onMouseEnter={show} onMouseLeave={hide} className="contents">
                 {children}
             </div>
-            {visible && (
+            {mounted && visible && createPortal(
                 <div
-                    onMouseEnter={hide}
-                    style={{ position: 'absolute', top: pos.top, left: pos.left, zIndex: 60, width: 300 }}
-                    className="bg-background border border-border rounded-xl shadow-2xl p-3 pointer-events-none"
+                    style={{
+                        position: 'fixed',
+                        top: coords.above ? undefined : coords.top,
+                        bottom: coords.above ? window.innerHeight - coords.top : undefined,
+                        left: coords.left,
+                        zIndex: 9999,
+                        width: 300,
+                        pointerEvents: 'none',
+                    }}
+                    className="bg-background border border-border rounded-xl shadow-2xl p-3 animate-in fade-in-0 zoom-in-95 duration-150"
                 >
                     {content}
-                </div>
+                </div>,
+                document.body
             )}
         </>
     )

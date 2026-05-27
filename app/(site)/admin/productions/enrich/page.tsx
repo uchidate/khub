@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
+import { HoverCard } from '@/components/admin/HoverCard'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Film, Search, RefreshCw, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react'
@@ -202,6 +203,31 @@ export default function ProductionEnrichQueuePage() {
                 ) : (
                     <div className="space-y-1.5">
                         {productions.map((p, idx) => (
+                            <HoverCard key={p.id} content={
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-10 rounded overflow-hidden bg-surface-hover shrink-0">
+                                            {p.imageUrl ? <Image src={p.imageUrl} alt={p.titlePt} width={32} height={40} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Film className="w-3 h-3 text-muted" /></div>}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-foreground truncate">{p.titlePt}</p>
+                                            <p className="text-xs text-muted">{[p.type, p.year, p.network].filter(Boolean).join(' · ')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {FIELD_DOTS.map(f => (
+                                            <div key={f.abbr} className={`flex items-center gap-1.5 text-[10px] ${p[f.key] ? 'text-green-400' : 'text-red-400'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p[f.key] ? 'bg-green-400' : 'bg-red-400'}`} />
+                                                {f.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-muted border-t border-border pt-2">
+                                        <span>Score</span>
+                                        <span className={`font-black ${p.score >= 80 ? 'text-green-400' : p.score >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{p.score}%</span>
+                                    </div>
+                                </div>
+                            }>
                             <Link key={p.id} href={`/admin/productions/${p.id}/enrich`}
                                 className="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3 hover:border-accent/40 hover:bg-accent/5 transition-all group">
                                 <span className="text-xs font-black text-muted w-6 text-right shrink-0">
@@ -248,6 +274,7 @@ export default function ProductionEnrichQueuePage() {
                                 )}
                                 <ChevronRight className="w-4 h-4 text-muted group-hover:text-accent transition-colors shrink-0" />
                             </Link>
+                            </HoverCard>
                         ))}
                     </div>
                 )}

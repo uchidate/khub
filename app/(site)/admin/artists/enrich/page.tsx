@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
+import { HoverCard } from '@/components/admin/HoverCard'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Search, TrendingUp, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
@@ -202,6 +203,31 @@ export default function ArtistEnrichQueuePage() {
                 ) : (
                     <div className="space-y-1.5">
                         {artists.map((a, idx) => (
+                            <HoverCard key={a.id} content={
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-hover shrink-0">
+                                            {a.primaryImageUrl ? <Image src={a.primaryImageUrl} alt={a.nameRomanized} width={40} height={40} className="w-full h-full object-cover object-top" /> : <div className="w-full h-full flex items-center justify-center text-muted text-[9px] font-black">{a.nameRomanized.slice(0,2).toUpperCase()}</div>}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-foreground truncate">{a.nameRomanized}</p>
+                                            {a.nameHangul && <p className="text-xs text-muted">{a.nameHangul}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        {FIELD_DOTS.map(f => (
+                                            <div key={f.abbr} className={`flex items-center gap-1.5 text-[10px] ${a[f.key] ? 'text-green-400' : 'text-red-400'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${a[f.key] ? 'bg-green-400' : 'bg-red-400'}`} />
+                                                {f.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-muted border-t border-border pt-2">
+                                        <span>Score</span>
+                                        <span className={`font-black ${a.score >= 80 ? 'text-green-400' : a.score >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{a.score}%</span>
+                                    </div>
+                                </div>
+                            }>
                             <Link
                                 key={a.id}
                                 href={`/admin/artists/${a.id}/enrich`}
@@ -274,6 +300,7 @@ export default function ArtistEnrichQueuePage() {
 
                                 <ChevronRight className="w-4 h-4 text-muted group-hover:text-accent transition-colors shrink-0" />
                             </Link>
+                            </HoverCard>
                         ))}
                     </div>
                 )}

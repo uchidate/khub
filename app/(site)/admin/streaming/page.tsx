@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
@@ -32,7 +33,9 @@ interface ApiResponse {
 
 export default function StreamingAdminPage() {
     const toast = useAdminToast()
-    const [activeSource, setActiveSource] = useState(STREAMING_TAB_ORDER[0])
+    const router = useRouter()
+const searchParams = useSearchParams()
+const [activeSource, setActiveSource] = useState(() => searchParams.get('source') ?? STREAMING_TAB_ORDER[0])
     const [shows,        setShows]        = useState<StreamingShow[]>([])
     const [total,        setTotal]        = useState(0)
     const [loading,      setLoading]      = useState(true)
@@ -55,7 +58,13 @@ export default function StreamingAdminPage() {
         }
     }, [toast])
 
-    useEffect(() => { load(activeSource) }, [activeSource, load])
+    useEffect(() => {
+    load(activeSource)
+    const params = new URLSearchParams()
+    if (activeSource !== STREAMING_TAB_ORDER[0]) params.set('source', activeSource)
+    const qs = params.toString()
+    router.replace(qs ? `/admin/streaming?${qs}` : '/admin/streaming', { scroll: false })
+}, [activeSource, load]) // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleRefresh() {
         if (refreshing) return

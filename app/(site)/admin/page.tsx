@@ -9,6 +9,7 @@ import {
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
 import { LastVisitBanner } from '@/components/admin/LastVisitBanner'
+import { SinceLastVisit } from '@/components/admin/SinceLastVisit'
 import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
 import { AdminStatsGrid } from '@/components/admin/AdminStatsGrid'
 import prisma from '@/lib/prisma'
@@ -242,6 +243,9 @@ export default async function AdminPage() {
             </Link>
           </div>
         </div>
+
+        {/* O que mudou desde a última visita */}
+        <SinceLastVisit />
 
         {/* Urgente live */}
         <LiveUrgentPanel initial={{ reports: pendingReports, comments: flaggedComments }} />
