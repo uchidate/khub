@@ -6,8 +6,8 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
 import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
-import { AdminButton, AdminIconButton } from '@/components/admin'
-import { Plus, Users, Loader2, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
+import { AdminButton, AdminIconButton, AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
+import { Plus, Users, ExternalLink, User, X, CheckCircle2 } from 'lucide-react'
 import { adminApi } from '@/lib/admin-api'
 
 interface Agency {
@@ -94,14 +94,9 @@ function ArtistsPanel({ agencyId, agencyName, onClose }: {
 
       <div className="p-4">
         {loading ? (
-          <div className="flex items-center justify-center py-8 gap-2 text-muted">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Carregando...</span>
-          </div>
+          <AdminTableSkeleton rows={3} />
         ) : !artists || artists.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted">
-            Nenhum artista vinculado a esta agência
-          </div>
+          <AdminEmptyState title="Nenhum artista vinculado a esta agência" size="sm" />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
             {artists.map(artist => (

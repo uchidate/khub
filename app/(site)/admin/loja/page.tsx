@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminButton, AdminLinkButton, AdminModalOverlay, ConfirmDialog } from '@/components/admin'
+import { AdminButton, AdminLinkButton, AdminModalOverlay, AdminTableSkeleton, AdminEmptyState, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, Star, StarOff,
@@ -434,17 +434,17 @@ export default function AdminLojaPage() {
 
             {/* Lista de produtos agrupada por categoria */}
             {loading ? (
-                <div className="flex items-center justify-center py-20 text-muted">
-                    <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Carregando...
-                </div>
+                <AdminTableSkeleton rows={6} />
             ) : products.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
-                    <Package className="w-10 h-10 opacity-30" />
-                    <p className="text-sm">Nenhum produto cadastrado ainda.</p>
-                    <AdminButton onClick={openNew}>
-                        <Plus className="w-4 h-4 inline mr-1" />Adicionar primeiro produto
-                    </AdminButton>
-                </div>
+                <AdminEmptyState
+                    icon={<Package className="w-8 h-8" />}
+                    title="Nenhum produto cadastrado ainda"
+                    action={
+                        <AdminButton onClick={openNew}>
+                            <Plus className="w-4 h-4 inline mr-1" />Adicionar primeiro produto
+                        </AdminButton>
+                    }
+                />
             ) : (
                 <div className="space-y-8">
                     {grouped.map(([category, items]) => (

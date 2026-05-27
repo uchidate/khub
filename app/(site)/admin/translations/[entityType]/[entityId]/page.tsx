@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { ArrowLeft, Save, ExternalLink, Clock, CheckCircle2, FileEdit, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
@@ -400,9 +401,9 @@ export default function TranslationEditorPage() {
             <h2 className="font-semibold text-sm text-foreground">Histórico de alterações</h2>
           </div>
           {logsLoading ? (
-            <div className="p-6 text-center text-muted text-sm">Carregando...</div>
+            <AdminTableSkeleton rows={3} />
           ) : logs.length === 0 ? (
-            <div className="p-6 text-center text-muted text-sm">Nenhuma alteração registrada</div>
+            <AdminEmptyState title="Nenhuma alteração registrada" size="sm" />
           ) : (
             <ul className="divide-y divide-white/5">
               {logs.map(log => (
