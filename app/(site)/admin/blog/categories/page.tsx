@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Tag, Plus, Pencil, Trash2, Check, X, Loader2, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
@@ -140,9 +140,7 @@ export default function BlogCategoriesPage() {
 
                 {/* List */}
                 {loading ? (
-                    <div className="flex justify-center py-12">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted" />
-                    </div>
+                    <AdminTableSkeleton rows={4} />
                 ) : categories.length === 0 ? (
                     <AdminEmptyState
                         icon={<Tag className="w-8 h-8 text-muted" />}

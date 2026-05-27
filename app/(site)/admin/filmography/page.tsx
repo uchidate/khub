@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info, Loader2 } from 'lucide-react'
+import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Search, Info } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { FilterPills } from '@/components/admin/FilterPills'
-import { AdminEmptyState, AdminButton, SectionHeader, ConfirmDialog } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton, AdminButton, SectionHeader, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 
 interface Artist {
@@ -212,9 +212,7 @@ export default function FilmographyAdminPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-muted animate-spin" />
-            </div>
+            <AdminTableSkeleton rows={5} />
           ) : filteredArtists.length === 0 ? (
             <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
           ) : (

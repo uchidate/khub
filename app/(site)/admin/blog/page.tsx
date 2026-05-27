@@ -9,7 +9,7 @@ import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
-import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton, ConfirmDialog } from '@/components/admin'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -566,11 +566,7 @@ function CategoriesTab({ showError, showSuccess }: { showError: (m: string) => v
         }
     }
 
-    if (loading) return (
-        <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted" />
-        </div>
-    )
+    if (loading) return <AdminTableSkeleton rows={3} />
 
     return (
         <div className="space-y-4 max-w-lg">
@@ -1205,9 +1201,7 @@ function AdminBlogPageContent() {
                         </div>
 
                         {loading && visibleSuggestions.length === 0 ? (
-                            <div className="flex justify-center py-12">
-                                <Loader2 className="w-6 h-6 text-muted animate-spin" />
-                            </div>
+                            <AdminTableSkeleton rows={4} />
                         ) : visibleSuggestions.length === 0 ? (
                             <AdminEmptyState
                                 icon={<CheckCircle className="w-8 h-8 text-emerald-500" />}

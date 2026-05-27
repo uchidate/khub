@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminTableSkeleton } from '@/components/admin'
 import { Save, Search, X, Star, LayoutGrid, BookMarked, Loader2, Layers, Sparkles, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -509,9 +510,7 @@ export default function HomepageConfigPage() {
     if (loading) {
         return (
             <AdminLayout title="Homepage Editorial" subtitle="Gerencie os destaques editoriais exibidos na página inicial">
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="animate-spin text-muted" size={24} />
-                </div>
+                <AdminTableSkeleton rows={4} />
             </AdminLayout>
         )
     }

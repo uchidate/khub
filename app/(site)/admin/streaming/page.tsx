@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { AdminEmptyState, AdminTableSkeleton, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { STREAMING_CONFIG, STREAMING_TAB_ORDER } from '@/lib/config/streaming-platforms'
 import { Tv, RefreshCw, Trash2, Loader2, ExternalLink, Star, Clock, AlertTriangle } from 'lucide-react'
@@ -161,9 +161,7 @@ export default function StreamingAdminPage() {
 
             {/* Table */}
             {loading ? (
-                <div className="flex justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted" />
-                </div>
+                <AdminTableSkeleton rows={5} />
             ) : shows.length === 0 ? (
                 <AdminEmptyState
                     icon={<Tv className="w-8 h-8 text-muted" />}
