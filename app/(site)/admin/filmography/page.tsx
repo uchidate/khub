@@ -140,7 +140,7 @@ export default function FilmographyAdminPage() {
   ]
 
   return (
-    <AdminLayout title="Filmografias">
+    <AdminLayout title="Filmografias" subtitle="Gerencie os vínculos entre artistas e suas produções">
       <div className="space-y-4">
         <p className="text-muted text-xs -mt-6 flex items-center gap-1.5">
           <Info size={12} />
