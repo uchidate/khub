@@ -59,7 +59,7 @@ export default function AiConfigPage() {
             })
             .catch(() => toast.error('Erro ao carregar configurações'))
             .finally(() => setLoading(false))
-    }, [])
+    }, [toast])
 
     async function handleSave(feature: string) {
         const form = forms[feature]
