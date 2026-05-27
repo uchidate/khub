@@ -174,9 +174,10 @@ const automationBacklog = [
   },
   {
     title: 'Inventário com última atualização',
-    value: 'Governança',
-    description: 'Mostrar quais fontes alimentam cada área e quando cada conjunto de dados foi atualizado.',
+    value: 'Implementado',
+    description: 'Mostra quais fontes alimentam cada área e quando cada conjunto de dados foi atualizado pela última vez.',
     icon: Database,
+    href: '/admin/processes/inventory',
   },
 ]
 
@@ -403,20 +404,28 @@ export default async function AdminProcessesPage() {
         <section>
           <h2 className="text-sm font-bold text-foreground mb-3">Backlog recomendado de automação</h2>
           <div className="grid sm:grid-cols-2 gap-3">
-            {automationBacklog.map(({ title, value, description, icon: Icon }) => (
-              <div key={title} className="bg-surface border border-border rounded-xl p-4">
+            {automationBacklog.map(({ title, value, description, icon: Icon, ...rest }) => {
+              const href = (rest as { href?: string }).href
+              const card = (
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-accent-soft flex items-center justify-center shrink-0">
                     <Icon size={15} className="text-accent" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-bold text-foreground">{title}</p>
                     <p className="text-[10px] font-semibold text-accent mt-0.5">{value}</p>
                     <p className="text-[11px] text-muted leading-relaxed mt-2">{description}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+              return href ? (
+                <Link key={title} href={href} className="bg-surface border border-border rounded-xl p-4 hover:border-accent/30 transition-colors block">
+                  {card}
+                </Link>
+              ) : (
+                <div key={title} className="bg-surface border border-border rounded-xl p-4">{card}</div>
+              )
+            })}
           </div>
         </section>
       </div>
