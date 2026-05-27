@@ -287,7 +287,7 @@ export default function AgenciesPage() {
   ]
 
   return (
-    <AdminLayout title="Agências">
+    <AdminLayout title="Agências" subtitle="Gerencie as agências de entretenimento vinculadas aos artistas">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TypeFilter value={typeFilter} onChange={v => { setTypeFilter(v); setExpanded(null) }} />

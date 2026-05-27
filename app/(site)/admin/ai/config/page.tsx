@@ -93,7 +93,7 @@ export default function AiConfigPage() {
 
     if (loading) {
         return (
-            <AdminLayout title="Configuração de IA">
+            <AdminLayout title="Configuração de IA" subtitle="Defina providers e orçamentos por feature de IA">
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 text-muted animate-spin" />
                 </div>

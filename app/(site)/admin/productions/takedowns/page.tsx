@@ -40,7 +40,7 @@ export default async function TakedownsPage() {
   const takedowns = await getActiveTakedowns()
 
   return (
-    <AdminLayout title="Takedowns Legais">
+    <AdminLayout title="Takedowns Legais" subtitle="Gerencie produções com pedidos de remoção e restrições legais">
       <div className="space-y-6">
         {/* Header info */}
         <div className="flex items-center gap-3 rounded-xl border border-red-800/30 bg-red-950/10 p-4">

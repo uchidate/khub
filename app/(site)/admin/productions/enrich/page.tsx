@@ -113,7 +113,7 @@ export default function ProductionEnrichQueuePage() {
     const pages = data?.pages ?? 1
 
     return (
-        <AdminLayout title="Curadoria Gemini de Produções">
+        <AdminLayout title="Curadoria Gemini de Produções" subtitle="Gera sinopses em português via IA para produções sem tradução">
             <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
                 <div className="flex items-start justify-between gap-4">
                     <div>
