@@ -19,7 +19,8 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import type { Metadata } from "next"
 
 import { SITE_URL } from '@/lib/constants/site'
-import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { StoreProductsRail } from '@/components/store/StoreProductsRail'
+import { inferProductionContentType } from '@/lib/store/product-matcher'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
@@ -753,14 +754,18 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
 
                         {/* Loja: após elenco, usuário já conhece o drama e o elenco */}
                         <div id="loja" className="scroll-mt-28">
-                        <LojaRelacionados
-                            tags={[
-                                ...tags,
-                                ...production.artists.slice(0, 3).map(a => a.artist.nameRomanized.toLowerCase()),
-                                isMovie ? 'kfilm' : 'kdrama',
-                            ]}
-                            title={`Produtos — ${production.titlePt}`}
-                        />
+                            <StoreProductsRail
+                                entityType="production"
+                                entityId={production.id}
+                                names={[
+                                    production.titlePt,
+                                    ...(production.titleKr ? [production.titleKr] : []),
+                                    ...production.artists.slice(0, 3).map(a => a.artist.nameRomanized),
+                                ]}
+                                contentType={inferProductionContentType(production.type ?? '')}
+                                title={`Produtos — ${production.titlePt}`}
+                                limit={6}
+                            />
                         </div>
 
                         {/* Blog articles */}

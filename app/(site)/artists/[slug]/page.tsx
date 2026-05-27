@@ -23,7 +23,8 @@ import { permanentRedirect } from "next/navigation"
 import { ExternalMusicEntityType } from "@prisma/client"
 
 import { SITE_URL } from '@/lib/constants/site'
-import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { StoreProductsRail } from '@/components/store/StoreProductsRail'
+import { inferContentType } from '@/lib/store/product-matcher'
 import { BrandDot } from '@/components/ui/BrandDot'
 const BASE_URL = SITE_URL
 
@@ -793,9 +794,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             {/* ── LOJA ── */}
             <div id="loja" className="scroll-mt-20 border-t border-border/40">
                 <div className="page-wrap py-14">
-                    <LojaRelacionados
-                        tags={[artist.nameRomanized.toLowerCase(), ...(activeGroup ? [activeGroup.name.toLowerCase()] : [])]}
-                        title={`Produtos ${artist.nameRomanized}`}
+                    <StoreProductsRail
+                        entityType="artist"
+                        entityId={artist.id}
+                        names={[
+                            artist.nameRomanized,
+                            ...(artist.nameHangul ? [artist.nameHangul] : []),
+                            ...(activeGroup ? [activeGroup.name] : []),
+                        ]}
+                        contentType={inferContentType(artist.roles ?? [], artist.productions.map(ap => ap.production))}
+                        title={`Produtos — ${artist.nameRomanized}`}
+                        limit={6}
                     />
                 </div>
             </div>
