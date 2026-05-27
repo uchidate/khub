@@ -185,7 +185,7 @@ export default function AdminLojaPage() {
         .slice(0, 5)
 
     return (
-        <AdminLayout title="Loja — Produtos Afiliados">
+        <AdminLayout title="Loja — Produtos Afiliados" subtitle="Gerencie produtos afiliados, links e cupons da loja">
             {/* Barra de ações */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
                 <AdminButton variant="primary" onClick={openNew}>

@@ -102,7 +102,7 @@ export default function AiConfigPage() {
     }
 
     return (
-        <AdminLayout title="Configuração de IA">
+        <AdminLayout title="Configuração de IA" subtitle="Defina providers e orçamentos por feature de IA">
             <div className="space-y-6 max-w-3xl">
                 {/* Header */}
                 <div className="flex items-center gap-3">

@@ -225,7 +225,7 @@ function TranslationsPageContent() {
   const draftCount = items.filter(i => i.status === 'draft').length
 
   return (
-    <AdminLayout title="Traduções">
+    <AdminLayout title="Traduções" subtitle="Gerencie traduções de conteúdo para artistas, grupos e produções">
       <div className="space-y-6">
 
         <PageGuide

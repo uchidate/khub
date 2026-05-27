@@ -109,7 +109,7 @@ function ImportForm() {
     )
 
     return (
-        <AdminLayout title="Importar produto via Bookmarklet">
+        <AdminLayout title="Importar produto via Bookmarklet" subtitle="Adicione produtos manualmente a partir de dados do bookmarklet de scraping">
             <div className="mb-6">
                 <Link href="/admin/loja" className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Voltar para Loja

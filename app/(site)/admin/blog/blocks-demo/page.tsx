@@ -638,7 +638,7 @@ export default function BlocksDemoPage() {
     const [filter, setFilter] = useState<'all' | 'existing' | 'new'>('all')
 
     return (
-        <AdminLayout title="Guia de blocos do Blog">
+        <AdminLayout title="Guia de blocos do Blog" subtitle="Referência visual de todos os tipos de blocos disponíveis no editor">
             <div className="max-w-3xl mx-auto px-4 py-8">
                 <div className="mb-8">
                     <h1 className="text-[24px] font-black text-foreground mb-1">Guia de blocos do Blog</h1>

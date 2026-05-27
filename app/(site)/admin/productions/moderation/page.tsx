@@ -1028,7 +1028,7 @@ function ProductionModerationContent() {
     : []
 
   return (
-    <AdminLayout title="Moderação de Produções">
+    <AdminLayout title="Moderação de Produções" subtitle="Revise e modere produções aguardando aprovação ou com flags de conteúdo">
       <ConfirmDialog
         open={modal.open}
         title={modal.title}
@@ -1299,7 +1299,7 @@ function ProductionModerationContent() {
 export default function ProductionModerationPage() {
   return (
     <Suspense fallback={
-      <AdminLayout title="Moderação de Produções">
+      <AdminLayout title="Moderação de Produções" subtitle="Revise e modere produções aguardando aprovação ou com flags de conteúdo">
         <div className="flex items-center justify-center py-16">
           <RefreshCw className="w-7 h-7 text-purple-500 animate-spin" />
         </div>

@@ -1110,7 +1110,7 @@ function AdminBlogPageContent() {
     ]
 
     return (
-        <AdminLayout title="Blog Pipeline">
+        <AdminLayout title="Blog Pipeline" subtitle="Gerencie o fluxo editorial de publicação de posts e artigos">
             <div className="space-y-5">
 
                 <BlogStatsBar stats={blogStats} />
@@ -1398,7 +1398,7 @@ export default function AdminBlogPage() {
     return (
         <Suspense
             fallback={
-                <AdminLayout title="Blog Pipeline">
+                <AdminLayout title="Blog Pipeline" subtitle="Gerencie o fluxo editorial de publicação de posts e artigos">
                     <div className="text-sm text-muted">Carregando painel do blog...</div>
                 </AdminLayout>
             }

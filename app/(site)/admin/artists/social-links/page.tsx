@@ -620,7 +620,7 @@ export default function SocialLinksAdminPage() {
     ]
 
     return (
-        <AdminLayout title="Redes Sociais dos Artistas">
+        <AdminLayout title="Redes Sociais dos Artistas" subtitle="Gerencie e valide os perfis de redes sociais vinculados a cada artista">
             <div className="space-y-5">
 
                 {/* Stats */}
