@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
-import { AdminButton, AdminIconButton, AdminIconLink } from '@/components/admin'
-import { Search, ChevronRight, RefreshCw, CheckCircle, Loader2, Pencil, AlertCircle, History, ExternalLink, ShieldAlert } from 'lucide-react'
+import { AdminButton, AdminIconButton, AdminIconLink, AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
+import { Search, ChevronRight, RefreshCw, CheckCircle, Loader2, Pencil, AlertCircle, History, ExternalLink, ShieldAlert, FileSearch } from 'lucide-react'
 import Link from 'next/link'
 
 type EntityType = 'artist' | 'group' | 'production' | 'news'
@@ -492,9 +492,14 @@ function TranslationsPageContent() {
 
           {/* Lista */}
           {loading ? (
-            <div className="p-8 text-center text-muted">Carregando...</div>
+            <AdminTableSkeleton rows={6} />
           ) : items.length === 0 ? (
-            <div className="p-8 text-center text-muted">Nenhum resultado</div>
+            <AdminEmptyState
+              icon={<FileSearch className="w-8 h-8" />}
+              title="Nenhum resultado"
+              description="Tente ajustar os filtros ou a busca."
+              size="sm"
+            />
           ) : (
             <ul className="divide-y divide-white/5">
               {items.map(item => {

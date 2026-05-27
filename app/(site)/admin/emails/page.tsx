@@ -99,7 +99,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                         const Icon = cfg.icon
                         return (
                             <Link key={s} href={buildUrl({ status: status === s ? '' : s })}
-                                className={`glass-card p-4 flex items-center gap-3 rounded-xl border border-border hover:border-border transition-colors ${status === s ? 'border-border' : ''}`}>
+                                className={`bg-surface p-4 flex items-center gap-3 rounded-xl border border-border hover:border-border transition-colors ${status === s ? 'border-border' : ''}`}>
                                 <Icon size={18} className={cfg.color.split(' ')[0]} />
                                 <div>
                                     <p className="text-xl font-black text-foreground">{countMap[s] ?? 0}</p>
@@ -128,7 +128,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 </div>
 
                 {/* Mobile cards */}
-                <div className="md:hidden glass-card rounded-xl border border-border overflow-hidden divide-y divide-white/5">
+                <div className="md:hidden bg-surface rounded-xl border border-border overflow-hidden divide-y divide-white/5">
                     {logs.length === 0 && (
                         <AdminEmptyState title="Nenhum email encontrado" icon={<Mail className="w-8 h-8" />} size="sm" />
                     )}
@@ -165,7 +165,7 @@ export default async function AdminEmailsPage({ searchParams }: Props) {
                 </div>
 
                 {/* Tabela — desktop */}
-                <div className="hidden md:block glass-card rounded-xl overflow-hidden overflow-x-auto border border-border">
+                <div className="hidden md:block bg-surface rounded-xl overflow-hidden overflow-x-auto border border-border">
                     <table className="w-full min-w-[600px] text-sm">
                         <thead>
                             <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted">

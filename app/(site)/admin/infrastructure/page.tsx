@@ -5,7 +5,7 @@ import {
     RefreshCw, Server, Clock, Loader2, Zap, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ConfirmDialog } from '@/components/admin'
+import { ConfirmDialog, AdminEmptyState } from '@/components/admin'
 
 interface AppStatus {
     uuid: string
@@ -207,9 +207,7 @@ export default function InfrastructurePage() {
                             <Loader2 className="w-5 h-5 animate-spin text-muted" />
                         </div>
                     ) : tasks.length === 0 ? (
-                        <div className="bg-surface border border-border rounded-2xl p-8 text-center text-muted text-sm">
-                            Nenhuma scheduled task configurada
-                        </div>
+                        <AdminEmptyState title="Nenhuma scheduled task configurada" size="sm" />
                     ) : (
                         <div className="space-y-2">
                             {tasks.map(task => (

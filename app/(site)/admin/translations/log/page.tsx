@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ArrowLeft, RefreshCw, ChevronDown } from 'lucide-react'
+import { AdminTableSkeleton, AdminEmptyState } from '@/components/admin'
+import { ArrowLeft, RefreshCw, ChevronDown, ClipboardList } from 'lucide-react'
 import Link from 'next/link'
 
 interface LogEntry {
@@ -120,9 +121,13 @@ export default function TranslationLogPage() {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-muted">Carregando...</div>
+            <AdminTableSkeleton rows={8} />
           ) : logs.length === 0 ? (
-            <div className="p-8 text-center text-muted">Nenhum registro encontrado</div>
+            <AdminEmptyState
+              icon={<ClipboardList className="w-8 h-8" />}
+              title="Nenhum registro encontrado"
+              size="sm"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

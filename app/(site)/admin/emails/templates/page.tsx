@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminLinkButton } from '@/components/admin'
+import { AdminLinkButton, AdminEmptyState } from '@/components/admin'
 import prisma from '@/lib/prisma'
 
 import { Pencil, CheckCircle, XCircle } from 'lucide-react'
@@ -21,13 +21,14 @@ export default async function AdminEmailTemplatesPage() {
         <AdminLayout title="Templates de Email" hideTitle>
             <div className="space-y-3">
                     {templates.length === 0 && (
-                        <div className="glass-card p-8 text-center text-muted rounded-xl">
-                            <p>Nenhum template encontrado.</p>
-                            <p className="text-sm mt-1">Execute o seed para criar os templates padrão.</p>
-                        </div>
+                        <AdminEmptyState
+                            title="Nenhum template encontrado"
+                            description="Execute o seed para criar os templates padrão."
+                            size="sm"
+                        />
                     )}
                     {templates.map(tpl => (
-                        <div key={tpl.id} className="glass-card p-5 rounded-xl border border-border flex items-center gap-4">
+                        <div key={tpl.id} className="bg-surface p-5 rounded-xl border border-border flex items-center gap-4">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <p className="font-black text-foreground">{tpl.name}</p>
