@@ -64,7 +64,7 @@ export default function BlogInspirationPage() {
       title="Inspirar artigo do blog por notícia"
       subtitle="Escolha uma notícia para inspirar a criação de um novo artigo. Depois, peça aqui no chat: 'Gere um artigo inspirado na notícia [id]'."
     >
-      <div className="mb-6 text-gray-600">
+      <div className="mb-6 text-muted">
         Selecione uma notícia abaixo. Copie o <b>ID</b> ou o <b>link</b> e peça aqui no chat para gerar o artigo adaptado.
       </div>
       <DataTable<News>

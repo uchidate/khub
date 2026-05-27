@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { AdminEmptyState } from '@/components/admin'
 import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
 import Image from 'next/image'
 
@@ -263,7 +264,7 @@ export default function InstagramAdminPage() {
                 ) : (
                     <div className="space-y-2">
                         {artists.length === 0 && (
-                            <div className="text-center py-16 text-muted">Nenhum artista encontrado</div>
+                            <AdminEmptyState title="Nenhum artista encontrado" size="sm" />
                         )}
                         {artists.map((artist) => {
                             const isSaved = saved === artist.id
