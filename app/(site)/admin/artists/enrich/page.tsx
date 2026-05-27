@@ -5,7 +5,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Sparkles, Search, TrendingUp, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Search, TrendingUp, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
 
 interface ArtistEnrichStatus {
     id: string

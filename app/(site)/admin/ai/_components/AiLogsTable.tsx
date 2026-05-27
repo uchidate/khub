@@ -76,7 +76,7 @@ export default function AiLogsTable({ initialLogs }: Props) {
         } finally {
             setLoading(false)
         }
-    }, [provider, feature, status])
+    }, [provider, feature, status, toast])
 
     function handleFilter(key: 'provider' | 'feature' | 'status', value: string) {
         if (key === 'provider') { setProvider(value); load(value, feature, status) }

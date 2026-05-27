@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
@@ -31,11 +31,7 @@ export default function InstagramStatusPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [artists, setArtists] = useState<ArtistWithFeed[]>([])
 
-  useEffect(() => {
-    fetchStatus()
-  }, [])
-
-  async function fetchStatus() {
+  const fetchStatus = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/instagram/status')
@@ -50,7 +46,9 @@ export default function InstagramStatusPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => { fetchStatus() }, [fetchStatus])
 
   function getStatusIcon(status: string) {
     switch (status) {
