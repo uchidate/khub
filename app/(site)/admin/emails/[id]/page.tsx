@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Clock, Mail } from 'lucide-react'
+import { AdminButton, AdminLinkButton } from '@/components/admin'
+import { AdminTableSkeleton } from '@/components/admin/AdminTableSkeleton'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Clock } from 'lucide-react'
 
 interface EmailLog {
     id: string
@@ -22,56 +24,57 @@ interface EmailLog {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-    SENT: { label: 'Enviado', color: 'text-green-400', icon: CheckCircle },
-    FAILED: { label: 'Falhou', color: 'text-red-400', icon: XCircle },
+    SENT:    { label: 'Enviado',  color: 'text-green-400',  icon: CheckCircle },
+    FAILED:  { label: 'Falhou',   color: 'text-red-400',    icon: XCircle },
     PENDING: { label: 'Pendente', color: 'text-yellow-400', icon: Clock },
 }
 
 export default function AdminEmailDetailPage() {
     const { id } = useParams<{ id: string }>()
     const router = useRouter()
+    const toast = useAdminToast()
     const [log, setLog] = useState<EmailLog | null>(null)
     const [loading, setLoading] = useState(true)
     const [resending, setResending] = useState(false)
-    const [resendMsg, setResendMsg] = useState('')
 
     useEffect(() => {
         fetch(`/api/admin/emails?page=1`)
             .then(r => r.json())
-            .then(data => {
-                const found = data.logs?.find((l: EmailLog) => l.id === id)
-                setLog(found ?? null)
-            })
+            .then(data => { setLog(data.logs?.find((l: EmailLog) => l.id === id) ?? null) })
+            .catch(() => toast.error('Erro ao carregar email'))
             .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const handleResend = async () => {
         setResending(true)
-        setResendMsg('')
-        const res = await fetch(`/api/admin/emails/${id}/resend`, { method: 'POST' })
-        if (res.ok) {
-            setResendMsg('Email reenviado com sucesso!')
-            setTimeout(() => router.push('/admin/emails'), 1500)
-        } else {
+        try {
+            const res = await fetch(`/api/admin/emails/${id}/resend`, { method: 'POST' })
             const data = await res.json()
-            setResendMsg(data.error || 'Erro ao reenviar')
+            if (res.ok) {
+                toast.success('Email reenviado com sucesso!')
+                setTimeout(() => router.push('/admin/emails'), 1500)
+            } else {
+                toast.error(data.error || 'Erro ao reenviar')
+            }
+        } finally {
+            setResending(false)
         }
-        setResending(false)
     }
 
     if (loading) return (
-        <AdminLayout title="Email">
-            <div className="p-6 flex items-center justify-center min-h-[200px]">
-                <RefreshCw className="animate-spin text-muted" size={24} />
-            </div>
+        <AdminLayout title="Detalhe do Email">
+            <AdminTableSkeleton rows={8} />
         </AdminLayout>
     )
 
     if (!log) return (
-        <AdminLayout title="Email">
-            <div className="p-6">
-                <p className="text-muted">Email não encontrado.</p>
-                <Link href="/admin/emails" className="text-accent text-sm mt-2 inline-block">← Voltar</Link>
+        <AdminLayout title="Email não encontrado">
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <p className="text-muted text-sm">Email não encontrado.</p>
+                <AdminLinkButton href="/admin/emails" variant="secondary" size="sm">
+                    <ArrowLeft size={14} /> Histórico
+                </AdminLinkButton>
             </div>
         </AdminLayout>
     )
@@ -80,68 +83,59 @@ export default function AdminEmailDetailPage() {
     const StatusIcon = cfg.icon
 
     return (
-        <AdminLayout title="Email">
-            <div className="p-6 max-w-3xl mx-auto">
-                <Link href="/admin/emails" className="flex items-center gap-2 text-muted hover:text-foreground text-sm mb-6 transition-colors w-fit">
-                    <ArrowLeft size={14} /> Histórico de Emails
-                </Link>
-
-                <div className="flex items-center gap-3 mb-6">
-                    <Mail size={20} className="text-accent" />
-                    <h1 className="text-xl font-black text-foreground">Detalhe do Email</h1>
-                    <span className={`flex items-center gap-1.5 ml-auto px-3 py-1 rounded-lg text-sm font-black ${cfg.color} bg-white/5`}>
+        <AdminLayout
+            title={log.subject}
+            subtitle={log.to}
+            actions={
+                <div className="flex items-center gap-2">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-black ${cfg.color} bg-white/5`}>
                         <StatusIcon size={14} />
                         {cfg.label}
                     </span>
+                    <AdminLinkButton href="/admin/emails" variant="secondary" size="sm">
+                        <ArrowLeft size={14} />
+                        Histórico
+                    </AdminLinkButton>
                 </div>
+            }
+        >
+            <div className="max-w-3xl space-y-3">
+                {[
+                    { label: 'Para',        value: log.to },
+                    { label: 'Assunto',     value: log.subject },
+                    { label: 'Tipo',        value: log.type },
+                    { label: 'Template',    value: log.templateSlug ?? '—' },
+                    { label: 'Resend ID',   value: log.resendId ?? '—' },
+                    { label: 'Usuário',     value: log.user ? `${log.user.name} (${log.user.id})` : '—' },
+                    { label: 'Enviado em',  value: log.sentAt ? new Date(log.sentAt).toLocaleString('pt-BR') : '—' },
+                    { label: 'Criado em',   value: new Date(log.createdAt).toLocaleString('pt-BR') },
+                ].map(({ label, value }) => (
+                    <div key={label} className="bg-surface border border-border px-4 py-3 rounded-xl flex gap-4">
+                        <span className="text-xs font-black text-muted uppercase tracking-wider w-28 flex-shrink-0 pt-0.5">{label}</span>
+                        <span className="text-sm text-foreground break-all">{value}</span>
+                    </div>
+                ))}
 
-                <div className="space-y-3">
-                    {[
-                        { label: 'Para', value: log.to },
-                        { label: 'Assunto', value: log.subject },
-                        { label: 'Tipo', value: log.type },
-                        { label: 'Template', value: log.templateSlug ?? '—' },
-                        { label: 'Resend ID', value: log.resendId ?? '—' },
-                        { label: 'Usuário', value: log.user ? `${log.user.name} (${log.user.id})` : '—' },
-                        { label: 'Enviado em', value: log.sentAt ? new Date(log.sentAt).toLocaleString('pt-BR') : '—' },
-                        { label: 'Criado em', value: new Date(log.createdAt).toLocaleString('pt-BR') },
-                    ].map(({ label, value }) => (
-                        <div key={label} className="glass-card px-4 py-3 rounded-xl border border-border flex gap-4">
-                            <span className="text-xs font-black text-muted uppercase tracking-wider w-28 flex-shrink-0 pt-0.5">{label}</span>
-                            <span className="text-sm text-foreground break-all">{value}</span>
-                        </div>
-                    ))}
+                {log.errorMessage && (
+                    <div className="bg-red-500/5 border border-red-500/20 px-4 py-3 rounded-xl">
+                        <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-1">Erro</p>
+                        <p className="text-sm text-red-300 font-mono">{log.errorMessage}</p>
+                    </div>
+                )}
 
-                    {log.errorMessage && (
-                        <div className="glass-card px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5">
-                            <p className="text-xs font-black text-red-400 uppercase tracking-wider mb-1">Erro</p>
-                            <p className="text-sm text-red-300 font-mono">{log.errorMessage}</p>
-                        </div>
-                    )}
-
-                    {log.metadata && (
-                        <div className="glass-card px-4 py-3 rounded-xl border border-border">
-                            <p className="text-xs font-black text-muted uppercase tracking-wider mb-2">Metadata</p>
-                            <pre className="text-xs text-muted font-mono overflow-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
-                        </div>
-                    )}
-                </div>
+                {log.metadata && (
+                    <div className="bg-surface border border-border px-4 py-3 rounded-xl">
+                        <p className="text-xs font-black text-muted uppercase tracking-wider mb-2">Metadata</p>
+                        <pre className="text-xs text-muted font-mono overflow-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
+                    </div>
+                )}
 
                 {log.templateSlug && (
-                    <div className="mt-6">
-                        {resendMsg && (
-                            <p className={`text-sm mb-3 font-bold ${resendMsg.includes('sucesso') ? 'text-green-400' : 'text-red-400'}`}>
-                                {resendMsg}
-                            </p>
-                        )}
-                        <button
-                            onClick={handleResend}
-                            disabled={resending}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors"
-                        >
+                    <div className="pt-3">
+                        <AdminButton onClick={handleResend} disabled={resending} variant="primary">
                             <RefreshCw size={14} className={resending ? 'animate-spin' : ''} />
                             {resending ? 'Reenviando...' : 'Reenviar Email'}
-                        </button>
+                        </AdminButton>
                     </div>
                 )}
             </div>

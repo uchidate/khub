@@ -212,6 +212,8 @@ const SECTION_LABELS: Record<string, string> = {
   visibility: 'Visibilidade', 'mb-import': 'Import MB', 'music-catalog': 'Catálogo Musical',
   'home-clusters': 'Home Clusters', loja: 'Loja',
   agent: 'Agente de Blog', 'image-audit': 'Auditoria Imagens',
+  ga4: 'Google Analytics 4', inspiration: 'Inspiração', enrich: 'Enriquecer',
+  cupons: 'Cupons', importar: 'Importar',
 }
 
 function isIdSegment(s: string) {
@@ -898,12 +900,15 @@ export function AdminLayout({ children, title, subtitle, actions, hideTitle }: A
           onClick={() => setShortcutsOpen(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Atalhos de teclado"
             className="w-full max-w-lg bg-background border border-border rounded-2xl shadow-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
               <h2 className="text-sm font-black text-foreground">Atalhos de teclado</h2>
-              <button onClick={() => setShortcutsOpen(false)} className="text-muted hover:text-foreground transition-colors">
+              <button onClick={() => setShortcutsOpen(false)} aria-label="Fechar" className="text-muted hover:text-foreground transition-colors">
                 <X size={15} />
               </button>
             </div>

@@ -5,12 +5,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
-import { useToast } from '@/lib/hooks/useToast'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import { AdminTabGroup } from '@/components/admin/AdminTabGroup'
 import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminIconLink } from '@/components/admin/AdminIconButton'
-import { AdminEmptyState } from '@/components/admin'
+import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
 import {
     CheckCircle, Eye, Archive, BookOpen, Sparkles, Loader2,
     Newspaper, FileText, RefreshCw, ArrowRight, ExternalLink,
@@ -348,10 +348,11 @@ function BulkActionBar({
     showError: (msg: string) => void
 }) {
     const [loading, setLoading] = useState<string | null>(null)
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
 
     const bulkAction = async (action: string, label: string) => {
         if (loading) return
-        if (action === 'delete' && !window.confirm(`Excluir ${selectedIds.length} post(s)? Esta ação é irreversível.`)) return
+        if (action === 'delete') { setConfirmBulkDelete(true); return }
         setLoading(action)
         try {
             const res = await fetch('/api/admin/blog/bulk', {
@@ -398,6 +399,33 @@ function BulkActionBar({
             >
                 <X size={14} />
             </button>
+            <ConfirmDialog
+                open={confirmBulkDelete}
+                title={`Excluir ${selectedIds.length} post${selectedIds.length !== 1 ? 's' : ''}?`}
+                description="Esta ação é irreversível."
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={async () => {
+                    setConfirmBulkDelete(false)
+                    setLoading('delete')
+                    try {
+                        const res = await fetch('/api/admin/blog/bulk', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ids: selectedIds, action: 'delete' }),
+                        })
+                        const data = await res.json()
+                        if (!res.ok) { showError(data.error ?? 'Erro ao excluir'); return }
+                        onDone()
+                        onClear()
+                    } catch {
+                        showError('Erro de rede ao excluir')
+                    } finally {
+                        setLoading(null)
+                    }
+                }}
+                onCancel={() => setConfirmBulkDelete(false)}
+            />
         </div>
     )
 }
@@ -509,6 +537,7 @@ function CategoriesTab({ showError, showSuccess }: { showError: (m: string) => v
     const [editName,   setEditName]   = useState('')
     const [savingId,   setSavingId]   = useState<string | null>(null)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [confirmCatDelete, setConfirmCatDelete] = useState<{ id: string; name: string } | null>(null)
     const editRef = useRef<HTMLInputElement>(null)
 
     const load = useCallback(async () => {
@@ -569,12 +598,16 @@ function CategoriesTab({ showError, showSuccess }: { showError: (m: string) => v
         }
     }
 
-    async function remove(id: string, name: string) {
-        if (deletingId || !window.confirm(`Remover categoria "${name}"? Os posts associados perderão a categoria.`)) return
+    function remove(id: string, name: string) {
+        if (deletingId) return
+        setConfirmCatDelete({ id, name })
+    }
+
+    async function executeRemove(id: string) {
         setDeletingId(id)
         try {
             await fetch(`/api/admin/blog/categories/${id}`, { method: 'DELETE' })
-            showSuccess(`Categoria removida`)
+            showSuccess('Categoria removida')
             load()
         } catch {
             showError('Erro de rede')
@@ -665,6 +698,15 @@ function CategoriesTab({ showError, showSuccess }: { showError: (m: string) => v
                     ))}
                 </div>
             )}
+            <ConfirmDialog
+                open={!!confirmCatDelete}
+                title={`Remover categoria "${confirmCatDelete?.name}"?`}
+                description="Os posts associados perderão a categoria."
+                confirmLabel="Remover"
+                variant="danger"
+                onConfirm={async () => { await executeRemove(confirmCatDelete!.id); setConfirmCatDelete(null) }}
+                onCancel={() => setConfirmCatDelete(null)}
+            />
         </div>
     )
 }
@@ -802,10 +844,9 @@ function DuplicateButton({ post, onDone, showError }: { post: BlogPost; onDone: 
 
 function DeleteButton({ post, onDone, showError }: { post: BlogPost; onDone: () => void; showError: (m: string) => void }) {
     const [loading, setLoading] = useState(false)
+    const [confirmOpen, setConfirmOpen] = useState(false)
 
-    const del = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        if (!window.confirm(`Excluir "${post.title}"? Esta ação é irreversível.`)) return
+    const executeDelete = async () => {
         setLoading(true)
         try {
             const res  = await fetch('/api/admin/blog/bulk', {
@@ -824,14 +865,25 @@ function DeleteButton({ post, onDone, showError }: { post: BlogPost; onDone: () 
     }
 
     return (
+        <>
         <button
-            onClick={del}
+            onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
             disabled={loading}
             title="Excluir post"
             className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:cursor-wait"
         >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
         </button>
+        <ConfirmDialog
+            open={confirmOpen}
+            title={`Excluir "${post.title}"?`}
+            description="Esta ação é irreversível."
+            confirmLabel="Excluir"
+            variant="danger"
+            onConfirm={async () => { setConfirmOpen(false); await executeDelete() }}
+            onCancel={() => setConfirmOpen(false)}
+        />
+        </>
     )
 }
 
@@ -872,9 +924,9 @@ function AdminBlogPageContent() {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
-    const addToast    = useToast(s => s.addToast)
-    const showError   = useCallback((msg: string) => addToast({ type: 'error',   message: msg, duration: 5000 }), [addToast])
-    const showSuccess = useCallback((msg: string) => addToast({ type: 'success', message: msg, duration: 3000 }), [addToast])
+    const toast = useAdminToast()
+    const showError   = useCallback((msg: string) => toast.error(msg), [toast])
+    const showSuccess = useCallback((msg: string) => toast.success(msg), [toast])
 
     const [statsKey,      setStatsKey]     = useState(0)
     const blogStats = useBlogStats(statsKey)

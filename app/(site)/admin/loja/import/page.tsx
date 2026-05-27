@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminButton } from '@/components/admin/AdminButton'
-import { useToast } from '@/lib/hooks/useToast'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import Image from 'next/image'
 import { ShoppingBag, Check, RefreshCw, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -30,7 +30,7 @@ const STORES: Record<string, string> = {
 function ImportForm() {
     const params = useSearchParams()
     const router = useRouter()
-    const { addToast } = useToast()
+    const toast = useAdminToast()
     const [saving, setSaving] = useState(false)
 
     const [form, setForm] = useState({
@@ -68,7 +68,7 @@ function ImportForm() {
 
     const save = async () => {
         if (!form.name || !form.imageUrl || !form.affiliateUrl) {
-            addToast({ type: 'error', message: 'Preencha nome, imagem e link de afiliado' })
+            toast.error('Preencha nome, imagem e link de afiliado')
             return
         }
         setSaving(true)
@@ -87,11 +87,11 @@ function ImportForm() {
             body: JSON.stringify(payload),
         })
         if (res.ok) {
-            addToast({ type: 'success', message: 'Produto criado com sucesso!' })
+            toast.success('Produto criado com sucesso!')
             router.push('/admin/loja')
         } else {
             const err = await res.json().catch(() => ({}))
-            addToast({ type: 'error', message: err.error || 'Erro ao salvar' })
+            toast.error(err.error || 'Erro ao salvar')
         }
         setSaving(false)
     }

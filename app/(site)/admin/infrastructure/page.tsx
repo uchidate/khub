@@ -5,6 +5,7 @@ import {
     RefreshCw, Server, Clock, Loader2, Zap, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { ConfirmDialog } from '@/components/admin'
 
 interface AppStatus {
     uuid: string
@@ -60,6 +61,7 @@ export default function InfrastructurePage() {
     const [tasks, setTasks] = useState<ScheduledTask[]>([])
     const [loading, setLoading] = useState(true)
     const [deploying, setDeploying] = useState(false)
+    const [confirmDeploy, setConfirmDeploy] = useState(false)
     const [togglingTask, setTogglingTask] = useState<string | null>(null)
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
@@ -82,7 +84,6 @@ export default function InfrastructurePage() {
     useEffect(() => { load() }, [load])
 
     async function handleDeploy() {
-        if (!confirm(`Deploy ${env}?`)) return
         setDeploying(true)
         try {
             await fetch('/api/admin/infrastructure', {
@@ -175,7 +176,7 @@ export default function InfrastructurePage() {
                         <div className="flex items-center gap-4">
                             {app && <StatusBadge status={app.status} />}
                             <button
-                                onClick={handleDeploy}
+                                onClick={() => setConfirmDeploy(true)}
                                 disabled={deploying}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 text-xs font-bold rounded-lg transition-colors"
                             >
@@ -258,6 +259,15 @@ export default function InfrastructurePage() {
                     )}
                 </div>
             </div>
+            <ConfirmDialog
+                open={confirmDeploy}
+                title={`Deploy ${env}?`}
+                description="Isso vai iniciar um novo deploy na plataforma Coolify."
+                confirmLabel="Deploy"
+                variant="default"
+                onConfirm={() => { setConfirmDeploy(false); handleDeploy() }}
+                onCancel={() => setConfirmDeploy(false)}
+            />
         </AdminLayout>
     )
 }

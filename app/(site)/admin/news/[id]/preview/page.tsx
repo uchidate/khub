@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
 import prisma from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { BlockRenderer } from '@/components/ui/BlockRenderer'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { NewsBlock } from '@/lib/types/blocks'

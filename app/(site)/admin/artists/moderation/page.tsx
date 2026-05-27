@@ -161,7 +161,10 @@ export default function ArtistModerationPage() {
   ]
 
   return (
-    <AdminLayout title="Moderação de Artistas">
+    <AdminLayout
+      title="Moderação de Artistas"
+      subtitle="Revise e gerencie artistas com relevância duvidosa para a cultura coreana"
+    >
       <ConfirmDialog
         open={modal.open}
         title={modal.title}
@@ -173,8 +176,6 @@ export default function ArtistModerationPage() {
       />
 
       <div className="space-y-4">
-        <p className="text-muted text-sm -mt-6">Revise e gerencie artistas com relevância duvidosa para a cultura coreana</p>
-
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

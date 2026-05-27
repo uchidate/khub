@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminButton } from '@/components/admin/AdminButton'
-import { useToast } from '@/lib/hooks/useToast'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
   History, RotateCcw, Loader2, ArrowLeft, Clock, User, FileText,
   Pin, PinOff, Eye, X, ChevronDown, ChevronUp, Pencil, Check,
@@ -190,7 +190,7 @@ function LabelEditor({ postId, version, onUpdate }: { postId: string; version: V
 
 export default function BlogPostHistory() {
   const { id } = useParams<{ id: string }>()
-  const { addToast } = useToast()
+  const toast = useAdminToast()
 
   const [versions, setVersions] = useState<VersionSummary[]>([])
   const [loading, setLoading]   = useState(true)
@@ -207,11 +207,11 @@ export default function BlogPostHistory() {
       if (!res.ok) throw new Error()
       setVersions(await res.json())
     } catch {
-      addToast({ type: 'error', message: 'Não foi possível carregar o histórico.' })
+      toast.error('Não foi possível carregar o histórico.')
     } finally {
       setLoading(false)
     }
-  }, [id, addToast])
+  }, [id, toast])
 
   useEffect(() => { loadVersions() }, [loadVersions])
 
@@ -221,10 +221,10 @@ export default function BlogPostHistory() {
     try {
       const res = await fetch(`/api/blog/posts/${id}/versions/${versionId}/restore`, { method: 'POST' })
       if (!res.ok) throw new Error()
-      addToast({ type: 'success', message: 'Versão restaurada com sucesso.' })
+      toast.success('Versão restaurada com sucesso.')
       await loadVersions()
     } catch {
-      addToast({ type: 'error', message: 'Não foi possível restaurar a versão.' })
+      toast.error('Não foi possível restaurar a versão.')
     } finally {
       setRestoring(null)
     }
@@ -241,7 +241,7 @@ export default function BlogPostHistory() {
       if (!res.ok) throw new Error()
       setVersions(prev => prev.map(x => x.id === v.id ? { ...x, pinned: !v.pinned } : x))
     } catch {
-      addToast({ type: 'error', message: 'Não foi possível alterar o pin.' })
+      toast.error('Não foi possível alterar o pin.')
     } finally {
       setTogglingPin(null)
     }

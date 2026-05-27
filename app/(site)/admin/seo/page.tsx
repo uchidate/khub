@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
-import { useToast } from '@/lib/hooks/useToast'
+import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Globe, Plus, Trash2, Loader2, Pencil, X, Check,
     AlertCircle, ExternalLink, EyeOff, ChevronDown, ChevronUp, Search,
@@ -152,7 +152,7 @@ async function searchEntities(type: EntityType, query: string): Promise<EntitySu
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export default function SeoAdminPage() {
-    const { addToast } = useToast()
+    const toast = useAdminToast()
     const [metas,        setMetas]        = useState<SeoMeta[]>([])
     const [total,        setTotal]        = useState(0)
     const [loading,      setLoading]      = useState(true)
@@ -162,6 +162,7 @@ export default function SeoAdminPage() {
     const [editId,       setEditId]       = useState<string | null>(null)
     const [saving,       setSaving]       = useState(false)
     const [deletingId,   setDeletingId]   = useState<string | null>(null)
+    const [confirmDelete, setConfirmDelete] = useState<SeoMeta | null>(null)
     const [expandedId,   setExpandedId]   = useState<string | null>(null)
 
     // busca de entidade
@@ -182,11 +183,11 @@ export default function SeoAdminPage() {
             setMetas(data.data ?? [])
             setTotal(data.total ?? 0)
         } catch {
-            addToast({ type: 'error', message: 'Erro ao carregar overrides SEO' })
+            toast.error('Erro ao carregar overrides SEO')
         } finally {
             setLoading(false)
         }
-    }, [typeFilter, addToast])
+    }, [typeFilter, toast])
 
     useEffect(() => { load() }, [load])
 
@@ -264,7 +265,7 @@ export default function SeoAdminPage() {
     }
 
     async function handleSave() {
-        if (!form.entityId.trim()) { addToast({ type: 'error', message: 'Selecione uma entidade' }); return }
+        if (!form.entityId.trim()) { toast.error('Selecione uma entidade'); return }
         setSaving(true)
         try {
             const res = await fetch('/api/admin/seo', {
@@ -282,22 +283,26 @@ export default function SeoAdminPage() {
                     noIndex:      form.noIndex,
                 }),
             })
-            if (!res.ok) { addToast({ type: 'error', message: 'Erro ao salvar' }); return }
-            addToast({ type: 'success', message: editId ? 'Override atualizado' : 'Override criado' })
+            if (!res.ok) { toast.error('Erro ao salvar'); return }
+            toast.success(editId ? 'Override atualizado' : 'Override criado')
             cancelForm()
             load()
-        } catch { addToast({ type: 'error', message: 'Erro de rede' }) }
+        } catch { toast.error('Erro de rede') }
         finally { setSaving(false) }
     }
 
-    async function handleDelete(meta: SeoMeta) {
-        if (deletingId || !window.confirm('Remover override SEO?')) return
+    function handleDelete(meta: SeoMeta) {
+        if (deletingId) return
+        setConfirmDelete(meta)
+    }
+
+    async function executeDelete(meta: SeoMeta) {
         setDeletingId(meta.id)
         try {
             await fetch(`/api/admin/seo?entityType=${meta.entityType}&entityId=${meta.entityId}`, { method: 'DELETE' })
-            addToast({ type: 'success', message: 'Override removido' })
+            toast.success('Override removido')
             load()
-        } catch { addToast({ type: 'error', message: 'Erro ao remover' }) }
+        } catch { toast.error('Erro ao remover') }
         finally { setDeletingId(null) }
     }
 
@@ -589,6 +594,14 @@ export default function SeoAdminPage() {
                     ))}
                 </div>
             )}
+            <ConfirmDialog
+                open={!!confirmDelete}
+                title="Remover override SEO?"
+                confirmLabel="Remover"
+                variant="danger"
+                onConfirm={async () => { await executeDelete(confirmDelete!); setConfirmDelete(null) }}
+                onCancel={() => setConfirmDelete(null)}
+            />
         </AdminLayout>
     )
 }

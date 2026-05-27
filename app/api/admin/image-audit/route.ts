@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+
+import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import type { BlogBlock } from '@/lib/types/blocks'
 
@@ -38,7 +38,7 @@ async function checkUrl(url: string): Promise<{ ok: boolean; status: number | nu
 }
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { searchParams } = new URL(req.url)

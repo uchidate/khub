@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Instagram, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
 
 type Stats = {
@@ -25,6 +26,7 @@ type ArtistWithFeed = {
 }
 
 export default function InstagramStatusPage() {
+  const toast = useAdminToast()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Stats | null>(null)
   const [artists, setArtists] = useState<ArtistWithFeed[]>([])
@@ -43,8 +45,8 @@ export default function InstagramStatusPage() {
 
       setStats(data.stats)
       setArtists(data.artistsWithFeed)
-    } catch (err: any) {
-      console.error('Failed to fetch status:', err)
+    } catch {
+      toast.error('Erro ao carregar status do Instagram')
     } finally {
       setLoading(false)
     }

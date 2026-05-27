@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+
+import { auth } from '@/lib/auth'
 import { getAllAiConfigs, upsertAiConfig } from '@/lib/services/ai-config-service'
 import { PROVIDER_CONFIGS } from '@/lib/ai/ai-config'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (session?.user?.role !== 'admin') {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (session?.user?.role !== 'admin') {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }

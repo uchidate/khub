@@ -43,23 +43,21 @@ export default function ImageAuditPage() {
     }
 
     return (
-        <AdminLayout title="Auditoria de Imagens" subtitle="Verifica todas as imagens dos artigos publicados">
-            <div className="p-6 max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-black text-foreground">Auditoria de Imagens</h1>
-                        <p className="text-sm text-muted mt-0.5">Verifica todas as imagens dos artigos publicados</p>
-                    </div>
-                    <button
-                        onClick={runAudit}
-                        disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                        {loading ? 'Verificando…' : 'Iniciar auditoria'}
-                    </button>
-                </div>
-
+        <AdminLayout
+            title="Auditoria de Imagens"
+            subtitle="Verifica todas as imagens dos artigos publicados"
+            actions={
+                <button
+                    onClick={runAudit}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    {loading ? 'Verificando…' : 'Iniciar auditoria'}
+                </button>
+            }
+        >
+            <div className="max-w-4xl space-y-6">
                 {error && (
                     <div className="p-4 rounded-xl border border-red-400/30 bg-red-500/5 text-red-500 text-sm">
                         {error}

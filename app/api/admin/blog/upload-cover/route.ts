@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+
+import { auth } from "@/lib/auth"
 import { writeFile, mkdir } from "fs/promises"
 import { existsSync } from "fs"
 import path from "path"
@@ -12,7 +12,7 @@ const MAX_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 
 export async function POST(request: NextRequest) {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }

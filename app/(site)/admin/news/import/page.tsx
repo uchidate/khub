@@ -186,16 +186,11 @@ export default function NewsImportPage() {
         : null
 
     return (
-        <AdminLayout title="Importar Notícias">
+        <AdminLayout
+            title="Importar Notícias"
+            subtitle="Importe artigos históricos via API WordPress REST. Selecione a fonte e o período desejado."
+        >
             <div className="max-w-3xl space-y-6">
-
-                {/* Instructions */}
-                <p className="text-muted text-sm leading-relaxed">
-                    Importe artigos históricos de uma fonte externa buscando pela
-                    <strong className="text-foreground"> API WordPress REST</strong> da fonte. Selecione a fonte
-                    e o período desejado. O sistema verificará quantos artigos estão disponíveis e quantos
-                    já existem no banco.
-                </p>
 
                 {/* Source selector */}
                 <div className="space-y-2">

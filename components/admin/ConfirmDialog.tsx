@@ -72,25 +72,30 @@ export function ConfirmDialog({
       onClick={() => { if (!loading) onCancel() }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby={description ? 'confirm-dialog-desc' : undefined}
         className="w-full max-w-sm bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 p-5 pb-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${iconStyles[variant]}`}>
-            <AlertTriangle size={16} />
+            <AlertTriangle size={16} aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-foreground">{title}</h3>
+            <h3 id="confirm-dialog-title" className="text-sm font-bold text-foreground">{title}</h3>
             {description && (
-              <p className="mt-1 text-xs text-muted leading-relaxed">{description}</p>
+              <p id="confirm-dialog-desc" className="mt-1 text-xs text-muted leading-relaxed">{description}</p>
             )}
           </div>
           <button
             onClick={() => { if (!loading) onCancel() }}
             disabled={loading}
+            aria-label="Fechar"
             className="p-1 text-muted hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-40"
           >
-            <X size={15} />
+            <X size={15} aria-hidden="true" />
           </button>
         </div>
 

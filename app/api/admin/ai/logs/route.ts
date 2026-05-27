@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+
+import { auth } from '@/lib/auth'
 import { getAiRecentLogs } from '@/lib/services/ai-stats-service'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (session?.user?.role !== 'admin') {
         return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }

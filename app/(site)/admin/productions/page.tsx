@@ -123,6 +123,7 @@ function CastModal({
   onClose: () => void
   onSyncCast: (production: Production) => Promise<void>
 }) {
+  const toast = useAdminToast()
   const [cast, setCast] = useState<CastMember[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -131,7 +132,7 @@ function CastModal({
   const [deleting, setDeleting] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [msg, setMsg] = useState('')
+  const [confirmRemoveArtist, setConfirmRemoveArtist] = useState<string | null>(null)
 
   const fetchCast = useCallback(async () => {
     setLoading(true)
@@ -177,8 +178,9 @@ function CastModal({
     }
   }
 
-  const deleteMember = async (artistId: string) => {
-    if (!confirm('Remover este artista do elenco desta produção?')) return
+  const deleteMember = (artistId: string) => setConfirmRemoveArtist(artistId)
+
+  const executeDeleteMember = async (artistId: string) => {
     setDeleting(artistId)
     try {
       const res = await fetch('/api/admin/productions/cast', {
@@ -197,17 +199,15 @@ function CastModal({
 
   const handleSync = async () => {
     setSyncing(true)
-    setMsg('')
     try {
       await onSyncCast(production)
       await fetchCast()
-      setMsg('✅ Elenco sincronizado com o TMDB!')
+      toast.success('Elenco sincronizado com o TMDB!')
       refetchTable()
     } catch {
-      setMsg('❌ Erro ao sincronizar')
+      toast.error('Erro ao sincronizar')
     } finally {
       setSyncing(false)
-      setTimeout(() => setMsg(''), 5000)
     }
   }
 
@@ -230,14 +230,6 @@ function CastModal({
             <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Sincronizando...' : 'Re-sync TMDB'}
           </button>
-        </div>
-      )}
-
-      {msg && (
-        <div className={`mb-3 px-3 py-2 rounded-lg text-xs font-medium ${
-          msg.startsWith('✅') ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-        }`}>
-          {msg}
         </div>
       )}
 
@@ -357,6 +349,14 @@ function CastModal({
             ))
           )}
       </div>
+      <ConfirmDialog
+        open={!!confirmRemoveArtist}
+        title="Remover este artista do elenco desta produção?"
+        confirmLabel="Remover"
+        variant="danger"
+        onConfirm={async () => { await executeDeleteMember(confirmRemoveArtist!); setConfirmRemoveArtist(null) }}
+        onCancel={() => setConfirmRemoveArtist(null)}
+      />
     </AdminModalOverlay>
   )
 }
@@ -539,6 +539,8 @@ export default function ProductionsPage() {
   const [batchSyncing, setBatchSyncing] = useState(false)
   const [resetSyncing, setResetSyncing] = useState(false)
   const [fixNoTypeSyncing, setFixNoTypeSyncing] = useState(false)
+  const [confirmResetResync, setConfirmResetResync] = useState(false)
+  const [confirmFixNoType, setConfirmFixNoType] = useState(false)
   const [ageSyncing, setAgeSyncing] = useState(false)
   const [ageSyncingId, setAgeSyncingId] = useState<string | null>(null)
   const [syncMsg, setSyncMsg] = useState('')
@@ -668,7 +670,7 @@ export default function ProductionsPage() {
   }
 
   const handleResetResync = async () => {
-    if (resetSyncing || !confirm('Isso vai resetar e resincronizar o elenco de TODAS as produções. Pode levar vários minutos. Continuar?')) return
+    if (resetSyncing) return
     setResetSyncing(true)
     setSyncMsg('Resetando elenco de todas as produções...')
     try {
@@ -705,7 +707,7 @@ export default function ProductionsPage() {
 
   // Reseta e resincroniza apenas produções com tmdbId mas sem tmdbType
   const handleFixNoTmdbType = async () => {
-    if (fixNoTypeSyncing || !confirm('Isso vai recuperar produções com TMDB ID mas sem tipo (movie/tv) definido. Continuar?')) return
+    if (fixNoTypeSyncing) return
     setFixNoTypeSyncing(true)
     setSyncMsg('Corrigindo produções sem tmdbType...')
     try {
@@ -1038,7 +1040,7 @@ export default function ProductionsPage() {
               {batchSyncing ? 'Importando...' : 'Elenco Pendente'}
             </AdminButton>
             <button
-              onClick={handleResetResync}
+              onClick={() => setConfirmResetResync(true)}
               disabled={resetSyncing}
               title="Reseta e reprocessa o elenco de TODAS as produções"
               className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 text-xs"
@@ -1047,7 +1049,7 @@ export default function ProductionsPage() {
               {resetSyncing ? 'Resincronizando...' : 'Resync Completo'}
             </button>
             <button
-              onClick={handleFixNoTmdbType}
+              onClick={() => setConfirmFixNoType(true)}
               disabled={fixNoTypeSyncing}
               title="Recupera produções com TMDB ID mas sem tipo (movie/tv) — foram ignoradas pelo sync anterior"
               className="flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold rounded-lg transition-all disabled:opacity-50 text-xs"
@@ -1157,7 +1159,7 @@ export default function ProductionsPage() {
                     Sync TMDB
                   </Link>
                   <button
-                    onClick={() => { handleResetResync(); setMoreActionsOpen(false) }}
+                    onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }}
                     disabled={resetSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border disabled:opacity-50"
                   >
@@ -1165,7 +1167,7 @@ export default function ProductionsPage() {
                     Resync Completo
                   </button>
                   <button
-                    onClick={() => { handleFixNoTmdbType(); setMoreActionsOpen(false) }}
+                    onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }}
                     disabled={fixNoTypeSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50"
                   >
@@ -1527,6 +1529,24 @@ export default function ProductionsPage() {
         loading={deleteLoading}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteOpen(false)}
+      />
+      <ConfirmDialog
+        open={confirmResetResync}
+        title="Resetar e resincronizar o elenco de TODAS as produções?"
+        description="Isso pode levar vários minutos."
+        confirmLabel="Continuar"
+        variant="danger"
+        onConfirm={() => { setConfirmResetResync(false); handleResetResync() }}
+        onCancel={() => setConfirmResetResync(false)}
+      />
+      <ConfirmDialog
+        open={confirmFixNoType}
+        title="Recuperar produções com TMDB ID mas sem tipo definido?"
+        description="Isso vai buscar e preencher o campo tmdbType (movie/tv) para essas produções."
+        confirmLabel="Continuar"
+        variant="default"
+        onConfirm={() => { setConfirmFixNoType(false); handleFixNoTmdbType() }}
+        onCancel={() => setConfirmFixNoType(false)}
       />
     </AdminLayout>
   )

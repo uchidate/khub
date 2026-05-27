@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { useToast } from '@/lib/hooks/useToast'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Search, Loader2, Package, CheckSquare, Square, Import, ExternalLink, Star, ChevronDown, BadgeCheck } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -40,7 +40,7 @@ interface MLProduct {
 }
 
 export default function MLImportarPage() {
-    const { addToast: toast } = useToast()
+    const toast = useAdminToast()
     const [mounted, setMounted] = useState(false)
     const [query, setQuery] = useState('')
     const [loading, setLoading] = useState(false)
@@ -64,7 +64,7 @@ export default function MLImportarPage() {
             setTotal(data.total || 0)
             setOffset(off + 50)
         } catch (e) {
-            toast({ type: 'error', message: String(e) })
+            toast.error(String(e))
         } finally {
             append ? setLoadingMore(false) : setLoading(false)
         }
@@ -132,7 +132,7 @@ export default function MLImportarPage() {
         }
         setImporting(false)
         setSelected(new Set())
-        toast({ type: 'success', message: `${created} importado(s)${skipped ? ` · ${skipped} erro(s)` : ''}` })
+        toast.success(`${created} importado(s)${skipped ? ` · ${skipped} erro(s)` : ''}`)
     }
 
     const notImportedCount = results.filter(r => !r.alreadyImported).length

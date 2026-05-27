@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, ShieldAlert, RotateCcw } from 'lucide-react'
+import { ExternalLink, Save, RefreshCw, Film, Download, Wand2, Check, Sparkles, ShieldAlert, RotateCcw, Loader2 } from 'lucide-react'
 import { AdminEmptyState } from '@/components/admin'
 import { TakedownModal } from '@/components/admin/TakedownModal'
 import { RestoreModal } from '@/components/admin/RestoreModal'
@@ -283,7 +283,7 @@ export default function EditProductionPage() {
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                        <Loader2 className="w-6 h-6 text-muted animate-spin" />
                     </div>
                 )}
 

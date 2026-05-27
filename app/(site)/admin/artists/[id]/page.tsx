@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react'
+import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles, Plus, Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { AdminEmptyState } from '@/components/admin'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
@@ -436,7 +436,7 @@ export default function EditArtistPage() {
 
                 {loading && (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                        <Loader2 className="w-6 h-6 text-muted animate-spin" />
                     </div>
                 )}
 

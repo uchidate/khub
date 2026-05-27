@@ -288,7 +288,15 @@ export default function AdminCommentsPage() {
     const handleStatus = (v: string) => { setStatus(v); setPage(1) }
 
     return (
-        <AdminLayout title="Comentários">
+        <AdminLayout
+            title="Comentários"
+            subtitle="Gerencie e modere os comentários dos usuários"
+            actions={
+                <AdminButton onClick={fetchComments} variant="secondary" size="sm">
+                    <RefreshCw className="w-3.5 h-3.5" /> Atualizar
+                </AdminButton>
+            }
+        >
         <ConfirmDialog
             open={confirmModal.open}
             title={confirmModal.message}
@@ -297,13 +305,6 @@ export default function AdminCommentsPage() {
             onCancel={() => setConfirmModal(m => ({ ...m, open: false }))}
         />
         <div className="space-y-6">
-            {/* Header row: description + refresh */}
-            <div className="flex items-center justify-between flex-wrap gap-3 -mt-6">
-                <p className="text-sm text-muted">Gerencie e modere os comentários dos usuários</p>
-                <AdminButton onClick={fetchComments} variant="secondary" size="sm">
-                    <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-                </AdminButton>
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

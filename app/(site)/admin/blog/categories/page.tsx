@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminEmptyState } from '@/components/admin'
-import { useToast } from '@/lib/hooks/useToast'
+import { AdminEmptyState, ConfirmDialog } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Tag, Plus, Pencil, Trash2, Check, X, Loader2, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 
@@ -16,7 +16,7 @@ interface BlogCategory {
 }
 
 export default function BlogCategoriesPage() {
-    const { addToast } = useToast()
+    const toast = useAdminToast()
     const [categories, setCategories] = useState<BlogCategory[]>([])
     const [loading,    setLoading]    = useState(true)
     const [newName,    setNewName]    = useState('')
@@ -25,6 +25,7 @@ export default function BlogCategoriesPage() {
     const [editName,   setEditName]   = useState('')
     const [savingId,   setSavingId]   = useState<string | null>(null)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null)
     const editRef = useRef<HTMLInputElement>(null)
 
     const load = useCallback(async () => {
@@ -32,11 +33,11 @@ export default function BlogCategoriesPage() {
             const res = await fetch('/api/admin/blog/categories')
             setCategories(await res.json())
         } catch {
-            addToast({ type: 'error', message: 'Erro ao carregar categorias' })
+            toast.error('Erro ao carregar categorias')
         } finally {
             setLoading(false)
         }
-    }, [addToast])
+    }, [toast])
 
     useEffect(() => { load() }, [load])
     useEffect(() => { if (editId) editRef.current?.focus() }, [editId])
@@ -51,11 +52,11 @@ export default function BlogCategoriesPage() {
                 body: JSON.stringify({ name: newName.trim() }),
             })
             const data = await res.json()
-            if (!res.ok) { addToast({ type: 'error', message: data.error ?? 'Erro ao criar' }); return }
+            if (!res.ok) { toast.error(data.error ?? 'Erro ao criar'); return }
             setNewName('')
-            addToast({ type: 'success', message: `Categoria "${newName.trim()}" criada` })
+            toast.success(`Categoria "${newName.trim()}" criada`)
             load()
-        } catch { addToast({ type: 'error', message: 'Erro de rede' }) }
+        } catch { toast.error('Erro de rede') }
         finally { setCreating(false) }
     }
 
@@ -68,22 +69,26 @@ export default function BlogCategoriesPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: editName.trim() }),
             })
-            if (!res.ok) { addToast({ type: 'error', message: 'Erro ao renomear' }); return }
+            if (!res.ok) { toast.error('Erro ao renomear'); return }
             setEditId(null)
-            addToast({ type: 'success', message: 'Categoria renomeada' })
+            toast.success('Categoria renomeada')
             load()
-        } catch { addToast({ type: 'error', message: 'Erro de rede' }) }
+        } catch { toast.error('Erro de rede') }
         finally { setSavingId(null) }
     }
 
-    async function remove(id: string, name: string) {
-        if (deletingId || !window.confirm(`Remover categoria "${name}"? Os posts associados perderão a categoria.`)) return
+    function remove(id: string, name: string) {
+        if (deletingId) return
+        setConfirmDelete({ id, name })
+    }
+
+    async function executeRemove(id: string) {
         setDeletingId(id)
         try {
             await fetch(`/api/admin/blog/categories/${id}`, { method: 'DELETE' })
-            addToast({ type: 'success', message: 'Categoria removida' })
+            toast.success('Categoria removida')
             load()
-        } catch { addToast({ type: 'error', message: 'Erro de rede' }) }
+        } catch { toast.error('Erro de rede') }
         finally { setDeletingId(null) }
     }
 
@@ -202,6 +207,15 @@ export default function BlogCategoriesPage() {
                     </div>
                 )}
             </div>
+            <ConfirmDialog
+                open={!!confirmDelete}
+                title={`Remover categoria "${confirmDelete?.name}"?`}
+                description="Os posts associados perderão a categoria."
+                confirmLabel="Remover"
+                variant="danger"
+                onConfirm={async () => { await executeRemove(confirmDelete!.id); setConfirmDelete(null) }}
+                onCancel={() => setConfirmDelete(null)}
+            />
         </AdminLayout>
     )
 }

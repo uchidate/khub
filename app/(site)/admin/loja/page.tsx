@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminButton } from '@/components/admin/AdminButton'
-import { useToast } from '@/lib/hooks/useToast'
+import { ConfirmDialog } from '@/components/admin'
+import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, Star, StarOff,
     ExternalLink, Package, RefreshCw, X, Check,
@@ -70,8 +71,9 @@ export default function AdminLojaPage() {
     const [showForm, setShowForm] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [form, setForm] = useState(EMPTY_FORM)
+    const [confirmRemove, setConfirmRemove] = useState<StoreProduct | null>(null)
     const [saving, setSaving] = useState(false)
-    const { addToast: toast } = useToast()
+    const toast = useAdminToast()
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -108,7 +110,7 @@ export default function AdminLojaPage() {
 
     const save = async () => {
         if (!form.name || !form.imageUrl || !form.affiliateUrl) {
-            toast({ type: 'error', message: 'Preencha os campos obrigatórios' })
+            toast.error('Preencha os campos obrigatórios')
             return
         }
         setSaving(true)
@@ -125,12 +127,12 @@ export default function AdminLojaPage() {
         const method = editingId ? 'PATCH' : 'POST'
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         if (res.ok) {
-            toast({ type: 'success', message: editingId ? 'Produto atualizado' : 'Produto criado' })
+            toast.success(editingId ? 'Produto atualizado' : 'Produto criado')
             closeForm()
             load()
         } else {
             const err = await res.json().catch(() => ({}))
-            toast({ type: 'error', message: err.error || 'Erro ao salvar' })
+            toast.error(err.error || 'Erro ao salvar')
         }
         setSaving(false)
     }
@@ -144,10 +146,11 @@ export default function AdminLojaPage() {
         load()
     }
 
-    const remove = async (p: StoreProduct) => {
-        if (!confirm(`Excluir "${p.name}"?`)) return
+    const remove = (p: StoreProduct) => setConfirmRemove(p)
+
+    const executeRemove = async (p: StoreProduct) => {
         await fetch(`/api/admin/store/${p.id}`, { method: 'DELETE' })
-        toast({ type: 'success', message: 'Produto removido' })
+        toast.deleted('Produto removido')
         load()
     }
 
@@ -426,6 +429,14 @@ export default function AdminLojaPage() {
                     ))}
                 </div>
             )}
+            <ConfirmDialog
+                open={!!confirmRemove}
+                title={`Excluir "${confirmRemove?.name}"?`}
+                confirmLabel="Excluir"
+                variant="danger"
+                onConfirm={async () => { await executeRemove(confirmRemove!); setConfirmRemove(null) }}
+                onCancel={() => setConfirmRemove(null)}
+            />
         </AdminLayout>
     )
 }

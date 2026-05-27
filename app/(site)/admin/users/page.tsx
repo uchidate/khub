@@ -191,15 +191,17 @@ export default function UsersAdminPage() {
   )
 
   return (
-    <AdminLayout title="Usuários">
+    <AdminLayout
+      title="Usuários"
+      subtitle="Gerencie os usuários da plataforma"
+      actions={
+        <AdminButton variant="primary" size="lg" onClick={handleCreate}>
+          <Plus size={16} />
+          Novo Usuário
+        </AdminButton>
+      }
+    >
       <div className="space-y-5">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <p className="text-muted text-sm -mt-4">Gerencie os usuários da plataforma</p>
-          <AdminButton variant="primary" size="lg" onClick={handleCreate}>
-            <Plus size={16} />
-            Novo Usuário
-          </AdminButton>
-        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

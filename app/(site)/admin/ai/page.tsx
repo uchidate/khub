@@ -1,6 +1,5 @@
-import { getServerSession } from 'next-auth'
+import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { authOptions } from '@/lib/auth'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminLinkButton } from '@/components/admin'
 import { getAiSummary, getAiCostByDay, getAiRecentLogs, getMonthlySpend } from '@/lib/services/ai-stats-service'
@@ -28,9 +27,9 @@ const emptySummary: ReturnType<typeof getAiSummary> extends Promise<infer T> ? T
 }
 
 export default async function AiDashboardPage() {
-    console.log('[AI Dashboard] render start')
-    const session = await getServerSession(authOptions)
-    if (session?.user?.role?.toLowerCase() !== 'admin') redirect('/admin')
+    const session = await auth()
+    if (!session) redirect('/auth/login?callbackUrl=/admin/ai')
+    if (session.user.role?.toLowerCase() !== 'admin') redirect('/admin')
 
     let summary = emptySummary
     let costByDay: Awaited<ReturnType<typeof getAiCostByDay>> = []
@@ -47,10 +46,8 @@ export default async function AiDashboardPage() {
             getAllAiConfigs(),
             getAiRecentLogs({ limit: 25 }),
         ])
-        console.log('[AI Dashboard] data loaded — logs:', logsResult.logs.length, 'costByDay:', costByDay.length)
     } catch (err: unknown) {
         loadError = err instanceof Error ? err.message : String(err)
-        console.error('[AI Dashboard] LOAD ERROR:', loadError, err instanceof Error ? err.stack : '')
     }
 
     let maxCost = 0.0001
@@ -58,9 +55,7 @@ export default async function AiDashboardPage() {
     try {
         maxCost  = Math.max(...costByDay.map(d => d.cost), 0.0001)
         maxCalls = Math.max(...costByDay.map(d => d.calls), 1)
-    } catch (err: unknown) {
-        console.error('[AI Dashboard] maxCost/maxCalls error:', err)
-    }
+    } catch { /* usa defaults */ }
 
     const providerColors: Record<string, string> = {
         deepseek: 'bg-blue-500',
@@ -72,7 +67,6 @@ export default async function AiDashboardPage() {
     const totalFeatureCalls = featureEntries.reduce((s, [, c]) => s + c, 0) || 1
 
     const budgetByFeature = Object.fromEntries(configs.map(c => [c.feature, c.monthlyBudgetUsd]))
-    console.log('[AI Dashboard] render JSX start')
 
     return (
         <AdminLayout title="Dashboard de IA">
