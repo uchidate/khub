@@ -251,7 +251,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Respeitar rate limit ML (10 req/s)
-        await new Promise(r => setTimeout(r, 200))
+        await new Promise(r => setTimeout(r, 2000))
     }
 
     return NextResponse.json({
