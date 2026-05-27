@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { AdminButton } from '@/components/admin/AdminButton'
+import { AdminButton, AdminModalOverlay } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import {
   History, RotateCcw, Loader2, ArrowLeft, Clock, User, FileText,
@@ -60,7 +60,6 @@ function DiffBadges({ current, v }: { current: VersionSummary; v: VersionSummary
 function PreviewModal({ postId, versionId, onClose }: { postId: string; versionId: string; onClose: () => void }) {
   const [version, setVersion] = useState<VersionFull | null>(null)
   const [loading, setLoading] = useState(true)
-  const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch(`/api/blog/posts/${postId}/versions/${versionId}`)
@@ -70,57 +69,39 @@ function PreviewModal({ postId, versionId, onClose }: { postId: string; versionI
       .finally(() => setLoading(false))
   }, [postId, versionId])
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      onClick={e => { if (e.target === overlayRef.current) onClose() }}
+    <AdminModalOverlay
+      open
+      onClose={onClose}
+      title="Preview da versão"
+      subtitle={version
+        ? `${new Date(version.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${version.savedBy.name ?? version.savedBy.email}`
+        : undefined}
+      maxWidth="2xl"
     >
-      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <div>
-            <p className="text-xs text-muted uppercase tracking-wider font-semibold">Preview da versão</p>
-            {version && (
-              <p className="text-sm text-muted mt-0.5">
-                {new Date(version.savedAt).toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                {' · '}{version.savedBy.name ?? version.savedBy.email}
-              </p>
-            )}
+      <div className="max-h-[65vh] overflow-y-auto -mx-5 px-5 space-y-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-muted">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando…
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="overflow-y-auto px-5 py-4 space-y-4 flex-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-muted">
-              <Loader2 className="w-5 h-5 animate-spin mr-2" /> Carregando…
-            </div>
-          ) : version ? (
-            <>
-              <h2 className="text-xl font-bold text-foreground">{version.title}</h2>
-              {version.excerpt && (
-                <p className="text-sm text-muted italic border-l-2 border-[#ff2d78]/30 pl-3">{version.excerpt}</p>
-              )}
-              {version.contentMd && (
-                <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-surface rounded-xl p-4 border border-border overflow-x-auto">
-                  {version.contentMd}
-                </pre>
-              )}
-              {!version.contentMd && <p className="text-sm text-muted italic">Conteúdo em blocos (sem preview de markdown).</p>}
-            </>
-          ) : (
-            <p className="text-sm text-muted">Versão não encontrada.</p>
-          )}
-        </div>
+        ) : version ? (
+          <>
+            <h2 className="text-xl font-bold text-foreground">{version.title}</h2>
+            {version.excerpt && (
+              <p className="text-sm text-muted italic border-l-2 border-[#ff2d78]/30 pl-3">{version.excerpt}</p>
+            )}
+            {version.contentMd && (
+              <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed bg-surface rounded-xl p-4 border border-border overflow-x-auto">
+                {version.contentMd}
+              </pre>
+            )}
+            {!version.contentMd && <p className="text-sm text-muted italic">Conteúdo em blocos (sem preview de markdown).</p>}
+          </>
+        ) : (
+          <p className="text-sm text-muted">Versão não encontrada.</p>
+        )}
       </div>
-    </div>
+    </AdminModalOverlay>
   )
 }
 
