@@ -128,11 +128,13 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
             description: fullDescription.slice(0, 160),
             type: 'video.movie',
             url: `${BASE_URL}/productions/${production.slug ?? production.id}`,
+            images: production.imageUrl ? [{ url: production.imageUrl, width: 1200, height: 630, alt: production.titlePt }] : [],
         },
         twitter: {
             card: 'summary_large_image',
             title: `${production.titlePt} | HallyuHub`,
             description: fullDescription.slice(0, 160),
+            images: production.imageUrl ? [production.imageUrl] : [],
         }
     }, 'production', production.id)
 }

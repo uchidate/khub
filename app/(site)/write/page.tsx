@@ -9,7 +9,9 @@ import {
     Blocks, FileText, Layout, ImageIcon, PanelRightClose, PanelRightOpen,
     Maximize2, Minimize2, Undo2, Redo2, Clock, History,
 } from 'lucide-react'
-import { BlogBlockEditor, BlockOutlinePanel } from '@/components/admin/BlogBlockEditor'
+import dynamic from 'next/dynamic'
+const BlogBlockEditor = dynamic(() => import('@/components/admin/BlogBlockEditor').then(m => m.BlogBlockEditor), { ssr: false })
+const BlockOutlinePanel = dynamic(() => import('@/components/admin/BlogBlockEditor').then(m => m.BlockOutlinePanel), { ssr: false })
 import { SeoChecklist } from '@/components/admin/SeoChecklist'
 import { MediaPicker } from '@/components/admin/MediaPicker'
 import { ArticleHealthPanel } from '@/components/admin/ArticleHealthPanel'
