@@ -332,7 +332,7 @@ export function HomeFrontPage({
                     </div>
                 )}
 
-                <div className="grid border-t border-border bg-surface/55 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.7fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.75fr)]">
+                <div className="grid border-t border-border bg-surface/55 lg:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.75fr)]">
                     <div className="border-b border-border px-4 py-8 sm:px-6 lg:border-b-0 lg:border-r lg:px-10">
                         <SectionTitleBar title="Para ler com calma" href="/blog" linkText="arquivo →" className="mb-3" />
                         <div>
