@@ -28,6 +28,14 @@ import { inferContentType } from '@/lib/store/product-matcher'
 import { BrandDot } from '@/components/ui/BrandDot'
 const BASE_URL = SITE_URL
 
+type ArtistWithExtras = Awaited<ReturnType<typeof getArtist>> & {
+  seoTags?: string[]
+  deathDate?: Date | null
+  debutDate?: Date | null
+  awards?: Array<{ premio: string; categoria: string; ano: number }>
+  faq?: Array<{ pergunta: string; resposta: string }>
+}
+
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
 // ISR ativo — revalidate abaixo substitui force-dynamic
 export const revalidate = 3600
@@ -125,7 +133,7 @@ function getSocialPlatform(key: string): SocialPlatform {
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const artist = await getArtist(params.slug)
+    const artist = await getArtist(params.slug) as ArtistWithExtras
 
     if (!artist) {
         return {
@@ -155,7 +163,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         ...(artist.nameHangul ? [artist.nameHangul] : []),
         ...roles.map(r => `${artist.nameRomanized} ${r}`),
         ...(primaryGroup ? [`${primaryGroup.name}`, `${artist.nameRomanized} ${primaryGroup.name}`] : []),
-        ...((artist as any).seoTags ?? []),
+        ...(artist.seoTags ?? []),
         'K-Pop', 'artista coreano', 'HallyuHub',
     ].filter(Boolean).join(', ')
 
@@ -185,7 +193,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function ArtistDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
-    const artist = await getArtist(params.slug)
+    const artist = await getArtist(params.slug) as ArtistWithExtras
 
     // Redireciona ID puro para URL canônica com slug (301 permanente para SEO)
     if (artist && isCuid(params.slug) && artist.slug && artist.slug !== params.slug) {
@@ -325,7 +333,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const stageNames = artist.stageNames || []
     const socialLinks = (artist.socialLinks as Record<string, string>) || {}
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
-    const deathDate = (artist as any).deathDate ? new Date((artist as any).deathDate) : null
+    const deathDate = artist.deathDate ? new Date(artist.deathDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
     const _deathDateFormatted = deathDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
     const ageRef = deathDate ?? new Date()
@@ -353,7 +361,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     if (bioText && !hasPerfilInAnalise) profileSections.unshift({ title: 'Perfil', content: bioText })
 
     const primaryBio = profileSections[0]?.content ?? bioText ?? null
-    const debutYear = (artist as any).debutDate ? new Date((artist as any).debutDate).getUTCFullYear() : null
+    const debutYear = artist.debutDate ? new Date(artist.debutDate).getUTCFullYear() : null
     const yearsActive = debutYear ? new Date().getFullYear() - debutYear : null
     const dramaCount = artist.productions.filter(({ production: p }) =>
         ['drama', 'mini-série', 'série', 'k-drama', 'sitcom'].some(t => p.type?.toLowerCase().includes(t))
@@ -366,7 +374,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         if (!rated.length) return null
         return (rated.reduce((sum, { production: p }) => sum + (p.voteAverage ?? 0), 0) / rated.length)
     })()
-    const awardsData = (artist as any).awards as Array<{ premio: string; categoria: string; ano: number }> | null
+    const awardsData = artist.awards as Array<{ premio: string; categoria: string; ano: number }> | null
     const awardsCount = awardsData?.length ?? 0
     const statsBar = [
         { label: 'Avaliação', value: avgRating ? (avgRating / 2).toFixed(1) : '—', sub: avgRating ? `de 5.0 · ${totalProductions} produções` : null },
@@ -406,7 +414,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "deathDate": deathDate ? deathDate.toISOString().split('T')[0] : undefined,
                 "birthPlace": artist.placeOfBirth ? { "@type": "Place", "name": artist.placeOfBirth } : undefined,
                 "jobTitle": artist.roles?.[0] ?? undefined,
-                ...((artist as any).debutDate ? { "foundingDate": new Date((artist as any).debutDate).toISOString().split('T')[0] } : {}),
+                ...(artist.debutDate ? { "foundingDate": new Date(artist.debutDate).toISOString().split('T')[0] } : {}),
                 "nationality": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
@@ -426,7 +434,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             }} />
 
             {(() => {
-                const faq = (artist as any).faq as { pergunta: string; resposta: string }[] | null
+                const faq = artist.faq as { pergunta: string; resposta: string }[] | null
                 if (!faq?.length) return null
                 return (
                     <JsonLd data={{

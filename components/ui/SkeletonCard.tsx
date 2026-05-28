@@ -3,13 +3,13 @@ export function SkeletonCard() {
   return (
     <div className="animate-pulse">
       {/* Image skeleton */}
-      <div className="aspect-[2/3] bg-[#1a1a1a] rounded-lg" />
+      <div className="aspect-[2/3] bg-surface rounded-lg" />
 
       {/* Title skeleton */}
-      <div className="mt-4 h-4 bg-[#1a1a1a] rounded w-3/4" />
+      <div className="mt-4 h-4 bg-surface rounded w-3/4" />
 
       {/* Subtitle skeleton */}
-      <div className="mt-2 h-3 bg-[#1a1a1a] rounded w-1/2" />
+      <div className="mt-2 h-3 bg-surface rounded w-1/2" />
     </div>
   )
 }
