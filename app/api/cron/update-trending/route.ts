@@ -27,6 +27,7 @@ import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
 import { HOME_CACHE_TAG } from '@/app/(site)/page'
 import { logCronRun } from '@/lib/services/cron-execution-service'
+import { updateArtistTrendingScores } from '@/lib/trending/artist-trending-score'
 
 export const maxDuration = 120
 
@@ -44,78 +45,6 @@ function verifyToken(request: NextRequest): boolean {
     } catch {
         return false
     }
-}
-
-/**
- * Persiste rank atual → rank anterior antes de recalcular.
- * Chamado no início de cada ciclo para preservar snapshot do ciclo anterior.
- */
-async function snapshotArtistRanks(): Promise<void> {
-    await prisma.$executeRaw`
-        UPDATE "Artist"
-        SET "trendingRankPrev" = "trendingRank"
-        WHERE "trendingRank" IS NOT NULL
-    `
-}
-
-/**
- * Batch UPDATE Artist.trendingScore — 1 query em vez de N.
- *
- * Score = normalize(
- *   viewCount * 0.6 + favoriteCount * 0.3
- *   + recentFavs * 0.3            (favoritos nos últimos 7 dias)
- *   + SUM(signal.score) * 200     (streaming signals não expirados)
- * )
- *
- * Após atualizar scores, recalcula trendingRank via ROW_NUMBER.
- */
-async function updateArtistTrending(since7d: Date): Promise<number> {
-    const result = await prisma.$executeRaw`
-        UPDATE "Artist" a
-        SET "trendingScore" = scores.normalized,
-            "updatedAt"     = NOW()
-        FROM (
-            SELECT id,
-                ROUND(
-                    (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
-                ) / 100.0 AS normalized
-            FROM (
-                SELECT
-                    a.id,
-                    (COALESCE(a."viewCount", 0) * 0.6
-                        + COALESCE(a."favoriteCount", 0) * 0.3
-                        + COALESCE((
-                            SELECT COUNT(*) * 0.3
-                            FROM "Favorite" f
-                            WHERE f."artistId" = a.id
-                              AND f."createdAt" >= ${since7d}
-                          ), 0)
-                        + COALESCE((
-                            SELECT SUM(s.score) * 200
-                            FROM streaming_trend_signal s
-                            WHERE s."artistId" = a.id
-                              AND s."expiresAt" > NOW()
-                          ), 0)
-                    ) AS raw
-                FROM "Artist" a
-            ) raw_scores
-        ) scores
-        WHERE a.id = scores.id
-    `
-
-    // Recalcula ranks baseado nos novos scores
-    await prisma.$executeRaw`
-        UPDATE "Artist" a
-        SET "trendingRank" = ranks.rn
-        FROM (
-            SELECT id,
-                ROW_NUMBER() OVER (ORDER BY "trendingScore" DESC) AS rn
-            FROM "Artist"
-        ) ranks
-        WHERE a.id = ranks.id
-    `
-
-    return result
 }
 
 /**
@@ -196,16 +125,18 @@ async function updateNewsTrending(since7d: Date): Promise<number> {
 async function runUpdateTrending() {
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
-    // Snapshot ranks antes de recalcular (preserva ciclo anterior para SUBINDO)
-    await snapshotArtistRanks()
-
-    const [artistsUpdated, groupsUpdated, newsUpdated] = await Promise.all([
-        updateArtistTrending(since7d),
+    const [artistResult, groupsUpdated, newsUpdated] = await Promise.all([
+        updateArtistTrendingScores(),
         updateGroupTrending(since7d),
         updateNewsTrending(since7d),
     ])
 
-    return { artistsUpdated, groupsUpdated, newsUpdated }
+    return {
+        artistsUpdated: artistResult.artistsUpdated,
+        artistSnapshotsCreated: artistResult.snapshotsCreated,
+        groupsUpdated,
+        newsUpdated,
+    }
 }
 
 export async function POST(request: NextRequest) {

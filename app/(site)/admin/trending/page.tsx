@@ -21,6 +21,19 @@ interface TrendingArtistRow extends ArtistForBadge {
     favoriteCount: number
     _count?: { streamingSignals: number }
     streamingSignals?: { showTitle: string; rank: number; source: string }[]
+    trendingBreakdown?: {
+        rawScore: number
+        views1d: number
+        views7d: number
+        views30d: number
+        previousViews7d: number
+        velocityScore: number
+        favorites7d: number
+        streamingBoost: number
+        priorScore: number
+        qualityBoost: number
+        calculatedAt: string
+    } | null
 }
 
 interface TrendingStats {
@@ -47,6 +60,18 @@ const OVERRIDE_OPTIONS: Array<{ value: string; label: string }> = [
 
 function getSignalSourceLabel(source: string) {
     return source.replace(/_br$/i, '').replace(/_/g, ' ').toUpperCase()
+}
+
+function getSignalVolume(artist: TrendingArtistRow): number {
+    const b = artist.trendingBreakdown
+    if (!b) return 0
+    return b.views7d + b.favorites7d * 4 + Math.round(b.streamingBoost)
+}
+
+function getMeaningfulDelta(artist: TrendingArtistRow): number | null {
+    const delta = getRankDelta(artist)
+    if (delta === null) return null
+    return getSignalVolume(artist) >= 8 ? delta : null
 }
 
 export default function AdminTrendingPage() {
@@ -145,7 +170,7 @@ export default function AdminTrendingPage() {
 
         const filtered = artists.filter((artist) => {
             const effectiveBadge = getArtistBadge(artist)
-            const delta = getRankDelta(artist)
+            const delta = getMeaningfulDelta(artist)
             const hasSignals = (artist.streamingSignals?.length ?? 0) > 0
             const matchesSearch = !normalizedSearch || [artist.nameRomanized, artist.nameHangul ?? '']
                 .join(' ')
@@ -169,8 +194,8 @@ export default function AdminTrendingPage() {
         })
 
         filtered.sort((left, right) => {
-            const leftDelta = getRankDelta(left) ?? Number.NEGATIVE_INFINITY
-            const rightDelta = getRankDelta(right) ?? Number.NEGATIVE_INFINITY
+            const leftDelta = getMeaningfulDelta(left) ?? Number.NEGATIVE_INFINITY
+            const rightDelta = getMeaningfulDelta(right) ?? Number.NEGATIVE_INFINITY
             const leftSignals = left.streamingSignals?.length ?? 0
             const rightSignals = right.streamingSignals?.length ?? 0
 
@@ -199,7 +224,7 @@ export default function AdminTrendingPage() {
         const manual = filteredArtists.filter((artist) => !!artist.trendingBadgeOverride).length
         const rising = filteredArtists.filter((artist) => getArtistBadge(artist) === 'SUBINDO').length
         const falling = filteredArtists.filter((artist) => {
-            const delta = getRankDelta(artist)
+            const delta = getMeaningfulDelta(artist)
             return delta !== null && delta <= -3 && !getArtistBadge(artist)
         }).length
 
@@ -431,7 +456,8 @@ export default function AdminTrendingPage() {
                             </thead>
                             <tbody>
                                 {filteredArtists.map((artist) => {
-                                    const delta = artist.trendingRankPrev != null && artist.trendingRank != null
+                                    const delta = getMeaningfulDelta(artist)
+                                    const rawDelta = artist.trendingRankPrev != null && artist.trendingRank != null
                                         ? artist.trendingRankPrev - artist.trendingRank
                                         : null
                                     const badgeDisplay = getArtistBadgeDisplay(artist)
@@ -453,6 +479,11 @@ export default function AdminTrendingPage() {
                                                     )}
                                                     {delta === 0 && (
                                                         <span className="text-[9px] text-muted"><Minus size={8} /></span>
+                                                    )}
+                                                    {delta === null && rawDelta !== null && rawDelta !== 0 && (
+                                                        <span className="text-[9px] text-muted" title="Movimento oculto: sinal baixo demais para confiar">
+                                                            <Minus size={8} />
+                                                        </span>
                                                     )}
                                                 </div>
                                             </td>
@@ -571,13 +602,43 @@ export default function AdminTrendingPage() {
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-muted">Movimento</p>
-                                                                    <p className="font-bold text-foreground">{delta === null ? 'Sem histórico' : delta > 0 ? `+${delta}` : `${delta}`}</p>
+                                                                    <p className="font-bold text-foreground">
+                                                                        {delta === null
+                                                                            ? rawDelta === null ? 'Sem histórico' : 'Sinal baixo'
+                                                                            : delta > 0 ? `+${delta}` : `${delta}`}
+                                                                    </p>
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-muted">Favoritos</p>
                                                                     <p className="font-bold text-foreground">{artist.favoriteCount.toLocaleString('pt-BR')}</p>
                                                                 </div>
                                                             </div>
+                                                        </div>
+
+                                                        <div className="rounded-xl border border-border bg-surface px-4 py-3 xl:col-span-3">
+                                                            <p className="text-[11px] uppercase tracking-[0.14em] text-muted">Breakdown do score</p>
+                                                            {artist.trendingBreakdown ? (
+                                                                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+                                                                    {[
+                                                                        ['Views 24h', artist.trendingBreakdown.views1d],
+                                                                        ['Views 7d', artist.trendingBreakdown.views7d],
+                                                                        ['Views 30d', artist.trendingBreakdown.views30d],
+                                                                        ['7d anterior', artist.trendingBreakdown.previousViews7d],
+                                                                        ['Favoritos 7d', artist.trendingBreakdown.favorites7d],
+                                                                        ['Velocidade', artist.trendingBreakdown.velocityScore.toFixed(1)],
+                                                                        ['Streaming', artist.trendingBreakdown.streamingBoost.toFixed(1)],
+                                                                        ['Prior', artist.trendingBreakdown.priorScore.toFixed(1)],
+                                                                        ['Qualidade', artist.trendingBreakdown.qualityBoost.toFixed(1)],
+                                                                    ].map(([label, value]) => (
+                                                                        <div key={label} className="rounded-lg bg-background px-3 py-2">
+                                                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{label}</p>
+                                                                            <p className="mt-1 text-sm font-black text-foreground">{value}</p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <p className="mt-3 text-sm text-muted">Sem snapshot ainda. Rode o recálculo de trending para gerar o breakdown.</p>
+                                                            )}
                                                         </div>
 
                                                         <div className="rounded-xl border border-border bg-surface px-4 py-3">

@@ -9,11 +9,14 @@ export type StoreProductRow = {
     category: string
     badge: string | null
     rating: number | null
+    reviewCount: number | null
+    soldCount: string | null
     featured: boolean
     position: number
+    tags: string[]
 }
 
-export type EntityType = 'artist' | 'group' | 'production'
+export type EntityType = 'artist' | 'group' | 'production' | 'blog_post' | 'agency' | 'calendar_event'
 
 export interface LinkedProductsOptions {
     entityType: EntityType
@@ -30,14 +33,15 @@ export interface FallbackProductsOptions {
 const productSelect = {
     id: true, name: true, imageUrl: true, affiliateUrl: true,
     store: true, category: true, badge: true, rating: true,
-    featured: true, position: true,
+    reviewCount: true, soldCount: true, featured: true, position: true,
+    tags: true,
     isActive: true, isHidden: true,
 } as const
 
 const ACTIVE_WHERE = { isActive: true, isHidden: false } as const
 
-function toRow(p: { id: string; name: string; imageUrl: string; affiliateUrl: string; store: string; category: string; badge: string | null; rating: number | null; featured: boolean; position: number; isActive: boolean; isHidden: boolean }): StoreProductRow {
-    return { id: p.id, name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl, store: p.store, category: p.category, badge: p.badge, rating: p.rating, featured: p.featured, position: p.position }
+function toRow(p: { id: string; name: string; imageUrl: string; affiliateUrl: string; store: string; category: string; badge: string | null; rating: number | null; reviewCount: number | null; soldCount: string | null; featured: boolean; position: number; tags: string[]; isActive: boolean; isHidden: boolean }): StoreProductRow {
+    return { id: p.id, name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl, store: p.store, category: p.category, badge: p.badge, rating: p.rating, reviewCount: p.reviewCount, soldCount: p.soldCount, featured: p.featured, position: p.position, tags: p.tags }
 }
 
 export class StoreProductRepository {

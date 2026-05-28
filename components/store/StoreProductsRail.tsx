@@ -56,6 +56,9 @@ export async function StoreProductsRail({
                         key={product.id}
                         product={product}
                         placement="related_store"
+                        entityType={matchInput.entityType}
+                        entityId={matchInput.entityId}
+                        position={i + 1}
                         priority={i < 2}
                     />
                 ))}

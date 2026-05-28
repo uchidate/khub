@@ -19,6 +19,15 @@ export interface ArtistForBadge {
   trendingRankPrev: number | null
   trendingBadgeOverride: string | null
   createdAt: Date | string
+  trendingScore?: number | null
+  trendingBreakdown?: {
+    views1d: number
+    views7d: number
+    favorites7d: number
+    streamingBoost: number
+    velocityScore: number
+    priorScore?: number
+  } | null
 }
 
 /**
@@ -29,6 +38,15 @@ const SUBINDO_THRESHOLD = 10
 
 /** Artistas criados há X dias ou menos podem ganhar badge NOVO (se em top 20) */
 const NOVO_MAX_AGE_DAYS = 30
+const HOT_MIN_SCORE = 82
+const HOT_MIN_SIGNAL = 10
+const RISING_MIN_SIGNAL = 8
+
+function signalVolume(artist: ArtistForBadge): number {
+  const b = artist.trendingBreakdown
+  if (!b) return 0
+  return b.views7d + b.favorites7d * 4 + Math.round(b.streamingBoost)
+}
 
 export function getArtistBadge(artist: ArtistForBadge): TrendingBadge {
   // Override manual do admin tem prioridade absoluta
@@ -42,22 +60,25 @@ export function getArtistBadge(artist: ArtistForBadge): TrendingBadge {
   const rank = artist.trendingRank
   if (!rank) return null
 
-  // #1 → sempre HOT
-  if (rank === 1) return 'HOT'
+  const score = artist.trendingScore ?? 0
+  const volume = signalVolume(artist)
+
+  // HOT exige topo + score forte + algum sinal real. Em cold start, evita selo inflado.
+  if (rank <= 3 && score >= HOT_MIN_SCORE && volume >= HOT_MIN_SIGNAL) return 'HOT'
 
   // Detecta velocidade: subiu bastante posições no último ciclo?
   const prevRank = artist.trendingRankPrev ?? 9999
   const delta = prevRank - rank // positivo = subiu
 
   // Salto absurdo (ex: estava em #15000, agora em top 500) → NOVO, não SUBINDO com número gigante
-  if (delta >= 1000 && rank <= 500) return 'NOVO'
+  if (delta >= 1000 && rank <= 500 && volume >= RISING_MIN_SIGNAL) return 'NOVO'
 
-  if (delta >= SUBINDO_THRESHOLD || (prevRank === 9999 && rank <= 10)) {
+  if (volume >= RISING_MIN_SIGNAL && (delta >= SUBINDO_THRESHOLD || (prevRank === 9999 && rank <= 10))) {
     return 'SUBINDO'
   }
 
   // Artista novo na plataforma (< 30 dias) e já em top 20
-  if (rank <= 20) {
+  if (rank <= 20 && volume >= RISING_MIN_SIGNAL) {
     const ageMs = Date.now() - new Date(artist.createdAt).getTime()
     const ageDays = ageMs / (1000 * 60 * 60 * 24)
     if (ageDays <= NOVO_MAX_AGE_DAYS) return 'NOVO'

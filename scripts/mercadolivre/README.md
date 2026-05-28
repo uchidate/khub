@@ -71,7 +71,27 @@ $PYTHON search_import.py "kpop" --auto --position 50
 
 ## Como funciona o link de afiliado
 
-O script adiciona `?affId={seu_user_id}` no link do produto. Para ganhar comissão, você precisa estar inscrito no **Programa de Afiliados do Mercado Livre** em [afiliados.mercadolivre.com.br](https://afiliados.mercadolivre.com.br).
+O Mercado Livre recomenda gerar o link pela Central de Afiliados e Criadores ou pela barra de afiliados. Para automacao, configure o identificador do seu perfil de afiliado:
+
+```bash
+ML_AFFILIATE_ID="SEU_ID_DE_AFILIADO"
+```
+
+Por padrao, o importador adiciona `?affId={ML_AFFILIATE_ID}` ao permalink ativo do item. Se o seu link oficial usar outro parametro, ajuste:
+
+```bash
+ML_AFFILIATE_PARAM="affId"
+```
+
+Se o Mercado Livre te entregar um formato completo de URL, use um template:
+
+```bash
+ML_AFFILIATE_URL_TEMPLATE="https://exemplo.com/redirect?url={url}&cid={affiliateId}"
+```
+
+Placeholders aceitos: `{url}`, `{permalink}`, `{productId}`, `{itemId}` e `{affiliateId}`.
+
+Importante: o script agora valida o anuncio ativo antes de importar. Ele busca um item `active`, com compra imediata, permalink e estoque disponivel; catalogos sem oferta ativa sao pulados.
 
 ## Arquivos
 

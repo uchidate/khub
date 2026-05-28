@@ -28,6 +28,7 @@ const QUICK_FILTERS = [
 
 interface MLProduct {
     id: string
+    itemId: string
     name: string
     imageUrl: string
     affiliateUrl: string
@@ -36,6 +37,7 @@ interface MLProduct {
     price: string | null
     rating: number | null
     reviewCount: number | null
+    soldCount: string | null
     alreadyImported: boolean
 }
 
@@ -116,13 +118,17 @@ export default function MLImportarPage() {
                         category:     categoryOverrides[p.id] || p.category,
                         price:        p.price,
                         rating:       p.rating,
-                        isActive:     true,
+                        reviewCount:  p.reviewCount,
+                        soldCount:    p.soldCount,
+                        externalId:   p.id,
+                        isActive:     false,
+                        isHidden:     false,
                         featured:     false,
                         position:     100,
-                        tags:         ['mercado livre', 'kpop'],
+                        tags:         ['mercado livre', 'kpop', 'pendente link afiliado'],
                     }),
                 })
-                if (res.status === 201) {
+                if (res.ok) {
                     created++
                     setResults(prev => prev.map(r => r.id === p.id ? { ...r, alreadyImported: true } : r))
                 } else skipped++
@@ -132,7 +138,7 @@ export default function MLImportarPage() {
         }
         setImporting(false)
         setSelected(new Set())
-        toast.success(`${created} importado(s)${skipped ? ` · ${skipped} erro(s)` : ''}`)
+        toast.success(`${created} rascunho(s) importado(s)${skipped ? ` · ${skipped} erro(s)` : ''}`)
     }
 
     const notImportedCount = results.filter(r => !r.alreadyImported).length
@@ -143,7 +149,7 @@ export default function MLImportarPage() {
 
     if (!mounted) {
         return (
-            <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos da busca do Mercado Livre para a loja afiliada">
+            <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos ativos como rascunho; publique depois de colar o link oficial de afiliado">
                 <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
                     <Loader2 className="w-8 h-8 animate-spin opacity-40" />
                     <p className="text-sm">Carregando importador...</p>
@@ -153,7 +159,7 @@ export default function MLImportarPage() {
     }
 
     return (
-        <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos da busca do Mercado Livre para a loja afiliada">
+        <AdminLayout title="Importar do Mercado Livre" subtitle="Importe produtos ativos como rascunho; publique depois de colar o link oficial de afiliado">
             <div className="space-y-6">
 
                 {/* Busca */}
@@ -219,7 +225,7 @@ export default function MLImportarPage() {
                             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold disabled:opacity-40"
                         >
                             {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Import className="w-4 h-4" />}
-                            Importar {selected.size > 0 ? `${selected.size} selecionado(s)` : ''}
+                            Importar rascunho {selected.size > 0 ? `(${selected.size})` : ''}
                         </button>
                     </div>
                 )}
