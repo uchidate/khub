@@ -48,11 +48,11 @@ export function SiteFooter() {
                     {/* Marca + descrição + social */}
                     <div className="col-span-2 sm:col-span-1">
                         <Link href="/" className="inline-block">
-                            <span className="text-[18px] font-extrabold tracking-tight text-white">
+                            <span className="text-subtitle font-extrabold tracking-tight text-white">
                                 HallyuHub<BrandDot />
                             </span>
                         </Link>
-                        <p className="text-[12px] text-white/40 mt-3 leading-relaxed max-w-[200px]">
+                        <p className="text-small text-white/40 mt-3 leading-relaxed max-w-[200px]">
                             O portal de referência de K-Pop, K-Drama e cultura coreana em português para fãs brasileiros.
                         </p>
                         <a
@@ -60,7 +60,7 @@ export function SiteFooter() {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Instagram HallyuHub"
-                            className="inline-flex items-center gap-2 mt-5 text-[12px] text-white/40 hover:text-[#ff2d78] transition-colors"
+                            className="inline-flex items-center gap-2 mt-5 text-small text-white/40 hover:text-accent transition-colors"
                         >
                             <Instagram className="w-3.5 h-3.5" />
                             @hallyuhub_br
@@ -70,7 +70,7 @@ export function SiteFooter() {
                     {/* Colunas de links */}
                     {NAV_COLUMNS.map(col => (
                         <div key={col.heading}>
-                            <h3 className="text-[9px] font-black uppercase tracking-[0.18em] text-white/30 mb-4">
+                            <h3 className="text-micro font-black uppercase tracking-[0.18em] text-white/30 mb-4">
                                 {col.heading}
                             </h3>
                             <ul className="space-y-2.5">
@@ -78,7 +78,7 @@ export function SiteFooter() {
                                     <li key={href}>
                                         <Link
                                             href={href}
-                                            className="text-[12px] text-white/50 hover:text-white transition-colors leading-none"
+                                            className="text-small text-white/50 hover:text-white transition-colors leading-none"
                                         >
                                             {label}
                                         </Link>
@@ -91,17 +91,17 @@ export function SiteFooter() {
 
                 {/* Rodapé inferior */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-6">
-                    <span className="text-[10px] text-white/25">
+                    <span className="text-caption text-white/25">
                         &copy; {year} HallyuHub. Todos os direitos reservados.
                     </span>
                     <div className="flex items-center gap-4">
-                        <Link href="/privacidade" className="text-[10px] text-white/25 hover:text-white/50 transition-colors">
+                        <Link href="/privacidade" className="text-caption text-white/25 hover:text-white/50 transition-colors">
                             Privacidade
                         </Link>
-                        <Link href="/termos" className="text-[10px] text-white/25 hover:text-white/50 transition-colors">
+                        <Link href="/termos" className="text-caption text-white/25 hover:text-white/50 transition-colors">
                             Termos
                         </Link>
-                        <span className="text-[10px] text-white/20">Feito com ♥ para fãs do Hallyu</span>
+                        <span className="text-caption text-white/20">Feito com ♥ para fãs do Hallyu</span>
                     </div>
                 </div>
             </div>

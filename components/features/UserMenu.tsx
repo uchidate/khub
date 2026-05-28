@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { LogOut, Settings } from 'lucide-react'
+import Image from 'next/image'
 import { accountNavGroups } from '@/lib/config/account-navigation'
 
 export function UserMenu() {
@@ -25,15 +26,15 @@ export function UserMenu() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-[#ff2d78]/40 transition-all flex-shrink-0"
+        className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-accent/40 transition-all flex-shrink-0"
         aria-label="Menu do usuário"
       >
         {session.user.image ? (
            
-          <img src={session.user.image} alt={session.user.name || 'User'} className="w-full h-full object-cover" />
+          <Image src={session.user.image} alt={session.user.name || 'User'} width={32} height={32} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-[#ff2d78] flex items-center justify-center">
-            <span className="text-white text-[11px] font-bold">{initials}</span>
+          <div className="w-full h-full bg-accent flex items-center justify-center">
+            <span className="text-white text-label font-bold">{initials}</span>
           </div>
         )}
       </button>

@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { nameToGradient } from '@/lib/utils'
+import Image from 'next/image'
 
 interface Production {
     id: string
@@ -88,7 +89,7 @@ function ProductionCard({ prod, priority }: { prod: Production; priority?: boole
         <Link href={`/productions/${prod.slug ?? prod.id}`} className="group flex flex-col">
             <div className="relative aspect-[2/3] overflow-hidden bg-surface">
                 {imageUrl ? (
-                     
+                    // img mantido (não next/image): precisa de onError para fallback de imagem quebrada
                     <img
                         src={imageUrl}
                         alt={prod.titlePt}
@@ -337,7 +338,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                         {featuredProductions[0] && (() => { const p = featuredProductions[0]; return (
                             <Link href={`/productions/${p.slug ?? p.id}`} className="group block relative overflow-hidden bg-surface aspect-[4/5]">
                                 {p.imageUrl ? (
-                                    <img src={p.imageUrl} alt={p.titlePt} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                                    <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                                 ) : (
                                     <div className="w-full h-full bg-surface flex items-center justify-center">
                                         <span className="font-black text-foreground/10 text-[80px] leading-none">{p.titlePt[0]}</span>
@@ -364,7 +365,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                     <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group block">
                                         <div className="relative overflow-hidden bg-surface aspect-[2/3]">
                                             {p.imageUrl ? (
-                                                <img src={p.imageUrl} alt={p.titlePt} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+                                                <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                                             ) : (
                                                 <div className="w-full h-full bg-surface flex items-center justify-center">
                                                     <span className="font-black text-foreground/10 text-[40px] leading-none">{p.titlePt[0]}</span>
@@ -397,7 +398,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                             <Link key={p.id} href={`/productions/${p.slug ?? p.id}`} className="group block">
                                 <div className={`relative overflow-hidden bg-surface ${i === 0 ? 'aspect-[3/2]' : 'aspect-[2/3]'}`}>
                                     {p.imageUrl ? (
-                                        <img src={p.imageUrl} alt={p.titlePt} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" />
+                                        <Image src={p.imageUrl} alt={p.titlePt} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                                     ) : (
                                         <div className="w-full h-full bg-surface flex items-center justify-center">
                                             <span className="font-black text-foreground/10 text-[80px] leading-none">{p.titlePt[0]}</span>
