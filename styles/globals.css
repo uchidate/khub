@@ -42,6 +42,7 @@
     /* Alturas fixas para cálculo de offsets sticky */
     --ticker-h: 28px;
     --nav-h: 52px;
+    --bottom-nav-h: 62px;
     --site-header-h: calc(var(--nav-h) + var(--ticker-h));
     --site-sticky-top: calc(var(--adsense-anchor-top-offset, 0px) + var(--site-header-h));
   }

@@ -39,7 +39,7 @@ export function SiteFooter() {
     const year = new Date().getFullYear()
 
     return (
-        <footer className="bg-featured px-4 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-[calc(62px+1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-10 font-sora">
+        <footer className="bg-featured px-4 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-[calc(var(--bottom-nav-h)+1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-10 font-sora">
             <div className="max-w-7xl mx-auto">
 
                 {/* Grid principal */}
