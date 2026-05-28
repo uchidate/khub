@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Film, Search, X } from 'lucide-react'
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { nameToGradient } from '@/lib/utils'
 import Image from 'next/image'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
@@ -288,15 +289,13 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
         <div id="productions-list">
             {/* Filters */}
             {!hideFilter && (
-                <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
-                    <div className="relative w-full">
-                    <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-                    <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
-                        <div className="flex shrink-0 items-center gap-2">
+                <ResponsiveFilterBar label="Filtros" value={(hasActiveFilters || filters.sortBy !== 'popular') ? 'ativos' : 'Produções'}>
+                    <div className="space-y-3 lg:flex lg:w-full lg:items-center lg:gap-2 lg:space-y-0">
+                        <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
                             {renderFilterControls()}
                         </div>
 
-                        <div className="flex h-8 w-[220px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[360px]">
+                        <div className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground lg:h-8 lg:w-[360px] lg:shrink-0">
                             <Search className="h-4 w-4 shrink-0 text-muted" />
                             <input
                                 type="text"
@@ -313,14 +312,17 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                             </button>
                         )}
                     </div>
-                    </div>
-                </nav>
+                </ResponsiveFilterBar>
             )}
 
             {!hideFilter && (
-                <div className="page-wrap border-b border-border/50 py-1.5">
-                    <Breadcrumbs items={[{ label: 'Produções' }]} />
-                </div>
+                <PageHeader
+                    breadcrumbs={[{ label: 'Produções' }]}
+                    eyebrow="Catálogo"
+                    title="Todas as produções"
+                    subtitle="Doramas, filmes e especiais coreanos"
+                    meta={pagination.total > 0 ? `${pagination.total.toLocaleString('pt-BR')} produções` : undefined}
+                />
             )}
 
             {!hideFilter && featuredProductions.length > 0 && (
@@ -443,12 +445,6 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {/* Grid */}
             {!isLoading && productions.length > 0 && (
                 <>
-                    <div className="mb-5 flex items-baseline justify-between border-b border-foreground pb-3">
-                        <h2 className="text-subtitle font-black tracking-[-0.03em] text-foreground">Todas as produções</h2>
-                        <p className="font-mono text-label text-muted">
-                            {pagination.total > 0 ? `vendo 1–${Math.min(parseInt(searchParams.get('limit') || '50'), productions.length)} de ${pagination.total.toLocaleString('pt-BR')}` : 'Refine sua busca'}
-                        </p>
-                    </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                         {productions.map((prod, index) => (
                             <ProductionCard key={prod.id} prod={prod} priority={index < 8} />

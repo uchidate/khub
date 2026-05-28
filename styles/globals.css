@@ -40,18 +40,19 @@
     /* Navbar translucida */
     --color-navbar-scrolled: rgba(249, 249, 251, 0.88);
     /* Alturas fixas para cálculo de offsets sticky */
-    --ticker-h: 28px;
+    --ticker-h: 40px;
     --nav-h: 52px;
     --bottom-nav-h: 62px;
-    --site-header-h: calc(var(--nav-h) + var(--ticker-h));
+    --site-header-h: 52px;
     --site-sticky-top: calc(var(--adsense-anchor-top-offset, 0px) + var(--site-header-h));
+    --section-bar-h: 52px;
   }
 
-  @media (min-width: 640px) {
-    :root { --nav-h: 60px; }
-  }
   @media (min-width: 1024px) {
-    :root { --nav-h: 64px; }
+    :root {
+      --site-header-h: 196px;
+      --section-bar-h: 44px;
+    }
   }
 
   /* ── Dark theme ── */
@@ -385,6 +386,10 @@ body {
   animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+body:has(#mobile-menu-toggle:checked) {
+  overflow: hidden;
+}
+
 /* Skeleton Loader */
 @keyframes pulse {
   0%, 100% {
@@ -479,13 +484,6 @@ textarea:focus-visible {
 /* AdSense — colapsar slots não preenchidos sem deixar espaço vazio */
 ins.adsbygoogle[data-ad-status="unfilled"] {
   display: none !important;
-}
-
-@media (max-width: 639px) {
-  .site-shell {
-    padding-top: var(--adsense-anchor-top-offset, 0px);
-    transition: padding-top 220ms ease;
-  }
 }
 
 /* Contentor padrão do site — alinhado com o NavBar (max-w-[1440px] + px-10) */

@@ -6,7 +6,7 @@ import { PageTransition } from "@/components/features/PageTransition"
 import { ArtistsList } from "@/components/features/ArtistsList"
 import { ArtistFilters } from "@/components/features/ArtistFilters"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
+import { PageHeader } from "@/components/ui/PageHeader"
 import { JsonLd } from "@/components/seo/JsonLd"
 import prisma from "@/lib/prisma"
 import { SITE_URL } from '@/lib/constants/site'
@@ -137,16 +137,16 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
         }} />
         <PageTransition className="pb-16">
 
-            <nav aria-label="Filtros" className="sticky z-[210] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
-                <Suspense>
-                    <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
-                </Suspense>
-            </nav>
+            <Suspense>
+                <ArtistFilters initialFilters={{ search, role, groupId, agencyId, memberType, sortBy }} />
+            </Suspense>
             {/* ── Contexto + alfabeto sticky ───────────────────────── */}
-            <section className="sticky z-10 bg-background" style={{ top: 'calc(var(--site-header-h, 92px) + 48px)' }}>
-                <div className="page-wrap border-b border-border/50 py-2">
-                    <Breadcrumbs items={[{ label: 'Artistas' }]} />
-                </div>
+            <section className="sticky z-10 bg-background" style={{ top: 'calc(var(--site-sticky-top, 92px) + var(--section-bar-h, 38px))' }}>
+                <PageHeader
+                    breadcrumbs={[{ label: 'Artistas' }]}
+                    subtitle="Catálogo de artistas K-Pop e K-Drama"
+                    className="py-2 lg:py-2"
+                />
                 <div className="page-wrap border-b border-foreground py-3">
                     <div className="relative">
                     <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />

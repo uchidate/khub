@@ -103,6 +103,7 @@ function formatEditionDate(now = new Date()) {
 }
 
 const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
+    const navRef = useRef<HTMLElement | null>(null)
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
@@ -130,9 +131,23 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
 
     useEffect(() => {
         const root = document.documentElement
-        const isMobile = window.matchMedia("(max-width: 1023px)").matches
-        root.style.setProperty("--site-header-h", isMobile ? "92px" : "196px")
-        return () => { root.style.removeProperty("--site-header-h") }
+        const nav = navRef.current
+        if (!nav) return
+
+        const updateHeaderHeight = () => {
+            root.style.setProperty("--site-header-h", `${Math.ceil(nav.getBoundingClientRect().height)}px`)
+        }
+
+        updateHeaderHeight()
+        const observer = new ResizeObserver(updateHeaderHeight)
+        observer.observe(nav)
+        window.addEventListener("resize", updateHeaderHeight)
+
+        return () => {
+            observer.disconnect()
+            window.removeEventListener("resize", updateHeaderHeight)
+            root.style.removeProperty("--site-header-h")
+        }
     }, [tickerItems.length])
 
     if (pathname?.startsWith("/auth") || pathname?.startsWith("/admin") || pathname?.startsWith("/write")) return null
@@ -144,7 +159,11 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     }
 
     return (
-        <nav className={`sticky top-0 z-[320] bg-background transition-shadow duration-300 ${isScrolled ? "shadow-[0_1px_0_var(--color-border)]" : ""}`}>
+        <nav
+            ref={navRef}
+            className={`sticky z-[320] bg-background transition-shadow duration-300 ${isScrolled ? "shadow-[0_1px_0_var(--color-border)]" : ""}`}
+            style={{ top: 'var(--adsense-anchor-top-offset, 0px)' }}
+        >
             {/* Mobile */}
             <div className="lg:hidden">
                 <div className="flex h-[52px] items-center justify-between border-b border-border px-3">
@@ -168,27 +187,6 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         </Link>
                         <ThemeToggle />
                     </div>
-                </div>
-                {/* Nav links mobile */}
-                <div className="relative" style={{ background: '#0a0a0a' }}>
-                <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10" style={{ background: 'linear-gradient(to right, transparent, #0a0a0a)' }} />
-                <div className="flex h-10 items-center gap-6 overflow-x-auto px-3 scrollbar-none pr-10">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            aria-current={isActiveLink(link.href) ? "page" : undefined}
-                            className={`relative flex h-full shrink-0 items-center text-[13px] font-bold tracking-[-0.01em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
-                                isActiveLink(link.href)
-                                    ? "after:scale-x-100 after:bg-accent"
-                                    : "after:scale-x-0 after:bg-accent"
-                            }`}
-                            style={{ color: isActiveLink(link.href) ? '#ff246e' : 'rgba(255,255,255,0.7)' }}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
-                </div>
                 </div>
             </div>
 

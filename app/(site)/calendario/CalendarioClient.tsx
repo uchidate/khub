@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Cake, CalendarDays, Film, Search, ShoppingBag, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react'
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
 import { TrackedAffiliateLink } from '@/components/ui/TrackedAffiliateLink'
 
@@ -208,15 +209,15 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
 
     const thisMonthTotal = (birthdays.filter(b => { const d = new Date(b.date); return d.getUTCFullYear() === today.getUTCFullYear() && d.getUTCMonth() === today.getUTCMonth() }).length)
         + (releases.filter(r => { const d = new Date(r.date); return d.getUTCFullYear() === today.getUTCFullYear() && d.getUTCMonth() === today.getUTCMonth() }).length)
+    const activeFilterLabel = filter === 'birthdays' ? 'Idols' : filter === 'releases' ? 'Estreias' : 'Tudo'
 
     const toggleMonth = (key: string) => setExpandedMonths(cur => { const n = new Set(cur); n.has(key) ? n.delete(key) : n.add(key); return n })
 
     return (
         <div>
-            {/* Sticky filter bar */}
-            <div className="sticky z-[200] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
-                <div className="page-wrap flex h-12 items-center gap-3">
-                    <div className="flex shrink-0 gap-1">
+            <ResponsiveFilterBar label="Calendário" value={search ? 'busca ativa' : activeFilterLabel}>
+                <div className="space-y-3 lg:flex lg:w-full lg:items-center lg:gap-3 lg:space-y-0">
+                    <div className="flex flex-wrap gap-1">
                         {[
                             { v: 'all', label: 'Tudo' },
                             { v: 'birthdays', label: '🎂 Idols' },
@@ -228,11 +229,10 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                             </button>
                         ))}
                     </div>
-                    <div className="flex-1" />
-                    <div className="relative w-[180px] sm:w-[240px]">
+                    <div className="relative w-full lg:ml-auto lg:w-[260px]">
                         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
                         <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
-                            className="h-8 w-full rounded-full border border-border bg-surface pl-8 pr-8 text-[13px] text-foreground placeholder:text-muted focus:border-foreground focus:outline-none" />
+                            className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-8 text-[13px] text-foreground placeholder:text-muted focus:border-foreground focus:outline-none lg:h-8 lg:bg-surface" />
                         {search && (
                             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground">
                                 <X className="h-3.5 w-3.5" />
@@ -240,23 +240,18 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                         )}
                     </div>
                 </div>
-            </div>
+            </ResponsiveFilterBar>
 
-            {/* Breadcrumb */}
-            <div className="page-wrap border-b border-border/50 py-2.5">
-                <Breadcrumbs items={[{ label: 'Calendário' }]} />
-            </div>
+            <PageHeader
+                breadcrumbs={[{ label: 'Calendário' }]}
+                eyebrow="Calendário Hallyu"
+                title={`${MONTH_NAMES_FULL[today.getUTCMonth()]} ${today.getUTCFullYear()}`}
+                subtitle={`${thisMonthTotal} eventos este mês · ${nextSevenDays.length} esta semana`}
+                meta={`${birthdays.length + releases.length} total`}
+            />
 
-            {/* Hero strip */}
-            <div className="border-b border-border bg-surface">
-                <div className="page-wrap flex items-center justify-between gap-4 py-5">
-                    <div>
-                        <p className="text-xs font-black uppercase tracking-[0.14em] text-muted mb-0.5">Calendário Hallyu</p>
-                        <h1 className="text-2xl font-black text-foreground">
-                            {MONTH_NAMES_FULL[today.getUTCMonth()]} <span className="text-muted font-normal text-lg">{today.getUTCFullYear()}</span>
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-6">
+            <div className="border-b border-border bg-surface/70">
+                <div className="page-wrap flex items-center gap-6 py-3">
                         <div className="text-center">
                             <p className="text-2xl font-black text-foreground">{thisMonthTotal}</p>
                             <p className="text-[10px] font-semibold text-muted">este mês</p>
@@ -269,7 +264,6 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                             <p className="text-2xl font-black text-foreground">{birthdays.length + releases.length}</p>
                             <p className="text-[10px] font-semibold text-muted">total</p>
                         </div>
-                    </div>
                 </div>
             </div>
 
@@ -429,7 +423,7 @@ export function CalendarioClient({ birthdays, releases, recentReleases, todayStr
                 </div>
 
                 {/* Sidebar */}
-                <aside className="space-y-6 lg:sticky lg:self-start" style={{ top: 'calc(var(--site-header-h, 92px) + 3.5rem + 1rem)' }}>
+                <aside className="space-y-6 lg:sticky lg:self-start" style={{ top: 'calc(var(--site-sticky-top, 92px) + 3.5rem + 1rem)' }}>
 
                     {/* Resumo */}
                     <div className="rounded-xl border border-border bg-surface p-4">
