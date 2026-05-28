@@ -277,24 +277,37 @@ export function HomeFrontPage({
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                         {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count }) => {
                             const cat = BLOG_CATEGORY_BY_SLUG[slug]
+                            const color = cat?.color ?? "#ee2244"
                             return (
                             <Link
                                 key={href}
                                 href={href}
-                                className="group relative min-h-[160px] overflow-hidden border border-border bg-background p-4 transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5 lg:min-h-[210px]"
+                                className="group relative min-h-[170px] overflow-hidden p-4 transition-all hover:-translate-y-1 hover:shadow-lg sm:p-5 lg:min-h-[220px]"
+                                style={{
+                                    backgroundColor: `${color}0f`,
+                                    borderLeft: `4px solid ${color}`,
+                                    border: `1px solid ${color}28`,
+                                    borderLeftWidth: '4px',
+                                    borderLeftColor: color,
+                                }}
                             >
-                                <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: cat?.color ?? "#ee2244" }} />
-                                <span className="pointer-events-none absolute -bottom-3 -right-2 font-sans text-[68px] font-black leading-none tracking-[-0.12em] text-foreground/[0.055]">
+                                <span
+                                    className="pointer-events-none absolute -bottom-4 -right-3 font-sans text-[82px] font-black leading-none tracking-[-0.12em] transition-transform duration-500 group-hover:scale-110"
+                                    style={{ color: `${color}20` }}
+                                >
                                     {hangul}
                                 </span>
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[19px] lg:text-[20px]">{label}</h3>
+                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[18px] lg:text-[20px]">{label}</h3>
                                         <p className="mt-1.5 text-[11px] leading-4 text-muted">{detail}</p>
                                     </div>
-                                    <div className="flex items-center justify-between font-mono text-[10px] font-bold text-muted/60">
-                                        <span>{count.toLocaleString("pt-BR")} artigos</span>
-                                        <span className="text-sm leading-none transition-transform group-hover:translate-x-0.5" style={{ color: cat?.color ?? "#ee2244" }}>→</span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-mono text-[10px] font-bold" style={{ color: `${color}99` }}>{count.toLocaleString("pt-BR")} artigos</span>
+                                        <span
+                                            className="text-sm leading-none transition-transform group-hover:translate-x-0.5"
+                                            style={{ color }}
+                                        >→</span>
                                     </div>
                                 </div>
                             </Link>
