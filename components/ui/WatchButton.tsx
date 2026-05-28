@@ -11,10 +11,10 @@ import { StarRating } from '@/components/ui/StarRating'
 import { useUmami } from '@/hooks/useUmami'
 
 const STATUS_COLORS: Record<WatchStatus, string> = {
-    WANT_TO_WATCH: 'bg-blue-600 hover:bg-blue-500 text-white',
-    WATCHING: 'bg-yellow-600 hover:bg-yellow-500 text-white',
-    WATCHED: 'bg-green-600 hover:bg-green-500 text-white',
-    DROPPED: 'bg-gray-600 hover:bg-gray-500 text-white',
+    WANT_TO_WATCH: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30',
+    WATCHING:      'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/30',
+    WATCHED:       'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30',
+    DROPPED:       'bg-surface hover:bg-surface-hover text-muted border border-border',
 }
 
 interface WatchButtonProps {
@@ -137,7 +137,7 @@ export function WatchButton({ productionId, productionName, className = '' }: Wa
                     <button
                         key={s}
                         onClick={() => handleSelectStatus(s)}
-                        className={`w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-[#fff0f5] text-[#ff2d78]' : 'text-foreground hover:bg-surface'}`}
+                        className={`w-full px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${entry?.status === s ? 'bg-accent-soft text-accent' : 'text-foreground hover:bg-surface'}`}
                     >
                         {WATCH_STATUS_LABELS[s]}
                     </button>

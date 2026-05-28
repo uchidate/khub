@@ -146,6 +146,16 @@ body {
     border-width: 1.5px;
   }
 
+  /* ── Typography scale ── */
+  .text-display   { @apply text-3xl lg:text-4xl font-black tracking-tight; }
+  .text-title      { @apply text-xl lg:text-2xl font-black; }
+  .text-subtitle   { @apply text-base lg:text-lg font-bold; }
+  .text-body       { @apply text-sm leading-relaxed; }
+  .text-small      { @apply text-xs leading-snug; }
+  .text-label      { @apply text-[11px] font-semibold tracking-wide; }
+  .text-caption    { @apply text-[10px] font-black uppercase tracking-widest; }
+  .text-micro      { @apply text-[9px] font-medium; }
+
   .btn-primary {
     background-color: var(--color-fg);
     color: var(--color-bg);

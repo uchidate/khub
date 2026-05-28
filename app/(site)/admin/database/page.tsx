@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ServerIcon, Activity } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { StatCard } from '@/components/admin'
-import prisma from '@/lib/prisma'
+import { getAdminDatabaseCounts } from '@/lib/repositories/AdminRepository'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,37 +14,18 @@ export default async function AdminDatabasePage() {
   if (!session) redirect('/auth/login?callbackUrl=/admin/database')
   if (session.user.role?.toLowerCase() !== 'admin') redirect('/dashboard')
 
-  const [
-    usersCount,
-    artistsCount,
-    agenciesCount,
-    productionsCount,
-    groupsCount,
-    newsCount,
-    albumsCount,
-    blogCount,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.artist.count(),
-    prisma.agency.count(),
-    prisma.production.count(),
-    prisma.musicalGroup.count(),
-    prisma.news.count(),
-    prisma.album.count(),
-    prisma.blogPost.count(),
-  ])
-
-  const total = usersCount + artistsCount + agenciesCount + productionsCount + groupsCount + newsCount + albumsCount + blogCount
+  const counts = await getAdminDatabaseCounts()
+  const total  = Object.values(counts).reduce((a, b) => a + b, 0)
 
   const stats = [
-    { label: 'Usuários',   value: usersCount },
-    { label: 'Artistas',   value: artistsCount },
-    { label: 'Agências',   value: agenciesCount },
-    { label: 'Produções',  value: productionsCount },
-    { label: 'Grupos',     value: groupsCount },
-    { label: 'Notícias',   value: newsCount },
-    { label: 'Álbuns',     value: albumsCount },
-    { label: 'Blog posts', value: blogCount },
+    { label: 'Usuários',   value: counts.users },
+    { label: 'Artistas',   value: counts.artists },
+    { label: 'Agências',   value: counts.agencies },
+    { label: 'Produções',  value: counts.productions },
+    { label: 'Grupos',     value: counts.groups },
+    { label: 'Notícias',   value: counts.news },
+    { label: 'Álbuns',     value: counts.albums },
+    { label: 'Blog posts', value: counts.blogPosts },
   ]
 
   return (

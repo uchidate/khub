@@ -539,7 +539,7 @@ function VsBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_vs' }> }) 
                         <button key={side} onClick={() => vote(side)} disabled={!!voted}
                             className={`flex flex-col items-center gap-3 p-5 transition-colors ${!voted ? 'hover:bg-accent/5 cursor-pointer' : 'cursor-default'} ${voted && isWinner ? 'bg-accent/8' : ''} ${side === 'a' ? 'border-r border-border' : ''}`}>
                             {opt.imageUrl && (
-                                <img src={opt.imageUrl} alt={opt.label} className="w-20 h-20 rounded-full object-cover object-top border-2 border-border" />
+                                <Image src={opt.imageUrl} alt={opt.label} width={80} height={80} className="w-20 h-20 rounded-full object-cover object-top border-2 border-border" />
                             )}
                             <div className="text-center">
                                 <p className="font-black text-[15px] text-foreground">{opt.label}</p>
@@ -623,9 +623,9 @@ function BeforeAfterBlock({ block }: { block: Extract<BlogBlock, { type: 'blog_b
                 onMouseUp={() => { dragging.current = false }}
                 onMouseLeave={() => { dragging.current = false }}
                 onTouchMove={e => update(e.touches[0].clientX)}>
-                <img src={block.after.url} alt={block.after.label || 'Depois'} className="absolute inset-0 w-full h-full object-cover" />
+                <Image src={block.after.url} alt={block.after.label || 'Depois'} fill className="object-cover" />
                 <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
-                    <img src={block.before.url} alt={block.before.label || 'Antes'} className="absolute inset-0 object-cover" style={{ width: `${10000 / position}%`, height: '100%', maxWidth: 'none' }} />
+                    <Image src={block.before.url} alt={block.before.label || 'Antes'} fill className="object-cover" style={{ width: `${10000 / position}%`, maxWidth: 'none' }} />
                 </div>
                 <div className="absolute inset-y-0 flex items-center pointer-events-none" style={{ left: `${position}%`, transform: 'translateX(-50%)' }}>
                     <div className="w-0.5 h-full bg-white/80" />
@@ -1109,7 +1109,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
             return (
                 <div className="my-8 rounded-2xl border border-orange-500/20 bg-orange-500/[.03] overflow-hidden">
                     <div className="flex gap-4 p-4">
-                        {block.imageUrl && <img src={block.imageUrl} alt={block.name} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" loading="lazy" />}
+                        {block.imageUrl && <Image src={block.imageUrl} alt={block.name} width={96} height={96} className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-border" />}
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-foreground leading-snug mb-2 line-clamp-2">{block.name}</p>
                             {block.rating && (
@@ -1197,7 +1197,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                                 }`}>{item.position}</span>
                                 {item.imageUrl && (
                                     <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-border">
-                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                        <Image src={item.imageUrl} alt={item.name} width={48} height={48} className="w-full h-full object-cover" />
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0">
@@ -1221,7 +1221,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                 <div className="my-8 rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-surface to-background">
                     {block.imageUrl && (
                         <div className="h-48 relative">
-                            <img src={block.imageUrl} alt={block.title} className="w-full h-full object-cover" />
+                            <Image src={block.imageUrl} alt={block.title} fill className="object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                             {block.type_label && (
                                 <span className="absolute top-3 left-3 text-[11px] font-bold px-2.5 py-1 rounded-full bg-accent text-white uppercase tracking-wider">
@@ -1248,7 +1248,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                             <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface/40 text-center">
                                 {m.imageUrl ? (
                                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border">
-                                        <img src={m.imageUrl} alt={m.name} className="w-full h-full object-cover object-top" />
+                                        <Image src={m.imageUrl} alt={m.name} width={64} height={64} className="w-full h-full object-cover object-top" />
                                     </div>
                                 ) : (
                                     <div className="w-16 h-16 rounded-full bg-surface border-2 border-border flex items-center justify-center text-2xl">
@@ -1321,7 +1321,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                 <div className="my-8 rounded-2xl border border-border overflow-hidden bg-surface">
                     <div className="flex items-center gap-4 px-5 py-4 border-b border-border bg-surface/60">
                         {block.imageUrl && (
-                            <img src={block.imageUrl} alt={block.name} className="w-12 h-12 rounded-full object-cover object-top border-2 border-accent/30" />
+                            <Image src={block.imageUrl} alt={block.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover object-top border-2 border-accent/30" />
                         )}
                         <div>
                             <p className="text-[10px] font-black text-muted uppercase tracking-widest">Ficha</p>
@@ -1514,7 +1514,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                 <div className="my-8 border border-border rounded-2xl overflow-hidden">
                     <div className="p-5 flex items-center gap-5" style={{ background: 'linear-gradient(135deg, #1a0030, #2d0050)' }}>
                         {block.imageUrl ? (
-                            <img src={block.imageUrl} alt={block.name} className="w-16 h-16 object-contain" />
+                            <Image src={block.imageUrl} alt={block.name} width={64} height={64} className="w-16 h-16 object-contain" />
                         ) : (
                             <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-3xl border border-white/20">🪄</div>
                         )}
@@ -1548,7 +1548,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                         {block.members.map((m, i) => (
                             <div key={i} className="border border-border rounded-xl p-3 bg-surface/30 flex gap-3">
                                 {m.imageUrl ? (
-                                    <img src={m.imageUrl} alt={m.name} className="w-10 h-10 rounded-full object-cover object-top border border-border shrink-0" />
+                                    <Image src={m.imageUrl} alt={m.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover object-top border border-border shrink-0" />
                                 ) : (
                                     <div className={`w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold ${m.line ? lineColors[m.line] : 'bg-surface border border-border'}`}>
                                         {m.name[0]}
@@ -1584,7 +1584,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
                         {block.albums.map((a, i) => (
                             <div key={i} className="flex flex-col gap-1">
                                 {a.imageUrl ? (
-                                    <img src={a.imageUrl} alt={a.title} className="aspect-square rounded-xl object-cover border border-border" />
+                                    <Image src={a.imageUrl} alt={a.title} width={120} height={120} className="aspect-square rounded-xl object-cover border border-border" />
                                 ) : (
                                     <div className="aspect-square rounded-xl flex items-center justify-center text-2xl border border-white/5"
                                         style={{ background: a.color ?? 'linear-gradient(135deg, #1a1a2e, #16213e)' }}>

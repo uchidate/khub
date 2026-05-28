@@ -15,7 +15,7 @@ export default function ArtistLoading() {
           </div>
           {/* Main */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="h-6 w-48 rounded bg-[#f0f0f0] animate-pulse" />
+            <div className="h-6 w-48 rounded bg-surface animate-pulse" />
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="h-24 rounded-xl bg-surface animate-pulse" />
             ))}

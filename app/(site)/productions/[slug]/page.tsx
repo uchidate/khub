@@ -23,6 +23,11 @@ import { StoreProductsRail } from '@/components/store/StoreProductsRail'
 import { inferProductionContentType } from '@/lib/store/product-matcher'
 const BASE_URL = SITE_URL
 
+type ProductionWithExtras = Awaited<ReturnType<typeof getProduction>> & {
+  editorialRating?: number | null
+  curiosidades?: string[]
+}
+
 // ISR: página cacheada 1h no servidor — revalidada sob demanda via revalidatePath no admin
 export const revalidate = 3600
 
@@ -62,7 +67,7 @@ const getProduction = cache(async (slugOrId: string) => {
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const params = await props.params;
-    const production = await getProduction(params.slug)
+    const production = await getProduction(params.slug) as ProductionWithExtras
 
     if (!production) {
         return {
@@ -135,7 +140,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function ProductionDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
 
-    const production = await getProduction(params.slug)
+    const production = await getProduction(params.slug) as ProductionWithExtras
 
     if (!production || production.isHidden) {
         notFound()
@@ -252,8 +257,8 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     const releaseLabel = production.releaseDate
         ? new Date(production.releaseDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
         : production.year ? String(production.year) : null
-    const scoreLabel = (production as any).editorialRating != null
-        ? `${(production as any).editorialRating.toFixed(1)}/10`
+    const scoreLabel = production.editorialRating != null
+        ? `${production.editorialRating.toFixed(1)}/10`
         : production.voteAverage && production.voteAverage > 0
             ? `${production.voteAverage.toFixed(1)}/10`
             : null
@@ -618,11 +623,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         )}
 
                         {/* Curiosidades */}
-                        {(production as any).curiosidades?.length > 0 && (
+                        {production.curiosidades?.length > 0 && (
                             <div id="elenco" className="scroll-mt-28">
                                 <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] mb-4">Curiosidades</h3>
                                 <ul className="space-y-2">
-                                    {((production as any).curiosidades as string[]).map((c, i) => (
+                                    {(production.curiosidades as string[]).map((c, i) => (
                                         <li key={i} className="group flex items-start gap-4 border border-border px-5 py-4 bg-surface hover:border-accent/40 hover:bg-accent/[0.03] transition-all">
                                             <span className="shrink-0 mt-0.5 text-[10px] font-black text-accent/70 group-hover:text-accent bg-accent/8 group-hover:bg-accent/15 w-6 h-6 flex items-center justify-center tabular-nums transition-all">{i + 1}</span>
                                             <span className="text-[15px] text-muted leading-relaxed text-justify">{c}</span>
@@ -859,14 +864,14 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             <div className="px-4 py-2">
                                 <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Informações</p>
                             </div>
-                            {(production as any).editorialRating != null && (
+                            {production.editorialRating != null && (
                                 <div className="flex justify-between px-4 py-3 items-center">
                                     <span className="text-xs font-black text-muted uppercase tracking-widest">Nossa Nota</span>
                                     <span className={`text-sm font-black ${
-                                        (production as any).editorialRating >= 7 ? 'text-accent' :
-                                        (production as any).editorialRating >= 5 ? 'text-amber-500' :
+                                        production.editorialRating >= 7 ? 'text-accent' :
+                                        production.editorialRating >= 5 ? 'text-amber-500' :
                                         'text-red-500'
-                                    }`}>★ {(production as any).editorialRating.toFixed(1)}<span className="text-muted font-normal text-xs">/10</span></span>
+                                    }`}>★ {production.editorialRating.toFixed(1)}<span className="text-muted font-normal text-xs">/10</span></span>
                                 </div>
                             )}
                             {production.voteAverage && production.voteAverage > 0 && (production.voteCount ?? 0) >= 50 && (
