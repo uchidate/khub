@@ -206,8 +206,9 @@ export function HomeFrontPage({
             <div className="mx-auto max-w-[1440px] border-y border-border bg-background">
                 {heroStory ? (
                     <div className="lg:flex lg:min-h-[560px]">
-                        <Link href={`/blog/${heroStory.slug}`} className="group block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
+                        <Link href={`/blog/${heroStory.slug}`} className="group relative block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
                             <StoryImage story={heroStory} className="aspect-[4/3] w-full lg:h-full lg:min-h-[560px]" priority />
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/30 to-transparent" />
                         </Link>
                         <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-7 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
                             <div className="mb-4 sm:mb-5">
@@ -317,10 +318,14 @@ export function HomeFrontPage({
                         <div className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4 lg:gap-5">
                             {highlightStories.map((post) => (
                                 <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
-                                    <StoryImage story={post} className="aspect-[4/3] border border-border" />
+                                    <div className="relative">
+                                        <StoryImage story={post} className="aspect-[4/3] border border-border" />
+                                        <div className="absolute bottom-2 left-2">
+                                            <StoryKicker story={post} />
+                                        </div>
+                                    </div>
                                     <div className="mt-3">
-                                        <StoryKicker story={post} />
-                                        <h3 className="mt-2 font-serif text-[16px] font-medium leading-[1.08] tracking-[-0.025em] text-foreground group-hover:text-accent sm:text-[20px] lg:text-[24px] lg:leading-[1.05] lg:tracking-[-0.04em]">
+                                        <h3 className="font-serif text-[16px] font-medium leading-[1.08] tracking-[-0.025em] text-foreground group-hover:text-accent sm:text-[20px] lg:text-[24px] lg:leading-[1.05] lg:tracking-[-0.04em]">
                                             {post.title}
                                         </h3>
                                         {post.excerpt && <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-muted max-sm:line-clamp-3">{post.excerpt}</p>}
@@ -340,7 +345,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 border-b border-border py-4 transition-colors last:border-b-0 hover:bg-background/70 sm:grid-cols-[104px_1fr_88px] sm:gap-4 sm:py-5"
+                                    className="group grid grid-cols-[80px_minmax(0,1fr)] gap-3 border-b border-border py-4 transition-colors last:border-b-0 hover:bg-background/70 sm:grid-cols-[104px_1fr_88px] sm:gap-4 sm:py-5"
                                 >
                                     <StoryImage story={post} className="aspect-[4/5] border border-border" />
                                     <div>
@@ -382,7 +387,7 @@ export function HomeFrontPage({
                                         <span className={`font-serif text-[32px] italic leading-none ${index < 3 ? "text-accent" : "text-muted/45"}`}>
                                             {String(index + 1).padStart(2, "0")}
                                         </span>
-                                        <span className="relative h-11 w-11 overflow-hidden rounded-full border border-border bg-surface" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || "artist") }}>
+                                        <span className={`relative h-11 w-11 overflow-hidden rounded-full border bg-surface ${index < 3 ? "border-accent/40 ring-2 ring-accent/20 ring-offset-1 ring-offset-background" : "border-border"}`} style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || "artist") }}>
                                             {artist.primaryImageUrl ? (
                                                 <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="44px" className="object-cover" />
                                             ) : (
@@ -410,15 +415,29 @@ export function HomeFrontPage({
                             )}
                         </div>
                         {spotlightArtist && (
-                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="mt-6 block border border-foreground bg-foreground p-5 text-background transition-opacity hover:opacity-95">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-accent">Destaque da semana</p>
-                                <h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{spotlightArtist.nameRomanized}</h3>
-                                <p className="mt-1 text-xs text-background/65">{spotlightArtist.nameHangul ?? spotlightArtist.agency?.name ?? "Perfil em foco"}</p>
-                                {spotlightProduction && (
-                                    <p className="mt-4 border-t border-background/20 pt-3 text-xs text-background/75">
-                                        Última produção: <b>{spotlightProduction.titlePt}</b>
-                                    </p>
+                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="group relative mt-6 block overflow-hidden border border-foreground bg-foreground text-background transition-opacity hover:opacity-95">
+                                {spotlightArtist.primaryImageUrl && (
+                                    <>
+                                        <Image
+                                            src={spotlightArtist.primaryImageUrl}
+                                            alt={spotlightArtist.nameRomanized}
+                                            fill
+                                            sizes="330px"
+                                            className="object-cover object-top opacity-30 transition-transform duration-700 group-hover:scale-[1.04]"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/70 to-foreground/30" />
+                                    </>
                                 )}
+                                <div className="relative p-5">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-accent">Destaque da semana</p>
+                                    <h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{spotlightArtist.nameRomanized}</h3>
+                                    <p className="mt-1 text-xs text-background/65">{spotlightArtist.nameHangul ?? spotlightArtist.agency?.name ?? "Perfil em foco"}</p>
+                                    {spotlightProduction && (
+                                        <p className="mt-4 border-t border-background/20 pt-3 text-xs text-background/75">
+                                            Última produção: <b>{spotlightProduction.titlePt}</b>
+                                        </p>
+                                    )}
+                                </div>
                             </Link>
                         )}
                     </aside>
