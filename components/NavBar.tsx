@@ -188,7 +188,7 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         <ThemeToggle />
                     </div>
                 </div>
-                {/* Links de navegação mobile */}
+                {/* Links de navegação mobile — barra de navegação principal */}
                 <div className="flex h-10 items-center overflow-x-auto border-b border-foreground/20 px-2 scrollbar-none" style={{ background: '#0a0a0a' }}>
                     {navLinks.map(({ label, href }) => (
                         <Link
