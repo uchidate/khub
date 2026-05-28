@@ -281,29 +281,18 @@ export function HomeFrontPage({
                             <Link
                                 key={href}
                                 href={href}
-                                className="group relative min-h-[160px] overflow-hidden border border-border bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm sm:p-5 lg:min-h-[210px]"
+                                className="group relative min-h-[160px] overflow-hidden border border-border bg-background p-4 transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5 lg:min-h-[210px]"
                             >
-                                <span
-                                    className="pointer-events-none absolute -right-4 -top-3 font-sans text-[80px] font-black leading-none tracking-[-0.12em] text-foreground/[0.05]"
-                                >
+                                <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: cat?.color ?? "#ee2244" }} />
+                                <span className="pointer-events-none absolute -bottom-3 -right-2 font-sans text-[68px] font-black leading-none tracking-[-0.12em] text-foreground/[0.055]">
                                     {hangul}
                                 </span>
-                                <div
-                                    className="absolute bottom-0 inset-x-0 h-[3px] transition-opacity group-hover:opacity-100 opacity-60"
-                                    style={{ backgroundColor: cat?.color ?? "#ee2244" }}
-                                />
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <span
-                                            className="mb-3 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black text-white"
-                                            style={{ backgroundColor: cat?.color ?? "#ee2244" }}
-                                        >
-                                            {label[0]}
-                                        </span>
-                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[19px] lg:text-[21px]">{label}</h3>
-                                        <p className="mt-1 text-[11px] text-muted">{detail}</p>
+                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[19px] lg:text-[20px]">{label}</h3>
+                                        <p className="mt-1.5 text-[11px] leading-4 text-muted">{detail}</p>
                                     </div>
-                                    <div className="flex items-center justify-between font-mono text-[10px] font-bold text-muted/70">
+                                    <div className="flex items-center justify-between font-mono text-[10px] font-bold text-muted/60">
                                         <span>{count.toLocaleString("pt-BR")} artigos</span>
                                         <span className="text-sm leading-none transition-transform group-hover:translate-x-0.5" style={{ color: cat?.color ?? "#ee2244" }}>→</span>
                                     </div>
