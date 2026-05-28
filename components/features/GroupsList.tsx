@@ -6,8 +6,9 @@ import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Search, Users, X } from 'lucide-react'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { nameToGradient } from '@/lib/utils'
 
 type Group = {
@@ -190,15 +191,13 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
         <div id="groups-list">
 
             {/* Filtros */}
-            {!hideFilter && <nav aria-label="Filtros" className="sticky z-[200] page-wrap flex h-12 items-center border-b border-border/50 bg-background" style={{ top: 'var(--site-header-h, 92px)' }}>
-                <div className="relative w-full">
-                <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-                <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
-                    <div className="flex shrink-0 items-center gap-2">
+            {!hideFilter && <ResponsiveFilterBar label="Filtros" value={hasActiveFilters ? 'ativos' : 'Grupos'}>
+                <div className="space-y-3 lg:flex lg:w-full lg:items-center lg:gap-2 lg:space-y-0">
+                    <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
                         {renderFilterControls()}
                     </div>
 
-                    <div className="flex h-8 w-[220px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[360px]">
+                    <div className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground lg:h-8 lg:w-[360px] lg:shrink-0">
                         <Search className="h-4 w-4 shrink-0 text-muted" />
                         <input
                             type="text"
@@ -222,13 +221,15 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                     </div>
                     )}
                 </div>
-                </div>
-            </nav>}
+            </ResponsiveFilterBar>}
 
             {!hideFilter && (
-                <div className="page-wrap border-b border-border/50 py-2">
-                    <Breadcrumbs items={[{ label: 'Grupos' }]} />
-                </div>
+                <PageHeader
+                    breadcrumbs={[{ label: 'Grupos' }]}
+                    eyebrow="Catálogo"
+                    title="Todos os grupos"
+                    meta={`${filtered.length.toLocaleString('pt-BR')} de ${groups.length.toLocaleString('pt-BR')} grupos`}
+                />
             )}
 
             <div className={hideFilter ? '' : 'page-wrap pt-6'}>
@@ -242,15 +243,6 @@ export function GroupsList({ hideFilter = false, initialGroups = [] }: { hideFil
                 />
             ) : groups.length > 0 ? (
                 <>
-                <div className="mb-5 flex flex-col gap-1 border-b border-foreground pb-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-accent">Catálogo</p>
-                        <h2 className="text-xl font-black tracking-[-0.03em] text-foreground sm:text-2xl">Todos os grupos</h2>
-                    </div>
-                    <p className="text-xs text-muted">
-                        {filtered.length.toLocaleString('pt-BR')} de {groups.length.toLocaleString('pt-BR')} grupos
-                    </p>
-                </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
                     {filtered.map((group, index) => {
                         const faded = !!group.disbandDate

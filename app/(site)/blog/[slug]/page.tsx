@@ -20,7 +20,7 @@ import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { CommentsSection } from '@/components/features/CommentsSection'
-import { SectionBar } from '@/components/ui/SectionBar'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
 
 const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
@@ -278,22 +278,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           { "@type": "ListItem", "position": 2, "name": post.title, "item": `${BASE_URL}/blog/${post.slug}` },
         ],
       }} />
-      <SectionBar>
-        <Link href="/blog" className="flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors border-border text-muted hover:border-border hover:text-foreground">
+      <ResponsiveFilterBar label="Categoria" value={post.category?.name ?? 'Artigos'}>
+        <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
+        <Link href="/blog" className="flex h-8 shrink-0 items-center whitespace-nowrap rounded-md bg-surface px-3 text-[12px] font-black text-muted transition-colors hover:text-foreground lg:h-full lg:rounded-none lg:border-b-2 lg:border-transparent lg:bg-transparent lg:px-0.5">
           Todos
         </Link>
         {BLOG_CATEGORIES.map(c => (
           <Link
             key={c.slug}
             href={`/blog?category=${c.slug}`}
-            className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[12px] font-bold transition-colors ${post.category?.slug === c.slug ? 'border-foreground bg-foreground text-background' : 'border-border text-muted hover:border-border hover:text-foreground'}`}
+            className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[12px] font-black transition-colors lg:h-full lg:rounded-none lg:border-b-2 lg:px-0.5 ${post.category?.slug === c.slug ? 'bg-accent text-white lg:border-accent lg:bg-transparent lg:text-accent' : 'bg-surface text-muted hover:text-foreground lg:border-transparent lg:bg-transparent'}`}
           >
             {c.name}
           </Link>
         ))}
-      </SectionBar>
+        </div>
+      </ResponsiveFilterBar>
 
-      <div className="sticky z-[190] bg-background border-b border-border/50 py-2 page-wrap" style={{ top: 'calc(var(--site-header-h, 92px) + 48px)' }}>
+      <div className="sticky z-[190] bg-background border-b border-border/50 py-2 page-wrap" style={{ top: 'calc(var(--site-sticky-top, 92px) + var(--section-bar-h, 44px))' }}>
         <Breadcrumbs items={[{ label: 'Artigos', href: '/blog' }, { label: post.title }]} />
       </div>
 
@@ -434,8 +436,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div
           className="sticky flex flex-col gap-4 overflow-y-auto"
           style={{
-            top: 'calc(var(--site-header-h, 92px) + 48px + 36px + 8px)',
-            maxHeight: 'calc(100vh - var(--site-header-h, 92px) - 48px - 36px - 24px)',
+            top: 'calc(var(--site-sticky-top, 92px) + var(--section-bar-h, 44px) + 36px + 8px)',
+            maxHeight: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
           }}
         >
           <BlogTableOfContents />

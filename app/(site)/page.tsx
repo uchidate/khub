@@ -13,6 +13,7 @@ import { HomeNowStrip } from "@/components/home/HomeNowStrip"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { buildHomeRuntimeData } from "@/lib/home/home-runtime"
 import { HomeDiscoverySection } from "@/components/home/HomeDiscoverySection"
+import { ResponsiveFilterBar } from "@/components/ui/ResponsiveFilterBar"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
 // Revalidação antecipada via revalidateTag(HOME_CACHE_TAG) nos crons de publish e trending.
@@ -22,6 +23,16 @@ export const revalidate = 600
 // Em produção, a primeira request popula o cache via ISR
 import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+
+const HOME_SECTIONS = [
+    { label: 'Destaques', href: '#destaques' },
+    { label: 'Descobertas', href: '#descobertas' },
+    { label: 'Agora', href: '#agora' },
+    { label: 'Aniversários', href: '#aniversarios' },
+    { label: 'Radar', href: '#radar' },
+    { label: 'Quiz', href: '#quiz' },
+    { label: 'Loja', href: '#loja' },
+]
 
 const getHomePublicData = unstable_cache(
     () => buildHomeRuntimeData(),
@@ -167,27 +178,23 @@ export default async function Home() {
                 },
             }} />
 
-            {/* Âncoras de seção — mobile only */}
-            <nav aria-label="Seções" className="sticky z-[210] bg-background border-b border-border" style={{ top: 'var(--site-header-h, 92px)' }}>
-                <div className="relative">
-                    <div className="pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-                    <div className="flex gap-0 overflow-x-auto scrollbar-none pr-10">
-                        {[
-                            { label: 'Destaques', href: '#destaques' },
-                            { label: 'Descobertas', href: '#descobertas' },
-                            { label: 'Agora', href: '#agora' },
-                            { label: 'Aniversários', href: '#aniversarios' },
-                            { label: 'Radar', href: '#radar' },
-                            { label: 'Quiz', href: '#quiz' },
-                            { label: 'Loja', href: '#loja' },
-                        ].map(({ label, href }) => (
-                            <a key={href} href={href} className="shrink-0 px-4 py-2.5 font-mono text-[11px] font-bold text-muted hover:text-foreground border-r border-border/50 transition-colors">
-                                {label}
-                            </a>
-                        ))}
-                    </div>
+            <ResponsiveFilterBar label="Seção" value="Destaques">
+                <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
+                    {HOME_SECTIONS.map(({ label, href }, index) => (
+                        <a
+                            key={href}
+                            href={href}
+                            className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[12px] font-black transition-colors lg:h-full lg:rounded-none lg:border-b-2 lg:px-0.5 ${
+                                index === 0
+                                    ? 'bg-accent text-white lg:border-accent lg:bg-transparent lg:text-accent'
+                                    : 'bg-surface text-muted hover:text-foreground lg:border-transparent lg:bg-transparent'
+                            }`}
+                        >
+                            {label}
+                        </a>
+                    ))}
                 </div>
-            </nav>
+            </ResponsiveFilterBar>
 
             <div id="destaques">
             <HomeFrontPage

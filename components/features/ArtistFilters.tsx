@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { ArrowUpDown, Search, UserRound, UsersRound, X } from 'lucide-react'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
 
 export interface ArtistFilterValues {
     search?: string
@@ -144,14 +145,13 @@ export function ArtistFilters({ initialFilters = {} }: ArtistFiltersProps) {
     )
 
     return (
-        <div className="relative w-full">
-        <div className="sm:hidden pointer-events-none absolute right-0 top-0 h-full w-10 z-10 bg-gradient-to-r from-transparent to-background" />
-        <div className="flex w-full items-center gap-2 overflow-x-auto pr-10 sm:pr-0" style={{ scrollbarWidth: 'none' }}>
-            <div className="flex shrink-0 items-center gap-2">
+        <ResponsiveFilterBar label="Filtros" value={hasActive ? 'ativos' : 'Artistas'}>
+            <div className="space-y-3 lg:flex lg:w-full lg:items-center lg:gap-2 lg:space-y-0">
+            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
                 {renderFilterControls()}
             </div>
 
-            <div className="flex h-8 w-[220px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[340px]">
+            <div className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground lg:h-8 lg:w-[340px] lg:shrink-0">
                 <Search className="h-4 w-4 shrink-0 text-muted" />
                 <input
                     type="text"
@@ -171,7 +171,7 @@ export function ArtistFilters({ initialFilters = {} }: ArtistFiltersProps) {
                     </button>
                 )}
             </div>
-        </div>
-        </div>
+            </div>
+        </ResponsiveFilterBar>
     )
 }

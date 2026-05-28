@@ -7,7 +7,8 @@ import { LojaCupons } from '@/components/ui/LojaCupons'
 import { AffiliateNotice } from '@/components/ui/AffiliateNotice'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { SITE_URL } from '@/lib/constants/site'
 
 export const dynamic = 'force-dynamic'
@@ -110,15 +111,22 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
             },
         })),
     } : null
+    const activeFilterLabel = sp.search
+        ? 'busca ativa'
+        : sp.category
+        ? formatCategory(sp.category)
+        : sp.store
+        ? STORE_LABELS[sp.store] ?? sp.store
+        : 'Todos'
 
     return (
         <>
             {jsonLd && <JsonLd data={jsonLd} />}
             <main className="min-h-screen bg-background pb-20">
-                <form action="/loja" className="page-wrap flex h-12 items-center border-b border-border/50">
-                    <div className="flex w-full min-w-0 items-center gap-2">
-                        <div className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                            <div className="flex w-max items-center gap-2">
+                <form action="/loja">
+                    <ResponsiveFilterBar label="Loja" value={activeFilterLabel}>
+                        <div className="space-y-3 lg:flex lg:w-full lg:items-center lg:gap-2 lg:space-y-0">
+                            <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap">
                                 <label className="flex shrink-0 items-center gap-1.5">
                                     <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Loja</span>
                                     <select name="store" defaultValue={sp.store ?? ''} className="h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground" aria-label="Filtrar loja por plataforma">
@@ -153,9 +161,8 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
                                     </select>
                                 </label>
                             </div>
-                        </div>
 
-                        <label className="flex h-8 w-[138px] shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground sm:w-[280px]">
+                        <label className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 transition-colors focus-within:border-foreground lg:h-8 lg:w-[280px] lg:shrink-0">
                             <Search className="h-4 w-4 shrink-0 text-muted" />
                             <input
                                 name="search"
@@ -166,29 +173,20 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
                             />
                         </label>
 
-                        <button className="h-8 shrink-0 rounded-md bg-foreground px-3 text-[12px] font-bold text-background transition-opacity hover:opacity-85" type="submit">
-                            OK
+                        <button className="h-9 w-full shrink-0 rounded-md bg-foreground px-3 text-[12px] font-bold text-background transition-opacity hover:opacity-85 lg:h-8 lg:w-auto" type="submit">
+                            Aplicar
                         </button>
-                    </div>
+                        </div>
+                    </ResponsiveFilterBar>
                 </form>
 
-                <div className="page-wrap border-b border-border/50 py-2">
-                    <Breadcrumbs items={[{ label: 'Loja' }]} />
-                </div>
-
-                {/* ── Banner fino ───────────────────────────────────────── */}
-                <div className="border-b border-border">
-                    <div className="page-wrap flex items-center justify-between gap-4 py-2.5">
-                        <div className="flex items-center gap-2">
-                            <ShoppingBag className="h-3.5 w-3.5 text-accent shrink-0" />
-                            <h1 className="text-[13px] font-black tracking-[-0.02em]">
-                                Achados para fãs<span className="text-accent">.</span>
-                            </h1>
-                            <span className="hidden sm:inline text-[11px] text-muted">Álbuns · Lightsticks · Photocards · K-Beauty · Moda</span>
-                        </div>
-                        <span className="font-mono text-[10px] text-muted shrink-0">{products.length} produtos</span>
-                    </div>
-                </div>
+                <PageHeader
+                    breadcrumbs={[{ label: 'Loja' }]}
+                    eyebrow="Vitrine K-Pop"
+                    title="Achados para fãs"
+                    subtitle="Álbuns · Lightsticks · Photocards · K-Beauty · Moda"
+                    meta={`${products.length} produtos`}
+                />
 
                 {/* ── Conteúdo principal ───────────────────────────────── */}
                 <div className="page-wrap py-6 space-y-8">

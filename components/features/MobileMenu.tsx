@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
 import { useSession, signOut } from "next-auth/react"
 import { Home, Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
@@ -28,8 +27,18 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const menuId = "mobile-menu-toggle"
+  const closeMenu = () => {
+    setIsOpen(false)
+    const checkbox = document.getElementById(menuId) as HTMLInputElement | null
+    if (checkbox) checkbox.checked = false
+  }
 
-  useEffect(() => { setIsOpen(false) }, [pathname])
+  useEffect(() => {
+    setIsOpen(false)
+    const checkbox = document.getElementById(menuId) as HTMLInputElement | null
+    if (checkbox) checkbox.checked = false
+  }, [pathname])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset'
@@ -46,43 +55,66 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
   return (
     <>
       {/* Hamburger */}
-      <button
+      <input
+        id={menuId}
+        type="checkbox"
+        className="peer sr-only"
+        aria-hidden="true"
+        onChange={event => setIsOpen(event.currentTarget.checked)}
+      />
+      <label
+        htmlFor={menuId}
         onClick={() => setIsOpen(true)}
-        className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] lg:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent text-foreground transition-colors hover:border-border hover:bg-surface lg:hidden"
         aria-label="Abrir menu"
-        aria-expanded={isOpen}
+        aria-controls="mobile-menu-drawer"
+        role="button"
       >
-        <span className="block w-5 h-0.5 bg-foreground rounded-sm" />
-        <span className="block w-5 h-0.5 bg-foreground rounded-sm" />
-        <span className="block w-5 h-0.5 bg-foreground rounded-sm" />
-      </button>
+        <span className="flex flex-col items-center justify-center gap-[5px]" aria-hidden="true">
+          <span className="block h-0.5 w-5 rounded-sm bg-current" />
+          <span className="block h-0.5 w-5 rounded-sm bg-current" />
+          <span className="block h-0.5 w-5 rounded-sm bg-current" />
+        </span>
+      </label>
 
-      {isOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+        <div className="fixed inset-0 z-[9999] hidden peer-checked:block lg:hidden" role="dialog" aria-modal="true" aria-label="Menu principal">
+          <label
+            htmlFor={menuId}
+            onClick={() => setIsOpen(false)}
+            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            aria-label="Fechar menu"
+          />
+          <div
+            id="mobile-menu-drawer"
+            className="animate-slide-in-left relative flex h-full w-[min(88vw,380px)] flex-col overflow-hidden border-r border-border bg-background shadow-[18px_0_36px_rgba(0,0,0,0.28)]"
+            style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 border-b border-border h-[56px] flex-shrink-0">
-            <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2.5 text-foreground">
-              <BrandMark size={26} />
-              <span className="text-[15px] font-black tracking-[-0.02em]">
-                Hallyu<span className="text-accent">Hub</span>
+          <div className="flex h-16 flex-shrink-0 items-center justify-between border-b border-border px-4">
+            <Link href="/" onClick={closeMenu} className="flex items-center gap-2.5 text-foreground">
+              <BrandMark size={30} />
+              <span className="text-[18px] font-black tracking-[-0.035em]">
+                HallyuHub<span className="text-accent">.</span>
               </span>
             </Link>
-            <button
+            <label
+              htmlFor={menuId}
               onClick={() => setIsOpen(false)}
-              className="w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-foreground hover:bg-surface transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted transition-colors hover:bg-surface hover:text-foreground"
               aria-label="Fechar menu"
+              role="button"
             >
-              <X size={18} />
-            </button>
+              <X size={20} />
+            </label>
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain py-3">
 
             {/* User card (logged in) */}
             {session && (
-              <div className="mx-4 mt-4 mb-2 rounded-2xl border border-border bg-surface p-4 flex items-center gap-3">
+              <div className="mx-4 mb-3 rounded-lg border border-border bg-surface p-4 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-accent/20">
                   {session.user.image ? (
                      
@@ -107,7 +139,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
             )}
 
             {/* Section: Navegar */}
-            <div className="px-4 pt-4 pb-1">
+            <div className="px-4 pt-2 pb-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted mb-1 px-1">Navegar</p>
             </div>
             <div className="px-3">
@@ -118,23 +150,23 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold transition-colors mb-0.5 ${
+                    onClick={closeMenu}
+                    className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-bold transition-colors mb-0.5 ${
                       active
-                        ? 'bg-accent/10 text-accent'
+                        ? 'bg-accent text-white'
                         : 'text-foreground hover:bg-surface'
                     }`}
                   >
-                    {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-accent' : 'text-muted'}`} />}
+                    {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-white' : 'text-muted'}`} />}
                     {link.label}
-                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
+                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
                   </Link>
                 )
               })}
               <Link
                 href="/search"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-foreground hover:bg-surface transition-colors mb-0.5"
+                onClick={closeMenu}
+                className="mb-0.5 flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-bold text-foreground transition-colors hover:bg-surface"
               >
                 <Search className="w-[18px] h-[18px] flex-shrink-0 text-muted" />
                 Buscar
@@ -146,7 +178,7 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
               {session ? (
                 <>
                   {accountNavGroups.map(group => (
-                    <section key={group.label} className="mb-3 rounded-2xl border border-border bg-surface p-2">
+                    <section key={group.label} className="mb-3 rounded-lg border border-border bg-surface p-2">
                       <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{group.label}</p>
                       {group.items.map(({ href, label, icon: Icon }) => {
                         const active = pathname === href || pathname?.startsWith(href + '/')
@@ -154,8 +186,8 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                           <Link
                             key={href}
                             href={href}
-                            onClick={() => setIsOpen(false)}
-                            className={`mb-0.5 flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-semibold transition-colors ${
+                            onClick={closeMenu}
+                            className={`mb-0.5 flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[14px] font-semibold transition-colors ${
                               active
                                 ? 'bg-foreground text-background'
                                 : 'text-foreground hover:bg-background'
@@ -172,16 +204,16 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                   {isAdmin && (
                     <Link
                       href="/admin"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-accent hover:bg-accent/10 transition-colors mb-0.5"
+                      onClick={closeMenu}
+                      className="mb-0.5 flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-semibold text-accent transition-colors hover:bg-accent/10"
                     >
                       <LayoutDashboard className="w-[18px] h-[18px] flex-shrink-0" />
                       Painel Admin
                     </Link>
                   )}
                   <button
-                    onClick={() => { setIsOpen(false); signOut({ callbackUrl: '/' }) }}
-                    className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-red-400 hover:bg-red-500/8 transition-colors w-full text-left mb-0.5"
+                    onClick={() => { closeMenu(); signOut({ callbackUrl: '/' }) }}
+                    className="mb-0.5 flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[15px] font-semibold text-red-400 transition-colors hover:bg-red-500/8"
                   >
                     <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
                     Sair
@@ -191,8 +223,8 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                 <>
                   <Link
                     href="/auth/login"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-3 py-3.5 rounded-xl text-[15px] font-semibold text-foreground hover:bg-surface transition-colors mb-0.5"
+                    onClick={closeMenu}
+                    className="mb-0.5 flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-bold text-foreground transition-colors hover:bg-surface"
                   >
                     <User className="w-[18px] h-[18px] flex-shrink-0 text-muted" />
                     Entrar
@@ -206,26 +238,25 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
 
           {/* Footer CTA (logged out only) */}
           {!session && (
-            <div className="px-4 pb-6 pt-3 border-t border-border flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 border-t border-border px-4 pb-4 pt-3">
               <Link
                 href="/auth/register"
-                onClick={() => setIsOpen(false)}
-                className="w-full text-center bg-accent text-white rounded-full py-3.5 text-[15px] font-bold hover:brightness-110 transition-all"
+                onClick={closeMenu}
+                className="w-full rounded-lg bg-accent py-3.5 text-center text-[15px] font-bold text-white transition-all hover:brightness-110"
               >
                 Criar conta grátis
               </Link>
               <Link
                 href="/artists"
-                onClick={() => setIsOpen(false)}
-                className="w-full text-center border border-border text-foreground rounded-full py-3.5 text-[15px] font-semibold hover:bg-surface transition-colors"
+                onClick={closeMenu}
+                className="w-full rounded-lg border border-border py-3.5 text-center text-[15px] font-semibold text-foreground transition-colors hover:bg-surface"
               >
                 Explorar a plataforma
               </Link>
             </div>
           )}
-        </div>,
-        document.body
-      )}
+          </div>
+        </div>
     </>
   )
 }
