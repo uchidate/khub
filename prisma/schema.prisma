@@ -183,6 +183,7 @@ model Artist {
   news                 NewsArtist[]
   kpoppingSuggestions  KpoppingMembershipSuggestion[]
   streamingSignals     StreamingTrendSignal[]
+  trendingSnapshots    ArtistTrendingSnapshot[]
   musicCatalogArtist    MusicCatalogArtist?
 
   @@index([agencyId])
@@ -202,6 +203,29 @@ model Artist {
   @@index([translationStatus, createdAt])
   @@index([discographySyncAt])
   @@index([socialLinksUpdatedAt])
+}
+
+model ArtistTrendingSnapshot {
+  id              String   @id @default(cuid())
+  artistId        String
+  score           Float
+  rawScore        Float
+  rank            Int?
+  views1d         Int      @default(0)
+  views7d         Int      @default(0)
+  views30d        Int      @default(0)
+  previousViews7d Int      @default(0)
+  velocityScore   Float    @default(0)
+  favorites7d     Int      @default(0)
+  streamingBoost  Float    @default(0)
+  priorScore      Float    @default(0)
+  qualityBoost    Float    @default(0)
+  calculatedAt    DateTime @default(now())
+  artist          Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, calculatedAt])
+  @@index([calculatedAt])
+  @@index([rank])
 }
 
 model InstagramPost {
@@ -1404,6 +1428,9 @@ model StoreProduct {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   clickEvents   StoreAffiliateClick[]
+  impressions   StoreProductImpression[]
+  candidates    StoreProductCandidate[]
+  snapshots     StoreProductOfferSnapshot[]
   links         StoreProductLink[]
 
   @@index([category, isActive, position])
@@ -1418,7 +1445,7 @@ model StoreProduct {
 model StoreProductLink {
   id         String   @id @default(cuid())
   productId  String
-  entityType String   // 'artist' | 'group' | 'production'
+  entityType String   // 'artist' | 'group' | 'production' | 'blog_post' | 'agency' | 'calendar_event'
   entityId   String
   score      Float    @default(1.0) // 0.0–1.0, maior = prioridade na exibição
   source     String   @default("manual") // 'manual' | 'auto'
@@ -1436,6 +1463,11 @@ model StoreAffiliateClick {
   productId String?
   couponId  String?
   placement String
+  entityType String?
+  entityId   String?
+  pagePath   String?
+  position   Int?
+  sessionId  String?
   createdAt DateTime      @default(now())
   product   StoreProduct? @relation(fields: [productId], references: [id], onDelete: Cascade)
   coupon    StoreCoupon?  @relation(fields: [couponId], references: [id], onDelete: Cascade)
@@ -1443,7 +1475,72 @@ model StoreAffiliateClick {
   @@index([productId, createdAt])
   @@index([couponId, createdAt])
   @@index([placement, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([sessionId, createdAt])
   @@index([createdAt])
+}
+
+model StoreProductImpression {
+  id         String   @id @default(cuid())
+  productId  String
+  placement  String
+  entityType String?
+  entityId   String?
+  pagePath   String?
+  position   Int?
+  sessionId  String?
+  createdAt  DateTime @default(now())
+  product    StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([placement, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([createdAt])
+}
+
+model StoreProductCandidate {
+  id           String   @id @default(cuid())
+  productId    String
+  entityType   String   // 'artist' | 'group' | 'production' | 'blog_post' | 'agency' | 'calendar_event'
+  entityId     String
+  matchScore   Float    @default(0)
+  matchReasons Json     @default("[]")
+  riskFlags    Json     @default("[]")
+  status       String   @default("candidate") // 'candidate' | 'approved' | 'rejected' | 'expired'
+  source       String   @default("auto")      // 'auto' | 'manual' | 'imported_query'
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product      StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, entityType, entityId])
+  @@index([entityType, entityId, status, matchScore])
+  @@index([productId])
+  @@index([status, matchScore])
+}
+
+model StoreProductOfferSnapshot {
+  id                String   @id @default(cuid())
+  productId         String
+  store             String
+  externalId        String?
+  price             String?
+  originalPrice     String?
+  rating            Float?
+  reviewCount       Int?
+  soldCount         String?
+  isActive          Boolean
+  isHidden          Boolean
+  hasOfficialLink   Boolean  @default(false)
+  qualityScore      Float    @default(0)
+  qualityReasons    Json     @default("[]")
+  riskFlags         Json     @default("[]")
+  capturedAt        DateTime @default(now())
+  product           StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, capturedAt])
+  @@index([store, externalId])
+  @@index([capturedAt])
 }
 
 model QuizQuestion {

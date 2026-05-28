@@ -3,6 +3,11 @@ import { requireAdmin } from '@/lib/admin-helpers'
 import fs from 'fs'
 import path from 'path'
 import prisma from '@/lib/prisma'
+import {
+    buildMercadoLivreAffiliateUrl,
+    resolveActiveMercadoLivreOffer,
+    type MlCatalogResult,
+} from '@/lib/store/mercadolivre'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,7 +80,7 @@ export async function GET(request: NextRequest) {
         ),
         prisma.storeProduct.findMany({
             where: { store: 'mercadolivre' },
-            select: { affiliateUrl: true },
+            select: { affiliateUrl: true, externalId: true },
         }),
     ])
 
@@ -89,7 +94,7 @@ export async function GET(request: NextRequest) {
     // Build set of already-imported ML product IDs (extracted from affiliateUrl)
     const importedIds = new Set(
         existingProducts
-            .map(p => p.affiliateUrl.match(/\/p\/(MLB[^?]+)/)?.[1])
+            .flatMap(p => [p.externalId, p.affiliateUrl.match(/\/p\/(MLB[^?]+)/)?.[1]])
             .filter(Boolean)
     )
 
@@ -99,33 +104,42 @@ export async function GET(request: NextRequest) {
             return KPOP_KEYWORDS.some(k => title.includes(k))
         })
 
-    const results = await Promise.all(
+    const resolved = await Promise.all(
         filtered.map(async r => {
             const pid = (r.catalog_product_id as string) || (r.id as string)
             const title = r.name as string
             const pictures = r.pictures as { url?: string }[] | undefined
             const apiImg = pictures?.[0]?.url ?? ''
-            const imageUrl = apiImg || await getOgImage(pid)
-            const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
-            const price = buyBox?.price
-                ? `R$ ${Number(buyBox.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            const offer = await resolveActiveMercadoLivreOffer(r as MlCatalogResult, token)
+            if (!offer) return null
+
+            const imageUrl = offer.imageUrl || apiImg || await getOgImage(pid)
+            const price = offer.price
+                ? `R$ ${offer.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                 : null
             const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
             const reviewCount = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
             return {
-                id:           pid,
+                id:           offer.catalogProductId,
+                itemId:       offer.itemId,
                 name:         title,
                 imageUrl,
-                affiliateUrl: `https://www.mercadolivre.com.br/p/${pid}?affId=${userId}`,
+                affiliateUrl: buildMercadoLivreAffiliateUrl(offer.permalink, {
+                    productId: offer.catalogProductId,
+                    itemId: offer.itemId,
+                    tokenUserId: userId,
+                }),
                 category:     detectCategory(title),
                 store:        'mercadolivre',
                 price,
                 rating:       rating ? Math.round(rating * 10) / 10 : null,
                 reviewCount:  reviewCount ?? null,
-                alreadyImported: importedIds.has(pid),
+                soldCount:    offer.soldQuantity != null ? String(offer.soldQuantity) : null,
+                alreadyImported: importedIds.has(pid) || importedIds.has(offer.catalogProductId),
             }
         })
     )
+    const results = resolved.filter((item): item is NonNullable<typeof item> => Boolean(item))
 
     return NextResponse.json({
         results: results.filter(r => r.imageUrl),

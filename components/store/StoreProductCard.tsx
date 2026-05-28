@@ -27,10 +27,13 @@ export const STORE_COLORS: Record<string, string> = {
 interface Props {
     product: StoreProductRow | MatchedProduct
     placement?: import('@/lib/store/affiliate-placements').AffiliatePlacement
+    entityType?: string
+    entityId?: string
+    position?: number
     priority?: boolean
 }
 
-export function StoreProductCard({ product, placement = 'related_store', priority = false }: Props) {
+export function StoreProductCard({ product, placement = 'related_store', entityType, entityId, position, priority = false }: Props) {
     const storeLabel = STORE_LABELS[product.store] ?? 'Ver produto'
     const storeColor = STORE_COLORS[product.store] ?? 'text-muted'
 
@@ -39,6 +42,9 @@ export function StoreProductCard({ product, placement = 'related_store', priorit
             href={product.affiliateUrl}
             productId={product.id}
             placement={placement}
+            entityType={entityType}
+            entityId={entityId}
+            position={position}
             className="group flex flex-col gap-2 rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors overflow-hidden"
         >
             {/* Imagem */}

@@ -16,6 +16,7 @@ O script:
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -48,6 +49,23 @@ def extract_item_id(url: str) -> tuple[str, str]:
     raise ValueError(f"Não foi possível extrair ID do ML da URL: {url}")
 
 
+def fetch_active_item(item_id: str, headers: dict) -> dict | None:
+    r = requests.get(f'{ML_API}/items/{item_id}', headers=headers, timeout=15)
+    if not r.ok:
+        return None
+    item = r.json()
+    if item.get('status') != 'active':
+        return None
+    if item.get('buying_mode') != 'buy_it_now':
+        return None
+    qty = item.get('available_quantity')
+    if qty is not None and qty <= 0:
+        return None
+    if not item.get('permalink'):
+        return None
+    return item
+
+
 def fetch_item(item_id: str, tipo: str, headers: dict) -> dict | None:
     if tipo == 'product':
         r = requests.get(f'{ML_API}/products/{item_id}', headers=headers)
@@ -55,23 +73,32 @@ def fetch_item(item_id: str, tipo: str, headers: dict) -> dict | None:
             d = r.json()
             pics = d.get('pictures', [])
             img = pics[0].get('url', '').replace('-O.jpg', '-O.jpg') if pics else ''
-            # Pegar preço via items associados
-            price = None
+            active_item = None
             items_r = requests.get(f'{ML_API}/products/{item_id}/items', headers=headers)
             if items_r.ok:
-                items_data = items_r.json().get('results', [])
-                prices = [i.get('price') for i in items_data if i.get('price')]
-                price = min(prices) if prices else None
+                for raw in items_r.json().get('results', []):
+                    raw_id = raw if isinstance(raw, str) else (raw.get('item_id') or raw.get('id'))
+                    if not raw_id:
+                        continue
+                    active_item = fetch_active_item(raw_id, headers)
+                    if active_item:
+                        break
+            if not active_item:
+                return None
+
+            item_pics = active_item.get('pictures') or []
+            item_img = (item_pics[0].get('secure_url') or item_pics[0].get('url')) if item_pics else img
             return {
                 'title':     d.get('name', ''),
-                'image':     img,
-                'permalink': f'https://www.mercadolivre.com.br/p/{item_id}',
-                'price':     price,
+                'image':     item_img,
+                'permalink': active_item.get('permalink'),
+                'price':     active_item.get('price'),
+                'externalId': item_id,
+                'itemId':    active_item.get('id'),
             }
     else:
-        r = requests.get(f'{ML_API}/items/{item_id}', headers=headers)
-        if r.ok:
-            d = r.json()
+        d = fetch_active_item(item_id, headers)
+        if d:
             pics = d.get('pictures', [])
             img = pics[0].get('url', '') if pics else d.get('thumbnail', '')
             return {
@@ -79,13 +106,25 @@ def fetch_item(item_id: str, tipo: str, headers: dict) -> dict | None:
                 'image':     img.replace('-I.jpg', '-O.jpg').replace('http://', 'https://'),
                 'permalink': d.get('permalink', ''),
                 'price':     d.get('price'),
+                'externalId': item_id,
+                'itemId':    item_id,
             }
     return None
 
 
-def make_affiliate_url(permalink: str, user_id: str) -> str:
+def make_affiliate_url(permalink: str, user_id: str, product_id: str = '', item_id: str = '') -> str:
+    affiliate_id = os.getenv('ML_AFFILIATE_ID') or os.getenv('ML_AFFILIATE_CID') or user_id
+    template = os.getenv('ML_AFFILIATE_URL_TEMPLATE')
+    if template:
+        return (template
+                .replace('{url}', requests.utils.quote(permalink, safe=''))
+                .replace('{permalink}', permalink)
+                .replace('{productId}', product_id)
+                .replace('{itemId}', item_id)
+                .replace('{affiliateId}', affiliate_id))
+    param = os.getenv('ML_AFFILIATE_PARAM', 'affId')
     sep = '&' if '?' in permalink else '?'
-    return f"{permalink}{sep}affId={user_id}"
+    return f"{permalink}{sep}{param}={affiliate_id}"
 
 
 def detect_category(title: str) -> str:
@@ -114,11 +153,21 @@ const products = {json.dumps(products, ensure_ascii=False)}
 async function main() {{
   let created = 0
   for (const p of products) {{
-    const existing = await prisma.storeProduct.findFirst({{ where: {{ affiliateUrl: p.affiliateUrl }} }})
-    if (existing) {{ console.log('⏭  Já existe:', p.name.slice(0,50)); continue }}
+    const where = p.externalId ? {{ externalId: p.externalId }} : {{ affiliateUrl: p.affiliateUrl }}
+    const existing = await prisma.storeProduct.findFirst({{ where }})
+    if (existing) {{
+      await prisma.storeProduct.update({{ where: {{ id: existing.id }}, data: {{
+        name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl,
+        price: p.price, store: p.store, category: p.category, externalId: p.externalId,
+        isActive: p.isActive, isHidden: false, featured: p.featured, position: p.position, tags: p.tags,
+      }} }})
+      console.log('🔄 Atualizado:', p.name.slice(0,50))
+      continue
+    }}
     await prisma.storeProduct.create({{ data: {{
       name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl,
-      store: p.store, category: p.category, isActive: p.isActive,
+      price: p.price, store: p.store, category: p.category, externalId: p.externalId,
+      isActive: p.isActive, isHidden: false,
       featured: p.featured, position: p.position, tags: p.tags,
     }} }})
     console.log('✅ Importado:', p.name.slice(0,50))
@@ -149,7 +198,7 @@ def process_url(url: str, token: str, user_id: str, auto_category: bool, positio
     headers = {'Authorization': f'Bearer {token}'}
     item = fetch_item(item_id, tipo, headers)
     if not item or not item['title']:
-        print(f"❌ Não foi possível buscar detalhes de {item_id}")
+        print(f"❌ Não foi possível buscar anúncio ativo com estoque para {item_id}")
         return None
 
     print(f"\n📦 {item['title'][:65]}")
@@ -164,7 +213,9 @@ def process_url(url: str, token: str, user_id: str, auto_category: bool, positio
     return {
         'name':         item['title'],
         'imageUrl':     item['image'],
-        'affiliateUrl': make_affiliate_url(item['permalink'], user_id),
+        'affiliateUrl': make_affiliate_url(item['permalink'], user_id, item.get('externalId', ''), item.get('itemId', '')),
+        'externalId':   item.get('externalId') or item_id,
+        'price':        f"R$ {item['price']:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if item.get('price') else None,
         'store':        'mercadolivre',
         'category':     category,
         'isActive':     True,

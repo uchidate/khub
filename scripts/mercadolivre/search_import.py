@@ -10,6 +10,7 @@ Uso:
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -80,8 +81,54 @@ def choose_category(suggested: str, title: str) -> str:
     return raw if raw in CATEGORY_LABELS else suggested
 
 
-def make_affiliate_url(product_id: str, user_id: str) -> str:
-    return f"https://www.mercadolivre.com.br/p/{product_id}?affId={user_id}"
+def make_affiliate_url(permalink: str, user_id: str, product_id: str = '', item_id: str = '') -> str:
+    affiliate_id = os.getenv('ML_AFFILIATE_ID') or os.getenv('ML_AFFILIATE_CID') or user_id
+    template = os.getenv('ML_AFFILIATE_URL_TEMPLATE')
+    if template:
+        return (template
+                .replace('{url}', requests.utils.quote(permalink, safe=''))
+                .replace('{permalink}', permalink)
+                .replace('{productId}', product_id)
+                .replace('{itemId}', item_id)
+                .replace('{affiliateId}', affiliate_id))
+
+    param = os.getenv('ML_AFFILIATE_PARAM', 'affId')
+    sep = '&' if '?' in permalink else '?'
+    return f"{permalink}{sep}{param}={affiliate_id}"
+
+
+def fetch_active_offer(product_id: str, result: dict, headers: dict) -> dict | None:
+    """Return one active buy-now item for a catalog product, or None."""
+    item_ids = []
+    buy_box = result.get('buy_box_winner') or {}
+    if buy_box.get('item_id') or buy_box.get('id'):
+        item_ids.append(buy_box.get('item_id') or buy_box.get('id'))
+
+    items_r = requests.get(f'{ML_API}/products/{product_id}/items',
+                           params={'limit': 10}, headers=headers, timeout=15)
+    if items_r.ok:
+        for item in items_r.json().get('results', []):
+            item_id = item if isinstance(item, str) else (item.get('item_id') or item.get('id'))
+            if item_id and item_id not in item_ids:
+                item_ids.append(item_id)
+
+    for item_id in item_ids:
+        r = requests.get(f'{ML_API}/items/{item_id}', headers=headers, timeout=15)
+        if not r.ok:
+            continue
+        item = r.json()
+        if item.get('status') != 'active':
+            continue
+        if item.get('buying_mode') != 'buy_it_now':
+            continue
+        qty = item.get('available_quantity')
+        if qty is not None and qty <= 0:
+            continue
+        if not item.get('permalink'):
+            continue
+        return item
+
+    return None
 
 
 def import_to_db(products: list[dict]):
@@ -92,11 +139,21 @@ const products = {json.dumps(products, ensure_ascii=False)}
 async function main() {{
   let created = 0
   for (const p of products) {{
-    const existing = await prisma.storeProduct.findFirst({{ where: {{ affiliateUrl: p.affiliateUrl }} }})
-    if (existing) {{ console.log('⏭  Já existe:', p.name.slice(0,50)); continue }}
+    const where = p.externalId ? {{ externalId: p.externalId }} : {{ affiliateUrl: p.affiliateUrl }}
+    const existing = await prisma.storeProduct.findFirst({{ where }})
+    if (existing) {{
+      await prisma.storeProduct.update({{ where: {{ id: existing.id }}, data: {{
+        name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl,
+        price: p.price, store: p.store, category: p.category, externalId: p.externalId,
+        isActive: p.isActive, isHidden: false, featured: p.featured, position: p.position, tags: p.tags,
+      }} }})
+      console.log('🔄 Atualizado:', p.name.slice(0,50))
+      continue
+    }}
     await prisma.storeProduct.create({{ data: {{
       name: p.name, imageUrl: p.imageUrl, affiliateUrl: p.affiliateUrl,
-      store: p.store, category: p.category, isActive: p.isActive,
+      price: p.price, store: p.store, category: p.category, externalId: p.externalId,
+      isActive: p.isActive, isHidden: false,
       featured: p.featured, position: p.position, tags: p.tags,
     }} }})
     console.log('✅ Importado:', p.name.slice(0,50))
@@ -154,6 +211,11 @@ def main():
             if not any(k in tl for k in KPOP_KEYWORDS):
                 continue
 
+            offer = fetch_active_offer(pid, r, headers)
+            if not offer:
+                print(f"   ⏭  Sem anuncio ativo/estoque: {title[:55]}")
+                continue
+
             category = detect_category(title)
             if not args.auto:
                 category = choose_category(category, title)
@@ -162,13 +224,19 @@ def main():
 
             # Imagem de maior qualidade
             img = r.get('thumbnail', '')
+            pictures = offer.get('pictures') or []
+            if pictures:
+                img = pictures[0].get('secure_url') or pictures[0].get('url') or img
             if img:
                 img = re.sub(r'-[A-Z]\.jpg', '-O.jpg', img).replace('http://', 'https://')
 
+            price = offer.get('price')
             products.append({
                 'name':         title,
                 'imageUrl':     img,
-                'affiliateUrl': make_affiliate_url(pid, user_id),
+                'affiliateUrl': make_affiliate_url(offer.get('permalink'), user_id, pid, offer.get('id', '')),
+                'externalId':   pid,
+                'price':        f"R$ {price:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if price else None,
                 'store':        'mercadolivre',
                 'category':     category,
                 'isActive':     True,

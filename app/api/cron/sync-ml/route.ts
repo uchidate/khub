@@ -15,6 +15,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { StoreProductRepository } from '@/lib/repositories/StoreProductRepository'
+import {
+    buildMercadoLivreAffiliateUrl,
+    isOfficialMercadoLivreAffiliateUrl,
+    resolveActiveMercadoLivreOffer,
+    type MlCatalogResult,
+} from '@/lib/store/mercadolivre'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -144,9 +150,9 @@ async function searchProducts(
     token: string,
     limit = 20
 ): Promise<Array<{
-    id: string; name: string; price: number | null
+    id: string; itemId: string; name: string; price: number | null
     thumbnail: string; rating: number; reviews: number
-    permalink: string
+    permalink: string; soldQuantity: number | null
 }>> {
     const res = await fetch(
         `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&status=active`,
@@ -155,23 +161,25 @@ async function searchProducts(
     if (!res.ok) return []
     const data = await res.json()
 
-    return (data.results ?? []).map((r: Record<string, unknown>) => {
-        const pid = (r.catalog_product_id as string) || (r.id as string)
-        const buyBox = r.buy_box_winner as Record<string, unknown> | undefined
+    const resolved = await Promise.all((data.results ?? []).map(async (r: MlCatalogResult) => {
+        const offer = await resolveActiveMercadoLivreOffer(r, { access_token: token })
+        if (!offer) return null
         const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
         const reviews = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
-        const pictures = r.pictures as { url?: string }[] | undefined
-        const thumbnail = (pictures?.[0]?.url ?? '').replace('http:', 'https:').replace('-I.jpg', '-O.jpg')
         return {
-            id: pid,
+            id: offer.catalogProductId,
+            itemId: offer.itemId,
             name: r.name as string,
-            price: buyBox?.price as number ?? null,
-            thumbnail,
+            price: offer.price,
+            thumbnail: offer.imageUrl,
             rating: rating ?? 0,
             reviews: reviews ?? 0,
-            permalink: `https://www.mercadolivre.com.br/p/${pid}`,
+            permalink: offer.permalink,
+            soldQuantity: offer.soldQuantity,
         }
-    })
+    }))
+
+    return resolved.filter((item): item is NonNullable<typeof item> => Boolean(item))
 }
 
 function auth(req: NextRequest): boolean {
@@ -201,7 +209,7 @@ export async function POST(req: NextRequest) {
     // IDs já importados
     const existing = await prisma.storeProduct.findMany({
         where: { store: 'mercadolivre' },
-        select: { externalId: true },
+        select: { id: true, externalId: true },
     })
     const existingIds = new Set(existing.map(p => p.externalId).filter(Boolean))
 
@@ -221,18 +229,48 @@ export async function POST(req: NextRequest) {
                 isKpopRelevant(r.name) &&
                 r.thumbnail &&
                 r.reviews >= MIN_REVIEWS &&
-                r.rating >= MIN_RATING &&
-                !existingIds.has(r.id)
+                r.rating >= MIN_RATING
             )
             .slice(0, MAX_PER_QUERY)
 
         for (const r of qualified) {
+            if (existingIds.has(r.id)) {
+                const affiliateUrl = buildMercadoLivreAffiliateUrl(r.permalink, {
+                    productId: r.id,
+                    itemId: r.itemId,
+                    tokenUserId: token.user_id,
+                })
+                const canPublish = isOfficialMercadoLivreAffiliateUrl(affiliateUrl)
+
+                await prisma.storeProduct.updateMany({
+                    where: { store: 'mercadolivre', externalId: r.id },
+                    data: {
+                        name: r.name,
+                        imageUrl: r.thumbnail,
+                        affiliateUrl,
+                        price: r.price ? `R$ ${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
+                        rating: r.rating ? Math.round(r.rating * 10) / 10 : null,
+                        reviewCount: r.reviews || null,
+                        soldCount: r.soldQuantity != null ? String(r.soldQuantity) : null,
+                        isHidden: false,
+                        isActive: canPublish,
+                        featured: canPublish ? undefined : false,
+                    },
+                })
+                continue
+            }
+
             if (totalImported >= slotsAvailable) break
 
             const detectedCategory = detectCategory(r.name)
             const finalCategory = detectedCategory !== 'outros' ? detectedCategory : category
 
-            const affiliateUrl = `${r.permalink}${r.permalink.includes('?') ? '&' : '?'}affId=${token.user_id}`
+            const affiliateUrl = buildMercadoLivreAffiliateUrl(r.permalink, {
+                productId: r.id,
+                itemId: r.itemId,
+                tokenUserId: token.user_id,
+            })
+            const canPublish = isOfficialMercadoLivreAffiliateUrl(affiliateUrl)
             const productTags = extractArtistTags(r.name)
 
             const created = await prisma.storeProduct.create({
@@ -243,11 +281,14 @@ export async function POST(req: NextRequest) {
                     store: 'mercadolivre',
                     category: finalCategory,
                     externalId: r.id,
+                    isActive: canPublish,
                     isHidden: false,
                     position: 9999,
+                    price: r.price ? `R$ ${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
                     rating: r.rating ? Math.round(r.rating * 10) / 10 : null,
                     reviewCount: r.reviews || null,
-                    tags: productTags,
+                    soldCount: r.soldQuantity != null ? String(r.soldQuantity) : null,
+                    tags: canPublish ? productTags : [...productTags, 'pendente link afiliado'],
                 },
             })
 

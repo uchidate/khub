@@ -56,6 +56,7 @@ const navSections: NavSection[] = [
         ],
       },
       { href: '/admin/processes', label: 'Processos e melhorias', icon: ClipboardList, isNew: true },
+      { href: '/admin/ops-metrics', label: 'Métricas Operacionais', icon: BarChart3, isNew: true },
       { href: '/admin/pipeline', label: 'Pipeline',  icon: Workflow },
       { href: '/admin/cron',     label: 'Central de Automação', icon: RefreshCw, badgeKey: 'automation' },
       { href: '/admin/enrichment', label: 'Curadoria Gemini', icon: Sparkles },

@@ -59,6 +59,33 @@ export async function GET() {
         where: { trendingBadgeOverride: { not: null } },
     })
 
+    const snapshots = await prisma.artistTrendingSnapshot.findMany({
+        where: { artistId: { in: artists.map(artist => artist.id) } },
+        orderBy: { calculatedAt: 'desc' },
+        select: {
+            artistId: true,
+            rawScore: true,
+            views1d: true,
+            views7d: true,
+            views30d: true,
+            previousViews7d: true,
+            velocityScore: true,
+            favorites7d: true,
+            streamingBoost: true,
+            priorScore: true,
+            qualityBoost: true,
+            calculatedAt: true,
+        },
+    })
+    const snapshotByArtist = new Map<string, (typeof snapshots)[number]>()
+    for (const snapshot of snapshots) {
+        if (!snapshotByArtist.has(snapshot.artistId)) snapshotByArtist.set(snapshot.artistId, snapshot)
+    }
+    const artistsWithBreakdown = artists.map(artist => ({
+        ...artist,
+        trendingBreakdown: snapshotByArtist.get(artist.id) ?? null,
+    }))
+
     const rising = artists.filter((artist) => getArtistBadge(artist) === 'SUBINDO').length
     const newInTop = artists.filter((artist) => getArtistBadge(artist) === 'NOVO').length
     const falling = artists.filter((artist) => {
@@ -67,7 +94,7 @@ export async function GET() {
     }).length
 
     return NextResponse.json({
-        artists,
+        artists: artistsWithBreakdown,
         stats: {
             total: statsRaw._count.id,
             withSignals,

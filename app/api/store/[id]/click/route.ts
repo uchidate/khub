@@ -9,6 +9,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params
     const body = await request.json().catch(() => ({}))
     const placement = isAffiliatePlacement(body.placement) ? body.placement : 'unknown'
+    const entityType = typeof body.entityType === 'string' ? body.entityType : null
+    const entityId = typeof body.entityId === 'string' ? body.entityId : null
+    const pagePath = typeof body.pagePath === 'string' ? body.pagePath.slice(0, 500) : null
+    const position = typeof body.position === 'number' ? body.position : null
+    const sessionId = typeof body.sessionId === 'string' ? body.sessionId.slice(0, 128) : null
     try {
         await prisma.$transaction([
             prisma.storeProduct.update({
@@ -16,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 data: { clickCount: { increment: 1 } },
             }),
             prisma.storeAffiliateClick.create({
-                data: { productId: id, placement },
+                data: { productId: id, placement, entityType, entityId, pagePath, position, sessionId },
             }),
         ])
         return NextResponse.json({ ok: true })

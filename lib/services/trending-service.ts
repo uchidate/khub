@@ -1,5 +1,6 @@
 import prisma from '../prisma'
 import { createLogger } from '../utils/logger'
+import { updateArtistTrendingScores } from '@/lib/trending/artist-trending-score'
 
 const log = createLogger('TRENDING')
 
@@ -57,41 +58,9 @@ export class TrendingService {
    * de streaming dominam o Trending Now mesmo com baixo engajamento orgânico.
    */
   async updateAllTrendingScores(): Promise<void> {
-    log.info('Iniciando atualização de trending scores (batch SQL)...')
-
-    const count = await prisma.artist.count()
-
-    await prisma.$executeRaw`
-      UPDATE "Artist" a
-      SET
-        "trendingScore" = scores.normalized,
-        "lastTrendingUpdate" = NOW(),
-        "updatedAt" = NOW()
-      FROM (
-        SELECT
-          id,
-          ROUND(
-            (raw / NULLIF(MAX(raw) OVER (), 0)) * 100 * 100
-          ) / 100.0 AS normalized
-        FROM (
-          SELECT
-            a.id,
-            -- Engajamento orgânico
-            (COALESCE(a."viewCount", 0) * 0.6 + COALESCE(a."favoriteCount", 0) * 0.3)
-            -- Boost streaming (somente protagonistas, sinais não expirados, ×200)
-            + COALESCE((
-                SELECT SUM(s.score) * 200
-                FROM streaming_trend_signal s
-                WHERE s."artistId" = a.id AND s."expiresAt" > NOW()
-              ), 0)
-            AS raw
-          FROM "Artist" a
-        ) raw_scores
-      ) scores
-      WHERE a.id = scores.id
-    `
-
-    log.info(`Trending scores atualizados para ${count} artistas (batch SQL)`, { count })
+    log.info('Iniciando atualização de trending scores (modelo temporal robusto)...')
+    const result = await updateArtistTrendingScores()
+    log.info('Trending scores atualizados', result)
   }
 
   async getTrendingArtists(limit: number = 6) {
