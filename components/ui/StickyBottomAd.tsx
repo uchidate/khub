@@ -8,7 +8,7 @@ const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR
 const IS_DEV = process.env.NODE_ENV === 'development'
 // BottomNav mobile height
-const BOTTOM_NAV_H = 62
+const BOTTOM_NAV_H = 0
 
 export function StickyBottomAd() {
     const pathname = usePathname()

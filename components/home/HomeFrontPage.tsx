@@ -50,6 +50,7 @@ interface HomeFrontPageProps {
     spotlightArtist: TrendingArtist | null
     spotlightProduction: SpotlightProduction | null
     latestPosts?: FeaturedStory[]
+    categoryCounts?: Record<string, number>
 }
 
 const ROLE_LABELS: Record<string, [string, string]> = {
@@ -64,12 +65,12 @@ const ROLE_LABELS: Record<string, [string, string]> = {
 }
 
 const EDITORIAL_HUBS = [
-    { label: "K-Drama", href: "/blog?category=k-drama", hangul: "드라마", detail: "케이드라마", count: 412 },
-    { label: "K-Pop", href: "/blog?category=k-pop", hangul: "케이팝", detail: "케이팝", count: 287 },
-    { label: "Artistas", href: "/artists", hangul: "아티스트", detail: "아티스트", count: 1240 },
-    { label: "Cinema", href: "/productions", hangul: "영화", detail: "영화", count: 96 },
-    { label: "Cultura", href: "/blog?category=cultura", hangul: "문화", detail: "문화", count: 156 },
-    { label: "K-Beauty", href: "/blog?category=k-beauty", hangul: "케이뷰티", detail: "케이뷰티", count: 84 },
+    { label: "K-Drama",  slug: "k-drama",       href: "/blog?category=k-drama",   hangul: "드라마",   detail: "séries coreanas",  count: 412 },
+    { label: "K-Pop",    slug: "k-pop",          href: "/blog?category=k-pop",     hangul: "케이팝",   detail: "música e grupos",  count: 287 },
+    { label: "K-Film",   slug: "k-film",         href: "/blog?category=k-film",    hangul: "영화",     detail: "cinema coreano",   count: 96  },
+    { label: "Cultura",  slug: "cultura",        href: "/blog?category=cultura",   hangul: "문화",     detail: "tradição e pop",   count: 156 },
+    { label: "Grupos",   slug: "grupos",         href: "/blog?category=grupos",    hangul: "그룹",     detail: "bandas e eras",    count: 124 },
+    { label: "K-Beauty", slug: "k-beauty",       href: "/blog?category=k-beauty",  hangul: "뷰티",     detail: "beleza coreana",   count: 84  },
 ]
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
@@ -183,6 +184,7 @@ export function HomeFrontPage({
     spotlightArtist,
     spotlightProduction,
     latestPosts = [],
+    categoryCounts = {},
 }: HomeFrontPageProps) {
     const heroStory = featuredStory ?? carouselPosts[0]
     const editorialPosts = carouselPosts
@@ -206,8 +208,9 @@ export function HomeFrontPage({
             <div className="mx-auto max-w-[1440px] border-y border-border bg-background">
                 {heroStory ? (
                     <div className="lg:flex lg:min-h-[560px]">
-                        <Link href={`/blog/${heroStory.slug}`} className="group block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
+                        <Link href={`/blog/${heroStory.slug}`} className="group relative block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
                             <StoryImage story={heroStory} className="aspect-[4/3] w-full lg:h-full lg:min-h-[560px]" priority />
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/30 to-transparent" />
                         </Link>
                         <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-7 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
                             <div className="mb-4 sm:mb-5">
@@ -269,37 +272,42 @@ export function HomeFrontPage({
 
                 <div className="border-t border-border px-4 py-8 sm:px-6 lg:px-10">
                     <SectionTitleBar
-                        title="Navegar por seção"
-                        action={<span className="hidden font-mono text-[11px] font-bold tracking-[0.08em] text-muted sm:block">
-                            {EDITORIAL_HUBS.length} hubs · {EDITORIAL_HUBS.reduce((total, hub) => total + hub.count, 0).toLocaleString("pt-BR")} matérias
-                        </span>}
+                        title="Explorar por categoria"
+                        href="/blog"
+                        linkText="ver todas →"
                     />
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-                        {EDITORIAL_HUBS.map(({ label, href, hangul, detail, count }, index) => {
-                            const dark = index % 2 === 0
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                        {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count: fallbackCount }) => {
+                            const count = categoryCounts[slug] ?? fallbackCount
+                            const cat = BLOG_CATEGORY_BY_SLUG[slug]
+                            const color = cat?.color ?? "#ee2244"
                             return (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group relative min-h-[160px] overflow-hidden border border-foreground p-4 transition-transform hover:-translate-y-0.5 sm:p-5 lg:min-h-[220px] ${
-                                    dark ? "bg-foreground text-background" : "bg-background text-foreground"
-                                }`}
+                                className="group relative min-h-[120px] overflow-hidden p-3 transition-all hover:-translate-y-1 hover:shadow-2xl lg:min-h-[150px]"
+                                style={{
+                                    border: `3px solid ${color}`,
+                                    background: `linear-gradient(135deg, ${color}1a 0%, ${color}06 100%)`,
+                                }}
                             >
                                 <span
-                                    className={`pointer-events-none absolute -right-6 -top-4 font-sans text-[88px] font-black leading-none tracking-[-0.12em] ${
-                                        dark ? "text-white/[0.07]" : "text-black/[0.045]"
-                                    }`}
+                                    className="pointer-events-none absolute top-[48%] right-0 font-sans text-[80px] font-black leading-none tracking-[-0.1em] transition-transform duration-500 group-hover:scale-105"
+                                    style={{ color: `${color}1c` }}
                                 >
                                     {hangul}
                                 </span>
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[18px] font-black leading-none tracking-[-0.04em] sm:text-[22px] lg:text-[24px] lg:tracking-[-0.055em]">{label}</h3>
-                                        <p className={`mt-2 text-[12px] font-semibold ${dark ? "text-background/45" : "text-muted"}`}>{detail}</p>
+                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.05em] text-foreground lg:text-[20px]">{label}</h3>
+                                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted/80">{detail}</p>
                                     </div>
-                                    <div className={`flex items-center justify-between font-mono text-[11px] font-black tracking-[0.04em] ${dark ? "text-background/45" : "text-muted"}`}>
-                                        <span>{count.toLocaleString("pt-BR")} matérias</span>
-                                        <span className={`text-base leading-none transition-transform group-hover:translate-x-1 ${dark ? "text-background" : "text-foreground"}`}>→</span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-mono text-[10px] font-bold" style={{ color: `${color}bb` }}>{count.toLocaleString("pt-BR")}</span>
+                                        <span
+                                            className="text-[20px] font-black leading-none transition-transform group-hover:translate-x-1"
+                                            style={{ color }}
+                                        >→</span>
                                     </div>
                                 </div>
                             </Link>
@@ -317,10 +325,14 @@ export function HomeFrontPage({
                         <div className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4 lg:gap-5">
                             {highlightStories.map((post) => (
                                 <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
-                                    <StoryImage story={post} className="aspect-[4/3] border border-border" />
+                                    <div className="relative">
+                                        <StoryImage story={post} className="aspect-[4/3] border border-border" />
+                                        <div className="absolute bottom-2 left-2">
+                                            <StoryKicker story={post} />
+                                        </div>
+                                    </div>
                                     <div className="mt-3">
-                                        <StoryKicker story={post} />
-                                        <h3 className="mt-2 font-serif text-[16px] font-medium leading-[1.08] tracking-[-0.025em] text-foreground group-hover:text-accent sm:text-[20px] lg:text-[24px] lg:leading-[1.05] lg:tracking-[-0.04em]">
+                                        <h3 className="font-serif text-[16px] font-medium leading-[1.08] tracking-[-0.025em] text-foreground group-hover:text-accent sm:text-[20px] lg:text-[24px] lg:leading-[1.05] lg:tracking-[-0.04em]">
                                             {post.title}
                                         </h3>
                                         {post.excerpt && <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-muted max-sm:line-clamp-3">{post.excerpt}</p>}
@@ -340,7 +352,7 @@ export function HomeFrontPage({
                                 <Link
                                     key={post.id}
                                     href={`/blog/${post.slug}`}
-                                    className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 border-b border-border py-4 transition-colors last:border-b-0 hover:bg-background/70 sm:grid-cols-[104px_1fr_88px] sm:gap-4 sm:py-5"
+                                    className="group grid grid-cols-[80px_minmax(0,1fr)] gap-3 border-b border-border py-4 transition-colors last:border-b-0 hover:bg-background/70 sm:grid-cols-[104px_1fr_88px] sm:gap-4 sm:py-5"
                                 >
                                     <StoryImage story={post} className="aspect-[4/5] border border-border" />
                                     <div>
@@ -382,7 +394,7 @@ export function HomeFrontPage({
                                         <span className={`font-serif text-[32px] italic leading-none ${index < 3 ? "text-accent" : "text-muted/45"}`}>
                                             {String(index + 1).padStart(2, "0")}
                                         </span>
-                                        <span className="relative h-11 w-11 overflow-hidden rounded-full border border-border bg-surface" style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || "artist") }}>
+                                        <span className={`relative h-11 w-11 overflow-hidden rounded-full border bg-surface ${index < 3 ? "border-accent/40 ring-2 ring-accent/20 ring-offset-1 ring-offset-background" : "border-border"}`} style={{ background: nameToGradient(artist.nameRomanized || artist.nameHangul || "artist") }}>
                                             {artist.primaryImageUrl ? (
                                                 <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="44px" className="object-cover" />
                                             ) : (
@@ -410,15 +422,29 @@ export function HomeFrontPage({
                             )}
                         </div>
                         {spotlightArtist && (
-                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="mt-6 block border border-foreground bg-foreground p-5 text-background transition-opacity hover:opacity-95">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-accent">Destaque da semana</p>
-                                <h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{spotlightArtist.nameRomanized}</h3>
-                                <p className="mt-1 text-xs text-background/65">{spotlightArtist.nameHangul ?? spotlightArtist.agency?.name ?? "Perfil em foco"}</p>
-                                {spotlightProduction && (
-                                    <p className="mt-4 border-t border-background/20 pt-3 text-xs text-background/75">
-                                        Última produção: <b>{spotlightProduction.titlePt}</b>
-                                    </p>
+                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="group relative mt-6 block overflow-hidden border border-foreground bg-foreground text-background transition-opacity hover:opacity-95">
+                                {spotlightArtist.primaryImageUrl && (
+                                    <>
+                                        <Image
+                                            src={spotlightArtist.primaryImageUrl}
+                                            alt={spotlightArtist.nameRomanized}
+                                            fill
+                                            sizes="330px"
+                                            className="object-cover object-top opacity-30 transition-transform duration-700 group-hover:scale-[1.04]"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/70 to-foreground/30" />
+                                    </>
                                 )}
+                                <div className="relative p-5">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-accent">Destaque da semana</p>
+                                    <h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{spotlightArtist.nameRomanized}</h3>
+                                    <p className="mt-1 text-xs text-background/65">{spotlightArtist.nameHangul ?? spotlightArtist.agency?.name ?? "Perfil em foco"}</p>
+                                    {spotlightProduction && (
+                                        <p className="mt-4 border-t border-background/20 pt-3 text-xs text-background/75">
+                                            Última produção: <b>{spotlightProduction.titlePt}</b>
+                                        </p>
+                                    )}
+                                </div>
                             </Link>
                         )}
                     </aside>

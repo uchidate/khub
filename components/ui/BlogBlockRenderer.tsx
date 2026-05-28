@@ -1167,14 +1167,7 @@ function BlogBlockItem({ block, resolvedEntities, isLead }: { block: BlogBlock; 
             )
 
         case 'blog_ad':
-            return (
-                <div className="my-6 flex items-center justify-center min-h-[100px] rounded-xl border border-dashed border-border bg-surface/50 text-muted text-xs">
-                    {/* AdSense auto-ads preenche este slot automaticamente */}
-                    <ins className="adsbygoogle block w-full"
-                        data-ad-format="auto"
-                        data-full-width-responsive="true" />
-                </div>
-            )
+            return null
 
         case 'blog_accordion':
             return <AccordionBlock block={block} />

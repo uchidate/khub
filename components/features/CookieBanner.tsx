@@ -33,7 +33,7 @@ export function CookieBanner() {
     return (
         <>
             {/* Mobile: card compacto acima da navegação inferior */}
-            <div data-cookie-banner="mobile" className="md:hidden fixed left-2.5 right-2.5 bottom-[calc(66px+env(safe-area-inset-bottom,0px))] z-[260] border border-border bg-background p-2.5 shadow-[0_8px_24px_rgba(18,15,21,0.12)] animate-[slideUp_300ms_ease-out]">
+            <div data-cookie-banner="mobile" className="md:hidden fixed left-2.5 right-2.5 bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[260] border border-border bg-background p-2.5 shadow-[0_8px_24px_rgba(18,15,21,0.12)] animate-[slideUp_300ms_ease-out]">
                 <div className="flex items-start gap-2">
                     <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-[#ff2d78]/20 bg-[#ff2d78]/10">
                         <Cookie className="h-4 w-4 text-[#ff2d78]" />

@@ -126,31 +126,8 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
               </div>
             )}
 
-            {/* Section: Navegar */}
-            <div className="px-4 pt-2 pb-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted mb-1 px-1">Navegar</p>
-            </div>
-            <div className="px-3">
-              {links.map((link) => {
-                const Icon = LINK_ICONS[link.href]
-                const active = pathname === link.href || pathname?.startsWith(link.href + '/')
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={closeMenu}
-                    className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-bold transition-colors mb-0.5 ${
-                      active
-                        ? 'bg-accent text-white'
-                        : 'text-foreground hover:bg-surface'
-                    }`}
-                  >
-                    {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-white' : 'text-muted'}`} />}
-                    {link.label}
-                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
-                  </Link>
-                )
-              })}
+            {/* Buscar */}
+            <div className="px-3 pt-3">
               <Link
                 href="/search"
                 onClick={closeMenu}

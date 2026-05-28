@@ -18,6 +18,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { CookieBanner } from "@/components/features/CookieBanner"
 import { ConditionalFooter } from "@/components/ui/ConditionalFooter"
 
+
 type TickerItem = { type: 'article' | 'artist'; href: string; label: string; title: string }
 
 const getTickerData = unstable_cache(
@@ -181,7 +182,7 @@ export default async function RootLayout({
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted' });
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted', ad_personalization: 'granted', ad_user_data: 'granted' });
                     gtag('config', 'G-KHWW1EGSK3');
                 `}</Script>
                 {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
