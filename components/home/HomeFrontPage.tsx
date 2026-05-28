@@ -64,12 +64,12 @@ const ROLE_LABELS: Record<string, [string, string]> = {
 }
 
 const EDITORIAL_HUBS = [
-    { label: "K-Drama", href: "/blog?category=k-drama", hangul: "드라마", detail: "케이드라마", count: 412 },
-    { label: "K-Pop", href: "/blog?category=k-pop", hangul: "케이팝", detail: "케이팝", count: 287 },
-    { label: "Artistas", href: "/artists", hangul: "아티스트", detail: "아티스트", count: 1240 },
-    { label: "Cinema", href: "/productions", hangul: "영화", detail: "영화", count: 96 },
-    { label: "Cultura", href: "/blog?category=cultura", hangul: "문화", detail: "문화", count: 156 },
-    { label: "K-Beauty", href: "/blog?category=k-beauty", hangul: "케이뷰티", detail: "케이뷰티", count: 84 },
+    { label: "K-Drama",  slug: "k-drama",       href: "/blog?category=k-drama",   hangul: "드라마",   detail: "séries coreanas",  count: 412 },
+    { label: "K-Pop",    slug: "k-pop",          href: "/blog?category=k-pop",     hangul: "케이팝",   detail: "música e grupos",  count: 287 },
+    { label: "K-Film",   slug: "k-film",         href: "/blog?category=k-film",    hangul: "영화",     detail: "cinema coreano",   count: 96  },
+    { label: "Cultura",  slug: "cultura",        href: "/blog?category=cultura",   hangul: "문화",     detail: "tradição e pop",   count: 156 },
+    { label: "Grupos",   slug: "grupos",         href: "/blog?category=grupos",    hangul: "그룹",     detail: "bandas e eras",    count: 124 },
+    { label: "K-Beauty", slug: "k-beauty",       href: "/blog?category=k-beauty",  hangul: "뷰티",     detail: "beleza coreana",   count: 84  },
 ]
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
@@ -270,37 +270,42 @@ export function HomeFrontPage({
 
                 <div className="border-t border-border px-4 py-8 sm:px-6 lg:px-10">
                     <SectionTitleBar
-                        title="Navegar por seção"
-                        action={<span className="hidden font-mono text-[11px] font-bold tracking-[0.08em] text-muted sm:block">
-                            {EDITORIAL_HUBS.length} hubs · {EDITORIAL_HUBS.reduce((total, hub) => total + hub.count, 0).toLocaleString("pt-BR")} matérias
-                        </span>}
+                        title="Explorar por categoria"
+                        href="/blog"
+                        linkText="ver todas →"
                     />
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-                        {EDITORIAL_HUBS.map(({ label, href, hangul, detail, count }, index) => {
-                            const dark = index % 2 === 0
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                        {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count }) => {
+                            const cat = BLOG_CATEGORY_BY_SLUG[slug]
                             return (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group relative min-h-[160px] overflow-hidden border border-foreground p-4 transition-transform hover:-translate-y-0.5 sm:p-5 lg:min-h-[220px] ${
-                                    dark ? "bg-foreground text-background" : "bg-background text-foreground"
-                                }`}
+                                className="group relative min-h-[160px] overflow-hidden border border-border bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm sm:p-5 lg:min-h-[210px]"
                             >
                                 <span
-                                    className={`pointer-events-none absolute -right-6 -top-4 font-sans text-[88px] font-black leading-none tracking-[-0.12em] ${
-                                        dark ? "text-white/[0.07]" : "text-black/[0.045]"
-                                    }`}
+                                    className="pointer-events-none absolute -right-4 -top-3 font-sans text-[80px] font-black leading-none tracking-[-0.12em] text-foreground/[0.05]"
                                 >
                                     {hangul}
                                 </span>
+                                <div
+                                    className="absolute bottom-0 inset-x-0 h-[3px] transition-opacity group-hover:opacity-100 opacity-60"
+                                    style={{ backgroundColor: cat?.color ?? "#ee2244" }}
+                                />
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[18px] font-black leading-none tracking-[-0.04em] sm:text-[22px] lg:text-[24px] lg:tracking-[-0.055em]">{label}</h3>
-                                        <p className={`mt-2 text-[12px] font-semibold ${dark ? "text-background/45" : "text-muted"}`}>{detail}</p>
+                                        <span
+                                            className="mb-3 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black text-white"
+                                            style={{ backgroundColor: cat?.color ?? "#ee2244" }}
+                                        >
+                                            {label[0]}
+                                        </span>
+                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[19px] lg:text-[21px]">{label}</h3>
+                                        <p className="mt-1 text-[11px] text-muted">{detail}</p>
                                     </div>
-                                    <div className={`flex items-center justify-between font-mono text-[11px] font-black tracking-[0.04em] ${dark ? "text-background/45" : "text-muted"}`}>
-                                        <span>{count.toLocaleString("pt-BR")} matérias</span>
-                                        <span className={`text-base leading-none transition-transform group-hover:translate-x-1 ${dark ? "text-background" : "text-foreground"}`}>→</span>
+                                    <div className="flex items-center justify-between font-mono text-[10px] font-bold text-muted/70">
+                                        <span>{count.toLocaleString("pt-BR")} artigos</span>
+                                        <span className="text-sm leading-none transition-transform group-hover:translate-x-0.5" style={{ color: cat?.color ?? "#ee2244" }}>→</span>
                                     </div>
                                 </div>
                             </Link>
