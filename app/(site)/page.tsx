@@ -80,7 +80,7 @@ export default async function Home() {
     const brtYear = nowBRT.getFullYear()
 
     // Todas as queries em paralelo — reduz latência de ~4 batches seriais para ~1
-    const [publicData, featuredProducts, birthdayArtists] = await Promise.all([
+    const [publicData, featuredProducts, birthdayArtists, categoryCounts] = await Promise.all([
         process.env.NODE_ENV === 'development' ? buildHomeRuntimeData() : getHomePublicData(),
         prisma.storeProduct.findMany({
             where: { isActive: true, isHidden: false },
@@ -103,6 +103,16 @@ export default async function Home() {
             orderBy: { trendingScore: 'desc' },
             take: 500,
         }).catch(() => []),
+        prisma.blogPost.groupBy({
+            by: ['categoryId'],
+            where: { publishedAt: { not: null } },
+            _count: { _all: true },
+            orderBy: { _count: { categoryId: 'desc' } },
+        }).then(async rows => {
+            const cats = await prisma.blogCategory.findMany({ select: { id: true, slug: true } })
+            const slugMap = Object.fromEntries(cats.map(c => [c.id, c.slug]))
+            return Object.fromEntries(rows.map(r => [slugMap[r.categoryId ?? ''] ?? '', r._count._all]))
+        }).catch(() => ({} as Record<string, number>)),
     ])
 
     const todaysBirthdays: BirthdayArtist[] = birthdayArtists
@@ -160,7 +170,7 @@ export default async function Home() {
     const hasStreaming = Object.keys(showsByPlatform).length > 0
     const compositionMode = composition?.mode ?? 'balanced'
     return (
-        <div className="min-h-screen bg-background font-sora" suppressHydrationWarning>
+        <div className="min-h-screen bg-background font-sora pb-[var(--bottom-nav-h)] sm:pb-0" suppressHydrationWarning>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -201,6 +211,7 @@ export default async function Home() {
                 spotlightArtist={spotlightArtist}
                 spotlightProduction={spotlightProduction}
                 latestPosts={feedPosts.slice(0, 10)}
+                categoryCounts={categoryCounts}
             />
             </div>
             <div id="descobertas">

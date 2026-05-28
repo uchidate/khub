@@ -11,6 +11,8 @@ function grantAnalytics() {
         ;(window as any).gtag('consent', 'update', {
             analytics_storage: 'granted',
             ad_storage: 'granted',
+            ad_personalization: 'granted',
+            ad_user_data: 'granted',
         })
     }
 }

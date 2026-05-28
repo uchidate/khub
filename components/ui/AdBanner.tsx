@@ -113,7 +113,7 @@ export function AdBanner({
         const timeout = setTimeout(() => {
             const status = ins.getAttribute('data-ad-status')
             if (!status) setFilled(false)
-        }, 12000)
+        }, 6000)
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
     }, [slot])

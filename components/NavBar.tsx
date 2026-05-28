@@ -188,6 +188,21 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                         <ThemeToggle />
                     </div>
                 </div>
+                {/* Links de navegação mobile */}
+                <div className="flex h-10 items-center overflow-x-auto border-b border-foreground/20 px-2 scrollbar-none" style={{ background: '#0a0a0a' }}>
+                    {navLinks.map(({ label, href }) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className={`relative flex h-full shrink-0 items-center px-3 text-[13px] font-bold tracking-[-0.01em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
+                                isActiveLink(href) ? 'after:scale-x-100 after:bg-accent' : 'after:scale-x-0 after:bg-accent'
+                            }`}
+                            style={{ color: isActiveLink(href) ? '#ff246e' : 'rgba(255,255,255,0.65)' }}
+                        >
+                            {label}
+                        </Link>
+                    ))}
+                </div>
             </div>
 
             {/* Desktop */}
