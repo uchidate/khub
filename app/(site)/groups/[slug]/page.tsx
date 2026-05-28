@@ -5,7 +5,7 @@ import { cache } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
-import { ErrorMessage } from '@/components/ui/ErrorMessage'
+import { notFound } from 'next/navigation'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ReportButton } from '@/components/ui/ReportButton'
@@ -135,18 +135,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
         permanentRedirect(`/groups/${group.slug}`)
     }
 
-    if (!group || group.isHidden) {
-        return (
-            <div className="py-8 md:py-12 px-4 sm:px-6 lg:px-12">
-                <Breadcrumbs items={[{ label: 'Grupos', href: '/groups' }, { label: 'Não Encontrado' }]} />
-                <ErrorMessage
-                    title="Grupo não encontrado"
-                    message="Este grupo pode ter sido removido ou o link está incorreto."
-                    showSupport={true}
-                />
-            </div>
-        )
-    }
+    if (!group || group.isHidden) notFound()
 
     const activeMembers = group.members.filter(m => m.isActive)
     const formerMembers = group.members.filter(m => !m.isActive)

@@ -7,6 +7,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, XCircle, AlertTriangle, ChevronLeft, Send, RefreshCw, Eye, Copy, ClipboardCheck } from 'lucide-react'
+import { slugify } from '@/lib/utils/slug'
 
 interface ProductionCurrent {
     id: string
@@ -46,17 +47,6 @@ function summarize(val: unknown): string {
     return JSON.stringify(val, null, 2)
 }
 
-function slugify(text: string): string {
-    return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_]+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        || 'producao'
-}
 
 function buildDiff(current: ProductionCurrent, incoming: Record<string, unknown>): DiffField[] {
     const fields: Array<{ key: keyof ProductionCurrent; label: string }> = [

@@ -56,7 +56,7 @@ async function fetchEntityData(type: string, id: string): Promise<EntityData | n
 
 const typeIcon = { ARTIST: User, GROUP: Users, PRODUCTION: Film }
 const typeLabel = { ARTIST: 'Artista', GROUP: 'Grupo', PRODUCTION: 'Produção' }
-const typeColor = { ARTIST: 'text-[#ff2d78]', GROUP: 'text-pink-400', PRODUCTION: 'text-cyan-400' }
+const typeColor = { ARTIST: 'text-accent', GROUP: 'text-pink-400', PRODUCTION: 'text-cyan-400' }
 
 export default function ListDetailPage() {
     const params = useParams()
@@ -81,12 +81,16 @@ export default function ListDetailPage() {
         setEditDesc(data.description ?? '')
         setEditPublic(data.isPublic)
         setLoading(false)
-        // Fetch entity data for each item
-        for (const item of data.items) {
-            fetchEntityData(item.entityType, item.entityId).then(e => {
-                setEntityData(prev => ({ ...prev, [`${item.entityType}:${item.entityId}`]: e }))
-            })
-        }
+        Promise.all(
+            data.items.map(item =>
+                fetchEntityData(item.entityType, item.entityId).then(e => ({
+                    key: `${item.entityType}:${item.entityId}`,
+                    value: e,
+                }))
+            )
+        ).then(results => {
+            setEntityData(Object.fromEntries(results.map(r => [r.key, r.value])))
+        })
     }, [listId, router])
 
     useEffect(() => { fetchList() }, [fetchList])
@@ -154,10 +158,10 @@ export default function ListDetailPage() {
                                 <span className="text-sm text-foreground">Lista pública</span>
                             </label>
                             <div className="flex gap-3">
-                                <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg bg-surface text-muted hover:text-foreground hover:bg-[#e8e8e8] text-sm font-bold transition-colors">
+                                <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg bg-surface text-muted hover:text-foreground hover:bg-surface-hover text-sm font-bold transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
-                                <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-[#ff2d78] hover:bg-[#ff2d78] text-white text-sm font-bold transition-colors flex items-center gap-2">
+                                <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-strong text-white text-sm font-bold transition-colors flex items-center gap-2">
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     Salvar
                                 </button>
@@ -176,7 +180,7 @@ export default function ListDetailPage() {
                                     </span>
                                 </div>
                             </div>
-                            <button onClick={() => setEditing(true)} className="p-2 rounded-lg bg-surface hover:bg-[#e8e8e8] text-muted hover:text-foreground transition-colors">
+                            <button onClick={() => setEditing(true)} className="p-2 rounded-lg bg-surface hover:bg-surface-hover text-muted hover:text-foreground transition-colors">
                                 <Pencil className="w-4 h-4" />
                             </button>
                         </div>
@@ -198,7 +202,7 @@ export default function ListDetailPage() {
                             const color = typeColor[item.entityType]
 
                             return (
-                                <div key={item.id} className="group bg-background rounded-xl border border-border hover:border-[#080808]/20 transition-all overflow-hidden">
+                                <div key={item.id} className="group bg-background rounded-xl border border-border hover:border-border-strong transition-all overflow-hidden">
                                     <div className="relative aspect-[3/2] bg-surface">
                                         {entity?.imageUrl ? (
                                             <Image src={entity.imageUrl} alt={entity.label} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw" />
@@ -208,7 +212,7 @@ export default function ListDetailPage() {
                                             </div>
                                         )}
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                        <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white ${color}`}>
+                                        <span className={`absolute top-2 left-2 text-caption font-bold px-2 py-0.5 rounded-full bg-black/60 text-white ${color}`}>
                                             {typeLabel[item.entityType]}
                                         </span>
                                         <button
@@ -220,7 +224,7 @@ export default function ListDetailPage() {
                                     </div>
                                     <div className="p-3">
                                         {entity ? (
-                                            <Link href={entity.href} className="font-bold text-foreground hover:text-[#ff2d78] transition-colors line-clamp-1 text-sm">
+                                            <Link href={entity.href} className="font-bold text-foreground hover:text-accent transition-colors line-clamp-1 text-sm">
                                                 {entity.label}
                                             </Link>
                                         ) : (
