@@ -152,12 +152,11 @@ describe('TrendingService', () => {
 
   describe('updateAllTrendingScores', () => {
     it('calls $executeRaw for batch update', async () => {
-      prisma.artist.count.mockResolvedValue(50)
       prisma.$executeRaw.mockResolvedValue(50)
+      prisma.artistTrendingSnapshot.deleteMany.mockResolvedValue({ count: 0 })
 
       await service.updateAllTrendingScores()
 
-      expect(prisma.artist.count).toHaveBeenCalled()
       expect(prisma.$executeRaw).toHaveBeenCalled()
     })
   })

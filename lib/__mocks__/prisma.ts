@@ -25,6 +25,9 @@ const prisma = {
     update: vi.fn(),
     deleteMany: vi.fn(),
   },
+  artistTrendingSnapshot: {
+    deleteMany: vi.fn(),
+  },
   $executeRaw: vi.fn(),
 }
 
