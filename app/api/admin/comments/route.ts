@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
     const skip   = (page - 1) * limit
     const search = searchParams.get('search') || undefined
     const status = searchParams.get('status') || undefined  // 'ACTIVE' | 'FLAGGED' | 'REMOVED'
-    const newsId = searchParams.get('newsId') || undefined
+    const blogPostId = searchParams.get('blogPostId') || undefined
     const userId = searchParams.get('userId') || undefined
     const sortBy = searchParams.get('sortBy') || 'newest'   // 'newest' | 'oldest'
 
     const where: Record<string, unknown> = {}
-    if (status)  where.status = status
-    if (newsId)  where.newsId = newsId
-    if (userId)  where.userId = userId
+    if (status)      where.status = status
+    if (blogPostId)  where.blogPostId = blogPostId
+    if (userId)      where.userId = userId
     if (search)  where.content = { contains: search, mode: 'insensitive' }
 
     const orderBy = sortBy === 'oldest'
@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
                 user: {
                     select: { id: true, name: true, email: true, image: true, role: true },
                 },
-                news: {
-                    select: { id: true, title: true },
+                blogPost: {
+                    select: { id: true, slug: true, title: true },
                 },
             },
         }),

@@ -227,7 +227,7 @@ export async function getProfileData() {
             take: 5,
             select: {
                 id: true, content: true, createdAt: true,
-                news: { select: { id: true, title: true, imageUrl: true } },
+                blogPost: { select: { slug: true, title: true, coverImageUrl: true } },
             },
         }),
         prisma.favorite.findMany({
@@ -266,8 +266,8 @@ export async function getProfileData() {
     return {
         stats: { favoriteArtists, favoriteProductions, favoriteNews, totalComments },
         recentComments: recentComments
-            .filter(c => c.news)
-            .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! })),
+            .filter(c => c.blogPost)
+            .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), blogPost: c.blogPost! })),
         recentFavoriteArtists: recentFavoriteArtistsRaw
             .filter(f => f.artist)
             .map(f => ({ ...f.artist!, favoritedAt: f.createdAt.toISOString() })),
@@ -290,13 +290,13 @@ export async function getAllComments() {
         orderBy: { createdAt: 'desc' },
         select: {
             id: true, content: true, createdAt: true,
-            news: { select: { id: true, title: true, imageUrl: true } },
+            blogPost: { select: { slug: true, title: true, coverImageUrl: true } },
         },
     })
 
     return comments
-        .filter(c => c.news)
-        .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), news: c.news! }))
+        .filter(c => c.blogPost)
+        .map(c => ({ id: c.id, content: c.content, createdAt: c.createdAt.toISOString(), blogPost: c.blogPost! }))
 }
 
 export async function registerInterest(tierName: string) {

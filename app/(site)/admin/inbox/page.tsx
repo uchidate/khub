@@ -105,7 +105,7 @@ export default async function AdminInboxPage() {
         id: true,
         content: true,
         createdAt: true,
-        news: { select: { title: true } },
+        blogPost: { select: { title: true } },
       },
     }),
     prisma.news.count({ where: { status: { in: ['draft', 'ready'] }, isHidden: false } }),
@@ -225,7 +225,7 @@ export default async function AdminInboxPage() {
                 {recentComments.map(comment => (
                   <Link key={comment.id} href="/admin/comments?status=FLAGGED" className="block rounded-lg border border-border p-3 hover:border-accent/30 transition-colors">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-foreground truncate">{comment.news.title}</p>
+                      <p className="text-xs font-semibold text-foreground truncate">{comment.blogPost?.title ?? '(sem artigo)'}</p>
                       <span className="text-[10px] text-muted shrink-0">{dateTime(comment.createdAt)}</span>
                     </div>
                     <p className="text-[11px] text-muted mt-1 line-clamp-2">{comment.content}</p>

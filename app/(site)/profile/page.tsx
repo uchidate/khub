@@ -282,9 +282,9 @@ export default async function ProfilePage() {
                     <SectionHeader title="Voz no site" subtitle="Comentários recentes em artigos." />
                     <div className="space-y-3">
                       {recentComments.slice(0, 4).map(comment => (
-                        <Link key={comment.id} href={`/news/${comment.news.id}`} className="block rounded-2xl border border-border bg-background p-3 transition-colors hover:border-accent/40">
+                        <Link key={comment.id} href={`/blog/${comment.blogPost?.slug}`} className="block rounded-2xl border border-border bg-background p-3 transition-colors hover:border-accent/40">
                           <p className="line-clamp-2 text-sm leading-5 text-foreground-subtle">&ldquo;{comment.content}&rdquo;</p>
-                          <p className="mt-3 truncate text-xs font-bold text-muted">{comment.news.title}</p>
+                          <p className="mt-3 truncate text-xs font-bold text-muted">{comment.blogPost?.title}</p>
                         </Link>
                       ))}
                     </div>
