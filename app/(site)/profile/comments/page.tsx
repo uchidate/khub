@@ -30,8 +30,8 @@ export default async function ProfileCommentsPage() {
                 <div className="rounded-2xl border border-border bg-surface p-10 text-center shadow-sm">
                     <MessageSquare className="w-12 h-12 text-muted mx-auto mb-4" />
                     <p className="text-muted text-sm">Você ainda não fez nenhum comentário.</p>
-                    <Link href="/news" className="btn-primary mt-6 inline-block text-xs uppercase tracking-widest">
-                        Ver Notícias
+                    <Link href="/blog" className="btn-primary mt-6 inline-block text-xs uppercase tracking-widest">
+                        Ver Blog
                     </Link>
                 </div>
             ) : (
@@ -39,14 +39,14 @@ export default async function ProfileCommentsPage() {
                     {comments.map((comment) => (
                         <Link
                             key={comment.id}
-                            href={`/news/${comment.news.id}`}
+                            href={`/blog/${comment.blogPost.slug}`}
                             className="group flex gap-4 rounded-2xl border border-border bg-surface p-4 shadow-sm transition-colors hover:border-accent/40"
                         >
-                            {comment.news.imageUrl && (
+                            {comment.blogPost.coverImageUrl && (
                                 <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                                     <Image
-                                        src={comment.news.imageUrl}
-                                        alt={comment.news.title}
+                                        src={comment.blogPost.coverImageUrl}
+                                        alt={comment.blogPost.title}
                                         fill
                                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                                         sizes="64px"
@@ -57,7 +57,7 @@ export default async function ProfileCommentsPage() {
                                 <div className="flex items-start gap-2 mb-1.5">
                                     <Newspaper className="w-3 h-3 text-muted flex-shrink-0 mt-0.5" />
                                     <p className="text-xs text-muted truncate group-hover:text-foreground transition-colors leading-tight">
-                                        {comment.news.title}
+                                        {comment.blogPost.title}
                                     </p>
                                 </div>
                                 <p className="text-sm text-foreground group-hover:text-foreground transition-colors line-clamp-2">

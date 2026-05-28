@@ -19,6 +19,7 @@ import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/conf
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { CommentsSection } from '@/components/features/CommentsSection'
 import { SectionBar } from '@/components/ui/SectionBar'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
 
@@ -424,6 +425,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
           <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
         </Link>
+
+        <CommentsSection blogPostSlug={post.slug} />
       </div>{/* fim coluna principal */}
 
       {/* ── Sidebar (xl+) ── */}

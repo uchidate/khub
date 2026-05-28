@@ -6,36 +6,26 @@ import { CommentsList } from './CommentsList'
 import { MessageSquare } from 'lucide-react'
 
 interface CommentsSectionProps {
-    newsId: string
+    blogPostSlug: string
 }
 
-export function CommentsSection({ newsId }: CommentsSectionProps) {
+export function CommentsSection({ blogPostSlug }: CommentsSectionProps) {
     const [refreshKey, setRefreshKey] = useState(0)
-
-    const handleCommentAdded = () => {
-        // Força o CommentsList a recarregar
-        setRefreshKey(prev => prev + 1)
-    }
 
     return (
         <section className="mt-12 pt-12 border-t border-border">
             <div className="mb-6 flex items-center gap-3">
-                <MessageSquare className="w-6 h-6 text-[#ff2d78]" />
-                <h2 className="text-2xl md:text-3xl font-black text-foreground">
+                <MessageSquare className="w-6 h-6 text-accent" />
+                <h2 className="text-title font-black text-foreground">
                     Comentários
                 </h2>
             </div>
 
-            {/* Formulário de novo comentário */}
             <div className="mb-8">
-                <CommentForm newsId={newsId} onCommentAdded={handleCommentAdded} />
+                <CommentForm blogPostSlug={blogPostSlug} onCommentAdded={() => setRefreshKey(k => k + 1)} />
             </div>
 
-            {/* Lista de comentários */}
-            <CommentsList
-                newsId={newsId}
-                onCommentAdded={refreshKey}
-            />
+            <CommentsList blogPostSlug={blogPostSlug} refreshKey={refreshKey} />
         </section>
     )
 }
