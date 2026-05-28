@@ -98,10 +98,10 @@ export function ShopeeCard({
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground line-clamp-2 leading-snug">{name}</p>
                     {price && <p className="mt-1 text-sm font-black text-foreground">{price}</p>}
-                    {vendidos && <p className="text-[10px] text-muted">{vendidos} vendidos</p>}
+                    {vendidos && <p className="text-caption text-muted">{vendidos} vendidos</p>}
                 </div>
                 <div className="flex-shrink-0 self-center">
-                    <span className={`flex items-center gap-1 font-mono text-[9px] font-bold uppercase ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
+                    <span className={`flex items-center gap-1 font-mono text-micro font-bold uppercase ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                     </span>
                 </div>
@@ -120,23 +120,23 @@ export function ShopeeCard({
             <div className="relative aspect-square bg-muted/10 overflow-hidden">
                 <Image src={imageUrl} alt={name} fill className="object-cover group-hover:scale-[1.03] transition-transform duration-500" unoptimized />
                 {badge && (
-                    <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">
+                    <span className="absolute left-2 top-2 max-w-[calc(100%-1rem)] bg-accent px-1.5 py-0.5 font-mono text-micro font-bold uppercase tracking-[0.05em] text-white">
                         {badge}
                     </span>
                 )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 px-1.5 py-0.5 flex items-center gap-1">
                     <ExternalLink className="w-3 h-3 text-white" />
-                    <span className="font-mono text-[9px] text-white">{cfg.label}</span>
+                    <span className="font-mono text-micro text-white">{cfg.label}</span>
                 </div>
             </div>
             <div className="flex flex-1 flex-col gap-2 p-3">
                 <div className="flex items-center justify-between gap-2">
-                    <span className={`flex-shrink-0 flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-[0.05em] ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
+                    <span className={`flex-shrink-0 flex items-center gap-1 font-mono text-micro font-bold uppercase tracking-[0.05em] ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-1.5 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
                     </span>
                     {rating > 0 && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-foreground">
+                        <span className="flex items-center gap-1 text-label font-bold text-foreground">
                             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                             {rating.toFixed(1)}
                         </span>
@@ -148,14 +148,14 @@ export function ShopeeCard({
                     {(price || originalPrice) && (
                         <div>
                             {price && <p className="text-base font-black leading-none text-foreground">{price}</p>}
-                            {originalPrice && <p className="mt-1 text-[11px] text-muted line-through">{originalPrice}</p>}
+                            {originalPrice && <p className="mt-1 text-label text-muted line-through">{originalPrice}</p>}
                         </div>
                     )}
                     <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
-                        <span className="min-w-0 truncate text-[10px] font-semibold text-muted">
+                        <span className="min-w-0 truncate text-caption font-semibold text-muted">
                             {vendidos ? `${vendidos} vendidos` : 'Selecionado pela curadoria'}
                         </span>
-                        <span className="flex shrink-0 items-center gap-1 text-[10px] font-black text-accent transition-colors">
+                        <span className="flex shrink-0 items-center gap-1 text-caption font-black text-accent transition-colors">
                             Ver
                             <ExternalLink className="h-3 w-3" />
                         </span>
@@ -173,7 +173,7 @@ export function ShopeeSectionHeader({ title, seeAllUrl, store }: { title: string
             <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-foreground">{title}</h2>
                 {cfg && store && (
-                    <span className={`flex items-center gap-1 text-[10px] font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-0.5`}>
+                    <span className={`flex items-center gap-1 text-caption font-bold ${cfg.bg} ${store === 'mercadolivre' ? 'text-[#333]' : 'text-white'} px-2 py-0.5`}>
                         <StoreLogo store={store} className="w-3 h-3" />
                         {cfg.label}
                     </span>

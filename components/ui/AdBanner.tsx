@@ -129,15 +129,15 @@ export function AdBanner({
                 : 'h-[250px]'
         return (
             <div className={`relative flex flex-col items-center justify-center gap-1 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded overflow-hidden ${heightClass} ${className}`}>
-                <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 select-none">📢 {devLabel ?? SLOT_NAMES[slot] ?? 'Anúncio'}</span>
+                <span className="text-label font-semibold text-amber-600 dark:text-amber-400 select-none">📢 {devLabel ?? SLOT_NAMES[slot] ?? 'Anúncio'}</span>
                 <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5">
-                    <span className="text-[10px] font-mono text-amber-700 dark:text-amber-300 select-none">{info.size}</span>
-                    <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
-                    <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.format}</span>
-                    <span className="text-[10px] font-mono text-amber-500/60 select-none">·</span>
-                    <span className="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
+                    <span className="text-caption font-mono text-amber-700 dark:text-amber-300 select-none">{info.size}</span>
+                    <span className="text-caption font-mono text-amber-500/60 select-none">·</span>
+                    <span className="text-caption font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.format}</span>
+                    <span className="text-caption font-mono text-amber-500/60 select-none">·</span>
+                    <span className="text-caption font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
                 </div>
-                <span className="text-[9px] font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{eager ? ' · eager' : ''}</span>
+                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{eager ? ' · eager' : ''}</span>
             </div>
         )
     }
@@ -158,7 +158,7 @@ export function AdBanner({
         <div ref={containerRef}>
             <div className={filled === true ? className : `overflow-hidden w-full ${loadingHeightClass} ${className}`}>
                 {!hideLabel && filled === true && (
-                    <p className={`text-[9px] font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
+                    <p className={`text-micro font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
                         Publicidade
                     </p>
                 )}
@@ -177,7 +177,7 @@ export function AdBanner({
                 {!minimal && !hideLabel && filled === true && (
                     <div className="flex items-center gap-3 mt-2">
                         <div className="flex-1 h-px bg-border/40" />
-                        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted/40 select-none">Continua abaixo</span>
+                        <span className="text-micro font-semibold uppercase tracking-widest text-muted/40 select-none">Continua abaixo</span>
                         <div className="flex-1 h-px bg-border/40" />
                     </div>
                 )}
