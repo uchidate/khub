@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { nameToGradient } from '@/lib/utils'
 import Image from 'next/image'
+import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 
 interface Production {
     id: string
@@ -81,47 +82,46 @@ const AGE_BADGE_STYLE: Record<string, string> = {
 
 function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
     const typeLabel = prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null
-    const [imageFailed, setImageFailed] = useState(false)
-    const imageUrl = !imageFailed ? (prod.imageUrl || prod.backdropUrl) : null
+    const imageUrl = prod.imageUrl || prod.backdropUrl
     const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
+
+    const fallback = (
+        <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(prod.titlePt) }}>
+            <span className="font-black text-white/15 text-[56px] leading-none select-none">
+                {prod.titlePt[0]}
+            </span>
+        </div>
+    )
 
     return (
         <Link href={`/productions/${prod.slug ?? prod.id}`} className="group flex flex-col">
             <div className="relative aspect-[2/3] overflow-hidden bg-surface">
                 {imageUrl ? (
-                    // img mantido (não next/image): precisa de onError para fallback de imagem quebrada
-                    <img
+                    <ImageWithFallback
                         src={imageUrl}
                         alt={prod.titlePt}
-                        loading={priority ? 'eager' : 'lazy'}
-                        decoding={priority ? 'sync' : 'async'}
-                        fetchPriority={priority ? 'high' : 'auto'}
-                        className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                        onError={() => setImageFailed(true)}
+                        fill
+                        priority={priority}
+                        className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                        fallback={fallback}
                     />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ background: nameToGradient(prod.titlePt) }}>
-                        <span className="font-black text-white/15 text-[56px] leading-none select-none">
-                            {prod.titlePt[0]}
-                        </span>
-                    </div>
-                )}
+                ) : fallback}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {prod.ageRating && <AgeRatingBadge rating={prod.ageRating} />}
-                    {prod.year && <span className="bg-black/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-white">{prod.year}</span>}
+                    {prod.year && <span className="bg-black/60 px-1.5 py-0.5 font-mono text-micro font-bold text-white">{prod.year}</span>}
                 </div>
                 {score !== null && (
-                    <div className="absolute bottom-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
+                    <div className="absolute bottom-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-label font-bold text-white">
                         ★ {score.toFixed(1)}
                     </div>
                 )}
             </div>
             <div className="pt-2.5 pb-3.5 border-b border-border/50 min-w-0">
                 <div className="flex items-baseline justify-between gap-1">
-                    <span className="text-[14px] font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{prod.titlePt}</span>
-                    {prod.titleKr && <span className="font-mono text-[10px] text-muted shrink-0">{prod.titleKr}</span>}
+                    <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors truncate leading-tight">{prod.titlePt}</span>
+                    {prod.titleKr && <span className="font-mono text-caption text-muted shrink-0">{prod.titleKr}</span>}
                 </div>
-                <div className="font-mono text-[10px] text-muted mt-1 uppercase tracking-[0.04em] truncate">
+                <div className="font-mono text-caption text-muted mt-1 uppercase tracking-[0.04em] truncate">
                     {typeLabel}{prod.year ? ` · ${prod.year}` : ''}
                 </div>
             </div>
@@ -145,7 +145,7 @@ function ProductionsSkeleton() {
 
 function AgeRatingBadge({ rating }: { rating: string }) {
     return (
-        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-black ${AGE_BADGE_STYLE[rating] ?? 'bg-surface text-muted'}`}>
+        <span className={`inline-block px-1.5 py-0.5 rounded text-caption font-black ${AGE_BADGE_STYLE[rating] ?? 'bg-surface text-muted'}`}>
             {rating === 'L' ? 'L' : `${rating}+`}
         </span>
     )
@@ -237,10 +237,10 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
 
     const hasActiveFilters = filters.search || filters.type || filters.ageRating
     const chipClass = (active: boolean) =>
-        `h-8 shrink-0 rounded-md px-3 text-[12px] font-bold transition-colors ${
+        `h-8 shrink-0 rounded-md px-3 text-small font-bold transition-colors ${
             active ? 'bg-foreground text-background' : 'text-muted hover:bg-surface hover:text-foreground'
         }`
-    const selectClass = 'h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-[12px] font-bold text-foreground !shadow-none focus:!border-foreground'
+    const selectClass = 'h-8 shrink-0 !rounded-md !border-border !bg-surface !py-0 !pl-2.5 !pr-8 text-small font-bold text-foreground !shadow-none focus:!border-foreground'
 
     const renderFilterControls = () => (
         <>
@@ -258,7 +258,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             </div>
 
             <label className="flex shrink-0 items-center gap-1.5">
-                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Tipo</span>
+                <span className="font-mono text-micro font-bold uppercase tracking-[0.12em] text-muted">Tipo</span>
                 <select value={filters.type} onChange={e => handleType(e.target.value)} className={selectClass} aria-label="Filtrar por tipo">
                     {TYPE_OPTIONS.filter(opt => opt.value === '' || !typeCounts || (typeCounts[opt.value] ?? 0) > 0).map(opt => (
                         <option key={opt.value || 'all'} value={opt.value}>
@@ -269,14 +269,14 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             </label>
 
             <label className="flex shrink-0 items-center gap-1.5">
-                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Ordenar</span>
+                <span className="font-mono text-micro font-bold uppercase tracking-[0.12em] text-muted">Ordenar</span>
                 <select value={filters.sortBy} onChange={e => handleSort(e.target.value)} className={selectClass} aria-label="Ordenar produções">
                     {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
             </label>
 
             <label className="flex shrink-0 items-center gap-1.5">
-                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted">Idade</span>
+                <span className="font-mono text-micro font-bold uppercase tracking-[0.12em] text-muted">Idade</span>
                 <select value={filters.ageRating} onChange={e => handleAgeRating(e.target.value)} className={selectClass} aria-label="Filtrar por classificação indicativa">
                     {AGE_RATING_OPTIONS.map(opt => <option key={opt.value || 'default'} value={opt.value}>{opt.label}</option>)}
                 </select>
@@ -304,7 +304,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                 onChange={e => setSearchInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleSearch(searchInput)}
                                 placeholder="Buscar drama, filme ou título..."
-                                className="min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !p-0 text-[13px] text-foreground !shadow-none placeholder:text-muted focus:outline-none"
+                                className="min-w-0 flex-1 !rounded-none !border-0 !bg-transparent !p-0 text-small text-foreground !shadow-none placeholder:text-muted focus:outline-none"
                             />
                         </div>
                         {(hasActiveFilters || filters.sortBy !== 'popular') && (
@@ -326,10 +326,10 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {!hideFilter && featuredProductions.length > 0 && (
                 <section className="page-wrap pt-3 pb-6">
                     <div className="flex items-baseline justify-between mb-3">
-                        <h2 className="text-[22px] font-black tracking-[-0.03em] text-foreground">
+                        <h2 className="text-subtitle font-black tracking-[-0.03em] text-foreground">
                             Capa do mês <span className="font-normal text-muted text-base ml-2">이달의 작품</span>
                         </h2>
-                        <span className="font-mono text-[11px] text-muted">curado pela redação</span>
+                        <span className="font-mono text-label text-muted">curado pela redação</span>
                     </div>
 
                     {/* Mobile layout */}
@@ -346,15 +346,15 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                                 <div className="absolute top-3 left-3 flex items-center gap-2">
-                                    <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #1 em alta</span>
+                                    <span className="bg-accent px-1.5 py-0.5 font-mono text-micro font-bold uppercase tracking-[0.05em] text-white">● #1 em alta</span>
                                     {p.voteAverage && (
-                                        <span className="bg-black/65 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">★ {p.voteAverage.toFixed(1)}</span>
+                                        <span className="bg-black/65 px-1.5 py-0.5 font-mono text-caption font-bold text-white">★ {p.voteAverage.toFixed(1)}</span>
                                     )}
                                 </div>
                                 <div className="absolute bottom-0 left-0 right-0 p-5">
-                                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-accent/90">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
+                                    <span className="font-mono text-caption font-bold uppercase tracking-[0.08em] text-accent/90">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
                                     <h3 className="text-[32px] font-black tracking-[-0.04em] leading-[1.0] mt-1 text-white group-hover:text-accent transition-colors">{p.titlePt}</h3>
-                                    {p.titleKr && <p className="text-[13px] text-white/55 mt-1">{p.titleKr}</p>}
+                                    {p.titleKr && <p className="text-small text-white/55 mt-1">{p.titleKr}</p>}
                                 </div>
                             </Link>
                         )})()}
@@ -373,17 +373,17 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                             )}
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                                             <div className="absolute top-2 left-2">
-                                                <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #{i + 2}</span>
+                                                <span className="bg-accent px-1.5 py-0.5 font-mono text-micro font-bold uppercase tracking-[0.05em] text-white">● #{i + 2}</span>
                                             </div>
                                             {p.voteAverage && (
-                                                <div className="absolute top-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                                <div className="absolute top-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-caption font-bold text-white">
                                                     ★ {p.voteAverage.toFixed(1)}
                                                 </div>
                                             )}
                                             <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                                                <span className="font-mono text-[8px] font-bold uppercase tracking-wide text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
-                                                <h3 className="text-[14px] font-black tracking-tight leading-tight mt-0.5 text-white group-hover:text-accent transition-colors line-clamp-2">{p.titlePt}</h3>
-                                                {p.titleKr && <p className="text-[10px] text-white/50 mt-0.5 truncate">{p.titleKr}</p>}
+                                                <span className="font-mono text-micro font-bold uppercase tracking-wide text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
+                                                <h3 className="text-sm font-black tracking-tight leading-tight mt-0.5 text-white group-hover:text-accent transition-colors line-clamp-2">{p.titlePt}</h3>
+                                                {p.titleKr && <p className="text-caption text-white/50 mt-0.5 truncate">{p.titleKr}</p>}
                                             </div>
                                         </div>
                                     </Link>
@@ -405,19 +405,19 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                         </div>
                                     )}
                                     <div className="absolute top-2 left-2 flex flex-col gap-1">
-                                        <span className="bg-accent px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.05em] text-white">● #{i + 1} em alta</span>
-                                        {p.year && <span className="bg-black/60 px-1.5 py-0.5 font-mono text-[9px] font-bold text-white">{p.year}</span>}
+                                        <span className="bg-accent px-1.5 py-0.5 font-mono text-micro font-bold uppercase tracking-[0.05em] text-white">● #{i + 1} em alta</span>
+                                        {p.year && <span className="bg-black/60 px-1.5 py-0.5 font-mono text-micro font-bold text-white">{p.year}</span>}
                                     </div>
                                     {p.voteAverage && (
-                                        <div className="absolute bottom-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white">
+                                        <div className="absolute bottom-2 right-2 bg-black/65 px-1.5 py-0.5 font-mono text-label font-bold text-white">
                                             ★ {p.voteAverage.toFixed(1)}
                                         </div>
                                     )}
                                 </div>
                                 <div className="pt-3 pb-4 border-b border-border/50">
-                                    <span className="font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
+                                    <span className="font-mono text-micro font-bold uppercase tracking-[0.06em] text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
                                     <h3 className={`font-display font-black tracking-[-0.03em] leading-[1.05] mt-1 group-hover:text-accent transition-colors ${i === 0 ? 'text-[28px]' : 'text-[20px]'}`}>{p.titlePt}</h3>
-                                    {p.titleKr && <p className="text-[12px] text-muted mt-0.5">{p.titleKr}</p>}
+                                    {p.titleKr && <p className="text-small text-muted mt-0.5">{p.titleKr}</p>}
                                 </div>
                             </Link>
                         ))}
@@ -444,8 +444,8 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
             {!isLoading && productions.length > 0 && (
                 <>
                     <div className="mb-5 flex items-baseline justify-between border-b border-foreground pb-3">
-                        <h2 className="text-[22px] font-black tracking-[-0.03em] text-foreground">Todas as produções</h2>
-                        <p className="font-mono text-[11px] text-muted">
+                        <h2 className="text-subtitle font-black tracking-[-0.03em] text-foreground">Todas as produções</h2>
+                        <p className="font-mono text-label text-muted">
                             {pagination.total > 0 ? `vendo 1–${Math.min(parseInt(searchParams.get('limit') || '50'), productions.length)} de ${pagination.total.toLocaleString('pt-BR')}` : 'Refine sua busca'}
                         </p>
                     </div>

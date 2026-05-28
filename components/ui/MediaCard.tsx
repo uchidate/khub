@@ -113,7 +113,7 @@ export function MediaCard({
                                 quality={85}
                             />
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-black text-[#444]">
+                            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-black text-muted/40">
                                 <svg className="w-16 h-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -134,7 +134,7 @@ export function MediaCard({
                         {badges.length > 0 && (
                             <div className="absolute top-9 left-2 flex flex-col gap-1 max-w-[75%]">
                                 {badges.slice(0, 2).map((badge) => (
-                                    <span key={badge} className="text-[9px] uppercase font-black px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white rounded-sm shadow tracking-widest w-fit">
+                                    <span key={badge} className="text-micro uppercase font-black px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white rounded-sm shadow tracking-widest w-fit">
                                         {badge}
                                     </span>
                                 ))}
@@ -147,11 +147,11 @@ export function MediaCard({
                             {streamingSignal && streamingSignal.source !== 'internal_production' && (
                                 <div className="mb-2">
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-red-600 backdrop-blur-sm text-white shadow-lg max-w-full overflow-hidden">
-                                        <span className="text-[11px] font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
-                                        <span className="text-[9px] opacity-60">·</span>
-                                        {streamingSignal.source && <span className="text-[10px] font-black whitespace-nowrap">{getStreamingConfig(streamingSignal.source).label}</span>}
-                                        {streamingSignal.source && <span className="text-[9px] opacity-60">·</span>}
-                                        <span className="text-[10px] font-bold truncate">{streamingSignal.showTitle}</span>
+                                        <span className="text-label font-black whitespace-nowrap">TOP {streamingSignal.rank}</span>
+                                        <span className="text-micro opacity-60">·</span>
+                                        {streamingSignal.source && <span className="text-caption font-black whitespace-nowrap">{getStreamingConfig(streamingSignal.source).label}</span>}
+                                        {streamingSignal.source && <span className="text-micro opacity-60">·</span>}
+                                        <span className="text-caption font-bold truncate">{streamingSignal.showTitle}</span>
                                     </span>
                                 </div>
                             )}
@@ -168,12 +168,12 @@ export function MediaCard({
                             {artists.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform translate-y-0 md:translate-y-4 md:group-hover:translate-y-0">
                                     {artists.slice(0, 3).map((name) => (
-                                        <span key={name} className="text-[9px] uppercase font-black px-2 py-1 bg-neon-pink/80 text-white rounded-sm shadow-lg tracking-widest">
+                                        <span key={name} className="text-micro uppercase font-black px-2 py-1 bg-neon-pink/80 text-white rounded-sm shadow-lg tracking-widest">
                                             {name}
                                         </span>
                                     ))}
                                     {artists.length > 3 && (
-                                        <span className="text-[9px] uppercase font-black px-2 py-1 bg-white/20 text-white rounded-sm shadow-lg tracking-widest">
+                                        <span className="text-micro uppercase font-black px-2 py-1 bg-white/20 text-white rounded-sm shadow-lg tracking-widest">
                                             +{artists.length - 3}
                                         </span>
                                     )}
