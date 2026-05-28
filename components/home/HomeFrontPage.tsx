@@ -275,31 +275,39 @@ export function HomeFrontPage({
                         linkText="ver todas →"
                     />
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                        {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count }, index) => {
-                            const dark = index % 2 === 0
+                        {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count }) => {
+                            const cat = BLOG_CATEGORY_BY_SLUG[slug]
+                            const color = cat?.color ?? "#ee2244"
                             return (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`group relative min-h-[160px] overflow-hidden border border-foreground p-4 transition-transform hover:-translate-y-0.5 sm:p-5 lg:min-h-[220px] ${
-                                    dark ? "bg-foreground text-background" : "bg-background text-foreground"
-                                }`}
+                                className="group relative min-h-[170px] overflow-hidden p-4 transition-all hover:-translate-y-1 hover:shadow-lg sm:p-5 lg:min-h-[220px]"
+                                style={{
+                                    backgroundColor: `${color}0f`,
+                                    borderLeft: `4px solid ${color}`,
+                                    border: `1px solid ${color}28`,
+                                    borderLeftWidth: '4px',
+                                    borderLeftColor: color,
+                                }}
                             >
                                 <span
-                                    className={`pointer-events-none absolute -right-6 -top-4 font-sans text-[88px] font-black leading-none tracking-[-0.12em] ${
-                                        dark ? "text-white/[0.07]" : "text-black/[0.045]"
-                                    }`}
+                                    className="pointer-events-none absolute -bottom-4 -right-3 font-sans text-[82px] font-black leading-none tracking-[-0.12em] transition-transform duration-500 group-hover:scale-110"
+                                    style={{ color: `${color}20` }}
                                 >
                                     {hangul}
                                 </span>
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[18px] font-black leading-none tracking-[-0.04em] sm:text-[20px] lg:text-[22px] lg:tracking-[-0.055em]">{label}</h3>
-                                        <p className={`mt-2 text-[12px] font-semibold ${dark ? "text-background/45" : "text-muted"}`}>{detail}</p>
+                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.03em] text-foreground sm:text-[18px] lg:text-[20px]">{label}</h3>
+                                        <p className="mt-1.5 text-[11px] leading-4 text-muted">{detail}</p>
                                     </div>
-                                    <div className={`flex items-center justify-between font-mono text-[11px] font-black tracking-[0.04em] ${dark ? "text-background/45" : "text-muted"}`}>
-                                        <span>{count.toLocaleString("pt-BR")} artigos</span>
-                                        <span className={`text-base leading-none transition-transform group-hover:translate-x-1 ${dark ? "text-background" : "text-foreground"}`}>→</span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-mono text-[10px] font-bold" style={{ color: `${color}99` }}>{count.toLocaleString("pt-BR")} artigos</span>
+                                        <span
+                                            className="text-sm leading-none transition-transform group-hover:translate-x-0.5"
+                                            style={{ color }}
+                                        >→</span>
                                     </div>
                                 </div>
                             </Link>
