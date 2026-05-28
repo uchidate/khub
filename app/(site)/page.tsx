@@ -160,7 +160,7 @@ export default async function Home() {
     const hasStreaming = Object.keys(showsByPlatform).length > 0
     const compositionMode = composition?.mode ?? 'balanced'
     return (
-        <div className="min-h-screen bg-background font-sora pb-[70px] sm:pb-0" suppressHydrationWarning>
+        <div className="min-h-screen bg-background font-sora" suppressHydrationWarning>
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "WebSite",
@@ -180,15 +180,11 @@ export default async function Home() {
 
             <ResponsiveFilterBar label="Seção" value="Destaques">
                 <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
-                    {HOME_SECTIONS.map(({ label, href }, index) => (
+                    {HOME_SECTIONS.map(({ label, href }) => (
                         <a
                             key={href}
                             href={href}
-                            className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[12px] font-black transition-colors lg:h-full lg:rounded-none lg:border-b-2 lg:px-0.5 ${
-                                index === 0
-                                    ? 'bg-accent text-white lg:border-accent lg:bg-transparent lg:text-accent'
-                                    : 'bg-surface text-muted hover:text-foreground lg:border-transparent lg:bg-transparent'
-                            }`}
+                            className="flex h-8 shrink-0 items-center whitespace-nowrap rounded-md bg-surface px-3 text-[12px] font-black text-muted transition-colors hover:text-foreground lg:h-full lg:rounded-none lg:border-b-2 lg:border-transparent lg:bg-transparent lg:px-0.5 lg:hover:border-foreground/30"
                         >
                             {label}
                         </a>

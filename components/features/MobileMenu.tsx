@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { Home, Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
@@ -25,25 +25,17 @@ const LINK_ICONS: Record<string, React.ElementType> = {
 
 export const MobileMenu = ({ links }: MobileMenuProps) => {
   const { data: session } = useSession()
-  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const menuId = "mobile-menu-toggle"
   const closeMenu = () => {
-    setIsOpen(false)
     const checkbox = document.getElementById(menuId) as HTMLInputElement | null
     if (checkbox) checkbox.checked = false
   }
 
   useEffect(() => {
-    setIsOpen(false)
     const checkbox = document.getElementById(menuId) as HTMLInputElement | null
     if (checkbox) checkbox.checked = false
   }, [pathname])
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'unset'
-    return () => { document.body.style.overflow = 'unset' }
-  }, [isOpen])
 
   const initials = session?.user
     ? (session.user.name || session.user.email || '?')
@@ -60,11 +52,9 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
         type="checkbox"
         className="peer sr-only"
         aria-hidden="true"
-        onChange={event => setIsOpen(event.currentTarget.checked)}
       />
       <label
         htmlFor={menuId}
-        onClick={() => setIsOpen(true)}
         className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent text-foreground transition-colors hover:border-border hover:bg-surface lg:hidden"
         aria-label="Abrir menu"
         aria-controls="mobile-menu-drawer"
@@ -80,7 +70,6 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
         <div className="fixed inset-0 z-[9999] hidden peer-checked:block lg:hidden" role="dialog" aria-modal="true" aria-label="Menu principal">
           <label
             htmlFor={menuId}
-            onClick={() => setIsOpen(false)}
             className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
             aria-label="Fechar menu"
           />
@@ -100,7 +89,6 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
             </Link>
             <label
               htmlFor={menuId}
-              onClick={() => setIsOpen(false)}
               className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted transition-colors hover:bg-surface hover:text-foreground"
               aria-label="Fechar menu"
               role="button"

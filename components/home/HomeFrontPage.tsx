@@ -207,7 +207,7 @@ export function HomeFrontPage({
                 {heroStory ? (
                     <div className="lg:flex lg:min-h-[560px]">
                         <Link href={`/blog/${heroStory.slug}`} className="group block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
-                            <StoryImage story={heroStory} className="aspect-[1.45/1] w-full sm:aspect-[4/3] lg:h-full lg:min-h-[560px]" priority />
+                            <StoryImage story={heroStory} className="aspect-[4/3] w-full lg:h-full lg:min-h-[560px]" priority />
                         </Link>
                         <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-7 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
                             <div className="mb-4 sm:mb-5">
@@ -267,6 +267,47 @@ export function HomeFrontPage({
                     </div>
                 )}
 
+                <div className="border-t border-border px-4 py-8 sm:px-6 lg:px-10">
+                    <SectionTitleBar
+                        title="Navegar por seção"
+                        action={<span className="hidden font-mono text-[11px] font-bold tracking-[0.08em] text-muted sm:block">
+                            {EDITORIAL_HUBS.length} hubs · {EDITORIAL_HUBS.reduce((total, hub) => total + hub.count, 0).toLocaleString("pt-BR")} matérias
+                        </span>}
+                    />
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+                        {EDITORIAL_HUBS.map(({ label, href, hangul, detail, count }, index) => {
+                            const dark = index % 2 === 0
+                            return (
+                            <Link
+                                key={href}
+                                href={href}
+                                className={`group relative min-h-[160px] overflow-hidden border border-foreground p-4 transition-transform hover:-translate-y-0.5 sm:p-5 lg:min-h-[220px] ${
+                                    dark ? "bg-foreground text-background" : "bg-background text-foreground"
+                                }`}
+                            >
+                                <span
+                                    className={`pointer-events-none absolute -right-6 -top-4 font-sans text-[88px] font-black leading-none tracking-[-0.12em] ${
+                                        dark ? "text-white/[0.07]" : "text-black/[0.045]"
+                                    }`}
+                                >
+                                    {hangul}
+                                </span>
+                                <div className="relative flex h-full flex-col justify-between">
+                                    <div>
+                                        <h3 className="text-[18px] font-black leading-none tracking-[-0.04em] sm:text-[22px] lg:text-[24px] lg:tracking-[-0.055em]">{label}</h3>
+                                        <p className={`mt-2 text-[12px] font-semibold ${dark ? "text-background/45" : "text-muted"}`}>{detail}</p>
+                                    </div>
+                                    <div className={`flex items-center justify-between font-mono text-[11px] font-black tracking-[0.04em] ${dark ? "text-background/45" : "text-muted"}`}>
+                                        <span>{count.toLocaleString("pt-BR")} matérias</span>
+                                        <span className={`text-base leading-none transition-transform group-hover:translate-x-1 ${dark ? "text-background" : "text-foreground"}`}>→</span>
+                                    </div>
+                                </div>
+                            </Link>
+                            )
+                        })}
+                    </div>
+                </div>
+
                 {highlightStories.length > 0 && (
                     <div className="border-t border-border px-4 py-7 sm:px-6 sm:py-8 lg:px-10">
                         <SectionTitleBar
@@ -291,7 +332,7 @@ export function HomeFrontPage({
                     </div>
                 )}
 
-                <div className="grid border-t border-border bg-surface/55 lg:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.75fr)]">
+                <div className="grid border-t border-border bg-surface/55 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.7fr)] xl:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.75fr)]">
                     <div className="border-b border-border px-4 py-8 sm:px-6 lg:border-b-0 lg:border-r lg:px-10">
                         <SectionTitleBar title="Para ler com calma" href="/blog" linkText="arquivo →" className="mb-3" />
                         <div>
@@ -381,47 +422,6 @@ export function HomeFrontPage({
                             </Link>
                         )}
                     </aside>
-                </div>
-
-                <div className="border-t border-border px-4 py-8 sm:px-6 lg:px-10">
-                    <SectionTitleBar
-                        title="Navegar por seção"
-                        action={<span className="hidden font-mono text-[11px] font-bold tracking-[0.08em] text-muted sm:block">
-                            {EDITORIAL_HUBS.length} hubs · {EDITORIAL_HUBS.reduce((total, hub) => total + hub.count, 0).toLocaleString("pt-BR")} matérias
-                        </span>}
-                    />
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-                        {EDITORIAL_HUBS.map(({ label, href, hangul, detail, count }, index) => {
-                            const dark = index % 2 === 0
-                            return (
-                            <Link
-                                key={href}
-                                href={href}
-                                className={`group relative min-h-[130px] overflow-hidden border border-foreground p-4 transition-transform hover:-translate-y-0.5 sm:min-h-[180px] sm:p-5 lg:min-h-[220px] ${
-                                    dark ? "bg-foreground text-background" : "bg-background text-foreground"
-                                }`}
-                            >
-                                <span
-                                    className={`pointer-events-none absolute -right-6 -top-4 font-sans text-[88px] font-black leading-none tracking-[-0.12em] ${
-                                        dark ? "text-white/[0.07]" : "text-black/[0.045]"
-                                    }`}
-                                >
-                                    {hangul}
-                                </span>
-                                <div className="relative flex h-full flex-col justify-between">
-                                    <div>
-                                        <h3 className="text-[18px] font-black leading-none tracking-[-0.04em] sm:text-[22px] lg:text-[24px] lg:tracking-[-0.055em]">{label}</h3>
-                                        <p className={`mt-2 text-[12px] font-semibold ${dark ? "text-background/45" : "text-muted"}`}>{detail}</p>
-                                    </div>
-                                    <div className={`flex items-center justify-between font-mono text-[11px] font-black tracking-[0.04em] ${dark ? "text-background/45" : "text-muted"}`}>
-                                        <span>{count.toLocaleString("pt-BR")} matérias</span>
-                                        <span className={`text-base leading-none transition-transform group-hover:translate-x-1 ${dark ? "text-background" : "text-foreground"}`}>→</span>
-                                    </div>
-                                </div>
-                            </Link>
-                            )
-                        })}
-                    </div>
                 </div>
 
                 {latestPosts.length > 0 && (
