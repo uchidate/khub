@@ -7,6 +7,7 @@ import { createPortal } from "react-dom"
 import { useSession, signOut } from "next-auth/react"
 import { Home, Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
+import Image from "next/image"
 import { accountNavGroups } from "@/lib/config/account-navigation"
 
 interface MobileMenuProps {
@@ -85,10 +86,10 @@ export const MobileMenu = ({ links }: MobileMenuProps) => {
                 <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-accent/20">
                   {session.user.image ? (
                      
-                    <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+                    <Image src={session.user.image} alt={session.user.name || ''} width={44} height={44} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-accent flex items-center justify-center">
-                      <span className="text-white text-[13px] font-bold">{initials}</span>
+                      <span className="text-white text-small font-bold">{initials}</span>
                     </div>
                   )}
                 </div>
