@@ -54,11 +54,11 @@ export const CRON_JOBS = [
   },
   {
     id: 'update-trending',
-    name: 'Atualizar trending',
+    name: 'Atualizar rankings',
     emoji: '📈',
     schedule: '0 */6 * * *',
     frequencyLabel: 'A cada 6 horas',
-    description: 'Recalcula scores e rankings de artistas, grupos e notícias',
+    description: 'Recalcula relevância de artistas, grupos e notícias usados na home, busca e listas',
     endpoint: '/api/cron/update-trending',
     defaultLimit: null,
     color: 'pink',
