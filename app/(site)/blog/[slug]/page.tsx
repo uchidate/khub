@@ -307,13 +307,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Header */}
         <header className="mb-7">
-          <h1 className="font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}<BrandDot /></h1>
+          <h1 className="hidden sm:block font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}<BrandDot /></h1>
 
           {post.excerpt && (
-            <p className="text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>
+            <p className="hidden sm:block text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-y-3 border-t border-border pt-4">
+          <div className="hidden sm:flex flex-wrap items-center justify-between gap-y-3 border-t border-border pt-4">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent shrink-0">
@@ -333,19 +333,68 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         </header>
 
-        {/* Cover image — ocupa toda a coluna principal */}
+        {/* Cover image — mobile: hero full-bleed com título sobreposto | sm+: imagem abaixo do header */}
         {post.coverImageUrl && (
-          <figure className="relative mb-8 w-full overflow-hidden rounded-xl border border-border/40 bg-surface aspect-video">
-            <SafeImage
-              src={post.coverImageUrl}
-              alt={post.title}
-              fill
-              sizes="(max-width: 768px) 100vw, calc(100vw - 360px)"
-              className="object-cover object-center"
-              priority
-              fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
-            />
-          </figure>
+          <>
+            {/* Mobile hero */}
+            <figure className="sm:hidden relative -mx-4 mb-6 w-[calc(100%+2rem)] overflow-hidden aspect-[4/3] bg-surface">
+              <SafeImage
+                src={post.coverImageUrl}
+                alt={post.title}
+                fill
+                sizes="100vw"
+                className="object-cover object-center"
+                priority
+                fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-4 pb-5">
+                <div className="flex items-center gap-2 mb-2">
+                  {post.category && (
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{post.category.name}</span>
+                  )}
+                  <span className="text-[10px] text-white/60 flex items-center gap-1"><Clock size={9} />{post.readingTimeMin} min</span>
+                </div>
+                <h1 className="font-display text-[22px] font-black leading-[1.1] tracking-[-0.02em] text-white">
+                  {post.title}<BrandDot />
+                </h1>
+              </div>
+            </figure>
+
+            {/* Mobile: excerpt + meta abaixo do hero */}
+            <div className="sm:hidden mb-5">
+              {post.excerpt && (
+                <p className="text-sm leading-relaxed text-muted border-l-4 border-accent/30 pl-3 mb-4">{post.excerpt}</p>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-y-2 border-t border-border pt-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent shrink-0">{BLOG_AUTHOR_AVATAR_INITIAL}</div>
+                    <span className="font-semibold text-foreground text-xs">{BLOG_AUTHOR_DISPLAY_NAME}</span>
+                  </div>
+                  <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()} className="flex items-center gap-1"><Calendar size={10} />{formatDate(post.publishedAt ?? post.createdAt)}</time>
+                  <span className="flex items-center gap-1"><Eye size={10} />{(post.viewCount + 1).toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BlogShareButtons title={post.title} url={`${BASE_URL}/blog/${post.slug}`} compact />
+                  <BlogEditButton postId={post.id} />
+                </div>
+              </div>
+            </div>
+
+            {/* sm+: imagem normal abaixo do header */}
+            <figure className="hidden sm:block relative mb-8 w-full overflow-hidden rounded-xl border border-border/40 bg-surface aspect-video">
+              <SafeImage
+                src={post.coverImageUrl}
+                alt={post.title}
+                fill
+                sizes="(max-width: 768px) 100vw, calc(100vw - 360px)"
+                className="object-cover object-center"
+                priority
+                fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
+              />
+            </figure>
+          </>
         )}
 
         {/* Content */}
