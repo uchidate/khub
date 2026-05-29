@@ -307,13 +307,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* Header */}
         <header className="mb-7">
-          <h1 className="font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}<BrandDot /></h1>
+          <h1 className="hidden lg:block font-display text-[28px] font-black leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[38px] lg:text-[52px] xl:text-[58px] mb-5">{post.title}<BrandDot /></h1>
 
           {post.excerpt && (
-            <p className="text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>
+            <p className="hidden lg:block text-base leading-relaxed text-muted sm:text-lg border-l-4 border-accent/30 pl-4 mb-5">{post.excerpt}</p>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-y-3 border-t border-border pt-4">
+          <div className="hidden lg:flex flex-wrap items-center justify-between gap-y-3 border-t border-border pt-4">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent shrink-0">
@@ -333,19 +333,68 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         </header>
 
-        {/* Cover image — ocupa toda a coluna principal */}
+        {/* Cover image — mobile: hero full-bleed com título sobreposto | sm+: imagem abaixo do header */}
         {post.coverImageUrl && (
-          <figure className="relative mb-8 w-full overflow-hidden rounded-xl border border-border/40 bg-surface aspect-video">
-            <SafeImage
-              src={post.coverImageUrl}
-              alt={post.title}
-              fill
-              sizes="(max-width: 768px) 100vw, calc(100vw - 360px)"
-              className="object-cover object-center"
-              priority
-              fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
-            />
-          </figure>
+          <>
+            {/* <lg hero — barra sólida estilo editorial */}
+            <figure className="lg:hidden relative -mx-4 mb-6 w-[calc(100%+2rem)] overflow-hidden bg-surface">
+              <div className="aspect-[4/3]">
+                <SafeImage
+                  src={post.coverImageUrl}
+                  alt={post.title}
+                  fill
+                  sizes="100vw"
+                  className="object-cover object-center"
+                  priority
+                  fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
+                />
+              </div>
+              <div className="bg-foreground px-4 py-3">
+                <div className="flex items-center gap-1.5 mb-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-white/50">
+                  {post.category && <span>{post.category.name}</span>}
+                  {post.category && <span>·</span>}
+                  <span className="flex items-center gap-1"><Clock size={9} />{post.readingTimeMin} min</span>
+                </div>
+                <h1 className="font-display text-[20px] font-black leading-[1.15] tracking-[-0.02em] text-white">
+                  {post.title}<BrandDot />
+                </h1>
+              </div>
+            </figure>
+
+            {/* <lg: excerpt + meta abaixo do hero */}
+            <div className="lg:hidden mb-5">
+              {post.excerpt && (
+                <p className="text-sm leading-relaxed text-muted border-l-4 border-accent/30 pl-3 mb-4">{post.excerpt}</p>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-y-2 border-t border-border pt-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent shrink-0">{BLOG_AUTHOR_AVATAR_INITIAL}</div>
+                    <span className="font-semibold text-foreground text-xs">{BLOG_AUTHOR_DISPLAY_NAME}</span>
+                  </div>
+                  <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()} className="flex items-center gap-1"><Calendar size={10} />{formatDate(post.publishedAt ?? post.createdAt)}</time>
+                  <span className="flex items-center gap-1"><Eye size={10} />{(post.viewCount + 1).toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BlogShareButtons title={post.title} url={`${BASE_URL}/blog/${post.slug}`} compact />
+                  <BlogEditButton postId={post.id} />
+                </div>
+              </div>
+            </div>
+
+            {/* lg+: imagem normal abaixo do header */}
+            <figure className="hidden lg:block relative mb-8 w-full overflow-hidden rounded-xl border border-border/40 bg-surface aspect-video">
+              <SafeImage
+                src={post.coverImageUrl}
+                alt={post.title}
+                fill
+                sizes="(max-width: 768px) 100vw, calc(100vw - 360px)"
+                className="object-cover object-center"
+                priority
+                fallback={<span className="absolute inset-0 flex items-center justify-center bg-surface text-muted"><BookOpen className="h-10 w-10" /></span>}
+              />
+            </figure>
+          </>
         )}
 
         {/* Content */}

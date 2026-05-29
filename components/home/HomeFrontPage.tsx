@@ -210,30 +210,49 @@ export function HomeFrontPage({
                     <div className="lg:flex lg:min-h-[560px]">
                         <Link href={`/blog/${heroStory.slug}`} className="group relative block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
                             <StoryImage story={heroStory} className="aspect-[4/3] w-full lg:h-full lg:min-h-[560px]" priority />
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/30 to-transparent" />
+                            {/* lg+: gradiente leve */}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 bg-gradient-to-t from-black/30 to-transparent lg:block" />
+                            {/* <lg: barra sólida estilo editorial */}
+                            <div className="absolute inset-x-0 bottom-0 lg:hidden bg-foreground px-4 py-3">
+                                <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-white/50">
+                                    <span>Capa</span>
+                                    <span>·</span>
+                                    <span>{heroStory.category?.name ?? heroStory.tags?.[0] ?? "Artigo"}</span>
+                                    <span>·</span>
+                                    <span>{heroStory.readingTimeMin ? `${heroStory.readingTimeMin} min` : "leitura"}</span>
+                                </div>
+                                <h1 className="font-serif text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-white">
+                                    {heroStory.title}
+                                </h1>
+                                {heroStory.excerpt && (
+                                    <p className="mt-1.5 text-[12px] leading-5 text-white/60 line-clamp-2">
+                                        {heroStory.excerpt}
+                                    </p>
+                                )}
+                            </div>
                         </Link>
-                        <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-7 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
-                            <div className="mb-4 sm:mb-5">
+                        <div className="hidden lg:flex relative z-10 min-w-0 flex-1 flex-col bg-background lg:min-h-[560px] lg:px-10 lg:py-12">
+                            <div className="mb-4 hidden lg:block lg:mb-5">
                                 <StoryEyebrow story={heroStory} />
                             </div>
-                            <Link href={`/blog/${heroStory.slug}`} className="group">
+                            <Link href={`/blog/${heroStory.slug}`} className="group hidden lg:block">
                                 <h1 className="max-w-[18ch] break-words font-serif text-[28px] font-medium leading-[0.96] tracking-[-0.045em] text-foreground transition-colors group-hover:text-accent sm:text-[46px] sm:tracking-[-0.055em] lg:text-[54px] xl:text-[62px]">
                                     {heroStory.title}
                                 </h1>
                             </Link>
                             {heroStory.excerpt && (
-                                <p className="mt-5 max-w-[62ch] text-[14px] leading-6 text-foreground/78 sm:mt-8 sm:text-[17px] sm:leading-7">
+                                <p className="hidden lg:block mt-8 max-w-[62ch] text-[17px] leading-7 text-foreground/78">
                                     {heroStory.excerpt}
                                 </p>
                             )}
-                            <div className="mt-6 flex flex-wrap gap-2 sm:mt-8">
+                            <div className="hidden lg:flex mt-8 flex-wrap gap-2">
                                 {(heroStory.tags ?? []).slice(0, 3).map((tag) => (
                                     <span key={tag} className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold text-muted">
                                         #{tag}
                                     </span>
                                 ))}
                             </div>
-                            <div className="mt-7 flex flex-col gap-3 border-t border-border pt-5 text-[12px] text-muted sm:mt-auto sm:flex-row sm:items-center sm:justify-between sm:pt-6">
+                            <div className="hidden lg:flex mt-7 flex-col gap-3 border-t border-border pt-5 text-[12px] text-muted lg:mt-auto lg:flex-row lg:items-center lg:justify-between lg:pt-6">
                                 <span><b className="text-foreground">HallyuHub Redação</b> · {formatDate(heroStory.publishedAt)}</span>
                                 <Link href={`/blog/${heroStory.slug}`} className="font-black text-accent">continuar a leitura →</Link>
                             </div>
@@ -270,13 +289,38 @@ export function HomeFrontPage({
                     </div>
                 )}
 
-                <div className="border-t border-border px-4 py-8 sm:px-6 lg:px-10">
-                    <SectionTitleBar
-                        title="Explorar por categoria"
-                        href="/blog"
-                        linkText="ver todas →"
-                    />
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="border-t border-border py-5 lg:px-10 lg:py-8">
+                    <div className="px-4 sm:px-6 lg:px-0">
+                        <SectionTitleBar
+                            title="Explorar por categoria"
+                            href="/blog"
+                            linkText="ver todas →"
+                        />
+                    </div>
+
+                    {/* Mobile/tablet: faixa horizontal scrollável */}
+                    <div className="lg:hidden flex gap-2 overflow-x-auto px-4 pb-1 sm:px-6" style={{ scrollbarWidth: 'none' }}>
+                        {EDITORIAL_HUBS.map(({ label, slug, href, detail, count: fallbackCount }) => {
+                            const count = categoryCounts[slug] ?? fallbackCount
+                            const cat = BLOG_CATEGORY_BY_SLUG[slug]
+                            const color = cat?.color ?? "#ee2244"
+                            return (
+                                <Link
+                                    key={href}
+                                    href={href}
+                                    className="group shrink-0 flex flex-col gap-0.5 rounded-md px-3 py-2 transition-all"
+                                    style={{ border: `2px solid ${color}`, background: `${color}12` }}
+                                >
+                                    <span className="text-[13px] font-black leading-tight tracking-[-0.03em] text-foreground whitespace-nowrap">{label}</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted/70 whitespace-nowrap">{detail}</span>
+                                    <span className="mt-1 font-mono text-[10px] font-bold" style={{ color }}>{count.toLocaleString("pt-BR")}</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+
+                    {/* Desktop: grid de cards */}
+                    <div className="grid grid-cols-6 gap-3 max-lg:hidden">
                         {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count: fallbackCount }) => {
                             const count = categoryCounts[slug] ?? fallbackCount
                             const cat = BLOG_CATEGORY_BY_SLUG[slug]
@@ -285,7 +329,7 @@ export function HomeFrontPage({
                             <Link
                                 key={href}
                                 href={href}
-                                className="group relative min-h-[120px] overflow-hidden p-3 transition-all hover:-translate-y-1 hover:shadow-2xl lg:min-h-[150px]"
+                                className="group relative min-h-[150px] overflow-hidden p-3 transition-all hover:-translate-y-1 hover:shadow-2xl"
                                 style={{
                                     border: `3px solid ${color}`,
                                     background: `linear-gradient(135deg, ${color}1a 0%, ${color}06 100%)`,
@@ -299,15 +343,12 @@ export function HomeFrontPage({
                                 </span>
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[17px] font-black leading-tight tracking-[-0.05em] text-foreground lg:text-[20px]">{label}</h3>
+                                        <h3 className="text-[20px] font-black leading-tight tracking-[-0.05em] text-foreground">{label}</h3>
                                         <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted/80">{detail}</p>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="font-mono text-[10px] font-bold" style={{ color: `${color}bb` }}>{count.toLocaleString("pt-BR")}</span>
-                                        <span
-                                            className="text-[20px] font-black leading-none transition-transform group-hover:translate-x-1"
-                                            style={{ color }}
-                                        >→</span>
+                                        <span className="text-[20px] font-black leading-none transition-transform group-hover:translate-x-1" style={{ color }}>→</span>
                                     </div>
                                 </div>
                             </Link>
