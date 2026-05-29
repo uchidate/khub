@@ -320,7 +320,7 @@ export function HomeFrontPage({
                     </div>
 
                     {/* Desktop: grid de cards */}
-                    <div className="grid grid-cols-6 gap-3 max-lg:hidden">
+                    <div className="hidden lg:grid lg:grid-cols-6 lg:gap-3">
                         {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count: fallbackCount }) => {
                             const count = categoryCounts[slug] ?? fallbackCount
                             const cat = BLOG_CATEGORY_BY_SLUG[slug]

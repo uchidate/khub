@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import type { MouseEvent } from "react"
-import { Command, Search } from "lucide-react"
+import { Command, Search, ChevronRight } from "lucide-react"
 import { UserMenu } from "@/components/features/UserMenu"
 import { MobileMenu } from "@/components/features/MobileMenu"
 import { NotificationBell } from "@/components/features/NotificationBell"
@@ -104,9 +104,11 @@ function formatEditionDate(now = new Date()) {
 
 const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     const navRef = useRef<HTMLElement | null>(null)
+    const navLinksRef = useRef<HTMLDivElement | null>(null)
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isScrolled, setIsScrolled] = useState(false)
+    const [showNavArrow, setShowNavArrow] = useState(false)
     const openSearch = useQuickSearch((state) => state.open)
     const [editionDate, setEditionDate] = useState(() => formatEditionDate())
     useEffect(() => {
@@ -115,6 +117,17 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
         const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds()
         const t = setTimeout(() => { tick(); const iv = setInterval(tick, 60_000); return () => clearInterval(iv) }, msToNextMinute)
         return () => clearTimeout(t)
+    }, [])
+
+    useEffect(() => {
+        const el = navLinksRef.current
+        if (!el) return
+        const check = () => setShowNavArrow(el.scrollWidth > el.clientWidth + 4 && el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
+        check()
+        el.addEventListener('scroll', check, { passive: true })
+        const ro = new ResizeObserver(check)
+        ro.observe(el)
+        return () => { el.removeEventListener('scroll', check); ro.disconnect() }
     }, [])
 
     const handleOpenSearch = (event?: MouseEvent) => {
@@ -186,22 +199,39 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
                             <Search className="h-[18px] w-[18px]" />
                         </Link>
                         <ThemeToggle />
+                        {session ? (
+                            <div className="flex items-center gap-0.5">
+                                <NotificationBell />
+                                <UserMenu />
+                            </div>
+                        ) : (
+                            <Link href="/auth/login" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted hover:text-foreground" aria-label="Entrar">
+                                <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            </Link>
+                        )}
                     </div>
                 </div>
                 {/* Links de navegação mobile — barra de navegação principal */}
-                <div className="flex h-10 items-center overflow-x-auto border-b border-foreground/20 px-2 scrollbar-none" style={{ background: '#0a0a0a' }}>
-                    {navLinks.map(({ label, href }) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className={`relative flex h-full shrink-0 items-center px-3 text-[13px] font-bold tracking-[-0.01em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
-                                isActiveLink(href) ? 'after:scale-x-100 after:bg-accent' : 'after:scale-x-0 after:bg-accent'
-                            }`}
-                            style={{ color: isActiveLink(href) ? '#ff246e' : 'rgba(255,255,255,0.65)' }}
-                        >
-                            {label}
-                        </Link>
-                    ))}
+                <div className="relative border-b border-foreground/20" style={{ background: '#0a0a0a' }}>
+                    <div ref={navLinksRef} className="flex h-10 items-center overflow-x-auto px-2" style={{ scrollbarWidth: 'none' }}>
+                        {navLinks.map(({ label, href }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className={`relative flex h-full shrink-0 items-center px-3 text-[13px] font-bold tracking-[-0.01em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:transition-transform ${
+                                    isActiveLink(href) ? 'after:scale-x-100 after:bg-accent' : 'after:scale-x-0 after:bg-accent'
+                                }`}
+                                style={{ color: isActiveLink(href) ? '#ff246e' : 'rgba(255,255,255,0.65)' }}
+                            >
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+                    {showNavArrow && (
+                        <div className="pointer-events-none absolute right-0 top-0 flex h-full items-center pr-1.5 pl-6" style={{ background: 'linear-gradient(to right, transparent, #0a0a0a 55%)' }}>
+                            <ChevronRight className="h-3.5 w-3.5 text-white/40" />
+                        </div>
+                    )}
                 </div>
             </div>
 
