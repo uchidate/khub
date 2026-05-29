@@ -37,6 +37,7 @@ export interface DiscoveredArticle {
 }
 
 export type ImportResult = 'imported' | 'exists' | 'error'
+export type DiscoveryStrategy = 'api' | 'listing'
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -141,6 +142,114 @@ export async function discoverViaWPAPI(
     }
 
     return collected
+}
+
+// ─── Listing fallback discovery ──────────────────────────────────────────────
+
+function listingPageUrl(source: string, page: number): string | null {
+    switch (source) {
+        case 'Soompi':
+            return page <= 1 ? 'https://www.soompi.com/' : `https://www.soompi.com/page/${page}/`
+        case 'Koreaboo':
+            return page <= 1 ? 'https://www.koreaboo.com/news/' : `https://www.koreaboo.com/news/page/${page}/`
+        case 'Dramabeans':
+            return page <= 1 ? 'https://dramabeans.com/' : `https://dramabeans.com/page/${page}/`
+        case 'Asian Junkie':
+            return page <= 1 ? 'https://www.asianjunkie.com/' : `https://www.asianjunkie.com/page/${page}/`
+        case 'HelloKpop':
+            return page <= 1 ? 'https://www.hellokpop.com/' : `https://www.hellokpop.com/page/${page}/`
+        case 'Kpopmap':
+            return page <= 1 ? 'https://kpopmap.com/' : `https://kpopmap.com/page/${page}/`
+        default:
+            return null
+    }
+}
+
+function extractArticlesFromListingPage(html: string): DiscoveredArticle[] {
+    const results: DiscoveredArticle[] = []
+    const articleBlockRegex = /<article[^>]*>([\s\S]*?)<\/article>/gi
+    let block: RegExpExecArray | null
+
+    while ((block = articleBlockRegex.exec(html)) !== null) {
+        const content = block[1]
+        const timeMatch = content.match(/<time[^>]*\bdatetime\s*=\s*["']([^"']+)["']/)
+        if (!timeMatch) continue
+
+        const date = new Date(timeMatch[1])
+        if (isNaN(date.getTime())) continue
+
+        const headingLinkMatch = content.match(
+            /<h[1-6][^>]*>[\s\S]*?<a[^>]*\bhref\s*=\s*["']([^"'#?]+)["'][^>]*>([\s\S]*?)<\/a>/i,
+        )
+        if (!headingLinkMatch) continue
+
+        const url = headingLinkMatch[1].trim()
+        const title = decodeHtmlEntities(
+            headingLinkMatch[2].replace(/<[\s\S]*?>/g, '').replace(/</g, '').trim(),
+        )
+
+        if (!url.startsWith('http')) continue
+        results.push({ url, date, title })
+    }
+
+    return results
+}
+
+export async function discoverViaListing(
+    source: string,
+    dateFrom: Date,
+    dateTo: Date,
+    limit: number,
+    offset = 0,
+): Promise<DiscoveredArticle[]> {
+    if (!listingPageUrl(source, 1)) throw new Error(`Listing não configurado para fonte: ${source}`)
+
+    const needed = offset + limit
+    const collected: DiscoveredArticle[] = []
+    let page = 1
+    const MAX_PAGES = 50
+
+    while (collected.length < needed && page <= MAX_PAGES) {
+        const url = listingPageUrl(source, page)
+        if (!url) break
+
+        const res = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HallyuHub/1.0)' },
+            signal: AbortSignal.timeout(12000),
+        })
+        if (!res.ok) break
+
+        const html = await res.text()
+        const articles = extractArticlesFromListingPage(html)
+        if (articles.length === 0) break
+
+        for (const article of articles) {
+            if (article.date > dateTo) continue
+            if (article.date < dateFrom) continue
+            collected.push(article)
+        }
+
+        if (articles.every(article => article.date < dateFrom)) break
+        page++
+    }
+
+    return collected.slice(offset, offset + limit)
+}
+
+export async function discoverArticlesFromSource(
+    source: string,
+    dateFrom: Date,
+    dateTo: Date,
+    limit: number,
+    offset = 0,
+): Promise<{ articles: DiscoveredArticle[]; strategy: DiscoveryStrategy }> {
+    try {
+        const articles = await discoverViaWPAPI(source, dateFrom, dateTo, limit, offset)
+        return { articles, strategy: 'api' }
+    } catch {
+        const articles = await discoverViaListing(source, dateFrom, dateTo, limit, offset)
+        return { articles, strategy: 'listing' }
+    }
 }
 
 // ─── Core import ──────────────────────────────────────────────────────────────

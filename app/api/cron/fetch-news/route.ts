@@ -28,7 +28,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { createLogger } from '@/lib/utils/logger'
 import { onCronError } from '@/lib/utils/cron-logger'
-import { WP_API_BASES, discoverViaWPAPI, importOne } from '@/lib/services/news-import-service'
+import { WP_API_BASES, discoverArticlesFromSource, importOne, type DiscoveryStrategy } from '@/lib/services/news-import-service'
 import { logSystemEvent } from '@/lib/services/system-event-service'
 import { logCronRun } from '@/lib/services/cron-execution-service'
 
@@ -53,6 +53,8 @@ function verifyToken(request: NextRequest): boolean {
 
 interface SourceResult {
     source:    string
+    strategy:  DiscoveryStrategy | null
+    skipped:   boolean
     discovered: number
     imported:  number
     exists:    number
@@ -67,9 +69,10 @@ async function fetchSourceNews(
     dryRun: boolean,
 ): Promise<SourceResult> {
     const t = Date.now()
-    const result: SourceResult = { source: sourceName, discovered: 0, imported: 0, exists: 0, errors: 0, duration_ms: 0 }
+    const result: SourceResult = { source: sourceName, strategy: null, skipped: false, discovered: 0, imported: 0, exists: 0, errors: 0, duration_ms: 0 }
 
-    const articles = await discoverViaWPAPI(sourceName, dateFrom, dateTo, 500)
+    const { articles, strategy } = await discoverArticlesFromSource(sourceName, dateFrom, dateTo, 500)
+    result.strategy = strategy
     result.discovered = articles.length
 
     if (dryRun) {
@@ -112,6 +115,7 @@ async function runFetchNews(
     dryRun: boolean,
 ): Promise<SourceResult[]> {
     const sources = source ? [source] : Object.keys(WP_API_BASES)
+    const strictSource = Boolean(source)
     const dateTo   = new Date()
     const dateFrom = new Date(dateTo.getTime() - daysBack * 86_400_000)
 
@@ -126,11 +130,17 @@ async function runFetchNews(
         log.info(`Buscando ${safeSrc} (últimos ${daysBack} dia(s))`)
         try {
             const result = await fetchSourceNews(src, dateFrom, dateTo, dryRun)
-            log.info(`${safeSrc}: discovered=${result.discovered} imported=${result.imported} exists=${result.exists} errors=${result.errors} (${result.duration_ms}ms)`)
+            log.info(`${safeSrc}: strategy=${result.strategy ?? 'none'} discovered=${result.discovered} imported=${result.imported} exists=${result.exists} errors=${result.errors} (${result.duration_ms}ms)`)
             results.push(result)
         } catch (err) {
-            log.error(`${safeSrc} falhou: ${String(err)}`)
-            results.push({ source: src, discovered: 0, imported: 0, exists: 0, errors: 1, duration_ms: 0 })
+            const message = `${safeSrc} falhou: ${String(err)}`
+            if (strictSource) {
+                log.error(message)
+                results.push({ source: src, strategy: null, skipped: false, discovered: 0, imported: 0, exists: 0, errors: 1, duration_ms: 0 })
+            } else {
+                log.warn(`${message}; fonte pulada no modo todas as fontes`)
+                results.push({ source: src, strategy: null, skipped: true, discovered: 0, imported: 0, exists: 0, errors: 0, duration_ms: 0 })
+            }
         }
     }
 
@@ -154,14 +164,15 @@ export async function POST(request: NextRequest) {
         .then(results => {
             const totalImported = results.reduce((s, r) => s + r.imported, 0)
             const totalErrors   = results.reduce((s, r) => s + r.errors,  0)
-            log.info('News fetch completed', { requestId, totalImported, totalErrors, results })
+            const totalSkipped  = results.filter(r => r.skipped).length
+            log.info('News fetch completed', { requestId, totalImported, totalErrors, totalSkipped, results })
             logCronRun(
                 'fetch-news',
                 totalErrors > 0 ? 'partial' : 'success',
                 totalErrors > 0
                     ? `${totalImported} notícia(s) importada(s), ${totalErrors} erro(s)`
-                    : `${totalImported} notícia(s) importada(s)`,
-                { requestId, totalImported, totalErrors },
+                    : `${totalImported} notícia(s) importada(s)${totalSkipped > 0 ? `, ${totalSkipped} fonte(s) pulada(s)` : ''}`,
+                { requestId, totalImported, totalErrors, totalSkipped },
             ).catch(() => {})
             if (totalErrors > 0) {
                 logSystemEvent('ERROR', 'cron-fetch-news', `Busca de notícias concluída com ${totalErrors} erro(s) de importação`, {
