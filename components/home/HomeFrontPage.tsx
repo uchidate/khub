@@ -210,13 +210,26 @@ export function HomeFrontPage({
                     <div className="lg:flex lg:min-h-[560px]">
                         <Link href={`/blog/${heroStory.slug}`} className="group relative block min-w-0 border-b border-border lg:w-[58%] lg:shrink-0 lg:border-b-0 lg:border-r">
                             <StoryImage story={heroStory} className="aspect-[4/3] w-full lg:h-full lg:min-h-[560px]" priority />
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/30 to-transparent" />
+                            {/* Mobile: gradiente + eyebrow + título sobrepostos | lg+: gradiente leve */}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 lg:h-28 lg:bg-gradient-to-t lg:from-black/30 lg:to-transparent sm:h-28 sm:bg-gradient-to-t sm:from-black/30 sm:to-transparent max-sm:inset-0 max-sm:bg-gradient-to-t max-sm:from-black/90 max-sm:via-black/40 max-sm:to-transparent" />
+                            <div className="absolute inset-x-0 bottom-0 p-4 pb-5 sm:hidden">
+                                <div className="mb-2 flex flex-wrap items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em]">
+                                    <span className="text-white/90">Capa</span>
+                                    <span className="text-white/50">·</span>
+                                    <span className="text-white/90">{heroStory.category?.name ?? heroStory.tags?.[0] ?? "Artigo"}</span>
+                                    <span className="text-white/40">·</span>
+                                    <span className="text-white/60">{heroStory.readingTimeMin ? `${heroStory.readingTimeMin} min` : "leitura"}</span>
+                                </div>
+                                <h1 className="font-serif text-[24px] font-medium leading-[1.0] tracking-[-0.04em] text-white">
+                                    {heroStory.title}
+                                </h1>
+                            </div>
                         </Link>
-                        <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-7 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
-                            <div className="mb-4 sm:mb-5">
+                        <div className="relative z-10 flex min-w-0 flex-1 flex-col bg-background px-4 py-5 sm:px-8 sm:py-12 lg:min-h-[560px] lg:px-10 lg:py-12">
+                            <div className="mb-4 hidden sm:block sm:mb-5">
                                 <StoryEyebrow story={heroStory} />
                             </div>
-                            <Link href={`/blog/${heroStory.slug}`} className="group">
+                            <Link href={`/blog/${heroStory.slug}`} className="group hidden sm:block">
                                 <h1 className="max-w-[18ch] break-words font-serif text-[28px] font-medium leading-[0.96] tracking-[-0.045em] text-foreground transition-colors group-hover:text-accent sm:text-[46px] sm:tracking-[-0.055em] lg:text-[54px] xl:text-[62px]">
                                     {heroStory.title}
                                 </h1>
