@@ -338,7 +338,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <>
             {/* <lg hero — barra sólida estilo editorial */}
             <figure className="lg:hidden relative -mx-4 mb-6 w-[calc(100%+2rem)] overflow-hidden bg-surface">
-              <div className="aspect-[4/3]">
+              <div className="relative aspect-[4/3]">
                 <SafeImage
                   src={post.coverImageUrl}
                   alt={post.title}
