@@ -13,7 +13,7 @@ import { HomeNowStrip } from "@/components/home/HomeNowStrip"
 import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { buildHomeRuntimeData } from "@/lib/home/home-runtime"
 import { HomeDiscoverySection } from "@/components/home/HomeDiscoverySection"
-import { ResponsiveFilterBar } from "@/components/ui/ResponsiveFilterBar"
+import { HomeSectionFilterBar } from "@/components/home/HomeSectionFilterBar"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
 // Revalidação antecipada via revalidateTag(HOME_CACHE_TAG) nos crons de publish e trending.
@@ -33,6 +33,10 @@ const HOME_SECTIONS = [
     { label: 'Quiz', href: '#quiz' },
     { label: 'Loja', href: '#loja' },
 ]
+
+const HOME_SECTION_SCROLL_MARGIN = {
+    scrollMarginTop: 'calc(var(--site-header-h, 92px) + var(--section-bar-h, 52px) + 16px)',
+}
 
 const getHomePublicData = unstable_cache(
     () => buildHomeRuntimeData(),
@@ -188,21 +192,9 @@ export default async function Home() {
                 },
             }} />
 
-            <ResponsiveFilterBar label="Seção" value="Destaques">
-                <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
-                    {HOME_SECTIONS.map(({ label, href }) => (
-                        <a
-                            key={href}
-                            href={href}
-                            className="flex h-8 shrink-0 items-center whitespace-nowrap rounded-md bg-surface px-3 text-[12px] font-black text-muted transition-colors hover:text-foreground lg:h-full lg:rounded-none lg:border-b-2 lg:border-transparent lg:bg-transparent lg:px-0.5 lg:hover:border-foreground/30"
-                        >
-                            {label}
-                        </a>
-                    ))}
-                </div>
-            </ResponsiveFilterBar>
+            <HomeSectionFilterBar sections={HOME_SECTIONS} />
 
-            <div id="destaques">
+            <div id="destaques" style={HOME_SECTION_SCROLL_MARGIN}>
             <HomeFrontPage
                 featuredStory={featuredPost ?? undefined}
                 carouselPosts={carouselPosts}
@@ -214,7 +206,7 @@ export default async function Home() {
                 categoryCounts={categoryCounts}
             />
             </div>
-            <div id="descobertas">
+            <div id="descobertas" style={HOME_SECTION_SCROLL_MARGIN}>
             <HomeDiscoverySection
                 cluster={featuredCluster ?? trendingCluster}
                 artist={randomArtist ? { id: randomArtist.id, slug: randomArtist.slug, nameRomanized: randomArtist.nameRomanized, nameHangul: randomArtist.nameHangul, primaryImageUrl: randomArtist.primaryImageUrl } : null}
@@ -223,7 +215,7 @@ export default async function Home() {
                 mode={compositionMode}
             />
             </div>
-            <div id="agora">
+            <div id="agora" style={HOME_SECTION_SCROLL_MARGIN}>
             <HomeNowStrip
                 artist={trendingArtists[0] ?? null}
                 group={trendingGroups[0] ?? null}
@@ -242,8 +234,8 @@ export default async function Home() {
                 mode={compositionMode}
             />
             </div>
-            <div id="aniversarios"><HomeTodaysBirthdays artists={todaysBirthdays.slice(1)} /></div>
-            <div id="radar">
+            <div id="aniversarios" style={HOME_SECTION_SCROLL_MARGIN}><HomeTodaysBirthdays artists={todaysBirthdays.slice(1)} /></div>
+            <div id="radar" style={HOME_SECTION_SCROLL_MARGIN}>
             <HomeBelowFold
                 watchProductions={watchProductions}
                 feedPosts={belowFoldFeedPosts}
@@ -253,8 +245,8 @@ export default async function Home() {
                 compositionMode={compositionMode}
             />
             </div>
-            <div id="quiz"><HomeQuizBanner /></div>
-            <div id="loja"><HomeLojaDestaque products={featuredProducts} /></div>
+            <div id="quiz" style={HOME_SECTION_SCROLL_MARGIN}><HomeQuizBanner /></div>
+            <div id="loja" style={HOME_SECTION_SCROLL_MARGIN}><HomeLojaDestaque products={featuredProducts} /></div>
             <ScrollToTop />
         </div>
     )

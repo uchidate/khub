@@ -289,8 +289,8 @@ export function HomeFrontPage({
                     </div>
                 )}
 
-                <div className="border-t border-border py-5 lg:px-10 lg:py-8">
-                    <div className="px-4 sm:px-6 lg:px-0">
+                <div className="border-t border-border px-4 py-5 sm:px-6 lg:px-5 lg:py-5">
+                    <div className="lg:px-0">
                         <SectionTitleBar
                             title="Explorar por categoria"
                             href="/blog"
@@ -299,7 +299,7 @@ export function HomeFrontPage({
                     </div>
 
                     {/* Mobile/tablet: faixa horizontal scrollável */}
-                    <div className="lg:hidden flex gap-2 overflow-x-auto px-4 pb-1 sm:px-6" style={{ scrollbarWidth: 'none' }}>
+                    <div className="lg:hidden -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6" style={{ scrollbarWidth: 'none' }}>
                         {EDITORIAL_HUBS.map(({ label, slug, href, detail, count: fallbackCount }) => {
                             const count = categoryCounts[slug] ?? fallbackCount
                             const cat = BLOG_CATEGORY_BY_SLUG[slug]
@@ -320,7 +320,7 @@ export function HomeFrontPage({
                     </div>
 
                     {/* Desktop: grid de cards */}
-                    <div className="hidden lg:grid lg:grid-cols-6 lg:gap-3">
+                    <div className="grid grid-cols-6 gap-2.5 max-lg:hidden">
                         {EDITORIAL_HUBS.map(({ label, slug, href, hangul, detail, count: fallbackCount }) => {
                             const count = categoryCounts[slug] ?? fallbackCount
                             const cat = BLOG_CATEGORY_BY_SLUG[slug]
@@ -329,26 +329,26 @@ export function HomeFrontPage({
                             <Link
                                 key={href}
                                 href={href}
-                                className="group relative min-h-[150px] overflow-hidden p-3 transition-all hover:-translate-y-1 hover:shadow-2xl"
+                                className="group relative h-[112px] overflow-hidden p-2.5 transition-all hover:-translate-y-0.5 hover:shadow-lg"
                                 style={{
-                                    border: `3px solid ${color}`,
+                                    border: `2px solid ${color}`,
                                     background: `linear-gradient(135deg, ${color}1a 0%, ${color}06 100%)`,
                                 }}
                             >
                                 <span
-                                    className="pointer-events-none absolute top-[48%] right-0 font-sans text-[80px] font-black leading-none tracking-[-0.1em] transition-transform duration-500 group-hover:scale-105"
-                                    style={{ color: `${color}1c` }}
+                                    className="pointer-events-none absolute -bottom-2 right-2 font-sans text-[68px] font-black leading-none tracking-[-0.1em] transition-transform duration-500 group-hover:scale-105"
+                                    style={{ color: `${color}16` }}
                                 >
                                     {hangul}
                                 </span>
                                 <div className="relative flex h-full flex-col justify-between">
                                     <div>
-                                        <h3 className="text-[20px] font-black leading-tight tracking-[-0.05em] text-foreground">{label}</h3>
-                                        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted/80">{detail}</p>
+                                        <h3 className="text-[17px] font-black leading-none tracking-[-0.04em] text-foreground">{label}</h3>
+                                        <p className="mt-1 text-[10px] font-black uppercase leading-none tracking-[0.12em] text-foreground/85">{detail}</p>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="font-mono text-[10px] font-bold" style={{ color: `${color}bb` }}>{count.toLocaleString("pt-BR")}</span>
-                                        <span className="text-[20px] font-black leading-none transition-transform group-hover:translate-x-1" style={{ color }}>→</span>
+                                        <span className="font-mono text-[10px] font-bold" style={{ color }}>{count.toLocaleString("pt-BR")}</span>
+                                        <span className="text-[18px] font-black leading-none transition-transform group-hover:translate-x-1" style={{ color }}>→</span>
                                     </div>
                                 </div>
                             </Link>

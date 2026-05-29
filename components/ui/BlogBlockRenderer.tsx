@@ -851,7 +851,7 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
                     )
                     : Array.isArray(item)
                         ? (
-                            <div key={idx} className={`grid gap-2 my-3 ${item.length >= 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            <div key={idx} className={`my-4 grid gap-3 ${item.length >= 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
                                 {item.map((block, j) => (
                                     <BlogBlockItem key={j} block={block} resolvedEntities={resolvedEntities} />
                                 ))}
@@ -1714,12 +1714,12 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
     // Card médio horizontal — thumbnail retrato + info
     return (
         <Link href={`/artists/${artistId}`}
-            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            className="group my-3 grid min-h-[132px] w-full max-w-[440px] grid-cols-[96px_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all hover:border-accent/40 hover:shadow-md sm:grid-cols-[104px_minmax(0,1fr)]">
             {/* Thumbnail retrato — 105px × 140px = proporção 3:4, object-top mostra o rosto */}
-            <div className="relative w-[105px] shrink-0 overflow-hidden bg-surface-hover">
+            <div className="relative min-h-[132px] overflow-hidden bg-surface-hover">
                 {data?.primaryImageUrl ? (
                     <Image src={data.primaryImageUrl} alt={data?.nameRomanized ?? artistId} fill
-                        className="object-cover object-top" sizes="105px" />
+                        className="object-cover object-top" sizes="104px" />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-accent/40 bg-gradient-to-b from-accent/10 to-surface">
                         {data?.nameRomanized?.[0] ?? '?'}
@@ -1727,10 +1727,10 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
                 )}
             </div>
             {/* Info */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
-                <div>
+            <div className="flex min-w-0 flex-col justify-between border-l border-border/60 px-3 py-3 sm:px-4">
+                <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-1">Artista</p>
-                    <p className="text-lg font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                    <p className="line-clamp-2 text-[15px] font-black leading-tight text-foreground transition-colors group-hover:text-accent sm:text-base">
                         {data?.nameRomanized ?? artistId}
                     </p>
                     {data?.roles && data.roles.length > 0 && (
@@ -1738,9 +1738,8 @@ function ArtistCardBlock({ artistId, note, compact, portrait, data }: { artistId
                     )}
                     {note && <p className="text-xs text-muted mt-1 line-clamp-1 leading-snug">{note}</p>}
                 </div>
-                <p className="text-[10px] text-muted flex items-center gap-1">
-                    Ver perfil no
-                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                <p className="mt-3 flex min-w-0 items-center gap-1 text-[10px] font-semibold text-muted">
+                    <span className="truncate">Ver perfil</span>
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>
@@ -1775,12 +1774,12 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
     // Card compacto horizontal — thumbnail landscape + info
     return (
         <Link href={`/groups/${groupId}`}
-            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            className="group my-3 grid min-h-[132px] w-full max-w-[440px] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all hover:border-accent/40 hover:shadow-md sm:grid-cols-[128px_minmax(0,1fr)]">
             {/* Thumbnail landscape — 16:9 na altura de 140px = ~249px, mas limitado em mobile */}
-            <div className="relative w-[40%] max-w-[200px] shrink-0 overflow-hidden bg-surface-hover">
+            <div className="relative min-h-[132px] overflow-hidden bg-surface-hover">
                 {data?.profileImageUrl ? (
                     <Image src={data.profileImageUrl} alt={data.name} fill
-                        className="object-cover object-center" sizes="160px" />
+                        className="object-cover object-center" sizes="128px" />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-accent/40 bg-gradient-to-br from-accent/10 to-surface">
                         {data?.name?.[0] ?? '?'}
@@ -1788,10 +1787,10 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
                 )}
             </div>
             {/* Info */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
-                <div>
+            <div className="flex min-w-0 flex-col justify-between border-l border-border/60 px-3 py-3 sm:px-4">
+                <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-0.5">Grupo</p>
-                    <p className="text-base font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                    <p className="line-clamp-2 text-[15px] font-black leading-tight text-foreground transition-colors group-hover:text-accent sm:text-base">
                         {data?.name ?? groupId}
                     </p>
                     {data?.fanClubName && (
@@ -1801,9 +1800,8 @@ function GroupCardBlock({ groupId, note, compact, data }: { groupId: string; not
                     )}
                     {note && <p className="text-xs text-muted mt-1 line-clamp-1">{note}</p>}
                 </div>
-                <p className="text-[10px] text-muted flex items-center gap-1">
-                    Ver perfil no
-                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                <p className="mt-3 flex min-w-0 items-center gap-1 text-[10px] font-semibold text-muted">
+                    <span className="truncate">Ver perfil</span>
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>
@@ -1816,12 +1814,12 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
     const typeLabel = data?.type ? (TYPE_LABELS[data.type] ?? data.type) : null
     return (
         <Link href={`/productions/${productionId}`}
-            className="group my-3 rounded-xl overflow-hidden flex items-stretch border border-border hover:border-accent/40 bg-surface transition-all shadow-sm hover:shadow-md h-[140px]">
+            className="group my-3 grid min-h-[132px] w-full max-w-[440px] grid-cols-[88px_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-all hover:border-accent/40 hover:shadow-md sm:grid-cols-[96px_minmax(0,1fr)]">
             {/* Poster — 93px wide × 140px tall = proporção 2:3 exata */}
-            <div className="relative w-[93px] shrink-0 overflow-hidden bg-surface-hover">
+            <div className="relative min-h-[132px] overflow-hidden bg-surface-hover">
                 {data?.imageUrl ? (
                     <Image src={data.imageUrl} alt={data?.titlePt ?? ''} fill
-                        className="object-cover" sizes="67px" />
+                        className="object-cover" sizes="96px" />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-lg font-black text-accent/30 bg-gradient-to-b from-accent/10 to-surface">
                         {data?.titlePt?.slice(0, 2).toUpperCase() ?? '?'}
@@ -1829,19 +1827,18 @@ function ProductionCardBlock({ productionId, note, data }: { productionId: strin
                 )}
             </div>
             {/* Info */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-3 px-4 border-l border-border/60">
-                <div>
+            <div className="flex min-w-0 flex-col justify-between border-l border-border/60 px-3 py-3 sm:px-4">
+                <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-accent mb-0.5">
                         {typeLabel ?? 'Produção'}{data?.year ? ` · ${data.year}` : ''}
                     </p>
-                    <p className="text-base font-black text-foreground group-hover:text-accent transition-colors leading-tight truncate">
+                    <p className="line-clamp-2 text-[15px] font-black leading-tight text-foreground transition-colors group-hover:text-accent sm:text-base">
                         {data?.titlePt ?? productionId}
                     </p>
                     {note && <p className="text-xs text-muted mt-1 line-clamp-1">{note}</p>}
                 </div>
-                <p className="text-[10px] text-muted flex items-center gap-1">
-                    Ver detalhes no
-                    <span className="font-black"><span className="text-foreground">HallyuHub</span><span className="text-accent">·</span></span>
+                <p className="mt-3 flex min-w-0 items-center gap-1 text-[10px] font-semibold text-muted">
+                    <span className="truncate">Ver detalhes</span>
                     <span className="group-hover:translate-x-0.5 transition-transform inline-block text-accent">→</span>
                 </p>
             </div>

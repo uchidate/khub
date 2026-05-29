@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Twitter, Facebook, Link2, Check } from 'lucide-react'
+import { ArrowLeft, Clock, Twitter, Facebook, Link2, Check, Share2 } from 'lucide-react'
 
 interface BlogStickyNavProps {
   title: string
@@ -47,6 +47,18 @@ export function BlogStickyNav({ title, readingTimeMin, shareUrl, shareTitle, cat
     } catch { /* silencioso */ }
   }
 
+  const shareArticle = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, url: shareUrl })
+        return
+      } catch {
+        // Usuário cancelou ou o navegador bloqueou; cai no copiar link.
+      }
+    }
+    await copyLink()
+  }
+
   const enc = encodeURIComponent
 
   return (
@@ -57,14 +69,14 @@ export function BlogStickyNav({ title, readingTimeMin, shareUrl, shareTitle, cat
       {/* Barra de progresso */}
       <div className="absolute bottom-0 left-0 h-[2px] bg-accent transition-all duration-150" style={{ width: `${progress}%` }} />
 
-      <div className="page-wrap h-12 flex items-center gap-4">
+      <div className="page-wrap flex h-14 items-center gap-2 sm:h-12 sm:gap-4">
         {/* Voltar */}
-        <Link href="/blog" className="shrink-0 flex items-center gap-1.5 text-muted hover:text-foreground transition-colors">
-          <ArrowLeft className="w-3.5 h-3.5" />
+        <Link href="/blog" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground sm:h-auto sm:w-auto sm:gap-1.5 sm:rounded-none">
+          <ArrowLeft className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
           <span className="text-[11px] font-semibold hidden sm:block">Artigos</span>
         </Link>
 
-        <div className="w-px h-4 bg-border shrink-0" />
+        <div className="hidden h-4 w-px shrink-0 bg-border sm:block" />
 
         {/* Categoria */}
         {categoryName && (
@@ -73,29 +85,47 @@ export function BlogStickyNav({ title, readingTimeMin, shareUrl, shareTitle, cat
           </Link>
         )}
 
-        {/* Título */}
-        <p className="flex-1 min-w-0 text-[13px] font-semibold text-foreground truncate">{title}</p>
+        {/* Título + contexto mobile */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-black leading-tight text-foreground sm:font-semibold">{title}</p>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-semibold text-muted sm:hidden">
+            {categoryName && (
+              <>
+                <span className="truncate uppercase tracking-[0.08em] text-accent">{categoryName}</span>
+                <span className="h-1 w-1 shrink-0 rounded-full bg-border" />
+              </>
+            )}
+            <span className="flex shrink-0 items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {minsLeft > 0 ? `${minsLeft} min` : 'Quase lá'}
+            </span>
+          </div>
+        </div>
 
         {/* Tempo restante */}
-        <span className="shrink-0 flex items-center gap-1 text-[11px] text-muted">
-          <Clock className="w-3 h-3" />
+        <span className="hidden shrink-0 items-center gap-1 text-[11px] text-muted sm:flex">
+          <Clock className="h-3 w-3" />
           {minsLeft > 0 ? `${minsLeft} min restantes` : 'Quase lá'}
         </span>
 
-        <div className="w-px h-4 bg-border shrink-0" />
+        <div className="hidden h-4 w-px shrink-0 bg-border sm:block" />
 
         {/* Share compacto */}
         <div className="flex items-center gap-1 shrink-0">
           <a href={`https://twitter.com/intent/tweet?text=${enc(shareTitle)}&url=${enc(shareUrl)}`} target="_blank" rel="noopener noreferrer"
-            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-colors" aria-label="X">
+            className="hidden rounded-md p-1.5 text-muted transition-colors hover:bg-surface hover:text-foreground sm:block" aria-label="X">
             <Twitter className="w-3.5 h-3.5" />
           </a>
           <a href={`https://www.facebook.com/sharer/sharer.php?u=${enc(shareUrl)}`} target="_blank" rel="noopener noreferrer"
-            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-colors" aria-label="Facebook">
+            className="hidden rounded-md p-1.5 text-muted transition-colors hover:bg-surface hover:text-foreground sm:block" aria-label="Facebook">
             <Facebook className="w-3.5 h-3.5" />
           </a>
+          <button onClick={shareArticle}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-foreground sm:hidden" aria-label="Compartilhar artigo">
+            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
+          </button>
           <button onClick={copyLink}
-            className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-colors" aria-label="Copiar link">
+            className="hidden rounded-md p-1.5 text-muted transition-colors hover:bg-surface hover:text-foreground sm:block" aria-label="Copiar link">
             {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Link2 className="w-3.5 h-3.5" />}
           </button>
         </div>

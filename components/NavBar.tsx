@@ -172,9 +172,10 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
     }
 
     return (
+        <>
         <nav
             ref={navRef}
-            className={`sticky z-[320] bg-background transition-shadow duration-300 ${isScrolled ? "shadow-[0_1px_0_var(--color-border)]" : ""}`}
+            className={`fixed left-1/2 z-[320] w-full max-w-[1440px] -translate-x-1/2 bg-background transition-shadow duration-300 ${isScrolled ? "shadow-[0_1px_0_var(--color-border)]" : ""}`}
             style={{ top: 'var(--adsense-anchor-top-offset, 0px)' }}
         >
             {/* Mobile */}
@@ -306,6 +307,8 @@ const NavBar = ({ tickerItems = [] }: { tickerItems?: TickerItem[] }) => {
             </div>
             <QuickSearch />
         </nav>
+        <div aria-hidden="true" className="shrink-0" style={{ height: 'var(--site-header-h)' }} />
+        </>
     )
 }
 
