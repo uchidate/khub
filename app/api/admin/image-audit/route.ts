@@ -12,11 +12,11 @@ type AuditResult = ImageRef & { ok: boolean; status: number | null }
 function extractImageUrls(blocks: BlogBlock[], postId: string, slug: string, title: string): ImageRef[] {
     const refs: ImageRef[] = []
     for (const block of blocks) {
-        if (block.type === 'blog_image' && block.url) {
+        if (block.type === 'blog_image' && block.url?.startsWith('http')) {
             refs.push({ postId, slug, title, url: block.url, blockType: 'blog_image' })
         } else if (block.type === 'blog_gallery' && block.urls) {
             for (const url of block.urls) {
-                if (url) refs.push({ postId, slug, title, url, blockType: 'blog_gallery' })
+                if (url?.startsWith('http')) refs.push({ postId, slug, title, url, blockType: 'blog_gallery' })
             }
         }
     }
@@ -68,8 +68,8 @@ export async function GET(req: Request) {
 
     const allRefs: ImageRef[] = []
     for (const post of posts) {
-        // Cover image
-        if (post.coverImageUrl) {
+        // Cover image — só URLs absolutas (relativas são servidas pelo próprio app, sempre acessíveis)
+        if (post.coverImageUrl?.startsWith('http')) {
             allRefs.push({ postId: post.id, slug: post.slug, title: post.title, url: post.coverImageUrl, blockType: 'cover' })
         }
         // Block images
