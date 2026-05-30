@@ -113,7 +113,8 @@ async function runCastSync(
             log.info('Cast sync reset completed', { resetCount })
         }
 
-        const result = await service.syncPendingProductionCasts(limit);
+        const castMode = mode === 'resync' ? 'resync' : 'normal'
+        const result = await service.syncPendingProductionCasts(limit, castMode);
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         log.info('Cast sync job completed', { result, duration_s: duration });

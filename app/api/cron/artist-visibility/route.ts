@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { getArtistVisibilityService } from '@/lib/services/artist-visibility-service'
+import prisma from '@/lib/prisma'
 import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service'
 import { createLogger } from '@/lib/utils/logger'
 import { logCronRun } from '@/lib/services/cron-execution-service'
@@ -63,7 +64,26 @@ export async function POST(request: NextRequest) {
     if (result.shown > 0 || result.hidden > 0) {
       revalidatePath('/artists')
     }
-    return NextResponse.json({ ok: true, ...result })
+
+    // Anomaly check: artistas populares incorretamente ocultos
+    const anomalies = await prisma.artist.findMany({
+      where: {
+        isHidden: true,
+        autoHidden: true,
+        viewCount: { gte: 100 },
+      },
+      select: { id: true, nameRomanized: true, viewCount: true, flaggedAsNonKorean: true },
+      orderBy: { viewCount: 'desc' },
+      take: 10,
+    })
+    if (anomalies.length > 0) {
+      log.warn('Anomaly: popular artists auto-hidden', {
+        count: anomalies.length,
+        artists: anomalies.map(a => ({ name: a.nameRomanized, views: a.viewCount, nonKorean: a.flaggedAsNonKorean })),
+      })
+    }
+
+    return NextResponse.json({ ok: true, ...result, anomalies: anomalies.length })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     log.error('Artist visibility reconciliation failed', { error: message })
