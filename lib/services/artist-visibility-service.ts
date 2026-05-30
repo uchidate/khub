@@ -332,36 +332,30 @@ export class ArtistVisibilityService {
     }
 
     // ── 7. Ocultar: não-coreanos com ≤1 produção coreana visível ─────────────
-    // Prisma não suporta count em WHERE — usa raw SQL.
-    // Captura o gray area: ator estrangeiro que apareceu em 1 produção coreana
-    // como papel secundário, sem nenhum sinal de vínculo real com a indústria.
-    type IdRow = { id: string }
-    const lowProductionToHide = await prisma.$queryRaw<IdRow[]>`
-      SELECT a.id
-      FROM "Artist" a
-      WHERE a."isHidden" = false
-        AND a."flaggedAsNonKorean" = true
-        AND a."nameHangul" IS NULL
-        AND NOT EXISTS (
-          SELECT 1 FROM "ArtistGroupMembership" m WHERE m."artistId" = a.id
-        )
-        AND (
-          SELECT COUNT(*)
-          FROM "ArtistProduction" ap
-          JOIN "Production" p ON p.id = ap."productionId"
-          WHERE ap."artistId" = a.id
-            AND p."isHidden" = false
-            AND (p."ageRating" IS NULL OR p."ageRating" != '18')
-            AND (p."isAdultContent" IS NULL OR p."isAdultContent" = false)
-        ) <= 1
-      LIMIT ${limit}
-    `
-    if (lowProductionToHide.length > 0) {
-      const r = await prisma.artist.updateMany({
-        where: {
-          id: { in: lowProductionToHide.map(a => a.id) },
-          isHidden: false,
+    // Carrega candidatos com suas produções coreanas visíveis (take:2 é suficiente
+    // para distinguir 0, 1 ou 2+ sem fazer COUNT(*) completo no banco).
+    const nonKoreanCandidates = await prisma.artist.findMany({
+      where: {
+        isHidden: false,
+        flaggedAsNonKorean: true,
+        nameHangul: null,
+        memberships: { none: {} },
+      },
+      include: {
+        productions: {
+          where: { production: PUBLIC_PRODUCTION_FILTER },
+          select: { artistId: true },
+          take: 2,
         },
+      },
+      take: limit,
+    })
+    const lowProductionIds = nonKoreanCandidates
+      .filter(a => a.productions.length <= 1)
+      .map(a => a.id)
+    if (lowProductionIds.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: { id: { in: lowProductionIds }, isHidden: false },
         data: { isHidden: true, autoHidden: true },
       })
       hidden += r.count
@@ -375,7 +369,7 @@ export class ArtistVisibilityService {
       irrelevantToHide.length +
       productionToShow.length +
       sexualToHide.length +
-      lowProductionToHide.length
+      nonKoreanCandidates.length
 
     log.info(`Reconciliation complete: ${processed} evaluated, ${hidden} hidden, ${shown} shown`)
     return { processed, hidden, shown }
