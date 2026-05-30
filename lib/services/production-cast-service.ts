@@ -325,7 +325,6 @@ export class ProductionCastService {
     const productions = await prisma.production.findMany({
       where: {
         tmdbId: { not: null },
-        artists: { none: {} },
         castSyncAt: null,  // Never attempted — avoids re-processing "tried, found nothing" rows
       },
       select: { id: true, titlePt: true },
