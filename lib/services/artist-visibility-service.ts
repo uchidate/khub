@@ -4,16 +4,11 @@ import { createLogger } from '@/lib/utils/logger'
 const log = createLogger('ARTIST_VISIBILITY')
 
 /**
- * Critério de "produção coreana publicamente visível" para fins de auto-hide de artistas.
- *
- * Regra: produção deve ser coreana (flaggedAsNonKorean=false), não-oculta e sem conteúdo adulto/18+.
- * Artistas que só aparecem em produções não-coreanas ficam ocultos — o site é focado em K-pop/K-drama.
- * Sem classificação (null) = permitido — são K-Dramas/filmes sem rating TMDB.
+ * Filtro de produção publicamente visível (coreana, não-oculta, sem conteúdo adulto).
+ * Produções não-coreanas já chegam com isHidden=true, então isHidden=false é suficiente.
  */
 const PUBLIC_PRODUCTION_FILTER = {
   isHidden: false,
-  // flaggedAsNonKorean check removed — non-Korean productions now always have isHidden=true,
-  // so the isHidden=false check above already excludes them.
   AND: [
     { OR: [{ ageRating: null }, { ageRating: { not: '18' } }] },
     { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
@@ -21,94 +16,150 @@ const PUBLIC_PRODUCTION_FILTER = {
 }
 
 /**
- * Avalia se um artista deve estar oculto ou visível com base nas suas produções.
- *
- * Regras:
- * 1. Artista com produção de conteúdo sexual adulto → sempre oculto (não pode ser mostrado)
- * 2. Artista com pelo menos uma produção publicamente visível → visível (auto-show)
- * 3. Artista sem produções visíveis → oculto (auto-hide)
- *
- * "Produção visível" = isHidden=false + classificada (ageRating L/10/12/14/16) + não-flagged
- *
- * O campo `autoHidden=true` indica que o sistema ocultou o artista automaticamente.
- * Artistas ocultados manualmente pelo admin (autoHidden=false, isHidden=true) não são
- * afetados pelo auto-show.
+ * Filtro de conteúdo sexual — motivo de ocultação permanente.
  */
+const SEXUAL_CONTENT_FILTER = {
+  isAdultContent: true,
+  adultContentType: 'sexual',
+}
+
+/**
+ * Avalia se um artista tem relevância cultural coreana independente de nacionalidade.
+ *
+ * Sinais FORTES (override de flaggedAsNonKorean):
+ *   1. Membro de grupo K-Pop → sempre relevante (Lisa/BLACKPINK, Nichkhun/2PM, etc.)
+ *   2. Tem nameHangul → atua na indústria coreana, independente de origem
+ *
+ * Sinal MÉDIO:
+ *   3. 2+ produções coreanas visíveis → demonstra conexão com a indústria
+ *
+ * @returns 'strong' | 'medium' | 'none'
+ */
+async function koreanCultureRelevance(
+  artistId: string,
+): Promise<'strong' | 'medium' | 'none'> {
+  // Sinal forte 1: membro de grupo K-Pop
+  const hasMembership = await prisma.artistGroupMembership.findFirst({
+    where: { artistId },
+    select: { id: true },
+  })
+  if (hasMembership) return 'strong'
+
+  const artist = await prisma.artist.findUnique({
+    where: { id: artistId },
+    select: { nameHangul: true },
+  })
+
+  // Sinal forte 2: tem nome em Hangul
+  if (artist?.nameHangul) return 'strong'
+
+  // Sinal médio: 2+ produções coreanas visíveis
+  const koreanProductionCount = await prisma.artistProduction.count({
+    where: { artistId, production: PUBLIC_PRODUCTION_FILTER },
+  })
+  if (koreanProductionCount >= 2) return 'medium'
+
+  return 'none'
+}
+
 export class ArtistVisibilityService {
   /**
    * Reavalia a visibilidade de um artista específico.
-   * Chame após qualquer alteração de elenco ou de visibilidade de produção.
+   *
+   * Regras em ordem de prioridade:
+   *   1. Conteúdo sexual → sempre oculto
+   *   2. Membro de grupo K-Pop → sempre visível (sinal forte de relevância cultural)
+   *   3. Tem nameHangul → visível se tiver produção; oculto se não tiver
+   *   4. flaggedAsNonKorean=true + sem sinal forte + ≤1 produção → ocultar
+   *   5. Sem produção coreana visível → ocultar
+   *   6. Tem produção coreana visível → mostrar
    */
   async evaluate(artistId: string): Promise<{ changed: boolean; isHidden: boolean }> {
     const artist = await prisma.artist.findUnique({
       where: { id: artistId },
-      select: { isHidden: true, autoHidden: true },
+      select: {
+        isHidden: true,
+        autoHidden: true,
+        flaggedAsNonKorean: true,
+        nameHangul: true,
+      },
     })
     if (!artist) return { changed: false, isHidden: false }
 
-    // Verificar se tem produção com conteúdo adulto sexual → ocultar permanentemente
+    // Regra 1: conteúdo sexual → sempre oculto
     const hasSexualProduction = await prisma.artistProduction.findFirst({
-      where: {
-        artistId,
-        production: { isAdultContent: true, adultContentType: 'sexual' },
-      },
+      where: { artistId, production: SEXUAL_CONTENT_FILTER },
     })
-
     if (hasSexualProduction) {
-      // Se ainda não está oculto, ocultar agora
       if (!artist.isHidden) {
         await prisma.artist.update({
           where: { id: artistId },
           data: { isHidden: true, autoHidden: true },
         })
-        log.info('Auto-hidden artist (restricted content)', { artistId })
         return { changed: true, isHidden: true }
-      }
-      // Já oculto — garantir que autoHidden reflete o motivo se ainda não estiver
-      if (!artist.autoHidden) {
-        await prisma.artist.update({ where: { id: artistId }, data: { autoHidden: true } })
       }
       return { changed: false, isHidden: true }
     }
 
-    // Verificar se tem pelo menos uma produção publicamente visível
-    const visibleProduction = await prisma.artistProduction.findFirst({
-      where: {
-        artistId,
-        production: PUBLIC_PRODUCTION_FILTER,
-      },
-    })
+    const relevance = await koreanCultureRelevance(artistId)
 
-    if (visibleProduction) {
-      // Tem produção visível — mostrar artista (apenas se estava auto-oculto)
+    // Regra 2: sinal forte (grupo K-Pop ou nameHangul) → sempre visível
+    if (relevance === 'strong') {
       if (artist.isHidden && artist.autoHidden) {
         await prisma.artist.update({
           where: { id: artistId },
           data: { isHidden: false, autoHidden: false },
         })
-        log.info('Auto-shown artist (has visible production)', { artistId })
+        log.info('Auto-shown artist (strong Korean culture signal)', { artistId })
         return { changed: true, isHidden: false }
       }
       return { changed: false, isHidden: artist.isHidden }
     }
 
-    // Sem produções visíveis — ocultar (apenas se estava visível)
-    if (!artist.isHidden) {
+    const visibleProduction = await prisma.artistProduction.findFirst({
+      where: { artistId, production: PUBLIC_PRODUCTION_FILTER },
+    })
+
+    // Regra 3: sem produção visível → ocultar
+    if (!visibleProduction) {
+      if (!artist.isHidden) {
+        await prisma.artist.update({
+          where: { id: artistId },
+          data: { isHidden: true, autoHidden: true },
+        })
+        log.info('Auto-hidden artist (no visible productions)', { artistId })
+        return { changed: true, isHidden: true }
+      }
+      return { changed: false, isHidden: true }
+    }
+
+    // Regra 4: flaggedAsNonKorean=true + sem sinal forte + sem sinal médio → ocultar
+    // (tem uma produção, mas sem conexão real com a indústria coreana)
+    if (artist.flaggedAsNonKorean && relevance === 'none') {
+      if (!artist.isHidden) {
+        await prisma.artist.update({
+          where: { id: artistId },
+          data: { isHidden: true, autoHidden: true },
+        })
+        log.info('Auto-hidden artist (non-Korean, no culture relevance signals)', { artistId })
+        return { changed: true, isHidden: true }
+      }
+      return { changed: false, isHidden: artist.isHidden }
+    }
+
+    // Regra 5: tem produção visível + relevância suficiente → mostrar
+    if (artist.isHidden && artist.autoHidden) {
       await prisma.artist.update({
         where: { id: artistId },
-        data: { isHidden: true, autoHidden: true },
+        data: { isHidden: false, autoHidden: false },
       })
-      log.info('Auto-hidden artist (no visible productions)', { artistId })
-      return { changed: true, isHidden: true }
+      log.info('Auto-shown artist (has visible production)', { artistId })
+      return { changed: true, isHidden: false }
     }
 
     return { changed: false, isHidden: artist.isHidden }
   }
 
-  /**
-   * Reavalia múltiplos artistas de uma vez.
-   * Retorna contagem de alterações.
-   */
   async evaluateMany(artistIds: string[]): Promise<{ hidden: number; shown: number }> {
     let hidden = 0
     let shown = 0
@@ -123,8 +174,15 @@ export class ArtistVisibilityService {
   }
 
   /**
-   * Reconcilia TODOS os artistas em lote.
-   * Usado pelo cron de manutenção.
+   * Reconcilia todos os artistas em lote.
+   *
+   * Ordem de operações:
+   *   1. Mostrar membros de grupo K-Pop ocultos automaticamente (sinal forte)
+   *   2. Mostrar artistas com nameHangul + produção visível (sinal forte)
+   *   3. Ocultar artistas sem produção visível (regra base)
+   *   4. Ocultar artistas não-coreanos sem relevância cultural (flaggedAsNonKorean + sem sinal)
+   *   5. Mostrar artistas auto-ocultos com produção visível (regra base)
+   *   6. Ocultar artistas com conteúdo sexual (segurança)
    */
   async reconcileAll(limit = 500): Promise<{
     processed: number
@@ -132,91 +190,155 @@ export class ArtistVisibilityService {
     shown: number
   }> {
     log.info(`Starting artist visibility reconciliation (limit: ${limit})`)
-
-    // Candidatos a ocultar: visíveis, sem produção publicamente visível
-    const toHide = await prisma.artist.findMany({
-      where: {
-        isHidden: false,
-        productions: {
-          none: { production: PUBLIC_PRODUCTION_FILTER },
-        },
-      },
-      select: { id: true },
-      take: limit,
-    })
-
-    // Candidatos a mostrar: auto-ocultos, com produção visível, sem conteúdo sexual
-    const toShow = await prisma.artist.findMany({
-      where: {
-        isHidden: true,
-        autoHidden: true,
-        productions: {
-          some: { production: PUBLIC_PRODUCTION_FILTER },
-        },
-        NOT: {
-          productions: {
-            some: {
-              production: { isAdultContent: true, adultContentType: 'sexual' },
-            },
-          },
-        },
-      },
-      select: { id: true },
-      take: limit,
-    })
-
     let hidden = 0
     let shown = 0
 
-    if (toHide.length > 0) {
-      const result = await prisma.artist.updateMany({
+    // ── 1. Mostrar: membros de grupo K-Pop auto-ocultos ──────────────────────
+    const groupMembersToShow = await prisma.artist.findMany({
+      where: {
+        isHidden: true,
+        autoHidden: true,
+        memberships: { some: {} },
+        NOT: {
+          productions: { some: { production: SEXUAL_CONTENT_FILTER } },
+        },
+      },
+      select: { id: true },
+      take: limit,
+    })
+    if (groupMembersToShow.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: { id: { in: groupMembersToShow.map(a => a.id) } },
+        data: { isHidden: false, autoHidden: false },
+      })
+      shown += r.count
+      log.info(`Shown ${r.count} artists (K-Pop group membership)`)
+    }
+
+    // ── 2. Mostrar: nameHangul + produção visível, auto-ocultos ──────────────
+    const hangulWithProductionToShow = await prisma.artist.findMany({
+      where: {
+        isHidden: true,
+        autoHidden: true,
+        nameHangul: { not: null },
+        productions: { some: { production: PUBLIC_PRODUCTION_FILTER } },
+        NOT: {
+          productions: { some: { production: SEXUAL_CONTENT_FILTER } },
+        },
+      },
+      select: { id: true },
+      take: limit,
+    })
+    if (hangulWithProductionToShow.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: { id: { in: hangulWithProductionToShow.map(a => a.id) } },
+        data: { isHidden: false, autoHidden: false },
+      })
+      shown += r.count
+      log.info(`Shown ${r.count} artists (nameHangul + visible production)`)
+    }
+
+    // ── 3. Ocultar: sem produção visível ─────────────────────────────────────
+    const noProductionToHide = await prisma.artist.findMany({
+      where: {
+        isHidden: false,
+        productions: { none: { production: PUBLIC_PRODUCTION_FILTER } },
+      },
+      select: { id: true },
+      take: limit,
+    })
+    if (noProductionToHide.length > 0) {
+      const r = await prisma.artist.updateMany({
         where: {
-          id: { in: toHide.map(a => a.id) },
+          id: { in: noProductionToHide.map(a => a.id) },
           isHidden: false,
         },
         data: { isHidden: true, autoHidden: true },
       })
-      hidden = result.count
-      log.info(`Reconciliation: hidden ${hidden} artists`)
+      hidden += r.count
+      log.info(`Hidden ${r.count} artists (no visible productions)`)
     }
 
-    if (toShow.length > 0) {
-      const result = await prisma.artist.updateMany({
-        where: {
-          id: { in: toShow.map(a => a.id) },
-          isHidden: true,
-          autoHidden: true,
-        },
-        data: { isHidden: false, autoHidden: false },
-      })
-      shown = result.count
-      log.info(`Reconciliation: shown ${shown} artists`)
-    }
-
-    // Artistas com conteúdo sexual que ainda estão visíveis
-    const restrictedToHide = await prisma.artist.findMany({
+    // ── 4. Ocultar: não-coreanos sem sinais de relevância cultural ────────────
+    // flaggedAsNonKorean=true + sem nameHangul + sem grupo K-Pop + ≤1 produção visível
+    const irrelevantToHide = await prisma.artist.findMany({
       where: {
         isHidden: false,
-        productions: {
-          some: {
-            production: { isAdultContent: true, adultContentType: 'sexual' },
-          },
-        },
+        flaggedAsNonKorean: true,
+        nameHangul: null,
+        memberships: { none: {} },
+        // Sem 2+ produções visíveis (none = 0 produções; 1 produção pega-se pela avaliação individual)
+        productions: { none: { production: PUBLIC_PRODUCTION_FILTER } },
       },
       select: { id: true },
       take: limit,
     })
-
-    if (restrictedToHide.length > 0) {
-      const result = await prisma.artist.updateMany({
-        where: { id: { in: restrictedToHide.map(a => a.id) } },
+    if (irrelevantToHide.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: {
+          id: { in: irrelevantToHide.map(a => a.id) },
+          isHidden: false,
+        },
         data: { isHidden: true, autoHidden: true },
       })
-      hidden += result.count
-      log.info(`Reconciliation: hidden ${result.count} artists (restricted content)`)
+      hidden += r.count
+      log.info(`Hidden ${r.count} artists (non-Korean, no culture relevance)`)
     }
 
-    const processed = toHide.length + toShow.length + restrictedToHide.length
+    // ── 5. Mostrar: auto-ocultos com produção visível (regra base) ────────────
+    const productionToShow = await prisma.artist.findMany({
+      where: {
+        isHidden: true,
+        autoHidden: true,
+        productions: { some: { production: PUBLIC_PRODUCTION_FILTER } },
+        NOT: {
+          productions: { some: { production: SEXUAL_CONTENT_FILTER } },
+        },
+        // Não mostrar não-coreanos sem sinal de relevância
+        OR: [
+          { flaggedAsNonKorean: false },
+          { nameHangul: { not: null } },
+          { memberships: { some: {} } },
+        ],
+      },
+      select: { id: true },
+      take: limit,
+    })
+    if (productionToShow.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: { id: { in: productionToShow.map(a => a.id) } },
+        data: { isHidden: false, autoHidden: false },
+      })
+      shown += r.count
+      log.info(`Shown ${r.count} artists (visible Korean production)`)
+    }
+
+    // ── 6. Ocultar: conteúdo sexual (segurança) ──────────────────────────────
+    const sexualToHide = await prisma.artist.findMany({
+      where: {
+        isHidden: false,
+        productions: { some: { production: SEXUAL_CONTENT_FILTER } },
+      },
+      select: { id: true },
+      take: limit,
+    })
+    if (sexualToHide.length > 0) {
+      const r = await prisma.artist.updateMany({
+        where: { id: { in: sexualToHide.map(a => a.id) } },
+        data: { isHidden: true, autoHidden: true },
+      })
+      hidden += r.count
+      log.info(`Hidden ${r.count} artists (sexual content)`)
+    }
+
+    const processed =
+      groupMembersToShow.length +
+      hangulWithProductionToShow.length +
+      noProductionToHide.length +
+      irrelevantToHide.length +
+      productionToShow.length +
+      sexualToHide.length
+
     log.info(`Reconciliation complete: ${processed} evaluated, ${hidden} hidden, ${shown} shown`)
     return { processed, hidden, shown }
   }
