@@ -195,13 +195,14 @@ jobs:
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-cast')
       || (github.event_name == 'schedule' && github.event.schedule == '0 * * * *')
+      || (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *')
     steps:
       - uses: actions/checkout@v4
       - name: Resumo
         run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
       - uses: ./.github/actions/cron-call
         with:
-          endpoint: /api/cron/sync-cast?limit=2825
+          endpoint: /api/cron/sync-cast?limit=50
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
 
