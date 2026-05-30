@@ -201,7 +201,7 @@ jobs:
         run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
       - uses: ./.github/actions/cron-call
         with:
-          endpoint: /api/cron/sync-cast?limit=15
+          endpoint: /api/cron/sync-cast?limit=2825
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
 
