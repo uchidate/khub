@@ -20,6 +20,8 @@ interface DataTableProps<T> {
   onEdit?: (item: T) => void
   /** If provided, renders an anchor link instead of a callback button for editing */
   editHref?: (item: T) => string
+  /** If provided, the entire row becomes clickable */
+  onRowClick?: (item: T) => void
   onDelete?: (ids: string[]) => void
   /** Extra bulk action buttons rendered in toolbar when rows are selected. Receives selected IDs and a clearSelection callback. */
   bulkActions?: (ids: string[], clearSelection: () => void) => React.ReactNode
@@ -95,6 +97,7 @@ export function DataTable<T extends { id: string }>({
   apiUrl,
   onEdit,
   editHref,
+  onRowClick,
   onDelete,
   bulkActions,
   actions,
@@ -352,7 +355,7 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               visibleData.map((item) => (
-                <tr key={item.id} className={`group border-b border-border/70 last:border-0 transition-colors ${selected.has(item.id) ? 'bg-accent-soft' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
+                <tr key={item.id} onClick={onRowClick ? () => onRowClick(item) : undefined} className={`group border-b border-border/70 last:border-0 transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${selected.has(item.id) ? 'bg-accent-soft' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
                   {onDelete && (
                     <td className={cellPad}>
                       <input
