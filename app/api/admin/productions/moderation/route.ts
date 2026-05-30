@@ -40,6 +40,7 @@ function buildWhere(filter: string, search?: string) {
       return {
         AND: [
           { flaggedAsNonKorean: false },
+          { suspicionDismissedAt: null },
           { OR: [{ titleKr: null }, { tmdbId: null }] },
           ...(search ? [titleFilter] : []),
         ],
@@ -132,6 +133,7 @@ export async function GET(request: NextRequest) {
       prisma.production.count({
         where: {
           flaggedAsNonKorean: false,
+          suspicionDismissedAt: null,
           OR: [{ titleKr: null }, { tmdbId: null }],
         },
       }),
@@ -188,6 +190,7 @@ export async function GET(request: NextRequest) {
           adultCheckedAt: true,
           isHidden: true,
           ageRating: true,
+          suspicionDismissedAt: true,
           _count: { select: { artists: true, userFavorites: true } },
         },
         skip,
@@ -222,6 +225,7 @@ const flagSchema = z.object({
   ids: z.array(z.string()).optional(),
   flaggedAsNonKorean: z.boolean().optional(),
   isHidden: z.boolean().optional(),
+  dismissSuspicion: z.boolean().optional(), // true = dispensar da fila suspicious; false = reabrir
 })
 
 /**
@@ -250,6 +254,9 @@ export async function PUT(request: NextRequest) {
     }
     if (parsed.isHidden !== undefined) {
       data.isHidden = parsed.isHidden
+    }
+    if (parsed.dismissSuspicion !== undefined) {
+      data.suspicionDismissedAt = parsed.dismissSuspicion ? new Date() : null
     }
 
     if (Object.keys(data).length === 0) {
