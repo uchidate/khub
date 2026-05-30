@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
@@ -371,6 +371,7 @@ function CastModal({
 // ─── Sub-page navigation ─────────────────────────────────────────────────────
 
 function ProductionSubNav() {
+  const pathname = usePathname()
   const links = [
     { href: '/admin/productions', label: 'Lista', exact: true },
     { href: '/admin/productions/moderation', label: 'Moderação' },
@@ -378,17 +379,30 @@ function ProductionSubNav() {
     { href: '/admin/productions/enrich', label: 'Enriquecimento' },
   ]
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {links.map(({ href, label, exact }) => (
-        <Link
-          key={href}
-          href={href}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors border-border text-muted hover:text-foreground hover:bg-surface-hover"
-          aria-current={exact ? 'page' : undefined}
-        >
-          {label}
-        </Link>
-      ))}
+    <div className="flex items-center justify-between border-b border-border -mx-1 px-1">
+      <div className="flex items-center gap-0.5">
+        {links.map(({ href, label, exact }) => {
+          const isActive = exact ? pathname === href : pathname.startsWith(href)
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`px-3 py-2 text-xs font-semibold transition-colors relative -mb-px border-b-2 ${
+                isActive
+                  ? 'text-foreground border-accent'
+                  : 'text-muted border-transparent hover:text-foreground hover:border-border'
+              }`}
+            >
+              {label}
+            </Link>
+          )
+        })}
+      </div>
+      <Link href="/admin/translations?tab=production"
+        className="flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors pb-2">
+        <Languages size={11} />
+        Traduções
+      </Link>
     </div>
   )
 }
@@ -1016,24 +1030,30 @@ export default function ProductionsPage() {
     },
     {
       key: 'id',
-      label: 'Completude',
+      label: 'Status',
       render: (p) => {
-        const gaps: { icon: React.ReactNode; label: string; ok: boolean }[] = [
-          { icon: <ImageOff size={10} />, label: 'Poster', ok: !!p.imageUrl },
-          { icon: <FileText size={10} />, label: 'Sinopse', ok: !!p.synopsis },
-          { icon: <Users size={10} />, label: 'Elenco', ok: p.artistsCount > 0 },
-          { icon: <ShieldAlert size={10} />, label: 'Faixa etária', ok: !!p.ageRating },
-          { icon: <Globe size={10} />, label: 'Tradução', ok: p.translationStatus === 'completed' || !p.synopsis },
+        const checks = [
+          { label: 'Poster', ok: !!p.imageUrl },
+          { label: 'Sinopse', ok: !!p.synopsis },
+          { label: 'Elenco', ok: p.artistsCount > 0 },
+          { label: 'Faixa etária', ok: !!p.ageRating },
+          { label: 'Tradução', ok: p.translationStatus === 'completed' || !p.synopsis },
         ]
-        const missing = gaps.filter(g => !g.ok)
-        if (missing.length === 0) return <span className="text-[10px] text-emerald-500 font-semibold">✓ Completo</span>
+        const score = checks.filter(c => c.ok).length
         return (
-          <div className="flex items-center gap-1 flex-wrap">
-            {missing.map(g => (
-              <span key={g.label} title={g.label} className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-red-500/8 text-red-400 border-red-500/25">
-                {g.icon} {g.label}
-              </span>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              {checks.map(c => (
+                <span
+                  key={c.label}
+                  title={`${c.label}: ${c.ok ? 'ok' : 'faltando'}`}
+                  className={`w-2 h-2 rounded-full ${c.ok ? 'bg-emerald-500/60' : 'bg-red-500/70'}`}
+                />
+              ))}
+            </div>
+            <span className={`text-[10px] font-black tabular-nums ${score === 5 ? 'text-emerald-500' : score >= 3 ? 'text-amber-400' : 'text-red-400'}`}>
+              {score}/5
+            </span>
           </div>
         )
       },
@@ -1043,7 +1063,7 @@ export default function ProductionsPage() {
   const newCount = importSelected.size
 
   return (
-    <AdminLayout title="Produções" subtitle="Gerencie dramas, filmes e outras produções da plataforma">
+    <AdminLayout title="Produções">
       <div className="space-y-5">
         <ProductionSubNav />
         <PageGuide
@@ -1069,14 +1089,6 @@ export default function ProductionsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <p className="text-muted text-sm">Gerencie dramas, filmes e outras produções da plataforma</p>
-              <Link href="/admin/translations?tab=production"
-                className="flex items-center gap-1 text-xs text-foreground border border-border bg-surface hover:bg-surface-hover px-2 py-0.5 rounded-full transition-colors flex-shrink-0">
-                <Languages size={11} />
-                Traduções
-              </Link>
-            </div>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
           {/* Desktop: Importar + Nova + Manutenção dropdown */}
