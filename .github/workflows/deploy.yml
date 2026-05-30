@@ -505,19 +505,33 @@ jobs:
   notify-production:
     name: 📣 Notify Production Deploy
     needs: deploy-production
-    if: success() && github.ref == 'refs/heads/main'
+    if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
     steps:
-      - name: 📣 Notificar deploy bem-sucedido
+      - name: 📣 Notificar deploy no Slack
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
+          STATUS: ${{ needs.deploy-production.result }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1)
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | cut -c1-80)
           ACTOR="${{ github.actor }}"
           SHA="${{ github.sha }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$STATUS" = "success" ]; then
+            EMOJI="✅"
+            STATUS_LABEL="Sucesso"
+            SITE_LINK=", {\"type\":\"mrkdwn\",\"text\":\"<https://www.hallyuhub.com.br|🌐 Ver Site>\"}"
+          else
+            EMOJI="❌"
+            STATUS_LABEL="Falhou"
+            SITE_LINK=""
+          fi
+
           {
-            echo "## ✅ Production Deploy"
+            echo "## ${EMOJI} Production Deploy — ${STATUS_LABEL}"
             echo "| Campo | Valor |"
             echo "|-------|-------|"
             echo "| Commit | \`${SHA:0:7}\` |"
@@ -525,4 +539,24 @@ jobs:
             echo "| Por | ${ACTOR} |"
             echo "| URL | [Ver run](${RUN_URL}) |"
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "✅ Production deploy concluído: ${COMMIT_MSG} (${SHA:0:7})"
+
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -s -X POST "$SLACK_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"text\": \"${EMOJI} Deploy PRODUÇÃO — ${STATUS_LABEL}\",
+                \"blocks\": [
+                  {\"type\":\"header\",\"text\":{\"type\":\"plain_text\",\"text\":\"${EMOJI} Deploy PRODUÇÃO — ${STATUS_LABEL}\",\"emoji\":true}},
+                  {\"type\":\"section\",\"fields\":[
+                    {\"type\":\"mrkdwn\",\"text\":\"*Commit:*\n\\\`${SHA:0:7}\\\`\"},
+                    {\"type\":\"mrkdwn\",\"text\":\"*Por:*\n${ACTOR}\"},
+                    {\"type\":\"mrkdwn\",\"text\":\"*Mensagem:*\n${COMMIT_MSG}\"}
+                  ]},
+                  {\"type\":\"divider\"},
+                  {\"type\":\"section\",\"fields\":[
+                    {\"type\":\"mrkdwn\",\"text\":\"<${RUN_URL}|⚙️ Ver Workflow>\"}
+                    ${SITE_LINK}
+                  ]}
+                ]
+              }" || true
+          fi
