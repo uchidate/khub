@@ -51,9 +51,6 @@ export function GroupTrophyWall({ curiosidades, accent, groupName }: TrophyWallP
 
     // Combinar facts e HISTÓRICO milestones
     const facts = curiosidades.filter(c => !c.startsWith('HISTÓRICO|'))
-    const timeline = curiosidades
-        .filter(c => c.startsWith('HISTÓRICO|'))
-        .map(c => { const [, year, ...rest] = c.split('|'); return { year, text: rest.join('|') } })
 
     // Achievements: apenas facts (HISTÓRICO fica na Linha do Tempo)
     const achievements = facts.map(text => ({ text, year: null })).slice(0, 9)
