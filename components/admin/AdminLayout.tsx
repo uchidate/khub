@@ -184,7 +184,6 @@ const navSections: NavSection[] = [
           { href: '/admin/bot-logs',       label: 'Robôs',          icon: Bot           },
           { href: '/admin/server-logs',    label: 'Server Logs',    icon: AlertTriangle },
           { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon    },
-          { href: '/admin/database',       label: 'Database',       icon: Database      },
         ],
       },
     ],
