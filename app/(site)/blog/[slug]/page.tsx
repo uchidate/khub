@@ -8,7 +8,7 @@ import { PageTransition } from '@/components/features/PageTransition'
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer'
 import type { ResolvedEntities } from '@/components/ui/BlogBlockRenderer'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { BookOpen, Clock, Eye, ArrowLeft, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
+import { BookOpen, Clock, Eye, ArrowRight, Tag, Calendar, Trophy } from 'lucide-react'
 import { BrandDot } from '@/components/ui/BrandDot'
 import prisma from '@/lib/prisma'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -206,7 +206,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const artistIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_artist_card' && (b as { artistId?: string }).artistId).map(b => (b as { artistId: string }).artistId)))
   const productionIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_production_card' && (b as { productionId?: string }).productionId).map(b => (b as { productionId: string }).productionId)))
   const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card' && (b as { groupId?: string }).groupId).map(b => (b as { groupId: string }).groupId)))
-  const [artists, productions, groups, relatedPosts, prevPost, nextPost] = await Promise.all([
+  const [artists, productions, groups, relatedPosts] = await Promise.all([
     artistIds.length > 0
       ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
       : [],
@@ -217,20 +217,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       ? prisma.musicalGroup.findMany({ where: { id: { in: groupIds } }, select: { id: true, name: true, profileImageUrl: true, fanClubName: true } })
       : [],
     fetchRelatedPosts(post.id, post.tags).catch(() => []),
-    post.publishedAt
-      ? prisma.blogPost.findFirst({
-          where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { lt: post.publishedAt } },
-          orderBy: { publishedAt: 'desc' },
-          select: { slug: true, title: true, coverImageUrl: true },
-        }).catch(() => null)
-      : null,
-    post.publishedAt
-      ? prisma.blogPost.findFirst({
-          where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { gt: post.publishedAt } },
-          orderBy: { publishedAt: 'asc' },
-          select: { slug: true, title: true, coverImageUrl: true },
-        }).catch(() => null)
-      : null,
   ])
   const resolvedEntities: ResolvedEntities = {
     artists: Object.fromEntries(artists.map(a => [a.id, a])),

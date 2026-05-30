@@ -83,7 +83,7 @@ interface ArtistsListProps {
     trendingIds?: string[]
 }
 
-export function ArtistsList({ artists, pagination, initialFilters, trendingIds = [] }: ArtistsListProps) {
+export function ArtistsList({ artists, pagination, initialFilters: _initialFilters, trendingIds = [] }: ArtistsListProps) {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()

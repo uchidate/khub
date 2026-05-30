@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
-import { Home, Mic2, Users, Film, PenLine, Search, User, LogOut, Settings, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
+import { Home, Mic2, Users, Film, PenLine, Search, User, LogOut, LayoutDashboard, ChevronRight, X, ShoppingBag, Calendar } from "lucide-react"
 import { BrandMark } from "@/components/ui/BrandMark"
 import Image from "next/image"
 import { accountNavGroups } from "@/lib/config/account-navigation"
@@ -13,17 +13,7 @@ interface MobileMenuProps {
   links: Array<{ label: string; href: string }>
 }
 
-const LINK_ICONS: Record<string, React.ElementType> = {
-  "/":            Home,
-  "/artists":     Mic2,
-  "/groups":      Users,
-  "/productions": Film,
-  "/blog":        PenLine,
-  "/calendario":  Calendar,
-  "/loja":        ShoppingBag,
-}
-
-export const MobileMenu = ({ links }: MobileMenuProps) => {
+export const MobileMenu = ({ links: _links }: MobileMenuProps) => {
   const { data: session } = useSession()
   const pathname = usePathname()
   const menuId = "mobile-menu-toggle"

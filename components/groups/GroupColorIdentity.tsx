@@ -37,7 +37,7 @@ function hexToHsl(hex: string): string {
     return `${Math.round(hue * 360)}° ${Math.round(sat * 100)}% ${Math.round(lum * 100)}%`
 }
 
-export function GroupColorIdentity({ officialColor, groupName, fanClubName, bio }: GroupColorIdentityProps) {
+export function GroupColorIdentity({ officialColor, groupName, fanClubName }: GroupColorIdentityProps) {
     const [copied, setCopied] = useState(false)
     if (!officialColor) return null
 
