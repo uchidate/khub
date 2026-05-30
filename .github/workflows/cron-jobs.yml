@@ -12,8 +12,9 @@ on:
     - cron: '0 */6 * * *'   # update-trending
     - cron: '0 * * * *'     # sync-discography, sync-cast
     - cron: '0 2 * * *'     # sync-social-links, artist-visibility, digest
-    - cron: '0 3 * * *'     # fetch-streaming-shows
-    - cron: '0 6 * * 0'     # sync-groups-discography (dom 06:00 UTC = 03:00 BRT)
+    - cron: '0 3 * * *'     # fetch-streaming-shows, import-streaming-unmatched
+    - cron: '0 10 * * *'    # sync-groups-discography (diário 10:00 UTC = 07:00 BRT)
+    - cron: '0 11 * * *'    # refresh-productions (diário 11:00 UTC = 08:00 BRT)
     - cron: '0 7 * * 0'     # sync-filmography (dom 07:00 UTC = 04:00 BRT)
 
   workflow_dispatch:
@@ -29,6 +30,8 @@ on:
           - update-trending
           - fetch-streaming-signals
           - fetch-streaming-shows
+          - import-streaming-unmatched
+          - refresh-productions
           - sync-discography
           - sync-cast
           - sync-social-links
@@ -198,7 +201,7 @@ jobs:
         run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
       - uses: ./.github/actions/cron-call
         with:
-          endpoint: /api/cron/sync-cast
+          endpoint: /api/cron/sync-cast?limit=15
           max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
 
@@ -290,7 +293,52 @@ jobs:
           max_time: '120'
           cron_secret: ${{ secrets.CRON_SECRET }}
 
-  # ─── Semanal domingo 06:00 UTC (03:00 BRT) ─────────────────────────────────
+  import-streaming-unmatched:
+    name: 🎬 Importar tops de streaming sem match
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    concurrency:
+      group: cron-import-streaming-unmatched
+      cancel-in-progress: false
+    needs: fetch-streaming-shows
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'import-streaming-unmatched')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *' && needs.fetch-streaming-shows.result == 'success')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/import-streaming-unmatched?topN=20
+          max_time: '240'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  # ─── Diário 11:00 UTC (08:00 BRT) ──────────────────────────────────────────
+
+  refresh-productions:
+    name: 🎞️ Radar de produções recentes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    concurrency:
+      group: cron-refresh-productions
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'refresh-productions')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 11 * * *')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/refresh-productions?months_back=2&months_ahead=4&pages=2&max_imports=20&max_refreshes=30
+          max_time: '600'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  # ─── Semanal domingo 07:00 UTC (04:00 BRT) ─────────────────────────────────
 
   sync-filmography:
     name: 🎬 Sincronizar filmografias desatualizadas (TMDB)
@@ -323,7 +371,7 @@ jobs:
       cancel-in-progress: false
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-groups-discography')
-      || (github.event_name == 'schedule' && github.event.schedule == '0 6 * * 0')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 10 * * *')
     steps:
       - uses: actions/checkout@v4
       - name: Resumo

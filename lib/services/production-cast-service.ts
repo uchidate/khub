@@ -310,6 +310,8 @@ export class ProductionCastService {
 
   /**
    * Sync cast for pending productions: has tmdbId, no artists, never attempted.
+   * Recent and upcoming productions run first so newly imported titles do not
+   * wait behind old backlog rows.
    * castSyncAt IS NULL means it was never tried (or was reset).
    * Productions already tried (castSyncAt IS NOT NULL) but with no result
    * need manual intervention or a full resync.
@@ -328,7 +330,10 @@ export class ProductionCastService {
       },
       select: { id: true, titlePt: true },
       take: limit,
-      orderBy: { createdAt: 'asc' },
+      orderBy: [
+        { releaseDate: 'desc' },
+        { createdAt: 'desc' },
+      ],
     })
 
     let totalSynced = 0

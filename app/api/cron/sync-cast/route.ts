@@ -16,7 +16,7 @@ import { logCronRun } from '@/lib/services/cron-execution-service';
  * AUTENTICAÇÃO: Requer CRON_SECRET via header Authorization: Bearer ou ?token=
  * RETORNO: 202 Accepted imediatamente — processamento continua em background.
  *
- * POST /api/cron/sync-cast                    → sync 5 productions
+ * POST /api/cron/sync-cast                    → sync 15 productions
  * POST /api/cron/sync-cast?limit=N            → sync N productions (max 50)
  * POST /api/cron/sync-cast?mode=reset-resync  → reset castSyncAt de todas e sincroniza N
  */
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '5');
+    const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '15');
     const limit = Math.min(Math.max(1, rawLimit), 50);
     const mode = request.nextUrl.searchParams.get('mode') || 'sync';
 
