@@ -16,6 +16,7 @@ on:
     - cron: '0 10 * * *'    # sync-groups-discography (diário 10:00 UTC = 07:00 BRT)
     - cron: '0 11 * * *'    # refresh-productions (diário 11:00 UTC = 08:00 BRT)
     - cron: '0 7 * * 0'     # sync-filmography (dom 07:00 UTC = 04:00 BRT)
+    - cron: '0 8 * * 0'     # sync-cast resync 90d, backfill-korean-flag, sync-hangul (dom 08:00 UTC)
 
   workflow_dispatch:
     inputs:
@@ -39,6 +40,9 @@ on:
           - digest
           - sync-groups-discography
           - sync-filmography
+          - backfill-korean-flag
+          - sync-hangul
+          - sync-cast-resync
 
 env:
   BASE_URL: https://www.hallyuhub.com.br
@@ -380,4 +384,69 @@ jobs:
         with:
           endpoint: /api/cron/sync-groups-discography
           max_time: '1800'   # 30min — corrigido (era 60s)
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  # ─── Semanal domingo 08:00 UTC (05:00 BRT) ─────────────────────────────────
+
+  sync-cast-resync:
+    name: 🔄 Re-sincronizar elenco (>90 dias)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    concurrency:
+      group: cron-sync-cast
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-cast-resync')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * 0')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/sync-cast?limit=30&mode=resync
+          max_time: '300'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  backfill-korean-flag:
+    name: 🇰🇷 Backfill flag cultural coreana
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    concurrency:
+      group: cron-backfill-korean-flag
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'backfill-korean-flag')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * 0')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/backfill-korean-flag?limit=500
+          max_time: '240'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  sync-hangul:
+    name: 🔤 Sincronizar nomes Hangul (TMDB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    concurrency:
+      group: cron-sync-hangul
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-hangul')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 8 * * 0')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/sync-hangul?limit=100
+          max_time: '240'
           cron_secret: ${{ secrets.CRON_SECRET }}

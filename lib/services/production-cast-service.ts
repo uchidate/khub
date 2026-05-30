@@ -148,7 +148,7 @@ export class ProductionCastService {
    * Sync cast for a single production.
    * Upserts Artists and ArtistProduction links.
    */
-  async syncProductionCast(productionId: string): Promise<{ synced: number; skipped: number }> {
+  async syncProductionCast(productionId: string): Promise<{ synced: number; skipped: number; artistIds: string[] }> {
     const production = await prisma.production.findUnique({
       where: { id: productionId },
       select: { id: true, tmdbId: true, tmdbType: true, type: true, titlePt: true },
@@ -162,7 +162,7 @@ export class ProductionCastService {
           data: { castSyncAt: new Date() },
         })
       }
-      return { synced: 0, skipped: 1 }
+      return { synced: 0, skipped: 1, artistIds: [] }
     }
 
     // Derive tmdbType from production.type when the explicit field is missing
@@ -298,34 +298,32 @@ export class ProductionCastService {
       data: { castSyncAt: new Date() },
     })
 
-    // Reavaliar visibilidade dos artistas sincronizados
-    if (syncedArtistIds.length > 0) {
-      void getArtistVisibilityService()
-        .evaluateMany(syncedArtistIds)
-        .catch(() => {})
-    }
-
-    return { synced, skipped: castMembers.length - synced }
+    return { synced, skipped: castMembers.length - synced, artistIds: syncedArtistIds }
   }
 
   /**
-   * Sync cast for pending productions: has tmdbId, no artists, never attempted.
-   * Recent and upcoming productions run first so newly imported titles do not
-   * wait behind old backlog rows.
-   * castSyncAt IS NULL means it was never tried (or was reset).
-   * Productions already tried (castSyncAt IS NOT NULL) but with no result
-   * need manual intervention or a full resync.
+   * Sync cast for pending productions.
+   *
+   * Dois modos:
+   *   normal  → castSyncAt IS NULL (nunca sincronizados)
+   *   resync  → castSyncAt < 90 dias atrás (re-sincroniza produções stale)
+   *
+   * Após o batch, reavalia visibilidade de todos os artistas afetados de uma vez.
    */
-  async syncPendingProductionCasts(limit: number = 5): Promise<{
+  async syncPendingProductionCasts(limit: number = 5, mode: 'normal' | 'resync' = 'normal'): Promise<{
     processed: number
     totalSynced: number
     totalSkipped: number
     failureCount: number
   }> {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+
     const productions = await prisma.production.findMany({
       where: {
         tmdbId: { not: null },
-        castSyncAt: null,  // Never attempted — avoids re-processing "tried, found nothing" rows
+        ...(mode === 'resync'
+          ? { castSyncAt: { lt: ninetyDaysAgo } }
+          : { castSyncAt: null }),
       },
       select: { id: true, titlePt: true },
       take: limit,
@@ -338,18 +336,26 @@ export class ProductionCastService {
     let totalSynced = 0
     let totalSkipped = 0
     let failureCount = 0
+    const allArtistIds: string[] = []
 
     for (const production of productions) {
       try {
         const result = await this.syncProductionCast(production.id)
         totalSynced += result.synced
         totalSkipped += result.skipped
+        allArtistIds.push(...result.artistIds)
         console.log(`✅ Cast synced for "${production.titlePt}": ${result.synced} actors`)
       } catch (err) {
         console.error(`Failed to sync cast for production ${production.id}:`, err)
         totalSkipped++
         failureCount++
       }
+    }
+
+    // Reavaliar visibilidade de todos os artistas do batch de uma vez
+    const uniqueArtistIds = [...new Set(allArtistIds)]
+    if (uniqueArtistIds.length > 0) {
+      await getArtistVisibilityService().evaluateMany(uniqueArtistIds)
     }
 
     return { processed: productions.length, totalSynced, totalSkipped, failureCount }
