@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rawLimit = parseInt(request.nextUrl.searchParams.get('limit') || '15');
-    const limit = Math.min(Math.max(1, rawLimit), 50);
+    const limit = Math.min(Math.max(1, rawLimit), 5000);
     const mode = request.nextUrl.searchParams.get('mode') || 'sync';
 
     log.info('Starting cast sync job in background', { limit, mode });
