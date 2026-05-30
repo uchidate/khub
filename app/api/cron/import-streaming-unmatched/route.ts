@@ -17,6 +17,8 @@ import { onCronError } from '@/lib/utils/cron-logger'
 import { getUnmatchedStreamingTmdbIds } from '@/lib/services/streaming-show-service'
 import { getTMDBProductionDiscoveryService } from '@/lib/services/tmdb-production-discovery-service'
 import { getProductionCastService } from '@/lib/services/production-cast-service'
+import { acquireCronLock, releaseCronLock } from '@/lib/services/cron-lock-service'
+import { logCronRun } from '@/lib/services/cron-execution-service'
 import prisma from '@/lib/prisma'
 
 export const maxDuration = 120
@@ -142,11 +144,30 @@ export async function POST(request: NextRequest) {
 
     const topN = Math.min(Number(request.nextUrl.searchParams.get('topN') ?? 10), 20)
     const requestId = `import-streaming-unmatched-${Date.now()}`
+
+    const lockId = await acquireCronLock('cron-import-streaming-unmatched')
+    if (!lockId) {
+        return NextResponse.json({ skipped: true, reason: 'already_running' }, { status: 409 })
+    }
+
     log.info('Starting import of unmatched streaming shows', { requestId, topN })
 
     run(topN)
-        .then(r => log.info('Import completed', { requestId, ...r }))
-        .catch(onCronError(log, 'import-streaming-unmatched', 'Import failed'))
+        .then(r => {
+            log.info('Import completed', { requestId, ...r })
+            return logCronRun(
+                'import-streaming-unmatched',
+                r.errors > 0 ? 'partial' : 'success',
+                `${r.imported} produção(ões) importada(s), ${r.linked} top show(s) vinculado(s)`,
+                { requestId, ...r },
+            )
+        })
+        .then(() => releaseCronLock('cron-import-streaming-unmatched', lockId))
+        .catch(async err => {
+            await logCronRun('import-streaming-unmatched', 'failed', 'Importação de tops sem match falhou', { requestId }).catch(() => {})
+            await releaseCronLock('cron-import-streaming-unmatched', lockId).catch(() => {})
+            onCronError(log, 'import-streaming-unmatched', 'Import failed')(err)
+        })
 
     return NextResponse.json({ success: true, status: 'accepted', requestId }, { status: 202 })
 }
