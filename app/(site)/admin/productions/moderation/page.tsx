@@ -7,7 +7,7 @@ import {
   Film, AlertTriangle, CheckCircle, XCircle, RefreshCw, Trash2,
   Search, ChevronLeft, ChevronRight, Flag, FlagOff, CheckSquare,
   Square, Minus, ExternalLink, ShieldAlert, Users, Sparkles, ChevronDown, ChevronUp, EyeOff, Eye,
-  Pencil, ArrowUpDown, X,
+  Pencil, ArrowUpDown, X, CheckCheck,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
@@ -38,6 +38,7 @@ type Production = {
   adultCheckedAt: string | null
   isHidden: boolean
   ageRating: string | null
+  suspicionDismissedAt: string | null
   _count: { artists: number; userFavorites: number }
   suspicionScore: number
   suspicionReasons: string[]
@@ -258,10 +259,10 @@ function AgeRatingBadge({ rating }: { rating: string | null }) {
 
 // ——— Production card ———
 function ProductionCard({
-  prod, selected, onSelect, onFlag, onDelete, onHide, actioning, highlightAdult,
+  prod, selected, onSelect, onFlag, onDelete, onHide, onDismiss, actioning, highlightAdult,
 }: {
   prod: Production; selected: boolean; onSelect: () => void
-  onFlag: () => void; onDelete: () => void; onHide: () => void; actioning: boolean; highlightAdult?: boolean
+  onFlag: () => void; onDelete: () => void; onHide: () => void; onDismiss: () => void; actioning: boolean; highlightAdult?: boolean
 }) {
   const showAdultKeywords = highlightAdult || prod.isAdultContent === true
   const adultKeywordsFound = showAdultKeywords
@@ -416,6 +417,21 @@ function ProductionCard({
               {prod.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
               {prod.isHidden ? 'Reexibir' : 'Ocultar'}
             </button>
+            {!prod.flaggedAsNonKorean && !prod.isHidden && (
+              <button
+                onClick={onDismiss}
+                disabled={actioning}
+                title={prod.suspicionDismissedAt ? 'Reabrir na fila suspicious' : 'Dispensar da fila suspicious — produção revisada e ok'}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 border ${
+                  prod.suspicionDismissedAt
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                    : 'bg-surface text-muted hover:text-emerald-400 border-border'
+                }`}
+              >
+                <CheckCheck size={12} />
+                {prod.suspicionDismissedAt ? 'Dispensado' : 'Dispensar'}
+              </button>
+            )}
             <button
               onClick={onDelete}
               disabled={actioning}
@@ -888,6 +904,18 @@ function ProductionModerationContent() {
     } finally { removeActioning(ids) }
   }
 
+  async function doDismiss(ids: string[], dismiss: boolean) {
+    addActioning(ids)
+    try {
+      const res = await fetch('/api/admin/productions/moderation', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, dismissSuspicion: dismiss }),
+      })
+      if (res.ok) { await fetchProductions(pagination?.page || 1); await fetchStats() }
+    } finally { removeActioning(ids) }
+  }
+
   async function doDelete(ids: string[], withArtists = false) {
     addActioning(ids)
     try {
@@ -933,6 +961,15 @@ function ProductionModerationContent() {
       destructive: true,
       onConfirm: () => doDelete([prod.id]),
     })
+  }
+
+  function handleDismiss(prod: Production) {
+    const dismiss = !prod.suspicionDismissedAt
+    if (!dismiss) {
+      doDismiss([prod.id], false)
+      return
+    }
+    doDismiss([prod.id], true)
   }
 
   function handleBulkFlag(flaggedAsNonKorean: boolean) {
@@ -1262,6 +1299,7 @@ function ProductionModerationContent() {
                 onFlag={() => handleFlag(prod)}
                 onHide={() => handleHide(prod)}
                 onDelete={() => handleDelete(prod)}
+                onDismiss={() => handleDismiss(prod)}
                 actioning={actioningIds.has(prod.id)}
                 highlightAdult={filter === 'adult'}
               />

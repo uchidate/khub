@@ -485,6 +485,7 @@ model Production {
   adultContentType    String?            // 'sexual' | 'violent' | 'other' — subtipo quando isAdultContent=true
   adultCheckedAt      DateTime?          // quando foi verificado pelo DeepSeek
   needsCuration       Boolean            @default(false) // true = aguardando curadoria antes de publicar
+  suspicionDismissedAt DateTime?         // quando admin dispensou da fila suspicious (revisado e ok)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   userFavorites      Favorite[]
@@ -510,6 +511,7 @@ model Production {
   @@index([adultContentType])
   @@index([adultCheckedAt])
   @@index([needsCuration])
+  @@index([suspicionDismissedAt])
   @@index([translationStatus])
   @@index([translationStatus, synopsis])
 }
