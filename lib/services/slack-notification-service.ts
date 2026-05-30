@@ -664,6 +664,151 @@ export class SlackNotificationService {
     }
 
     /**
+     * Digest diário — resumo consolidado do dia
+     */
+    async notifyDailyDigest(data: {
+        postsPublished: number
+        newsImported: number
+        newUsers: number
+        cronsOk: number
+        cronsFailed: number
+        openIssues: number
+        catalogHealth: number
+        editorialHealth: number
+        pendingCandidates: number
+        date: string
+    }): Promise<boolean> {
+        const webhook = this.webhookAlerts || this.webhookContent
+        if (!webhook) return false
+
+        const healthEmoji = (v: number) => v >= 85 ? '🟢' : v >= 65 ? '🟡' : '🔴'
+        const cronEmoji = data.cronsFailed > 0 ? '⚠️' : '✅'
+
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: { type: 'plain_text', text: `📋 Digest Diário — ${data.date}`, emoji: true },
+            },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*📝 Posts publicados:*\n${data.postsPublished}` },
+                    { type: 'mrkdwn', text: `*📰 Notícias importadas:*\n${data.newsImported}` },
+                    { type: 'mrkdwn', text: `*👤 Novos usuários:*\n${data.newUsers}` },
+                    { type: 'mrkdwn', text: `*${cronEmoji} Crons (ok/falhou):*\n${data.cronsOk} / ${data.cronsFailed}` },
+                ],
+            },
+            { type: 'divider' },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*${healthEmoji(data.catalogHealth)} Saúde do catálogo:*\n${data.catalogHealth}%` },
+                    { type: 'mrkdwn', text: `*${healthEmoji(data.editorialHealth)} Saúde editorial:*\n${data.editorialHealth}%` },
+                    { type: 'mrkdwn', text: `*🔴 Pendências abertas:*\n${data.openIssues}` },
+                    { type: 'mrkdwn', text: `*🛒 Candidatos loja:*\n${data.pendingCandidates}` },
+                ],
+            },
+            { type: 'divider' },
+            {
+                type: 'section',
+                text: { type: 'mrkdwn', text: `🔗 <${this.siteUrl}/admin/ops-metrics|Abrir Métricas> · <${this.siteUrl}/admin/cron|Crons> · <${this.siteUrl}/admin/pipeline|Pipeline>` },
+            },
+        ]
+
+        return this.sendMessage(webhook, { blocks })
+    }
+
+    /**
+     * Alerta de watchdog — cron silencioso, spike de erros, loja acumulando
+     */
+    async notifyWatchdogAlert(alert: {
+        type: 'silent_cron' | 'error_spike' | 'store_candidates'
+        title: string
+        details: string
+        severity: AlertSeverity
+        actionUrl?: string
+    }): Promise<boolean> {
+        if (!this.webhookAlerts) return false
+
+        const emoji = alert.severity === 'error' ? '🚨' : '⚠️'
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: { type: 'plain_text', text: `${emoji} ${alert.title}`, emoji: true },
+            },
+            {
+                type: 'section',
+                text: { type: 'mrkdwn', text: alert.details },
+            },
+        ]
+
+        if (alert.actionUrl) {
+            blocks.push({ type: 'divider' })
+            blocks.push({
+                type: 'section',
+                text: { type: 'mrkdwn', text: `🔗 <${alert.actionUrl}|Ver no admin>` },
+            })
+        }
+
+        blocks.push({
+            type: 'context',
+            elements: [{ type: 'mrkdwn', text: `🕐 ${this.formatTimestamp(new Date())} · 🤖 Watchdog` }],
+        })
+
+        return this.sendMessage(this.webhookAlerts, { blocks })
+    }
+
+    /**
+     * Resultado de deploy com detalhes (sucesso ou falha)
+     */
+    async notifyDeployResult(deploy: {
+        environment: 'staging' | 'production'
+        status: 'success' | 'failed'
+        commit: string
+        commitMessage: string
+        actor: string
+        duration: string
+        runUrl: string
+        error?: string
+    }): Promise<boolean> {
+        if (!this.webhookDeploys) return false
+
+        const emoji = deploy.status === 'success' ? '✅' : '❌'
+        const envLabel = deploy.environment === 'production' ? 'PRODUÇÃO' : 'STAGING'
+        const siteUrl = deploy.environment === 'production' ? this.siteUrl : this.siteUrl.replace('www.', 'staging.')
+
+        const blocks: SlackBlock[] = [
+            {
+                type: 'header',
+                text: { type: 'plain_text', text: `${emoji} Deploy ${envLabel} — ${deploy.status === 'success' ? 'Sucesso' : 'Falhou'}`, emoji: true },
+            },
+            {
+                type: 'section',
+                fields: [
+                    { type: 'mrkdwn', text: `*Commit:*\n\`${deploy.commit.substring(0, 7)}\`` },
+                    { type: 'mrkdwn', text: `*Duração:*\n${deploy.duration}` },
+                    { type: 'mrkdwn', text: `*Por:*\n${deploy.actor}` },
+                    { type: 'mrkdwn', text: `*Mensagem:*\n${deploy.commitMessage.split('\n')[0].substring(0, 60)}` },
+                ],
+            },
+        ]
+
+        if (deploy.error) {
+            blocks.push({
+                type: 'section',
+                text: { type: 'mrkdwn', text: `*Erro:*\n\`\`\`${deploy.error.substring(0, 300)}\`\`\`` },
+            })
+        }
+
+        blocks.push({ type: 'divider' })
+        const links = [`<${deploy.runUrl}|⚙️ Ver Workflow>`]
+        if (deploy.status === 'success') links.push(`<${siteUrl}|🌐 Ver Site>`)
+        blocks.push({ type: 'section', text: { type: 'mrkdwn', text: links.join(' · ') } })
+
+        return this.sendMessage(this.webhookDeploys, { blocks })
+    }
+
+    /**
      * Send raw message to a webhook
      */
     private async sendMessage(webhookUrl: string, payload: { blocks: SlackBlock[]; text?: string }): Promise<boolean> {

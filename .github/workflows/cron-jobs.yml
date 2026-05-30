@@ -14,7 +14,8 @@ on:
     - cron: '0 2 * * *'     # sync-social-links, artist-visibility, digest
     - cron: '0 3 * * *'     # fetch-streaming-shows, import-streaming-unmatched
     - cron: '0 10 * * *'    # sync-groups-discography (diário 10:00 UTC = 07:00 BRT)
-    - cron: '0 11 * * *'    # refresh-productions (diário 11:00 UTC = 08:00 BRT)
+    - cron: '0 11 * * *'    # refresh-productions, daily-digest (diário 11:00 UTC = 08:00 BRT)
+    - cron: '*/30 * * * *'  # watchdog
     - cron: '0 7 * * 0'     # sync-filmography (dom 07:00 UTC = 04:00 BRT)
     - cron: '0 8 * * 0'     # sync-cast resync 90d, backfill-korean-flag, sync-hangul (dom 08:00 UTC)
 
@@ -43,6 +44,8 @@ on:
           - backfill-korean-flag
           - sync-hangul
           - sync-cast-resync
+          - daily-digest
+          - watchdog
 
 env:
   BASE_URL: https://www.hallyuhub.com.br
@@ -449,4 +452,50 @@ jobs:
         with:
           endpoint: /api/cron/sync-hangul?limit=100
           max_time: '240'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  # ─── Digest diário (08:00 BRT = 11:00 UTC) ────────────────────────────────
+
+  daily-digest:
+    name: 📋 Digest Diário Slack
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    concurrency:
+      group: cron-daily-digest
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'daily-digest')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 11 * * *')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/daily-digest
+          max_time: '60'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  # ─── Watchdog (a cada 30 minutos) ─────────────────────────────────────────
+
+  watchdog:
+    name: 🔍 Watchdog — Crons, Erros, Loja
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    concurrency:
+      group: cron-watchdog
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'watchdog')
+      || (github.event_name == 'schedule' && github.event.schedule == '*/30 * * * *')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/watchdog
+          max_time: '60'
           cron_secret: ${{ secrets.CRON_SECRET }}
