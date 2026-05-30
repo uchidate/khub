@@ -131,7 +131,7 @@ export class ProductionCastService {
     if (!result) return []
 
     return result.cast
-      .filter(m => m.known_for_department === 'Acting')
+      .filter(m => m.known_for_department === 'Acting' && m.popularity >= 1)
       .sort((a, b) => a.order - b.order)
       .slice(0, topN)
   }
