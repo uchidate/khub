@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
@@ -15,7 +16,8 @@ import { AdminBadge } from '@/components/admin/AdminBadge'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
-  Check, AlertCircle, Film, Star, Languages,
+  Check, AlertCircle, Film, Star, Languages, Wrench, ImageOff,
+  FileText, Globe, ShieldAlert,
 } from 'lucide-react'
 import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
 import { adminApi, ApiError } from '@/lib/admin-api'
@@ -54,6 +56,11 @@ interface Production {
   artistsCount: number
   castSyncAt: string | null
   tmdbId: string | null
+  synopsis: string | null
+  isHidden: boolean
+  translationStatus: string | null
+  needsCuration: boolean
+  slug: string | null
 }
 
 interface CastMember {
@@ -361,6 +368,31 @@ function CastModal({
   )
 }
 
+// ─── Sub-page navigation ─────────────────────────────────────────────────────
+
+function ProductionSubNav() {
+  const links = [
+    { href: '/admin/productions', label: 'Lista', exact: true },
+    { href: '/admin/productions/moderation', label: 'Moderação' },
+    { href: '/admin/productions/sync', label: 'Sync TMDB' },
+    { href: '/admin/productions/enrich', label: 'Enriquecimento' },
+  ]
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {links.map(({ href, label, exact }) => (
+        <Link
+          key={href}
+          href={href}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors border-border text-muted hover:text-foreground hover:bg-surface-hover"
+          aria-current={exact ? 'page' : undefined}
+        >
+          {label}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 // ─── Stats / Filter Bar ───────────────────────────────────────────────────────
 
 function StatsBar({
@@ -530,6 +562,7 @@ const formFields: FormField[] = [
 
 export default function ProductionsPage() {
   const toast = useAdminToast()
+  const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -932,15 +965,15 @@ export default function ProductionsPage() {
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-foreground text-sm">{p.titlePt}</span>
             <Link
-              href={`/productions/${p.id}`}
+              href={p.slug ? `/productions/${p.slug}` : `/productions/${p.id}`}
               target="_blank"
-              className="text-muted hover:text-muted transition-colors"
+              className="text-muted hover:text-foreground transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink size={11} />
             </Link>
           </div>
-          {p.titleKr && <p className="text-xs text-muted mt-0.5">{p.titleKr}</p>}
+          {p.titleKr && <p className="text-xs text-muted mt-0.5 truncate max-w-[220px]">{p.titleKr}</p>}
         </div>
       ),
     },
@@ -981,6 +1014,30 @@ export default function ProductionsPage() {
         </div>
       ),
     },
+    {
+      key: 'id',
+      label: 'Completude',
+      render: (p) => {
+        const gaps: { icon: React.ReactNode; label: string; ok: boolean }[] = [
+          { icon: <ImageOff size={10} />, label: 'Poster', ok: !!p.imageUrl },
+          { icon: <FileText size={10} />, label: 'Sinopse', ok: !!p.synopsis },
+          { icon: <Users size={10} />, label: 'Elenco', ok: p.artistsCount > 0 },
+          { icon: <ShieldAlert size={10} />, label: 'Faixa etária', ok: !!p.ageRating },
+          { icon: <Globe size={10} />, label: 'Tradução', ok: p.translationStatus === 'completed' || !p.synopsis },
+        ]
+        const missing = gaps.filter(g => !g.ok)
+        if (missing.length === 0) return <span className="text-[10px] text-emerald-500 font-semibold">✓ Completo</span>
+        return (
+          <div className="flex items-center gap-1 flex-wrap">
+            {missing.map(g => (
+              <span key={g.label} title={g.label} className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded border bg-red-500/8 text-red-400 border-red-500/25">
+                {g.icon} {g.label}
+              </span>
+            ))}
+          </div>
+        )
+      },
+    },
   ]
 
   const newCount = importSelected.size
@@ -988,6 +1045,7 @@ export default function ProductionsPage() {
   return (
     <AdminLayout title="Produções" subtitle="Gerencie dramas, filmes e outras produções da plataforma">
       <div className="space-y-5">
+        <ProductionSubNav />
         <PageGuide
           storageKey="productions"
           title="Como funciona a gestão de Produções"
@@ -1021,59 +1079,8 @@ export default function ProductionsPage() {
             </div>
             <StatsBar stats={stats} filter={filter} onFilter={setFilter} />
           </div>
-          {/* Desktop: all buttons in a row */}
-          <div className="hidden sm:flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            <AdminButton
-              onClick={handleSyncAgeRating}
-              disabled={ageSyncing}
-              size="sm"
-            >
-              <ShieldCheck size={13} className={ageSyncing ? 'animate-pulse' : ''} />
-              {ageSyncing ? 'Classificando...' : 'Classificar Pendentes'}
-            </AdminButton>
-            <AdminButton
-              onClick={handleSyncPending}
-              disabled={batchSyncing}
-              size="sm"
-            >
-              <RefreshCw size={13} className={batchSyncing ? 'animate-spin' : ''} />
-              {batchSyncing ? 'Importando...' : 'Elenco Pendente'}
-            </AdminButton>
-            <button
-              onClick={() => setConfirmResetResync(true)}
-              disabled={resetSyncing}
-              title="Reseta e reprocessa o elenco de TODAS as produções"
-              className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold rounded-lg transition-all disabled:opacity-50 text-xs"
-            >
-              <RotateCcw size={13} className={resetSyncing ? 'animate-spin' : ''} />
-              {resetSyncing ? 'Resincronizando...' : 'Resync Completo'}
-            </button>
-            <button
-              onClick={() => setConfirmFixNoType(true)}
-              disabled={fixNoTypeSyncing}
-              title="Recupera produções com TMDB ID mas sem tipo (movie/tv) — foram ignoradas pelo sync anterior"
-              className="flex items-center gap-1.5 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold rounded-lg transition-all disabled:opacity-50 text-xs"
-            >
-              <RotateCcw size={13} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
-              {fixNoTypeSyncing ? 'Corrigindo...' : 'Corrigir sem Tipo'}
-            </button>
-            <button
-              onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false) }}
-              className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
-                backfillPanelOpen ? 'bg-green-500/20 border-green-500/40 text-green-700 dark:text-green-300' : 'bg-surface hover:bg-surface-hover border-border text-foreground'
-              }`}
-            >
-              <RefreshCw size={13} className={backfillRunning ? 'animate-spin' : ''} />
-              Atualizar PT-BR
-            </button>
-            <AdminLinkButton
-              href="/admin/productions/sync"
-              size="sm"
-              title="Sincronizar dados do TMDB em lote para todas as produções"
-            >
-              <Star size={13} />
-              Sync TMDB
-            </AdminLinkButton>
+          {/* Desktop: Importar + Nova + Manutenção dropdown */}
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
@@ -1083,36 +1090,63 @@ export default function ProductionsPage() {
               <CalendarSearch size={13} />
               Importar
             </button>
-            <AdminButton
-              variant="primary"
-              onClick={handleCreate}
-              size="sm"
-            >
+            <AdminButton variant="primary" onClick={handleCreate} size="sm">
               <Plus size={13} />
               Nova
             </AdminButton>
+            {/* Manutenção dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMoreActionsOpen(v => !v)}
+                title="Ações de manutenção"
+                className="flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface-hover border border-border text-muted hover:text-foreground font-bold rounded-lg transition-all text-xs"
+              >
+                <Wrench size={13} />
+                <ChevronDown size={11} className={`transition-transform ${moreActionsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {moreActionsOpen && (
+                <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-52">
+                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={batchSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
+                    <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
+                    {batchSyncing ? 'Importando...' : 'Elenco Pendente'}
+                  </button>
+                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ageSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
+                    <ShieldCheck size={12} className={ageSyncing ? 'animate-pulse' : ''} />
+                    {ageSyncing ? 'Classificando...' : 'Classificar Pendentes'}
+                  </button>
+                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
+                    className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold transition-colors border-b border-border ${
+                      backfillPanelOpen ? 'text-green-400 bg-green-500/10' : 'text-foreground hover:bg-surface-hover'
+                    }`}>
+                    <RefreshCw size={12} className={backfillRunning ? 'animate-spin' : ''} />
+                    Atualizar PT-BR
+                  </button>
+                  <Link href="/admin/productions/sync" onClick={() => setMoreActionsOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border">
+                    <Star size={12} />
+                    Sync TMDB
+                  </Link>
+                  <div className="border-t border-border mt-1 pt-1">
+                    <button onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }} disabled={resetSyncing}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border/50 disabled:opacity-50">
+                      <RotateCcw size={12} className={resetSyncing ? 'animate-spin' : ''} />
+                      Resync Completo
+                    </button>
+                    <button onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }} disabled={fixNoTypeSyncing}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50">
+                      <RotateCcw size={12} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
+                      Corrigir sem Tipo
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Mobile: primary actions + "Mais" dropdown */}
+          {/* Mobile: Importar + Nova + Manutenção */}
           <div className="sm:hidden flex items-center gap-1.5 w-full">
-            <AdminButton
-              onClick={handleSyncPending}
-              disabled={batchSyncing}
-              size="sm"
-              className="flex-1 justify-center"
-            >
-              <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
-              Elenco
-            </AdminButton>
-            <AdminButton
-              onClick={handleSyncAgeRating}
-              disabled={ageSyncing}
-              size="sm"
-              className="flex-1 justify-center"
-            >
-              <ShieldCheck size={12} className={ageSyncing ? 'animate-pulse' : ''} />
-              Classificar
-            </AdminButton>
             <button
               onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-2.5 py-2 border font-bold rounded-lg transition-all text-xs flex-1 justify-center ${
@@ -1122,56 +1156,48 @@ export default function ProductionsPage() {
               <CalendarSearch size={12} />
               Importar
             </button>
-            <AdminButton
-              variant="primary"
-              onClick={handleCreate}
-              size="sm"
-              className="flex-1 justify-center"
-            >
+            <AdminButton variant="primary" onClick={handleCreate} size="sm" className="flex-1 justify-center">
               <Plus size={12} />
               Nova
             </AdminButton>
-            {/* More actions dropdown */}
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setMoreActionsOpen(v => !v)}
                 className="flex items-center gap-1 px-2.5 py-2 bg-surface hover:bg-surface-hover border border-border text-foreground font-bold rounded-lg transition-all text-xs"
               >
-                <ChevronDown size={14} className={`transition-transform ${moreActionsOpen ? 'rotate-180' : ''}`} />
+                <Wrench size={13} />
+                <ChevronDown size={11} className={`transition-transform ${moreActionsOpen ? 'rotate-180' : ''}`} />
               </button>
               {moreActionsOpen && (
-                <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-48">
-                  <button
-                    onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
-                    className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-bold transition-colors border-b border-border ${
-                      backfillPanelOpen ? 'text-green-600 dark:text-green-300 bg-green-500/10' : 'text-foreground hover:bg-surface-hover'
-                    }`}
-                  >
-                    <RefreshCw size={12} className={backfillRunning ? 'animate-spin' : ''} />
+                <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-52">
+                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={batchSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
+                    <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
+                    Elenco Pendente
+                  </button>
+                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ageSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
+                    <ShieldCheck size={12} />
+                    Classificar Pendentes
+                  </button>
+                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border">
+                    <RefreshCw size={12} />
                     Atualizar PT-BR
                   </button>
-                  <Link
-                    href="/admin/productions/sync"
-                    onClick={() => setMoreActionsOpen(false)}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-foreground hover:bg-surface-hover transition-colors border-b border-border"
-                  >
+                  <Link href="/admin/productions/sync" onClick={() => setMoreActionsOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border">
                     <Star size={12} />
                     Sync TMDB
                   </Link>
-                  <button
-                    onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }}
-                    disabled={resetSyncing}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border disabled:opacity-50"
-                  >
-                    <RotateCcw size={12} className={resetSyncing ? 'animate-spin' : ''} />
+                  <button onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }} disabled={resetSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border/50 disabled:opacity-50">
+                    <RotateCcw size={12} />
                     Resync Completo
                   </button>
-                  <button
-                    onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }}
-                    disabled={fixNoTypeSyncing}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50"
-                  >
-                    <RotateCcw size={12} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
+                  <button onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }} disabled={fixNoTypeSyncing}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50">
+                    <RotateCcw size={12} />
                     Corrigir sem Tipo
                   </button>
                 </div>
@@ -1384,7 +1410,7 @@ export default function ProductionsPage() {
           columns={columns}
           apiUrl="/api/admin/productions"
           extraParams={filter ? { filter } : undefined}
-          editHref={(p) => `/admin/productions/${p.id}`}
+          onRowClick={(p) => router.push(`/admin/productions/${p.id}`)}
           onDelete={handleDelete}
           searchPlaceholder="Buscar por título..."
           renderMobileCard={(production) => (
@@ -1463,7 +1489,7 @@ export default function ProductionsPage() {
             </div>
           )}
           actions={(production) => (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               {/* Cast button → opens modal */}
               <button
                 onClick={() => setCastModalProduction(production)}
