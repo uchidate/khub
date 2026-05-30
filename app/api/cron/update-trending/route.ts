@@ -154,7 +154,13 @@ export async function POST(request: NextRequest) {
             revalidateTag(HOME_CACHE_TAG, { expire: 0 })
         })
         .catch(err => {
-            logCronRun('update-trending', 'failed', 'Atualização de trending falhou', { requestId }).catch(() => {})
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            const errorStack = err instanceof Error ? err.stack?.slice(0, 500) : undefined
+            log.error('Trending update failed', { requestId, error: errorMsg, stack: errorStack })
+            logCronRun('update-trending', 'failed', 'Atualização de trending falhou', {
+                requestId,
+                error: errorMsg,
+            }).catch(() => {})
             onCronError(log, 'cron-update-trending', 'Trending update failed')(err)
         })
 
