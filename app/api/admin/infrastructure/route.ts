@@ -19,7 +19,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ app, tasks })
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err)
-        return NextResponse.json({ error: msg }, { status: 502 })
+        const isTokenMissing = msg.includes('COOLIFY_TOKEN not configured')
+        const isUnauthorized = msg.includes('401') || msg.toLowerCase().includes('unauthenticated')
+        return NextResponse.json({
+            error: msg,
+            hint: isTokenMissing
+                ? 'COOLIFY_TOKEN não está configurado neste ambiente.'
+                : isUnauthorized
+                    ? 'Token do Coolify inválido ou expirado. Atualize COOLIFY_TOKEN no GitHub Secret E nas env vars do container no Coolify UI.'
+                    : 'Erro ao conectar com o Coolify.',
+        }, { status: 502 })
     }
 }
 

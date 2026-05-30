@@ -63,7 +63,7 @@ const RELATED_AREAS = [
   {
     title: 'Infra e logs',
     description: 'Banco, infraestrutura e automações técnicas.',
-    href: '/admin/database',
+    href: '/admin/infrastructure',
     icon: Database,
   },
 ] as const

@@ -9,7 +9,7 @@ import {
   UsersRound, RefreshCw, MessageSquare, Flag, Sparkles, EyeOff, Languages,
   Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink,
   PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert,
-  TrendingUp, BarChart3, Layers, Tv, Database, Globe, FolderOpen, ServerIcon, ChevronDown,
+  TrendingUp, BarChart3, Layers, Tv, Globe, FolderOpen, ServerIcon, ChevronDown,
   ShoppingBag, Image as ImageIcon, BookOpen, Inbox, ClipboardList,
 } from 'lucide-react'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
@@ -184,7 +184,6 @@ const navSections: NavSection[] = [
           { href: '/admin/bot-logs',       label: 'Robôs',          icon: Bot           },
           { href: '/admin/server-logs',    label: 'Server Logs',    icon: AlertTriangle },
           { href: '/admin/infrastructure', label: 'Infraestrutura', icon: ServerIcon    },
-          { href: '/admin/database',       label: 'Database',       icon: Database      },
         ],
       },
     ],

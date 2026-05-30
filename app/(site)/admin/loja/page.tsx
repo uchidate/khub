@@ -41,6 +41,20 @@ interface StorePerformance {
     placements: Array<{ placement: string; label: string; clicks: number }>
 }
 
+interface LojaMetrics {
+    activeProducts: number
+    draftProducts: number
+    totalProducts: number
+    mlMissingOfficialLink: number
+    pendingCandidates: number
+    approvedCandidates: number
+    mercadoLivreProducts: number
+    impressions30d: number
+    clicks30d: number
+    clicks7d: number
+    ctr30d: number | null
+}
+
 const CATEGORIES: Record<string, string> = {
     kpop_album:   '💿 Álbum K-Pop',
     lightstick:   '💡 Lightstick',
@@ -81,6 +95,7 @@ export default function AdminLojaPage() {
     const [confirmRemove, setConfirmRemove] = useState<StoreProduct | null>(null)
     const [saving, setSaving] = useState(false)
     const [performance, setPerformance] = useState<StorePerformance | null>(null)
+    const [metrics, setMetrics] = useState<LojaMetrics | null>(null)
     const toast = useAdminToast()
 
     const load = useCallback(async () => {
@@ -88,12 +103,14 @@ export default function AdminLojaPage() {
         const params = new URLSearchParams()
         if (filterCategory) params.set('category', filterCategory)
         if (filterStore) params.set('store', filterStore)
-        const [productsResponse, performanceResponse] = await Promise.all([
+        const [productsResponse, performanceResponse, metricsResponse] = await Promise.all([
             fetch(`/api/admin/store?${params}`),
             fetch('/api/admin/store/performance'),
+            fetch('/api/admin/loja/metrics'),
         ])
         if (productsResponse.ok) setProducts(await productsResponse.json())
         if (performanceResponse.ok) setPerformance(await performanceResponse.json())
+        if (metricsResponse.ok) setMetrics(await metricsResponse.json())
         setLoading(false)
     }, [filterCategory, filterStore])
 
@@ -221,6 +238,32 @@ export default function AdminLojaPage() {
                 </button>
                 <span className="text-xs text-muted ml-auto">{products.length} produto{products.length !== 1 ? 's' : ''}</span>
             </div>
+
+            {metrics && (
+                <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-xl border border-border bg-surface p-4">
+                        <p className="text-xs font-semibold text-muted">Impressões 30d</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">{metrics.impressions30d.toLocaleString('pt-BR')}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-surface p-4">
+                        <p className="text-xs font-semibold text-muted">CTR 30d</p>
+                        <p className="mt-2 text-2xl font-black text-foreground">
+                            {metrics.ctr30d != null ? `${(metrics.ctr30d * 100).toFixed(1)}%` : '—'}
+                        </p>
+                        <p className="mt-1 text-xs text-muted">{metrics.clicks30d} cliques · {metrics.clicks7d} últimos 7d</p>
+                    </div>
+                    <div className={`rounded-xl border bg-surface p-4 ${metrics.pendingCandidates > 0 ? 'border-amber-500/40' : 'border-border'}`}>
+                        <p className="text-xs font-semibold text-muted">Candidatos pendentes</p>
+                        <p className={`mt-2 text-2xl font-black ${metrics.pendingCandidates > 0 ? 'text-amber-500' : 'text-foreground'}`}>{metrics.pendingCandidates}</p>
+                        {metrics.approvedCandidates > 0 && <p className="mt-1 text-xs text-muted">{metrics.approvedCandidates} aprovados aguardando</p>}
+                    </div>
+                    <div className={`rounded-xl border bg-surface p-4 ${metrics.mlMissingOfficialLink > 0 ? 'border-red-500/40' : 'border-border'}`}>
+                        <p className="text-xs font-semibold text-muted">ML sem link oficial</p>
+                        <p className={`mt-2 text-2xl font-black ${metrics.mlMissingOfficialLink > 0 ? 'text-red-500' : 'text-foreground'}`}>{metrics.mlMissingOfficialLink}</p>
+                        <p className="mt-1 text-xs text-muted">de {metrics.mercadoLivreProducts ?? metrics.totalProducts} produtos ML</p>
+                    </div>
+                </section>
+            )}
 
             {!loading && products.length > 0 && (
                 <section className="mb-8 space-y-4">

@@ -1,22 +1,31 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import {
   Activity, AlertTriangle, BarChart3, BookOpen, CheckCircle2,
   FileText, Film, Languages, Mic2, Newspaper, RefreshCw,
-  ShoppingBag, UsersRound,
+  UsersRound, Clock, Database, XCircle,
 } from 'lucide-react'
+
+type CronJob = { id: string; status: string; at: string }
 
 type MetricData = {
   generatedAt: string
   summary: {
     catalogHealth: number
     editorialHealth: number
-    monetizationHealth: number
+    cronHealth: number
     openIssues: number
   }
+  cron: {
+    total: number
+    ok: number
+    failed: number
+    jobs: CronJob[]
+  }
+  database: Record<string, number>
   catalog: {
     artists: Record<string, number> & { coverage: Record<string, number> }
     groups: Record<string, number> & { coverage: Record<string, number> }
@@ -27,7 +36,6 @@ type MetricData = {
     blog: Record<string, number>
     seo: Record<string, number>
   }
-  monetization: Record<string, number | null>
 }
 
 function fmt(value: number | null | undefined): string {
@@ -100,22 +108,26 @@ export default function OpsMetricsPage() {
   const [data, setData] = useState<MetricData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     const res = await fetch('/api/admin/ops-metrics')
     if (res.ok) setData(await res.json())
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const interval = setInterval(load, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [load])
 
   return (
-    <AdminLayout title="Métricas Operacionais" subtitle="Saúde de dados, filas acionáveis, qualidade editorial e monetização">
+    <AdminLayout title="Métricas Operacionais" subtitle="Qualidade do catálogo, editorial e saúde das automações">
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-muted">
             <Activity className="h-4 w-4 text-accent" />
-            {data ? `Atualizado em ${new Date(data.generatedAt).toLocaleString('pt-BR')}` : 'Carregando métricas...'}
+            {data ? `Atualizado em ${new Date(data.generatedAt).toLocaleString('pt-BR')} · auto-refresh a cada 5 min` : 'Carregando métricas...'}
           </div>
           <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-muted hover:text-foreground disabled:opacity-50">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -127,34 +139,70 @@ export default function OpsMetricsPage() {
           <div className="rounded-xl border border-border bg-surface p-10 text-center text-sm text-muted">Carregando...</div>
         ) : (
           <>
+            {/* Health scores */}
             <div className="grid gap-3 md:grid-cols-4">
               <HealthCard label="Saúde do catálogo" value={data.summary.catalogHealth} href="/admin/enrichment" />
               <HealthCard label="Saúde editorial" value={data.summary.editorialHealth} href="/admin/pipeline" />
-              <HealthCard label="Saúde da monetização" value={data.summary.monetizationHealth} href="/admin/loja" />
+              <HealthCard label="Saúde das automações" value={data.summary.cronHealth} href="/admin/cron" />
               <div className="rounded-xl border border-border bg-surface p-4">
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-muted"><AlertTriangle className="h-3.5 w-3.5" /> Pendências abertas</p>
                 <p className="mt-2 text-3xl font-black text-foreground">{fmt(data.summary.openIssues)}</p>
-                <p className="mt-2 text-xs text-muted">Soma operacional dos problemas mensuráveis.</p>
+                <p className="mt-2 text-xs text-muted">Catálogo + editorial. Monetização em <Link href="/admin/loja" className="underline hover:text-foreground">/loja</Link>.</p>
               </div>
             </div>
 
+            {/* Cron health summary */}
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-accent" />
+                  <h2 className="text-sm font-bold text-foreground">Automações (últimas 48h)</h2>
+                </div>
+                <Link href="/admin/cron" className="text-xs text-muted hover:text-foreground transition-colors">
+                  Ver detalhes
+                </Link>
+              </div>
+              {data.cron.total === 0 ? (
+                <p className="text-xs text-muted">Nenhum run registrado nas últimas 48h.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-semibold text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" /> {data.cron.ok} ok
+                  </span>
+                  {data.cron.failed > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/30 px-2.5 py-1 text-xs font-semibold text-red-400">
+                      <XCircle className="h-3 w-3" /> {data.cron.failed} falhou
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-border px-2.5 py-1 text-xs font-semibold text-muted">
+                    {data.cron.total} jobs monitorados
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Cobertura do catálogo */}
             <SectionCard title="Cobertura do Catálogo" icon={BarChart3}>
               <Coverage label="Artistas com imagem" value={data.catalog.artists.coverage.image} />
               <Coverage label="Artistas com bio" value={data.catalog.artists.coverage.bio} />
               <Coverage label="Artistas com hangul" value={data.catalog.artists.coverage.hangul} />
               <Coverage label="Grupos com imagem" value={data.catalog.groups.coverage.image} />
+              <Coverage label="Grupos com bio" value={data.catalog.groups.coverage.bio} />
               <Coverage label="Grupos com membros" value={data.catalog.groups.coverage.members} />
+              <Coverage label="Produções com poster" value={data.catalog.productions.coverage.poster} />
               <Coverage label="Produções com elenco" value={data.catalog.productions.coverage.cast} />
               <Coverage label="Produções com sinopse" value={data.catalog.productions.coverage.synopsis} />
               <Coverage label="Produções com streaming" value={data.catalog.productions.coverage.streaming} />
             </SectionCard>
 
+            {/* Entidades */}
             <div className="grid gap-4 xl:grid-cols-3">
               <SectionCard title="Artistas" icon={Mic2}>
                 <MetricRow label="Total visível" value={data.catalog.artists.total} href="/admin/artists" />
                 <MetricRow label="Sem slug" value={data.catalog.artists.missingSlug} danger href="/admin/artists" />
                 <MetricRow label="Sem imagem" value={data.catalog.artists.missingImage} danger href="/admin/artists?filter=no_photo" />
                 <MetricRow label="Sem bio" value={data.catalog.artists.missingBio} danger href="/admin/enrichment" />
+                <MetricRow label="Sem agência" value={data.catalog.artists.missingAgency} href="/admin/agencies" />
                 <MetricRow label="Tradução pendente" value={data.catalog.artists.pendingTranslation} danger href="/admin/translations?tab=artist" />
                 <MetricRow label="Tradução falhou" value={data.catalog.artists.failedTranslation} danger href="/admin/translations/log" />
               </SectionCard>
@@ -174,16 +222,22 @@ export default function OpsMetricsPage() {
                 <MetricRow label="Sem sinopse" value={data.catalog.productions.missingSynopsis} danger href="/admin/productions/enrich" />
                 <MetricRow label="Sem elenco" value={data.catalog.productions.missingCast} danger href="/admin/productions/sync" />
                 <MetricRow label="Sem streaming" value={data.catalog.productions.missingStreaming} href="/admin/streaming" />
+                <MetricRow label="Precisa curadoria" value={data.catalog.productions.needsCuration} danger href="/admin/productions/moderation" />
                 <MetricRow label="Adulto não verificado" value={data.catalog.productions.adultUnchecked} danger href="/admin/productions/moderation" />
+                <MetricRow label="Tradução pendente" value={data.catalog.productions.pendingTranslation} danger href="/admin/translations" />
+                <MetricRow label="Tradução falhou" value={data.catalog.productions.failedTranslation} danger href="/admin/translations/log" />
               </SectionCard>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-3">
+            {/* Editorial */}
+            <div className="grid gap-4 xl:grid-cols-2">
               <SectionCard title="Notícias" icon={Newspaper}>
                 <MetricRow label="Publicadas" value={data.editorial.news.published} href="/admin/news" />
                 <MetricRow label="Draft/ready" value={data.editorial.news.draftReady} danger href="/admin/news" />
+                <MetricRow label="Ocultas" value={data.editorial.news.hidden} href="/admin/news" />
                 <MetricRow label="Sem imagem" value={data.editorial.news.missingImage} danger href="/admin/news" />
                 <MetricRow label="Tradução pendente" value={data.editorial.news.pendingTranslation} danger href="/admin/translations" />
+                <MetricRow label="Tradução falhou" value={data.editorial.news.failedTranslation} danger href="/admin/translations/log" />
                 <MetricRow label="Sem nota editorial" value={data.editorial.news.withoutEditorialNote} href="/admin/news/reprocess" />
                 <MetricRow label="Sem blog derivado" value={data.editorial.news.withoutGeneratedBlog} href="/admin/blog/inspiration" />
               </SectionCard>
@@ -193,20 +247,41 @@ export default function OpsMetricsPage() {
                 <MetricRow label="Rascunhos" value={data.editorial.blog.draft} href="/admin/blog" />
                 <MetricRow label="Revisão pendente" value={data.editorial.blog.pendingReview} danger href="/admin/blog" />
                 <MetricRow label="Sem capa" value={data.editorial.blog.missingCover} danger href="/admin/blog" />
+                <MetricRow label="Sem categoria" value={data.editorial.blog.missingCategory} danger href="/admin/blog" />
                 <MetricRow label="Sem vínculo com entidade" value={data.editorial.blog.withoutEntityLinks} danger href="/admin/blog" />
                 <MetricRow label="Meta description faltando" value={data.editorial.seo.missingMetaDesc} danger href="/admin/seo" />
-              </SectionCard>
-
-              <SectionCard title="Monetização" icon={ShoppingBag}>
-                <MetricRow label="Produtos ativos" value={data.monetization.activeProducts} href="/admin/loja" />
-                <MetricRow label="Produtos rascunho" value={data.monetization.draftProducts} href="/admin/loja" />
-                <MetricRow label="ML sem link oficial" value={data.monetization.mercadoLivreMissingOfficialLink} danger href="/admin/loja?store=mercadolivre" />
-                <MetricRow label="Candidatos pendentes" value={data.monetization.pendingCandidates} danger href="/admin/loja" />
-                <MetricRow label="Impressões 30d" value={data.monetization.impressions30d} />
-                <MetricRow label="CTR loja 30d" value={data.monetization.ctr30d} />
+                <MetricRow label="Páginas noindex" value={data.editorial.seo.noIndex} href="/admin/seo" />
               </SectionCard>
             </div>
 
+            {/* Base cadastrada (absorve /admin/database) */}
+            <section className="rounded-xl border border-border bg-surface">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Database className="h-4 w-4 text-accent" />
+                  <h2 className="text-sm font-bold text-foreground">Base cadastrada</h2>
+                </div>
+              </div>
+              <div className="grid gap-2 p-4 sm:grid-cols-4">
+                {([
+                  ['Usuários', data.database.users, '/admin/users'],
+                  ['Artistas', data.database.artists, '/admin/artists'],
+                  ['Grupos', data.database.groups, '/admin/groups'],
+                  ['Produções', data.database.productions, '/admin/productions'],
+                  ['Agências', data.database.agencies, '/admin/agencies'],
+                  ['Álbuns', data.database.albums, '/admin/albums'],
+                  ['Notícias', data.database.news, '/admin/news'],
+                  ['Blog posts', data.database.blogPosts, '/admin/blog'],
+                ] as [string, number, string][]).map(([label, value, href]) => (
+                  <Link key={label} href={href} className="flex items-center justify-between gap-3 rounded-lg bg-background px-3 py-2 hover:bg-surface-hover transition-colors">
+                    <span className="truncate text-xs font-medium text-muted">{label}</span>
+                    <span className="shrink-0 text-sm font-black text-foreground">{fmt(value)}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Guia de uso */}
             <div className="rounded-xl border border-border bg-surface p-4">
               <div className="mb-3 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -214,8 +289,8 @@ export default function OpsMetricsPage() {
               </div>
               <div className="grid gap-2 text-xs text-muted md:grid-cols-3">
                 <p><FileText className="mr-1 inline h-3.5 w-3.5 text-accent" /> Priorize métricas vermelhas que afetam páginas com tráfego alto.</p>
-                <p><Languages className="mr-1 inline h-3.5 w-3.5 text-accent" /> Tradução pendente/falha é dívida de publicação, não só conteúdo incompleto.</p>
-                <p><ShoppingBag className="mr-1 inline h-3.5 w-3.5 text-accent" /> Produto sem link oficial é estoque editorial, mas ainda não monetiza.</p>
+                <p><Languages className="mr-1 inline h-3.5 w-3.5 text-accent" /> Tradução falhou é dívida de publicação — acionar via <Link href="/admin/translations/log" className="underline">log de traduções</Link>.</p>
+                <p><Clock className="mr-1 inline h-3.5 w-3.5 text-accent" /> Automações com falha devem ser verificadas em <Link href="/admin/cron" className="underline">/admin/cron</Link>.</p>
               </div>
             </div>
           </>

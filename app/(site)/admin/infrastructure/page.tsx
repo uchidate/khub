@@ -64,18 +64,23 @@ export default function InfrastructurePage() {
     const [confirmDeploy, setConfirmDeploy] = useState(false)
     const [togglingTask, setTogglingTask] = useState<string | null>(null)
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+    const [loadError, setLoadError] = useState<{ error: string; hint?: string } | null>(null)
 
     const load = useCallback(async () => {
         setLoading(true)
+        setLoadError(null)
         try {
             const res = await fetch(`/api/admin/infrastructure?env=${env}`)
-            if (!res.ok) throw new Error('Failed to load')
             const data = await res.json()
+            if (!res.ok) {
+                setLoadError({ error: data.error ?? 'Erro desconhecido', hint: data.hint })
+                return
+            }
             setApp(data.app)
             setTasks(data.tasks)
             setLastRefresh(new Date())
-        } catch {
-            // ignore
+        } catch (err) {
+            setLoadError({ error: err instanceof Error ? err.message : 'Falha na requisição' })
         } finally {
             setLoading(false)
         }
@@ -163,8 +168,19 @@ export default function InfrastructurePage() {
                     </div>
                 </div>
 
+                {/* Erro de conexão */}
+                {loadError && (
+                    <div className="rounded-xl border border-red-500/40 bg-red-500/8 p-4 space-y-1">
+                        <p className="text-sm font-bold text-red-400">Erro ao conectar com o Coolify</p>
+                        <p className="text-xs text-red-300/80">{loadError.error}</p>
+                        {loadError.hint && (
+                            <p className="text-xs text-muted mt-2">{loadError.hint}</p>
+                        )}
+                    </div>
+                )}
+
                 {/* App Status */}
-                <div className="bg-surface border border-border rounded-2xl p-5">
+                {!loadError && (<div className="bg-surface border border-border rounded-2xl p-5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${envConfig.dot}`} />
@@ -193,9 +209,10 @@ export default function InfrastructurePage() {
                             Atualizado às {lastRefresh.toLocaleTimeString('pt-BR')}
                         </p>
                     )}
-                </div>
+                </div>)}
 
                 {/* Scheduled Tasks */}
+                {!loadError &&
                 <div>
                     <h2 className="text-xs font-black uppercase tracking-widest text-muted mb-3 flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5" />
@@ -255,7 +272,7 @@ export default function InfrastructurePage() {
                             ))}
                         </div>
                     )}
-                </div>
+                </div>}
             </div>
             <ConfirmDialog
                 open={confirmDeploy}

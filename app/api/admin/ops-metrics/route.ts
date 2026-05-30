@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-helpers'
 import prisma from '@/lib/prisma'
-import { isOfficialMercadoLivreAffiliateUrl } from '@/lib/store/mercadolivre'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +18,7 @@ export async function GET() {
   const { error } = await requireAdmin()
   if (error) return error
 
-  const since30d = new Date(Date.now() - 30 * 86400_000)
+  const since48h = new Date(Date.now() - 48 * 3600_000)
 
   const [
     artistsTotal,
@@ -69,11 +68,16 @@ export async function GET() {
     seoMissingMetaDesc,
     seoNoIndex,
 
-    storeProducts,
-    storeCandidatesPending,
-    storeCandidatesApproved,
-    storeImpressions30d,
-    storeClicks30d,
+    dbUsers,
+    dbArtists,
+    dbGroups,
+    dbProductions,
+    dbAgencies,
+    dbAlbums,
+    dbNews,
+    dbBlogPosts,
+
+    cronEvents,
   ] = await Promise.all([
     prisma.artist.count({ where: { isHidden: false } }),
     prisma.artist.count({ where: { isHidden: false, slug: null } }),
@@ -130,27 +134,41 @@ export async function GET() {
     prisma.seoMeta.count({ where: { OR: [{ metaDesc: null }, { metaDesc: '' }] } }),
     prisma.seoMeta.count({ where: { noIndex: true } }),
 
-    prisma.storeProduct.findMany({
-      select: {
-        id: true,
-        store: true,
-        affiliateUrl: true,
-        isActive: true,
-        isHidden: true,
-        externalId: true,
-      },
+    prisma.user.count(),
+    prisma.artist.count(),
+    prisma.musicalGroup.count(),
+    prisma.production.count(),
+    prisma.agency.count(),
+    prisma.album.count(),
+    prisma.news.count(),
+    prisma.blogPost.count(),
+
+    // Últimos eventos de cron das últimas 48h para calcular saúde
+    prisma.systemEvent.findMany({
+      where: { source: 'CRON_RUN', createdAt: { gte: since48h } },
+      select: { metadata: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
     }),
-    prisma.storeProductCandidate.count({ where: { status: 'candidate' } }),
-    prisma.storeProductCandidate.count({ where: { status: 'approved' } }),
-    prisma.storeProductImpression.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.storeAffiliateClick.count({ where: { createdAt: { gte: since30d }, productId: { not: null } } }),
   ])
 
-  const mlProducts = storeProducts.filter(p => p.store === 'mercadolivre')
-  const mlMissingOfficialLink = mlProducts.filter(p => !isOfficialMercadoLivreAffiliateUrl(p.affiliateUrl)).length
-  const storeActive = storeProducts.filter(p => p.isActive && !p.isHidden).length
-  const storeDraft = storeProducts.length - storeActive
-  const storeTrackedExternal = storeProducts.filter(p => p.externalId).length
+  // Saúde dos crons: pega o último run por jobId e conta ok vs falha
+  const latestByJob = new Map<string, { status: string; at: string }>()
+  for (const event of cronEvents) {
+    const meta = event.metadata as Record<string, unknown> | null
+    if (!meta?.jobId) continue
+    const jobId = String(meta.jobId)
+    if (!latestByJob.has(jobId)) {
+      latestByJob.set(jobId, {
+        status: String(meta.status ?? 'unknown'),
+        at: event.createdAt.toISOString(),
+      })
+    }
+  }
+  const cronJobs = Array.from(latestByJob.entries()).map(([id, v]) => ({ id, ...v }))
+  const cronOk = cronJobs.filter(j => j.status === 'success' || j.status === 'partial').length
+  const cronFailed = cronJobs.filter(j => j.status === 'failed').length
+  const cronTotal = cronJobs.length
 
   const catalogIssues =
     artistsMissingSlug + artistsMissingImage + artistsMissingBio + artistsMissingHangul + artistsPendingTranslation +
@@ -162,15 +180,29 @@ export async function GET() {
     newsDraftReady + newsMissingImage + newsPendingTranslation + newsWithoutEditorialNote +
     blogDraft + blogPendingReview + blogMissingCover + blogMissingCategory + blogWithoutEntityLinks
 
-  const monetizationIssues = mlMissingOfficialLink + storeCandidatesPending
-
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     summary: {
       catalogHealth: healthScore(catalogIssues, artistsTotal + groupsTotal + productionsTotal),
       editorialHealth: healthScore(editorialIssues, newsPublished + blogPublished + newsDraftReady + blogDraft + blogPendingReview),
-      monetizationHealth: healthScore(monetizationIssues, Math.max(1, storeProducts.length + storeCandidatesPending)),
-      openIssues: catalogIssues + editorialIssues + monetizationIssues,
+      cronHealth: cronTotal > 0 ? Math.round((cronOk / cronTotal) * 100) : 100,
+      openIssues: catalogIssues + editorialIssues,
+    },
+    cron: {
+      total: cronTotal,
+      ok: cronOk,
+      failed: cronFailed,
+      jobs: cronJobs,
+    },
+    database: {
+      users: dbUsers,
+      artists: dbArtists,
+      groups: dbGroups,
+      productions: dbProductions,
+      agencies: dbAgencies,
+      albums: dbAlbums,
+      news: dbNews,
+      blogPosts: dbBlogPosts,
     },
     catalog: {
       artists: {
@@ -244,19 +276,6 @@ export async function GET() {
         missingMetaDesc: seoMissingMetaDesc,
         noIndex: seoNoIndex,
       },
-    },
-    monetization: {
-      storeProducts: storeProducts.length,
-      activeProducts: storeActive,
-      draftProducts: storeDraft,
-      externalTrackedProducts: storeTrackedExternal,
-      mercadoLivreProducts: mlProducts.length,
-      mercadoLivreMissingOfficialLink: mlMissingOfficialLink,
-      pendingCandidates: storeCandidatesPending,
-      approvedCandidates: storeCandidatesApproved,
-      impressions30d: storeImpressions30d,
-      clicks30d: storeClicks30d,
-      ctr30d: storeImpressions30d ? storeClicks30d / storeImpressions30d : null,
     },
   })
 }
