@@ -23,13 +23,25 @@ function extractImageUrls(blocks: BlogBlock[], postId: string, slug: string, tit
     return refs
 }
 
+// Wikimedia e alguns CDNs exigem User-Agent com URL e contato para não bloquear bots.
+const AUDIT_UA = 'HallyuHub-ImageAudit/1.0 (https://hallyuhub.com.br; contato@hallyuhub.com.br)'
+
 async function checkUrl(url: string): Promise<{ ok: boolean; status: number | null }> {
     try {
         const res = await fetch(url, {
             method: 'HEAD',
             signal: AbortSignal.timeout(8000),
-            headers: { 'User-Agent': 'HallyuHub-ImageAudit/1.0' },
+            headers: { 'User-Agent': AUDIT_UA },
         })
+        // Alguns servidores não suportam HEAD — tentar GET parcial como fallback
+        if (res.status === 405 || res.status === 429) {
+            const retry = await fetch(url, {
+                method: 'GET',
+                signal: AbortSignal.timeout(10000),
+                headers: { 'User-Agent': AUDIT_UA, 'Range': 'bytes=0-0' },
+            })
+            return { ok: retry.ok || retry.status === 206, status: retry.status }
+        }
         return { ok: res.ok, status: res.status }
     } catch {
         return { ok: false, status: null }
