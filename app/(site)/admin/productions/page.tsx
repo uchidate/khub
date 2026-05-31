@@ -11,13 +11,12 @@ import { FormModal, FormField } from '@/components/admin/FormModal'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { FilterPills } from '@/components/admin/FilterPills'
-import { AdminButton, AdminLinkButton } from '@/components/admin/AdminButton'
+import { AdminButton } from '@/components/admin/AdminButton'
 import { AdminBadge } from '@/components/admin/AdminBadge'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
-  Check, Film, Star, Languages, Wrench, ImageOff,
-  FileText, Globe, ShieldAlert, LayoutList, List,
+  Check, Film, Star, Languages, Wrench,
 } from 'lucide-react'
 import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
 import { adminApi, ApiError } from '@/lib/admin-api'
@@ -619,7 +618,6 @@ export default function ProductionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [castModalProduction, setCastModalProduction] = useState<Production | null>(null)
   const [moreActionsOpen, setMoreActionsOpen] = useState(false)
-  const [compact, setCompact] = useState(false)
   const [stats, setStats] = useState<Stats | null>(null)
 
   // Filter persisted in URL — supports shareable links and back-button
