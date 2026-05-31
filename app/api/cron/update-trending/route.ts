@@ -85,7 +85,8 @@ async function updateGroupTrending(since7d: Date): Promise<number> {
 /**
  * Batch UPDATE News.trendingScore — 1 query em vez de N.
  *
- * Score = normalize(viewCount * 0.6 + recentFavs * 0.3 + recentComments * 0.1)
+ * Score = normalize(viewCount * 0.6 + recentFavs * 0.3)
+ * Nota: Comment não tem newsId (só blogPostId) — sinal removido.
  */
 async function updateNewsTrending(since7d: Date): Promise<number> {
     const result = await prisma.$executeRaw`
@@ -106,12 +107,6 @@ async function updateNewsTrending(since7d: Date): Promise<number> {
                             FROM "Favorite" f
                             WHERE f."newsId" = n.id
                               AND f."createdAt" >= ${since7d}
-                          ), 0)
-                        + COALESCE((
-                            SELECT COUNT(*) * 0.1
-                            FROM "Comment" c
-                            WHERE c."newsId" = n.id
-                              AND c."createdAt" >= ${since7d}
                           ), 0)
                     ) AS raw
                 FROM "News" n
