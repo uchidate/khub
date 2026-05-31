@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useReducer } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { PageGuide } from '@/components/admin/PageGuide'
 import { DataTable, Column, refetchTable } from '@/components/admin/DataTable'
@@ -16,8 +16,8 @@ import { AdminBadge } from '@/components/admin/AdminBadge'
 import {
   Plus, Users, RefreshCw, ShieldCheck, RotateCcw, CalendarSearch,
   ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, Pencil, Trash2,
-  Check, AlertCircle, Film, Star, Languages, Wrench, ImageOff,
-  FileText, Globe, ShieldAlert,
+  Check, Film, Star, Languages, Wrench, ImageOff,
+  FileText, Globe, ShieldAlert, LayoutList, List,
 } from 'lucide-react'
 import { AdminEmptyState, AdminModalOverlay } from '@/components/admin'
 import { adminApi, ApiError } from '@/lib/admin-api'
@@ -572,28 +572,64 @@ const formFields: FormField[] = [
   },
 ]
 
+// ─── Ops reducer ─────────────────────────────────────────────────────────────
+
+type OpsState = {
+  batchSyncing: boolean
+  resetSyncing: boolean
+  fixNoTypeSyncing: boolean
+  ageSyncing: boolean
+  ageSyncingId: string | null
+  syncingId: string | null
+  confirmResetResync: boolean
+  confirmFixNoType: boolean
+}
+
+type OpsAction =
+  | { type: 'SET'; key: keyof OpsState; value: OpsState[keyof OpsState] }
+  | { type: 'RESET_CONFIRMS' }
+
+const opsInit: OpsState = {
+  batchSyncing: false, resetSyncing: false, fixNoTypeSyncing: false,
+  ageSyncing: false, ageSyncingId: null, syncingId: null,
+  confirmResetResync: false, confirmFixNoType: false,
+}
+
+function opsReducer(state: OpsState, action: OpsAction): OpsState {
+  if (action.type === 'RESET_CONFIRMS') return { ...state, confirmResetResync: false, confirmFixNoType: false }
+  return { ...state, [action.key]: action.value }
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProductionsPage() {
   const toast = useAdminToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Ops state consolidated in a reducer
+  const [ops, dispatch] = useReducer(opsReducer, opsInit)
+  const setOp = <K extends keyof OpsState>(key: K, value: OpsState[K]) => dispatch({ type: 'SET', key, value })
+
+  // UI state
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [editingProduction, setEditingProduction] = useState<Production | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [syncingId, setSyncingId] = useState<string | null>(null)
-  const [batchSyncing, setBatchSyncing] = useState(false)
-  const [resetSyncing, setResetSyncing] = useState(false)
-  const [fixNoTypeSyncing, setFixNoTypeSyncing] = useState(false)
-  const [confirmResetResync, setConfirmResetResync] = useState(false)
-  const [confirmFixNoType, setConfirmFixNoType] = useState(false)
-  const [ageSyncing, setAgeSyncing] = useState(false)
-  const [ageSyncingId, setAgeSyncingId] = useState<string | null>(null)
-  const [syncMsg, setSyncMsg] = useState('')
   const [castModalProduction, setCastModalProduction] = useState<Production | null>(null)
-  const [filter, setFilter] = useState<FilterType>('')
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false)
+  const [compact, setCompact] = useState(false)
   const [stats, setStats] = useState<Stats | null>(null)
+
+  // Filter persisted in URL — supports shareable links and back-button
+  const filter = (searchParams.get('filter') as FilterType) ?? ''
+  const setFilter = useCallback((f: FilterType) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (f) params.set('filter', f)
+    else params.delete('filter')
+    router.replace(`/admin/productions?${params}`, { scroll: false })
+  }, [router, searchParams])
 
   // Backfill pt-BR state
   const [backfillPanelOpen, setBackfillPanelOpen] = useState(false)
@@ -603,11 +639,8 @@ export default function ProductionsPage() {
   const [backfillStats, setBackfillStats] = useState<{ updated: number; noChange: number; errors: number } | null>(null)
   const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number; totalGlobal: number } | null>(null)
 
-  // Mobile "more actions" dropdown
-  const [moreActionsOpen, setMoreActionsOpen] = useState(false)
-
-  // Import by period state
-  const [importPanelOpen, setImportPanelOpen] = useState(false)
+  // Import modal state
+  const [importOpen, setImportOpen] = useState(false)
   const [importType, setImportType] = useState<'tv' | 'movie'>('tv')
   const [importYear, setImportYear] = useState(String(new Date().getFullYear()))
   const [importMonth, setImportMonth] = useState('0')
@@ -625,16 +658,18 @@ export default function ProductionsPage() {
 
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  const showMsg = (msg: string, timeout = 8000) => {
-    setSyncMsg(msg)
-    setTimeout(() => setSyncMsg(''), timeout)
+  // All feedback goes through toast — no inline syncMsg banner
+  const showMsg = (msg: string) => {
+    if (msg.startsWith('✅')) toast.success(msg.replace('✅ ', ''))
+    else if (msg.startsWith('❌')) toast.error(msg.replace('❌ ', ''))
+    else toast.info?.(msg) ?? toast.success(msg)
   }
 
   // ─── Cast sync ─────────────────────────────────────────────────────────────
 
   const handleSyncCast = async (production: Production) => {
-    if (syncingId) return
-    setSyncingId(production.id)
+    if (ops.syncingId) return
+    setOp("syncingId", production.id)
     let success = false
     try {
       const res = await fetch('/api/admin/productions/sync-cast', {
@@ -654,7 +689,7 @@ export default function ProductionsPage() {
     } catch {
       showMsg('❌ Erro de rede')
     } finally {
-      setSyncingId(null)
+      setOp("syncingId", null)
     }
     // Propagate failure so CastModal can show the error instead of false "✅"
     if (!success) throw new Error('sync failed')
@@ -663,8 +698,8 @@ export default function ProductionsPage() {
   // ─── Age rating per production ─────────────────────────────────────────────
 
   const handleSyncAgeRatingOne = async (production: Production) => {
-    if (ageSyncingId) return
-    setAgeSyncingId(production.id)
+    if (ops.ageSyncingId) return
+    setOp("ageSyncingId", production.id)
     try {
       const res = await fetch('/api/admin/productions/sync-age-rating', {
         method: 'POST',
@@ -676,7 +711,7 @@ export default function ProductionsPage() {
         const rated = data.ageRating
           ? `classificado como ${data.ageRating === 'L' ? 'Livre' : data.ageRating + '+'}`
           : 'sem dados no TMDB'
-        showMsg(`✅ ${production.titlePt}: ${rated}`, 6000)
+        showMsg(`✅ ${production.titlePt}: ${rated}`)
         refetchTable()
         fetchStats()
       } else {
@@ -685,16 +720,16 @@ export default function ProductionsPage() {
     } catch {
       showMsg('❌ Erro de rede')
     } finally {
-      setAgeSyncingId(null)
+      setOp("ageSyncingId", null)
     }
   }
 
   // ─── Batch ops ─────────────────────────────────────────────────────────────
 
   const handleSyncPending = async () => {
-    if (batchSyncing) return
-    setBatchSyncing(true)
-    setSyncMsg('Sincronizando elenco pendente...')
+    if (ops.batchSyncing) return
+    setOp("batchSyncing", true)
+    showMsg('Sincronizando elenco pendente...')
     try {
       const res = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
@@ -712,14 +747,14 @@ export default function ProductionsPage() {
     } catch {
       showMsg('❌ Erro de rede')
     } finally {
-      setBatchSyncing(false)
+      setOp("batchSyncing", false)
     }
   }
 
   const handleResetResync = async () => {
-    if (resetSyncing) return
-    setResetSyncing(true)
-    setSyncMsg('Resetando elenco de todas as produções...')
+    if (ops.resetSyncing) return
+    setOp("resetSyncing", true)
+    showMsg('Resetando elenco de todas as produções...')
     try {
       const resetRes = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
@@ -731,7 +766,7 @@ export default function ProductionsPage() {
       const total = resetData.total as number
       let processed = 0; let totalSynced = 0
       while (true) {
-        setSyncMsg(`🔄 Resincronizando... ${processed}/${total} produções`)
+        showMsg(`🔄 Resincronizando... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -742,21 +777,21 @@ export default function ProductionsPage() {
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
-      showMsg(`✅ Resync completo: ${processed}/${total} produções · ${totalSynced} artistas`, 15000)
+      showMsg(`✅ Resync completo: ${processed}/${total} produções · ${totalSynced} artistas`)
       refetchTable()
       fetchStats()
     } catch {
       showMsg('❌ Erro de rede durante o resync')
     } finally {
-      setResetSyncing(false)
+      setOp("resetSyncing", false)
     }
   }
 
   // Reseta e resincroniza apenas produções com tmdbId mas sem tmdbType
   const handleFixNoTmdbType = async () => {
-    if (fixNoTypeSyncing) return
-    setFixNoTypeSyncing(true)
-    setSyncMsg('Corrigindo produções sem tmdbType...')
+    if (ops.fixNoTypeSyncing) return
+    setOp("fixNoTypeSyncing", true)
+    showMsg('Corrigindo produções sem tmdbType...')
     try {
       const resetRes = await fetch('/api/admin/productions/sync-cast', {
         method: 'POST',
@@ -769,7 +804,7 @@ export default function ProductionsPage() {
       if (total === 0) { showMsg('✅ Nenhuma produção com tmdbType ausente encontrada.'); return }
       let processed = 0; let totalSynced = 0
       while (true) {
-        setSyncMsg(`🔄 Corrigindo sem tmdbType... ${processed}/${total} produções`)
+        showMsg(`🔄 Corrigindo sem tmdbType... ${processed}/${total} produções`)
         const batchRes = await fetch('/api/admin/productions/sync-cast', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -780,13 +815,13 @@ export default function ProductionsPage() {
         processed += batchData.processed as number
         totalSynced += batchData.totalSynced as number
       }
-      showMsg(`✅ Correção concluída: ${processed}/${total} produções · ${totalSynced} artistas`, 15000)
+      showMsg(`✅ Correção concluída: ${processed}/${total} produções · ${totalSynced} artistas`)
       refetchTable()
       fetchStats()
     } catch {
       showMsg('❌ Erro de rede durante correção')
     } finally {
-      setFixNoTypeSyncing(false)
+      setOp("fixNoTypeSyncing", false)
     }
   }
 
@@ -857,9 +892,9 @@ export default function ProductionsPage() {
   }
 
   const handleSyncAgeRating = async () => {
-    if (ageSyncing) return
-    setAgeSyncing(true)
-    setSyncMsg('Buscando classificações no TMDB...')
+    if (ops.ageSyncing) return
+    setOp("ageSyncing", true)
+    showMsg('Buscando classificações no TMDB...')
     try {
       const res = await fetch('/api/admin/productions/sync-age-rating', {
         method: 'POST',
@@ -869,7 +904,7 @@ export default function ProductionsPage() {
       const data = await res.json()
       if (res.ok) {
         const rem = data.remaining > 0 ? ` · ${data.remaining} ainda pendentes` : ' · Todas classificadas!'
-        showMsg(`✅ ${data.updated} classificadas · ${data.notFound} sem dados${rem}`, 15000)
+        showMsg(`✅ ${data.updated} classificadas · ${data.notFound} sem dados${rem}`)
         refetchTable()
         fetchStats()
       } else {
@@ -878,7 +913,7 @@ export default function ProductionsPage() {
     } catch {
       showMsg('❌ Erro de rede')
     } finally {
-      setAgeSyncing(false)
+      setOp("ageSyncing", false)
     }
   }
 
@@ -1094,9 +1129,9 @@ export default function ProductionsPage() {
           {/* Desktop: Importar + Nova + Manutenção dropdown */}
           <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
+              onClick={() => { setImportOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-3 py-2 border font-bold rounded-lg transition-all text-xs ${
-                importPanelOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-700 dark:text-cyan-300' : 'bg-surface hover:bg-surface-hover border-border text-foreground'
+                importOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-700 dark:text-cyan-300' : 'bg-surface hover:bg-surface-hover border-border text-foreground'
               }`}
             >
               <CalendarSearch size={13} />
@@ -1118,17 +1153,17 @@ export default function ProductionsPage() {
               </button>
               {moreActionsOpen && (
                 <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-52">
-                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={batchSyncing}
+                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={ops.batchSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
-                    <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
-                    {batchSyncing ? 'Importando...' : 'Elenco Pendente'}
+                    <RefreshCw size={12} className={ops.batchSyncing ? 'animate-spin' : ''} />
+                    {ops.batchSyncing ? 'Importando...' : 'Elenco Pendente'}
                   </button>
-                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ageSyncing}
+                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ops.ageSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
-                    <ShieldCheck size={12} className={ageSyncing ? 'animate-pulse' : ''} />
-                    {ageSyncing ? 'Classificando...' : 'Classificar Pendentes'}
+                    <ShieldCheck size={12} className={ops.ageSyncing ? 'animate-pulse' : ''} />
+                    {ops.ageSyncing ? 'Classificando...' : 'Classificar Pendentes'}
                   </button>
-                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
+                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportOpen(false); setMoreActionsOpen(false) }}
                     className={`w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold transition-colors border-b border-border ${
                       backfillPanelOpen ? 'text-green-400 bg-green-500/10' : 'text-foreground hover:bg-surface-hover'
                     }`}>
@@ -1141,14 +1176,14 @@ export default function ProductionsPage() {
                     Sync TMDB
                   </Link>
                   <div className="border-t border-border mt-1 pt-1">
-                    <button onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }} disabled={resetSyncing}
+                    <button onClick={() => { setOp("confirmResetResync", true); setMoreActionsOpen(false) }} disabled={ops.resetSyncing}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border/50 disabled:opacity-50">
-                      <RotateCcw size={12} className={resetSyncing ? 'animate-spin' : ''} />
+                      <RotateCcw size={12} className={ops.resetSyncing ? 'animate-spin' : ''} />
                       Resync Completo
                     </button>
-                    <button onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }} disabled={fixNoTypeSyncing}
+                    <button onClick={() => { setOp("confirmFixNoType", true); setMoreActionsOpen(false) }} disabled={ops.fixNoTypeSyncing}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50">
-                      <RotateCcw size={12} className={fixNoTypeSyncing ? 'animate-spin' : ''} />
+                      <RotateCcw size={12} className={ops.fixNoTypeSyncing ? 'animate-spin' : ''} />
                       Corrigir sem Tipo
                     </button>
                   </div>
@@ -1160,9 +1195,9 @@ export default function ProductionsPage() {
           {/* Mobile: Importar + Nova + Manutenção */}
           <div className="sm:hidden flex items-center gap-1.5 w-full">
             <button
-              onClick={() => { setImportPanelOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
+              onClick={() => { setImportOpen(v => !v); setImportMsg(''); setBackfillPanelOpen(false) }}
               className={`flex items-center gap-1.5 px-2.5 py-2 border font-bold rounded-lg transition-all text-xs flex-1 justify-center ${
-                importPanelOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-700 dark:text-cyan-300' : 'bg-surface hover:bg-surface-hover border-border text-foreground'
+                importOpen ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-700 dark:text-cyan-300' : 'bg-surface hover:bg-surface-hover border-border text-foreground'
               }`}
             >
               <CalendarSearch size={12} />
@@ -1182,17 +1217,17 @@ export default function ProductionsPage() {
               </button>
               {moreActionsOpen && (
                 <div className="absolute right-0 top-full mt-1 z-30 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden w-52">
-                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={batchSyncing}
+                  <button onClick={() => { handleSyncPending(); setMoreActionsOpen(false) }} disabled={ops.batchSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
-                    <RefreshCw size={12} className={batchSyncing ? 'animate-spin' : ''} />
+                    <RefreshCw size={12} className={ops.batchSyncing ? 'animate-spin' : ''} />
                     Elenco Pendente
                   </button>
-                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ageSyncing}
+                  <button onClick={() => { handleSyncAgeRating(); setMoreActionsOpen(false) }} disabled={ops.ageSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border disabled:opacity-50">
                     <ShieldCheck size={12} />
                     Classificar Pendentes
                   </button>
-                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportPanelOpen(false); setMoreActionsOpen(false) }}
+                  <button onClick={() => { setBackfillPanelOpen(v => !v); setImportOpen(false); setMoreActionsOpen(false) }}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors border-b border-border">
                     <RefreshCw size={12} />
                     Atualizar PT-BR
@@ -1202,12 +1237,12 @@ export default function ProductionsPage() {
                     <Star size={12} />
                     Sync TMDB
                   </Link>
-                  <button onClick={() => { setConfirmResetResync(true); setMoreActionsOpen(false) }} disabled={resetSyncing}
+                  <button onClick={() => { setOp("confirmResetResync", true); setMoreActionsOpen(false) }} disabled={ops.resetSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors border-b border-border/50 disabled:opacity-50">
                     <RotateCcw size={12} />
                     Resync Completo
                   </button>
-                  <button onClick={() => { setConfirmFixNoType(true); setMoreActionsOpen(false) }} disabled={fixNoTypeSyncing}
+                  <button onClick={() => { setOp("confirmFixNoType", true); setMoreActionsOpen(false) }} disabled={ops.fixNoTypeSyncing}
                     className="w-full flex items-center gap-2 px-4 py-3 text-xs font-semibold text-orange-400 hover:bg-orange-500/10 transition-colors disabled:opacity-50">
                     <RotateCcw size={12} />
                     Corrigir sem Tipo
@@ -1218,16 +1253,11 @@ export default function ProductionsPage() {
           </div>
         </div>
 
-        {/* Status message */}
-        {syncMsg && (
-          <div className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 ${
-            syncMsg.startsWith('✅') ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400'
-            : syncMsg.startsWith('🔄') ? 'bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-400'
-            : 'bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400'
-          }`}>
-            {syncMsg.startsWith('🔄') && <RefreshCw size={14} className="animate-spin flex-shrink-0" />}
-            {syncMsg.startsWith('❌') && <AlertCircle size={14} className="flex-shrink-0" />}
-            {syncMsg}
+        {/* Progress message for long-running batch ops */}
+        {(ops.batchSyncing || ops.resetSyncing || ops.fixNoTypeSyncing || ops.ageSyncing) && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/10 border border-accent/20 text-xs text-accent">
+            <RefreshCw size={12} className="animate-spin flex-shrink-0" />
+            <span>Operação em andamento...</span>
           </div>
         )}
 
@@ -1310,15 +1340,10 @@ export default function ProductionsPage() {
           </div>
         )}
 
-        {/* Import by Period Panel */}
-        {importPanelOpen && (
-          <div className="rounded-xl border border-cyan-500/20 bg-surface p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-widest">Importar por Período</h3>
-              <button onClick={() => setImportPanelOpen(false)} className="text-muted hover:text-foreground">
-                <X size={16} />
-              </button>
-            </div>
+        {/* Import by Period Modal */}
+        {importOpen && (
+          <AdminModalOverlay open onClose={() => { setImportOpen(false); setImportMsg('') }} title="Importar por Período" maxWidth="2xl">
+            <div className="space-y-4">
             <div className="flex flex-wrap gap-3 items-end">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-muted font-bold uppercase">Tipo</label>
@@ -1414,7 +1439,8 @@ export default function ProductionsPage() {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          </AdminModalOverlay>
         )}
 
         {/* Data Table */}
@@ -1465,7 +1491,7 @@ export default function ProductionsPage() {
                     </button>
                     <button
                       onClick={() => handleSyncAgeRatingOne(production)}
-                      disabled={ageSyncingId === production.id || !production.tmdbId}
+                      disabled={ops.ageSyncingId === production.id || !production.tmdbId}
                       title={production.tmdbId ? (production.ageRating ? `Reclassificar (atual: ${production.ageRating})` : 'Classificar no TMDB') : 'Sem TMDB ID'}
                       className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-bold transition-all disabled:opacity-40 ${
                         production.ageRating
@@ -1473,8 +1499,8 @@ export default function ProductionsPage() {
                           : 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/20 text-yellow-400'
                       }`}
                     >
-                      <ShieldCheck size={11} className={ageSyncingId === production.id ? 'animate-pulse' : ''} />
-                      <span>{ageSyncingId === production.id ? '...' : production.ageRating ? (production.ageRating === 'L' ? 'L' : `${production.ageRating}+`) : '—'}</span>
+                      <ShieldCheck size={11} className={ops.ageSyncingId === production.id ? 'animate-pulse' : ''} />
+                      <span>{ops.ageSyncingId === production.id ? '...' : production.ageRating ? (production.ageRating === 'L' ? 'L' : `${production.ageRating}+`) : '—'}</span>
                     </button>
                     <Link
                       href={`/admin/productions/${production.id}`}
@@ -1501,35 +1527,29 @@ export default function ProductionsPage() {
             </div>
           )}
           actions={(production) => (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              {/* Cast button → opens modal */}
+            <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+              {/* Cast — ghost button, red count when empty */}
               <button
                 onClick={() => setCastModalProduction(production)}
-                title="Gerenciar elenco"
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-bold transition-all ${
-                  production.artistsCount === 0
-                    ? 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
-                    : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/20 text-cyan-400'
-                }`}
+                title={`Elenco: ${production.artistsCount} artista${production.artistsCount !== 1 ? 's' : ''}`}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs transition-colors hover:bg-surface-hover group"
               >
-                <Users size={12} />
-                <span>{production.artistsCount}</span>
+                <Users size={11} className="text-muted group-hover:text-foreground" />
+                <span className={`tabular-nums font-medium ${production.artistsCount === 0 ? 'text-red-400' : 'text-muted group-hover:text-foreground'}`}>
+                  {production.artistsCount}
+                </span>
               </button>
 
-              {/* Age rating button → sync from TMDB */}
+              {/* Age rating — ghost button, dash when missing */}
               <button
                 onClick={() => handleSyncAgeRatingOne(production)}
-                disabled={ageSyncingId === production.id || !production.tmdbId}
+                disabled={ops.ageSyncingId === production.id || !production.tmdbId}
                 title={production.tmdbId ? (production.ageRating ? `Reclassificar (atual: ${production.ageRating})` : 'Classificar no TMDB') : 'Sem TMDB ID'}
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-bold transition-all disabled:opacity-40 ${
-                  production.ageRating
-                    ? AGE_RATING_STYLES[production.ageRating] ?? 'bg-surface text-muted border-border'
-                    : 'bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/20 text-yellow-400'
-                }`}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs transition-colors hover:bg-surface-hover group disabled:opacity-30 disabled:cursor-default"
               >
-                <ShieldCheck size={12} className={ageSyncingId === production.id ? 'animate-pulse' : ''} />
-                <span>
-                  {ageSyncingId === production.id ? '...'
+                <ShieldCheck size={11} className={`text-muted group-hover:text-foreground ${ops.ageSyncingId === production.id ? 'animate-pulse' : ''}`} />
+                <span className={`tabular-nums font-medium ${production.ageRating ? 'text-muted group-hover:text-foreground' : 'text-muted/50'}`}>
+                  {ops.ageSyncingId === production.id ? '…'
                     : production.ageRating
                     ? (production.ageRating === 'L' ? 'L' : `${production.ageRating}+`)
                     : '—'}
@@ -1569,22 +1589,22 @@ export default function ProductionsPage() {
         onCancel={() => setDeleteOpen(false)}
       />
       <ConfirmDialog
-        open={confirmResetResync}
+        open={ops.confirmResetResync}
         title="Resetar e resincronizar o elenco de TODAS as produções?"
         description="Isso pode levar vários minutos."
         confirmLabel="Continuar"
         variant="danger"
-        onConfirm={() => { setConfirmResetResync(false); handleResetResync() }}
-        onCancel={() => setConfirmResetResync(false)}
+        onConfirm={() => { setOp("confirmResetResync", false); handleResetResync() }}
+        onCancel={() => setOp("confirmResetResync", false)}
       />
       <ConfirmDialog
-        open={confirmFixNoType}
+        open={ops.confirmFixNoType}
         title="Recuperar produções com TMDB ID mas sem tipo definido?"
         description="Isso vai buscar e preencher o campo tmdbType (movie/tv) para essas produções."
         confirmLabel="Continuar"
         variant="default"
-        onConfirm={() => { setConfirmFixNoType(false); handleFixNoTmdbType() }}
-        onCancel={() => setConfirmFixNoType(false)}
+        onConfirm={() => { setOp("confirmFixNoType", false); handleFixNoTmdbType() }}
+        onCancel={() => setOp("confirmFixNoType", false)}
       />
     </AdminLayout>
   )
