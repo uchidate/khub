@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Trash2, ArrowUpDown, SearchX, Pencil, AlignJustify, AlignCenter } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, ArrowUpDown, SearchX, Pencil } from 'lucide-react'
 import { AdminSearchInput } from '@/components/admin/AdminSearchInput'
 
 export interface Column<T> {
@@ -231,14 +231,6 @@ export function DataTable<T extends { id: string }>({
               Excluir {selected.size}
             </button>
           )}
-          {/* Density toggle */}
-          <button
-            onClick={toggleDensity}
-            title={compact ? 'Mudar para visualização normal' : 'Mudar para visualização compacta'}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-          >
-            {compact ? <AlignCenter size={14} /> : <AlignJustify size={14} />}
-          </button>
         </div>
       </div>
 
@@ -274,10 +266,10 @@ export function DataTable<T extends { id: string }>({
       )}
 
       {/* Table — overflow-x-auto + min-w-max ensures horizontal scroll instead of column squishing */}
-      <div className={`overflow-x-auto rounded-2xl border border-border/80 bg-surface shadow-[0_10px_30px_rgba(0,0,0,0.18)] ${renderMobileCard ? 'hidden md:block' : ''}`}>
+      <div className={`overflow-x-auto rounded-xl border border-border/60 bg-surface ${renderMobileCard ? 'hidden md:block' : ''}`}>
         <table className="min-w-max w-full text-sm border-separate border-spacing-0">
           <thead>
-            <tr className="border-b border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
+            <tr className="border-b border-border/60">
               {onDelete && (
                 <th className={`w-10 ${cellPad}`}>
                   <input
@@ -307,11 +299,7 @@ export function DataTable<T extends { id: string }>({
                   </span>
                 </th>
               ))}
-              {hasActions && (
-                <th className={`sticky right-0 z-10 bg-surface border-l border-border/80 ${cellPad} text-right text-[10px] font-bold uppercase tracking-[0.14em] text-muted shadow-[-10px_0_16px_rgba(0,0,0,0.18)]`}>
-                  Ações
-                </th>
-              )}
+              {hasActions && <th className={`w-1 ${cellPad}`} />}
             </tr>
           </thead>
           <tbody>
@@ -336,7 +324,7 @@ export function DataTable<T extends { id: string }>({
                         </td>
                       ))}
                       {hasActions && (
-                        <td className={`sticky right-0 bg-surface border-l border-border/80 ${cellPad}`}>
+                        <td className={`${cellPad}`}>
                           <div className="w-16 h-6 bg-skeleton rounded-lg ml-auto" />
                         </td>
                       )}
@@ -355,7 +343,7 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               visibleData.map((item) => (
-                <tr key={item.id} onClick={onRowClick ? () => onRowClick(item) : undefined} className={`group border-b border-border/70 last:border-0 transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${selected.has(item.id) ? 'bg-accent-soft' : 'odd:bg-white/[0.01] hover:bg-surface-hover/90'}`}>
+                <tr key={item.id} onClick={onRowClick ? () => onRowClick(item) : undefined} className={`group border-b border-border/50 last:border-0 transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${selected.has(item.id) ? 'bg-accent-soft' : 'hover:bg-surface-hover/70'}`}>
                   {onDelete && (
                     <td className={cellPad}>
                       <input
@@ -372,15 +360,20 @@ export function DataTable<T extends { id: string }>({
                     </td>
                   ))}
                   {hasActions && (
-                    <td className={`sticky right-0 bg-surface border-l border-border/80 ${cellPad} text-right shadow-[-10px_0_16px_rgba(0,0,0,0.12)]`}>
+                    <td className={`${cellPad} text-right`}>
                       <div className="inline-flex items-center justify-end gap-0.5">
-                        {actions?.(item)}
+                        {/* Custom actions — hover only */}
+                        <div className="inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-100">
+                          {actions?.(item)}
+                        </div>
+                        {/* Edit always visible — main navigation action */}
                         {editHref && (
                           <Link
                             href={editHref(item)}
                             title="Editar"
                             aria-label="Editar"
                             className="inline-flex items-center justify-center rounded p-1.5 text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Pencil size={14} />
                           </Link>
