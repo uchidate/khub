@@ -99,7 +99,7 @@ const QUIZ_SIZE = 15
 function getSessionId(): string {
     try {
         let id = localStorage.getItem('quiz_session_id')
-        if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('quiz_session_id', id) }
+        if (!id) { id = crypto.randomUUID(); localStorage.setItem('quiz_session_id', id) }
         return id
     } catch { return 'anon' }
 }

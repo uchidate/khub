@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+function escHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 const ML_TOKEN = 'https://api.mercadolibre.com/oauth/token'
 const APP_ID     = process.env.ML_APP_ID!
 const SECRET_KEY = process.env.ML_SECRET_KEY!
@@ -11,7 +15,7 @@ export async function GET(req: NextRequest) {
     const error = req.nextUrl.searchParams.get('error')
 
     if (error) {
-        return new NextResponse(`<h2>Erro: ${error}</h2>`, { headers: { 'Content-Type': 'text/html' } })
+        return new NextResponse(`<h2>Erro: ${escHtml(error)}</h2>`, { headers: { 'Content-Type': 'text/html' } })
     }
     if (!code) {
         return new NextResponse('<h2>Código não recebido.</h2>', { headers: { 'Content-Type': 'text/html' } })
@@ -31,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     if (!resp.ok) {
         const err = await resp.text()
-        return new NextResponse(`<h2>Erro ao obter token: ${err}</h2>`, { headers: { 'Content-Type': 'text/html' } })
+        return new NextResponse(`<h2>Erro ao obter token: ${escHtml(err.slice(0, 200))}</h2>`, { headers: { 'Content-Type': 'text/html' } })
     }
 
     const token = await resp.json()
