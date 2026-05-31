@@ -6,6 +6,7 @@ interface GroupColorIdentityProps {
     officialColor: string | null
     groupName: string
     fanClubName: string | null
+    nameMeaning?: string | null
     bio?: string | null
 }
 
@@ -37,7 +38,7 @@ function hexToHsl(hex: string): string {
     return `${Math.round(hue * 360)}° ${Math.round(sat * 100)}% ${Math.round(lum * 100)}%`
 }
 
-export function GroupColorIdentity({ officialColor, groupName, fanClubName }: GroupColorIdentityProps) {
+export function GroupColorIdentity({ officialColor, groupName, fanClubName, nameMeaning }: GroupColorIdentityProps) {
     const [copied, setCopied] = useState(false)
     if (!officialColor) return null
 
@@ -66,27 +67,13 @@ export function GroupColorIdentity({ officialColor, groupName, fanClubName }: Gr
             <div className="grid gap-3 sm:grid-cols-2">
                 {/* Paleta de cores */}
                 <div className="border border-border overflow-hidden">
-                    <div className="grid grid-cols-2 h-28">
-                        <div className="relative flex items-end p-3" style={{ background: '#000000' }}>
-                            <div>
-                                <p className="font-mono text-[8px] font-black uppercase tracking-widest text-white/40">BLACK</p>
-                                <p className="font-mono text-xs font-black text-white">#000000</p>
-                            </div>
-                        </div>
-                        <div className="relative flex items-end p-3 cursor-pointer group" style={{ background: officialColor }} onClick={copy}>
-                            <div>
-                                <p className="font-mono text-[8px] font-black uppercase tracking-widest text-white/70">PINK</p>
-                                <p className="font-mono text-xs font-black text-white">
-                                    {copied ? 'copiado!' : officialColor}
-                                </p>
-                            </div>
-                            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-                        </div>
-                    </div>
+                    <div className="h-28 cursor-pointer" style={{ background: officialColor }} onClick={copy} />
                     <div className="p-3 bg-background border-t border-border">
-                        <p className="font-mono text-[9px] font-black uppercase tracking-widest text-muted mb-1">HSL</p>
-                        <p className="font-mono text-xs text-foreground">{hsl}</p>
-                        <p className="font-mono text-[9px] text-muted mt-0.5">Clique no rosa para copiar o hex</p>
+                        <p className="font-mono text-[9px] font-black uppercase tracking-widest text-muted mb-1">Cor oficial</p>
+                        <p className="font-mono text-xs text-foreground cursor-pointer" onClick={copy}>
+                            {copied ? 'copiado!' : officialColor}
+                        </p>
+                        <p className="font-mono text-[9px] text-muted mt-0.5">HSL {hsl} · clique para copiar</p>
                     </div>
                 </div>
 
@@ -95,14 +82,13 @@ export function GroupColorIdentity({ officialColor, groupName, fanClubName }: Gr
                     style={{ borderTopColor: officialColor, borderTopWidth: 2 }}>
                     <div>
                         <p className="font-mono text-[9px] font-black uppercase tracking-widest text-muted mb-2">O nome</p>
-                        <p className="font-display text-4xl font-black leading-none tracking-tight mb-3">
-                            <span style={{ color: '#111' }} className="dark:text-white">BLACK</span>
-                            <span style={{ color: officialColor }}>PINK</span>
+                        <p className="font-display text-4xl font-black leading-none tracking-tight mb-3"
+                            style={{ color: officialColor }}>
+                            {groupName}
                         </p>
-                        <p className="text-xs text-muted leading-relaxed">
-                            Uma inversão consciente de clichês — o preto representa poder e escuridão; o rosa,
-                            doçura e feminilidade. Juntos, rejeitam a obrigação de escolher entre um e outro.
-                        </p>
+                        {nameMeaning && (
+                            <p className="text-xs text-muted leading-relaxed">{nameMeaning}</p>
+                        )}
                     </div>
                     {fanClubName && (
                         <div className="mt-3 pt-3 border-t border-border">
