@@ -122,19 +122,7 @@ export function DataTable<T extends { id: string }>({
   // Serialize for stable dependency comparison (avoids infinite loop when parent passes inline objects)
   const extraParamsKey = JSON.stringify(extraParams ?? null)
 
-  // Row density
-  const [compact, setCompact] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('admin-table-density') === 'compact'
-  })
-  const toggleDensity = () => {
-    setCompact(c => {
-      const next = !c
-      localStorage.setItem('admin-table-density', next ? 'compact' : 'default')
-      return next
-    })
-  }
-  const cellPad = compact ? 'px-3 py-2' : 'px-4 py-3.5'
+  const cellPad = 'px-4 py-3'
 
   const fetchData = useCallback(async () => {
     setLoading(true)
