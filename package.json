@@ -49,7 +49,7 @@
     "exceljs": "^4.4.0",
     "framer-motion": "^12.36.0",
     "google-auth-library": "^10.6.2",
-    "googleapis": "^171.0.0",
+    "googleapis": "^172.0.0",
     "jsdom": "^29.0.0",
     "lucide-react": "^1.16.0",
     "next": "^16.2.6",
