@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { Twitter, MessageCircle } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
+import { Twitter } from '@/components/ui/BrandIcons'
 
 interface BlogTextShareProps {
   shareUrl: string

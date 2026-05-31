@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import {
-    Plus, Trash2, GripVertical, ChevronUp, ChevronDown,
-    Type, AlignLeft, Quote, Image, Twitter, Instagram, Video, Music2, X
-} from 'lucide-react'
+import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown, Type, AlignLeft, Quote, Image, Video, Music2, X } from 'lucide-react'
+import { Instagram, Twitter } from '@/components/ui/BrandIcons'
 import type {
     NewsBlock, NewsBlockType,
     HeadingBlock, ParagraphBlock, QuoteBlock,

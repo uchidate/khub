@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Instagram } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 import { BrandDot } from '@/components/ui/BrandDot'
 
 const NAV_COLUMNS = [

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Trophy, Youtube, Music2, Star, Globe, Crown, Zap } from 'lucide-react'
+import { Trophy, Music2, Star, Globe, Crown, Zap } from 'lucide-react'
+import { Youtube } from '@/components/ui/BrandIcons'
 
 interface TrophyWallProps {
     curiosidades: string[]

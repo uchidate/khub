@@ -1,6 +1,7 @@
 'use client'
 
-import { Instagram, Twitter, Youtube, Music, Globe, ExternalLink } from 'lucide-react'
+import { Music, Globe, ExternalLink } from 'lucide-react'
+import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 
 interface SocialStat {
     platform: string

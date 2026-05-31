@@ -1,5 +1,6 @@
 import Image from 'next/image'
-import { Instagram, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 
 interface InstagramPost {
     id: string

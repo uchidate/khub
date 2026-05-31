@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Instagram, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 
 type Stats = {
   totalArtists: number

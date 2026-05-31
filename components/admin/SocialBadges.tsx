@@ -1,4 +1,5 @@
-import { Instagram, Twitter, Youtube, Globe, Music2, ExternalLink } from 'lucide-react'
+import { Globe, Music2, ExternalLink } from 'lucide-react'
+import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 
 const SOCIAL_ICONS: Record<string, React.ReactNode> = {
     instagram: <Instagram size={12} />,

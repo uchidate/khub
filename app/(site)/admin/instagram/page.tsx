@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { AdminEmptyState } from '@/components/admin'
-import { Instagram, Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
+import { Check, Search, RefreshCw, ExternalLink, Clock, AlertCircle, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 import Image from 'next/image'
 
 interface Artist {

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Share2, Twitter, MessageCircle, Check, Link as LinkIcon } from 'lucide-react'
+import { Share2, MessageCircle, Check, Link as LinkIcon } from 'lucide-react'
+import { Twitter } from '@/components/ui/BrandIcons'
 
 interface ShareButtonsProps {
     title: string
