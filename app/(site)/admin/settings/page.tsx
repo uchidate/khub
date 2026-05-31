@@ -3,11 +3,8 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import {
-  Shield, AlertTriangle, CheckCircle, RefreshCw, Wrench,
-  Layers, Clock, RotateCcw, ChevronRight, Disc3, Tag, Instagram,
-  Activity, EyeOff, Database, ServerIcon, Bot,
-} from 'lucide-react'
+import { Shield, AlertTriangle, CheckCircle, RefreshCw, Wrench, Layers, Clock, RotateCcw, ChevronRight, Disc3, Tag, Activity, EyeOff, Database, ServerIcon, Bot } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 
 type SystemSettings = {
   id: string

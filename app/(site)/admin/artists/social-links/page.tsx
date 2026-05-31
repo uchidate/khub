@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminModalOverlay, StatCard } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Instagram, Twitter, Youtube, Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, Search, ExternalLink, Sparkles, RefreshCw, Square, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import Image from 'next/image'
 
 interface SocialLinks {

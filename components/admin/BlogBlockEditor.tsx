@@ -1,13 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import {
-    Plus, Trash2, ChevronUp, ChevronDown,
-    Type, AlignLeft, Quote, Image as ImageIcon, Twitter, Instagram, Video, Music2,
-    User, Film, BarChart2, Star, Minus, GalleryHorizontal, X,
-    ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones,
-    ChevronsUpDown, GripVertical,
-} from 'lucide-react'
+import { Plus, Trash2, ChevronUp, ChevronDown, Type, AlignLeft, Quote, Image as ImageIcon, Video, Music2, User, Film, BarChart2, Star, Minus, GalleryHorizontal, X, ChevronRight, Copy, Search, Loader2, Users, Zap, Clock, Headphones, ChevronsUpDown, GripVertical } from 'lucide-react'
+import { Instagram, Twitter } from '@/components/ui/BrandIcons'
 import type { BlogBlock, BlogBlockType } from '@/lib/types/blocks'
 import { BLOG_BLOCK_TYPE_LABELS } from '@/lib/types/blocks'
 import { BlockCommandPalette } from './BlockCommandPalette'

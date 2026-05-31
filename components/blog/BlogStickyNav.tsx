@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Twitter, Facebook, Link2, Check, Share2 } from 'lucide-react'
+import { ArrowLeft, Clock, Link2, Check, Share2 } from 'lucide-react'
+import { Facebook, Twitter } from '@/components/ui/BrandIcons'
 
 interface BlogStickyNavProps {
   title: string

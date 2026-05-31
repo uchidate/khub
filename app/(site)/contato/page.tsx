@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { ContactForm } from '@/components/features/ContactForm'
-import { Mail, Instagram, HelpCircle, FileText, Handshake } from 'lucide-react'
+import { Mail, HelpCircle, FileText, Handshake } from 'lucide-react'
+import { Instagram } from '@/components/ui/BrandIcons'
 import Link from 'next/link'
 
 import { SITE_URL, baseOG, baseTwitter } from '@/lib/constants/site'

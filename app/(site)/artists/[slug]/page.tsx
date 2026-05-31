@@ -17,7 +17,8 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
-import { Instagram, Twitter, Youtube, Music, Globe } from "lucide-react"
+import { Music, Globe } from 'lucide-react'
+import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
 import { ExternalMusicEntityType } from "@prisma/client"

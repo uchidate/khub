@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Share2, Link2, Check, Twitter, Facebook } from 'lucide-react'
+import { Share2, Link2, Check } from 'lucide-react'
+import { Facebook, Twitter } from '@/components/ui/BrandIcons'
 
 interface BlogShareButtonsProps {
   title: string
