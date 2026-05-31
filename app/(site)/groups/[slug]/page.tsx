@@ -149,6 +149,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
     const fanClubName = group.fanClubName ?? null
     const officialColorRaw = group.officialColor ?? null
+    const nameMeaning = group.nameMeaning ?? null
     const videos = (group.videos as Array<{ title: string; url: string }>) || []
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
     const roleBreakdown = Array.from(
@@ -962,6 +963,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                 officialColor={officialColorRaw}
                                 groupName={group.name}
                                 fanClubName={fanClubName}
+                                nameMeaning={nameMeaning}
                             />
                         )}
 

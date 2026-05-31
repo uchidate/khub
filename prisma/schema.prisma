@@ -60,6 +60,7 @@ model MusicalGroup {
   socialLinks     Json?
   fanClubName     String?                 // ex: "ARMY", "BLINK", "ONCE"
   officialColor   String?                 // hex ex: "#c6a852" — cor oficial do grupo
+  nameMeaning     String?                 // significado/origem do nome do grupo (1-3 frases)
   videos          Json?                   // [{title, url}] — MVs principais
   members              ArtistGroupMembership[]
   kpoppingSuggestions  KpoppingMembershipSuggestion[]
