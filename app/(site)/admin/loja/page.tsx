@@ -196,6 +196,8 @@ export default function AdminLojaPage() {
     const totalClicks = visibleProducts.reduce((total, product) => total + product.clickCount, 0)
     const productsWithoutClicks = visibleProducts.filter(product => product.clickCount === 0)
     const hiddenProducts = products.filter(product => product.isHidden)
+    const AFFILIATE_ID = '20379928'
+    const productsWithoutAffiliate = visibleProducts.filter(p => !p.affiliateUrl.includes(AFFILIATE_ID))
     const topClicked = [...visibleProducts]
         .filter(product => product.clickCount > 0)
         .sort((a, b) => b.clickCount - a.clickCount)
@@ -263,6 +265,31 @@ export default function AdminLojaPage() {
                         <p className="mt-1 text-xs text-muted">de {metrics.mercadoLivreProducts ?? metrics.totalProducts} produtos ML</p>
                     </div>
                 </section>
+            )}
+
+            {/* Alerta: produtos sem link de afiliado */}
+            {!loading && productsWithoutAffiliate.length > 0 && (
+                <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/8 p-4 flex items-start gap-3">
+                    <CircleAlert className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-amber-400">{productsWithoutAffiliate.length} produto{productsWithoutAffiliate.length !== 1 ? 's' : ''} sem ID de afiliado</p>
+                        <p className="text-xs text-muted mt-0.5">
+                            Esses links não contêm <code className="font-mono bg-black/20 px-1 rounded">affId={AFFILIATE_ID}</code> — cliques não geram comissão.
+                            Edite cada produto e cole o link gerado na Central de Afiliados do ML.
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {productsWithoutAffiliate.slice(0, 6).map(p => (
+                                <button key={p.id} onClick={() => openEdit(p)}
+                                    className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded hover:bg-amber-500/20 transition-colors">
+                                    {p.name.slice(0, 30)}…
+                                </button>
+                            ))}
+                            {productsWithoutAffiliate.length > 6 && (
+                                <span className="text-[10px] text-muted px-2 py-0.5">+{productsWithoutAffiliate.length - 6} mais</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
 
             {!loading && products.length > 0 && (
@@ -520,6 +547,9 @@ export default function AdminLojaPage() {
                                                             <p className="text-xs font-medium text-foreground line-clamp-1">{p.name}</p>
                                                             {p.badge && <span className="text-[10px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full">{p.badge}</span>}
                                                             {p.isHidden && <span className="ml-1 text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded-full">Oculto pelo sync</span>}
+                                                            {!p.affiliateUrl.includes(AFFILIATE_ID) && (
+                                                                <span className="ml-1 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full" title="Link sem ID de afiliado — não gera comissão">sem afiliado</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
