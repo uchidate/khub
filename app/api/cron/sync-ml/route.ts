@@ -22,56 +22,41 @@ export const maxDuration = 300
 const ML_API = 'https://api.mercadolibre.com'
 const ML_TOKEN_URL = 'https://api.mercadolibre.com/oauth/token'
 
-// Queries rotativas — cada execução percorre todas, pega os melhores de cada
-const SYNC_QUERIES = [
-    // ── Álbuns por grupo ─────────────────────────────────────────────────────
-    { q: 'album kpop bts',            category: 'kpop_album' },
-    { q: 'album kpop blackpink',      category: 'kpop_album' },
-    { q: 'album kpop twice',          category: 'kpop_album' },
-    { q: 'album kpop stray kids',     category: 'kpop_album' },
-    // ── Photocards — alta disponibilidade de estoque (6-7/10) ────────────────
-    { q: 'photocard kpop blackpink',  category: 'photocard' },
-    { q: 'photocard kpop bts',        category: 'photocard' },
-    { q: 'photocard kpop stray kids', category: 'photocard' },
-    { q: 'photocard kpop twice',      category: 'photocard' },
-    { q: 'photocard kpop aespa',      category: 'photocard' },
-    { q: 'photocard kpop newjeans',   category: 'photocard' },
-    { q: 'photocard kpop ive',        category: 'photocard' },
-    { q: 'photocard kpop seventeen',  category: 'photocard' },
-    { q: 'photocard kpop enhypen',    category: 'photocard' },
-    { q: 'photocard kpop le sserafim',category: 'photocard' },
-    { q: 'photocard kpop txt',        category: 'photocard' },
-    { q: 'photocard kpop ateez',      category: 'photocard' },
-    { q: 'photocard kpop nct',        category: 'photocard' },
-    { q: 'photocard kpop itzy',       category: 'photocard' },
-    { q: 'photocard kpop gidle',      category: 'photocard' },
-    // ── Comida Coreana — alta disponibilidade (5-7/10) ────────────────────────
-    { q: 'buldak',                    category: 'alimenta' },
-    { q: 'shin ramyun',               category: 'alimenta' },
-    { q: 'doce coreano',              category: 'alimenta' },
-    { q: 'pepero',                    category: 'alimenta' },
-    { q: 'choco pie coreano',         category: 'alimenta' },
-    { q: 'chapagetti',                category: 'alimenta' },
-    { q: 'tteokbokki',                category: 'alimenta' },
-    { q: 'snack coreano',             category: 'alimenta' },
-    { q: 'ramen coreano',             category: 'alimenta' },
-    // ── K-Beauty ──────────────────────────────────────────────────────────────
-    { q: 'skincare coreano',          category: 'kbeauty' },
-    { q: 'serum coreano',             category: 'kbeauty' },
-    { q: 'toner coreano',             category: 'kbeauty' },
-    // ── Álbuns — disponibilidade variável, mantém algumas queries ─────────────
-    { q: 'album kpop blackpink',      category: 'kpop_album' },
-    { q: 'album kpop bts',            category: 'kpop_album' },
-    { q: 'album kpop stray kids',     category: 'kpop_album' },
-    { q: 'album kpop twice',          category: 'kpop_album' },
-    { q: 'album kpop newjeans',       category: 'kpop_album' },
-    { q: 'album kpop aespa',          category: 'kpop_album' },
-    { q: 'mini album kpop',           category: 'kpop_album' },
+// Queries estáticas: categorias que não dependem de grupos específicos
+const STATIC_QUERIES: Array<{ q: string; category: string }> = [
+    { q: 'buldak',            category: 'alimenta' },
+    { q: 'shin ramyun',       category: 'alimenta' },
+    { q: 'doce coreano',      category: 'alimenta' },
+    { q: 'pepero',            category: 'alimenta' },
+    { q: 'choco pie coreano', category: 'alimenta' },
+    { q: 'chapagetti',        category: 'alimenta' },
+    { q: 'tteokbokki',        category: 'alimenta' },
+    { q: 'ramen coreano',     category: 'alimenta' },
+    { q: 'skincare coreano',  category: 'kbeauty'  },
+    { q: 'serum coreano',     category: 'kbeauty'  },
+    { q: 'toner coreano',     category: 'kbeauty'  },
 ]
+
+// Queries dinâmicas: geradas dos top grupos por trendingScore do banco
+async function buildDynamicQueries(): Promise<Array<{ q: string; category: string }>> {
+    const topGroups = await prisma.musicalGroup.findMany({
+        where: { isHidden: false, trendingScore: { gt: 0 } },
+        select: { name: true, trendingScore: true },
+        orderBy: { trendingScore: 'desc' },
+        take: 20,
+    })
+    return topGroups.flatMap(g => {
+        const name = g.name.toLowerCase()
+        return [
+            { q: `photocard kpop ${name}`, category: 'photocard'  },
+            { q: `album kpop ${name}`,     category: 'kpop_album' },
+        ]
+    })
+}
 
 const MAX_PER_QUERY = 5
 const MAX_TOTAL_ACTIVE = 500
-const QUERIES_PER_RUN = 8
+const QUERIES_PER_RUN = 10
 
 const GROUP_TAGS = [
     'blackpink', 'bts', 'twice', 'stray kids', 'aespa', 'ive', 'newjeans',
@@ -313,14 +298,17 @@ export async function POST(req: NextRequest) {
     const skipped: string[] = []
     let totalImported = 0
 
-    // Rotação de queries: cada run processa uma fatia diferente
-    const hourSlot = Math.floor(Date.now() / (1000 * 60 * 60))
-    const sliceStart = (hourSlot % Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
-    const queriesToRun = SYNC_QUERIES.slice(sliceStart, sliceStart + QUERIES_PER_RUN)
+    // Constrói lista de queries: dinâmicas (baseadas em trendingScore) + estáticas
+    const dynamicQueries = await buildDynamicQueries()
+    const allQueries = [...dynamicQueries, ...STATIC_QUERIES]
 
-    // Offset rotativo: avança a cada ciclo completo de queries para descobrir produtos novos
-    // (20 resultados por página, varia entre 0–180 para cobrir ~200 produtos por query)
-    const cycleCount = Math.floor(hourSlot / Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN))
+    // Rotação: cada run processa uma fatia diferente
+    const hourSlot = Math.floor(Date.now() / (1000 * 60 * 60))
+    const sliceStart = (hourSlot % Math.ceil(allQueries.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
+    const queriesToRun = allQueries.slice(sliceStart, sliceStart + QUERIES_PER_RUN)
+
+    // Offset rotativo para descobrir produtos além dos top-20 de cada query
+    const cycleCount = Math.floor(hourSlot / Math.ceil(allQueries.length / QUERIES_PER_RUN))
     const searchOffset = (cycleCount * MAX_PER_QUERY) % 180
 
     for (const { q, category } of queriesToRun) {
@@ -413,8 +401,42 @@ export async function POST(req: NextRequest) {
             skipped.push(r.id)
         }
 
-        // Respeitar rate limit ML (10 req/s)
+        // Rate limit
         await new Promise(r => setTimeout(r, 2000))
+    }
+
+    // ── FASE 3: Posição por cliques ───────────────────────────────────────────
+    // Produtos com mais cliques ganham posição menor (aparecem primeiro na vitrine)
+    const clickedProducts = await prisma.storeProduct.findMany({
+        where: { isActive: true, isHidden: false, clickCount: { gt: 0 } },
+        select: { id: true, clickCount: true },
+        orderBy: { clickCount: 'desc' },
+    })
+    for (let i = 0; i < clickedProducts.length; i++) {
+        await prisma.storeProduct.update({
+            where: { id: clickedProducts[i].id },
+            data: { position: i },
+        })
+    }
+
+    // ── FASE 4: Deduplicação ──────────────────────────────────────────────────
+    // Remove duplicatas com nome muito similar (mesmo prefixo de 45 chars),
+    // mantendo o com mais cliques ou o mais barato
+    const dupeGroups = await prisma.$queryRaw<Array<{ prefix: string; ids: string[] }>>`
+        SELECT LEFT(name, 45) as prefix, ARRAY_AGG(id ORDER BY "clickCount" DESC, price ASC NULLS LAST) as ids
+        FROM "StoreProduct"
+        WHERE "isHidden" = false AND store = 'mercadolivre'
+        GROUP BY LEFT(name, 45)
+        HAVING COUNT(*) > 1
+    `
+    let deduped = 0
+    for (const group of dupeGroups) {
+        const [, ...toRemove] = group.ids  // mantém o primeiro (mais clicado/barato)
+        if (toRemove.length > 0) {
+            await prisma.storeProductLink.deleteMany({ where: { productId: { in: toRemove } } })
+            await prisma.storeProduct.deleteMany({ where: { id: { in: toRemove } } })
+            deduped += toRemove.length
+        }
     }
 
     return NextResponse.json({
@@ -422,8 +444,9 @@ export async function POST(req: NextRequest) {
         imported: imported.length,
         deactivated,
         priceUpdated,
-        skipped: skipped.length,
+        deduped,
         searchOffset,
+        dynamicQueries: dynamicQueries.length,
         activeTotal: activeCount + imported.length,
     })
     } catch (e) {
