@@ -68,12 +68,12 @@ async function buildDynamicQueries(): Promise<Array<{ q: string; category: strin
     })
 }
 
-const MAX_PER_QUERY = 20
+const MAX_PER_QUERY = 40
 const MAX_TOTAL_ACTIVE = 500
-const QUERIES_PER_RUN = 16
+const QUERIES_PER_RUN = 20
 const SEARCH_LIMIT = 50
-const SEARCH_PAGES_PER_QUERY = 1
-const MAX_CANDIDATES_PER_PAGE = 10
+const SEARCH_PAGES_PER_QUERY = 2
+const MAX_CANDIDATES_PER_PAGE = 15
 const RUN_TIME_BUDGET_MS = 85_000
 
 const GROUP_TAGS = [
