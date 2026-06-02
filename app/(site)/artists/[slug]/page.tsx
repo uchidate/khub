@@ -17,6 +17,7 @@ import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
+import { buildArtistSeoDescription, buildArtistSeoTitle } from "@/lib/seo/metadata-builders"
 import { Music, Globe } from 'lucide-react'
 import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import type { Metadata } from "next"
@@ -159,6 +160,29 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 
     const canonicalUrl = `${BASE_URL}/artists/${artist.slug ?? artist.id}`
     const primaryGroup = artist.memberships?.find(m => m.isActive)?.group ?? artist.memberships?.[0]?.group ?? null
+    const roleLabels = getRoleLabels(roles)
+    const seoTitle = buildArtistSeoTitle({
+        name: artist.nameRomanized,
+        hangul: artist.nameHangul,
+        roleLabels,
+        agencyName: artist.agency?.name,
+        groupNames: artist.memberships?.map(m => m.group.name),
+        productions: artist.productions?.map(item => ({
+            titlePt: item.production.titlePt,
+            year: item.production.year,
+        })),
+    })
+    const seoDescription = buildArtistSeoDescription({
+        name: artist.nameRomanized,
+        hangul: artist.nameHangul,
+        roleLabels,
+        agencyName: artist.agency?.name,
+        groupNames: artist.memberships?.map(m => m.group.name),
+        productions: artist.productions?.map(item => ({
+            titlePt: item.production.titlePt,
+            year: item.production.year,
+        })),
+    })
     const keywords = [
         artist.nameRomanized,
         ...(artist.nameHangul ? [artist.nameHangul] : []),
@@ -169,8 +193,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     ].filter(Boolean).join(', ')
 
     return applySeoOverride({
-        title: `${artist.nameRomanized}${artist.nameHangul ? ` (${artist.nameHangul})` : ''}`,
-        description: description.slice(0, 160),
+        title: seoTitle,
+        description: seoDescription,
         keywords,
         alternates: {
             canonical: canonicalUrl,

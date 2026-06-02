@@ -16,6 +16,7 @@ import { JsonLd } from "@/components/seo/JsonLd"
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { buildProductionSeoDescription, buildProductionSeoTitle, productionTypeLabel } from "@/lib/seo/metadata-builders"
 import type { Metadata } from "next"
 
 import { SITE_URL } from '@/lib/constants/site'
@@ -100,8 +101,25 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         : description
 
     const canonicalUrl = `${BASE_URL}/productions/${production.slug ?? production.id}`
-    const isMovie = production.type === 'MOVIE' || production.type === 'FILM'
-    const typeLabel = isMovie ? 'Filme' : 'Série'
+    const typeLabel = productionTypeLabel(production.type)
+    const seoTitle = buildProductionSeoTitle({
+        title: production.titlePt,
+        titleKr: production.titleKr,
+        type: production.type,
+        year: production.year,
+        synopsis: synopsisMeta,
+        cast: production.artists.map(a => ({ name: a.artist.nameRomanized })),
+        streamingPlatforms: production.streamingPlatforms,
+    })
+    const seoDescription = buildProductionSeoDescription({
+        title: production.titlePt,
+        titleKr: production.titleKr,
+        type: production.type,
+        year: production.year,
+        synopsis: synopsisMeta,
+        cast: production.artists.map(a => ({ name: a.artist.nameRomanized })),
+        streamingPlatforms: production.streamingPlatforms,
+    })
     const castNamesForKeywords = production.artists.slice(0, 5).map(a => a.artist.nameRomanized)
     const keywords = [
         production.titlePt,
@@ -114,10 +132,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     ].filter(Boolean).join(', ')
 
     return applySeoOverride({
-        title: production.titleKr
-            ? `${production.titlePt} (${production.titleKr})`
-            : production.titlePt,
-        description: fullDescription.slice(0, 160),
+        title: seoTitle,
+        description: seoDescription,
         keywords,
         alternates: {
             canonical: canonicalUrl,
