@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { LiveUrgentPanel, AiWidget } from '@/components/admin/DashboardLive'
+import { GscInsightsPanel } from '@/components/admin/GscInsightsPanel'
 import { LastVisitBanner } from '@/components/admin/LastVisitBanner'
 import { SinceLastVisit } from '@/components/admin/SinceLastVisit'
 import { AdminRefreshButton } from '@/components/admin/AdminRefreshButton'
@@ -367,6 +368,12 @@ export default async function AdminPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Search Console — oportunidades de conteúdo */}
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Foco editorial · SEO</p>
+          <GscInsightsPanel />
         </div>
 
         {/* Widget IA */}
