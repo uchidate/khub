@@ -24,6 +24,16 @@ const ML_TOKEN_URL = 'https://api.mercadolibre.com/oauth/token'
 
 // Queries estáticas: categorias que não dependem de grupos específicos
 const STATIC_QUERIES: Array<{ q: string; category: string }> = [
+    { q: 'album kpop',        category: 'kpop_album' },
+    { q: 'album k-pop',       category: 'kpop_album' },
+    { q: 'kpop album original', category: 'kpop_album' },
+    { q: 'kpop merch',        category: 'outros' },
+    { q: 'lightstick kpop',   category: 'lightstick' },
+    { q: 'photocard kpop',    category: 'photocard' },
+    { q: 'poster kpop',       category: 'outros' },
+    { q: 'chaveiro kpop',     category: 'acessorios' },
+    { q: 'camiseta kpop',     category: 'clothing' },
+    { q: 'moletom kpop',      category: 'clothing' },
     { q: 'buldak',            category: 'alimenta' },
     { q: 'shin ramyun',       category: 'alimenta' },
     { q: 'doce coreano',      category: 'alimenta' },
@@ -33,30 +43,36 @@ const STATIC_QUERIES: Array<{ q: string; category: string }> = [
     { q: 'tteokbokki',        category: 'alimenta' },
     { q: 'ramen coreano',     category: 'alimenta' },
     { q: 'skincare coreano',  category: 'kbeauty'  },
+    { q: 'protetor solar coreano', category: 'kbeauty' },
+    { q: 'cosmetico coreano', category: 'kbeauty'  },
     { q: 'serum coreano',     category: 'kbeauty'  },
     { q: 'toner coreano',     category: 'kbeauty'  },
+    { q: 'snail mucin coreano', category: 'kbeauty' },
 ]
 
 // Queries dinâmicas: geradas dos top grupos por trendingScore do banco
 async function buildDynamicQueries(): Promise<Array<{ q: string; category: string }>> {
     const topGroups = await prisma.musicalGroup.findMany({
-        where: { isHidden: false, trendingScore: { gt: 0 } },
+        where: { isHidden: false },
         select: { name: true, trendingScore: true },
         orderBy: { trendingScore: 'desc' },
-        take: 20,
+        take: 50,
     })
     return topGroups.flatMap(g => {
         const name = g.name.toLowerCase()
         return [
             { q: `photocard kpop ${name}`, category: 'photocard'  },
             { q: `album kpop ${name}`,     category: 'kpop_album' },
+            { q: `lightstick kpop ${name}`, category: 'lightstick' },
         ]
     })
 }
 
-const MAX_PER_QUERY = 5
+const MAX_PER_QUERY = 12
 const MAX_TOTAL_ACTIVE = 500
-const QUERIES_PER_RUN = 10
+const QUERIES_PER_RUN = 28
+const SEARCH_LIMIT = 50
+const SEARCH_PAGES_PER_QUERY = 2
 
 const GROUP_TAGS = [
     'blackpink', 'bts', 'twice', 'stray kids', 'aespa', 'ive', 'newjeans',
@@ -64,6 +80,21 @@ const GROUP_TAGS = [
     'shinee', 'got7', 'red velvet', 'mamamoo', 'itzy', 'nmixx', 'babymonster',
     'zerobaseone', 'bigbang', 'super junior', 'the boyz', 'sf9', 'monsta x',
     'iu', 'gidle', 'g-idle',
+]
+
+const NEGATIVE_TITLE_PATTERNS = [
+    /\b(pdf|digital|arquivo|download|ebook|e-book)\b/i,
+    /\b(usad[oa]|avaria|defeito|quebrad[oa])\b/i,
+    /\b(capa|case|pel[ií]cula)\s+(de\s+)?(celular|iphone|samsung)\b/i,
+    /\bcurso|apostila\b/i,
+]
+
+const RELEVANT_TITLE_PATTERNS = [
+    /\bk-?pop\b/i,
+    /\balbum|mini album|single album|lightstick|photocard|photo card|poster|chaveiro|keychain\b/i,
+    /\bcorean[ao]|k-?beauty|skincare|serum|toner|essence|snail|protetor solar\b/i,
+    /\bbuldak|ramen|ramyun|tteokbokki|pepero|chapagetti|choco pie\b/i,
+    ...GROUP_TAGS.map(tag => new RegExp(`\\b${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')),
 ]
 
 function extractArtistTags(title: string): string[] {
@@ -80,6 +111,11 @@ function detectCategory(title: string, defaultCategory: string): string {
     if (['ramen', 'ramyun', 'buldak', 'tteokbokki', 'pepero', 'doce', 'snack', 'macarrao', 'chapagetti'].some(w => t.includes(w))) return 'alimenta'
     if (['camiseta', 'moletom', 'hoodie'].some(w => t.includes(w))) return 'clothing'
     return defaultCategory
+}
+
+function isRelevantProductTitle(title: string): boolean {
+    if (!title || NEGATIVE_TITLE_PATTERNS.some(pattern => pattern.test(title))) return false
+    return RELEVANT_TITLE_PATTERNS.some(pattern => pattern.test(title))
 }
 
 async function refreshToken(settings: { mlRefreshToken: string | null }): Promise<{
@@ -186,8 +222,10 @@ async function searchCatalogProducts(
     q: string,
     token: string,
     userId: string,
-    limit = 20,
-    offset = 0
+    limit = SEARCH_LIMIT,
+    offset = 0,
+    maxResults = MAX_PER_QUERY,
+    skipIds: Set<string> = new Set()
 ): Promise<CatalogProduct[]> {
     const params = new URLSearchParams({ site_id: 'MLB', q, limit: String(limit), status: 'active' })
     if (offset > 0) params.set('offset', String(offset))
@@ -200,8 +238,13 @@ async function searchCatalogProducts(
     const products: CatalogProduct[] = []
 
     for (const r of results) {
+        if (products.length >= maxResults) break
         const pid = String(r.catalog_product_id || r.id || '')
         if (!pid) continue
+        if (skipIds.has(pid)) continue
+
+        const name = String(r.name ?? '')
+        if (!isRelevantProductTitle(name)) continue
 
         // 1. Valida estoque real
         const { hasStock, price } = await checkStock(pid, token)
@@ -220,7 +263,7 @@ async function searchCatalogProducts(
 
         products.push({
             id: pid,
-            name: String(r.name ?? ''),
+            name,
             imageUrl,
             affiliateUrl: makeAffiliateUrl(pid, userId),
             price,
@@ -285,17 +328,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ── FASE 2: Importar novos produtos ──────────────────────────────────────
-    const activeCount = await prisma.storeProduct.count({ where: { isHidden: false } })
+    const activeCount = await prisma.storeProduct.count({ where: { isActive: true, isHidden: false } })
     const slotsAvailable = MAX_TOTAL_ACTIVE - activeCount
 
     const existing = await prisma.storeProduct.findMany({
         where: { store: 'mercadolivre' },
         select: { id: true, externalId: true },
     })
-    const existingIds = new Set(existing.map(p => p.externalId).filter(Boolean))
+    const existingIds = new Set(existing.map(p => p.externalId).filter((id): id is string => Boolean(id)))
 
     const imported: string[] = []
     const skipped: string[] = []
+    let searchedPages = 0
+    let duplicateCandidates = 0
     let totalImported = 0
 
     // Constrói lista de queries: dinâmicas (baseadas em trendingScore) + estáticas
@@ -314,12 +359,29 @@ export async function POST(req: NextRequest) {
     for (const { q, category } of queriesToRun) {
         if (slotsAvailable - totalImported <= 0) break
 
-        // Busca com offset rotativo para descobrir produtos além dos top-20
-        const results = await searchCatalogProducts(q, token.access_token, token.user_id, 20, searchOffset)
-        const qualified = results.slice(0, MAX_PER_QUERY)
+        // Busca páginas rotativas e para cedo quando já há candidatos suficientes.
+        const queryResults: CatalogProduct[] = []
+        for (let page = 0; page < SEARCH_PAGES_PER_QUERY && queryResults.length < MAX_PER_QUERY; page++) {
+            const pageOffset = searchOffset + page * SEARCH_LIMIT
+            const pageResults = await searchCatalogProducts(
+                q,
+                token.access_token,
+                token.user_id,
+                SEARCH_LIMIT,
+                pageOffset,
+                MAX_PER_QUERY - queryResults.length,
+                existingIds,
+            )
+            searchedPages++
+            queryResults.push(...pageResults)
+            if (pageResults.length === 0) break
+            await new Promise(r => setTimeout(r, 350))
+        }
+        const qualified = queryResults.slice(0, MAX_PER_QUERY)
 
         for (const r of qualified) {
             if (existingIds.has(r.id)) {
+                duplicateCandidates++
                 // Atualiza preço e URL do produto existente
                 await prisma.storeProduct.updateMany({
                     where: { store: 'mercadolivre', externalId: r.id },
@@ -397,12 +459,12 @@ export async function POST(req: NextRequest) {
             totalImported++
         }
 
-        for (const r of results.filter(r => existingIds.has(r.id))) {
+        for (const r of queryResults.filter(r => existingIds.has(r.id))) {
             skipped.push(r.id)
         }
 
         // Rate limit
-        await new Promise(r => setTimeout(r, 2000))
+        await new Promise(r => setTimeout(r, 900))
     }
 
     // ── FASE 3: Posição por cliques ───────────────────────────────────────────
@@ -445,6 +507,8 @@ export async function POST(req: NextRequest) {
         deactivated,
         priceUpdated,
         deduped,
+        searchedPages,
+        duplicateCandidates,
         searchOffset,
         dynamicQueries: dynamicQueries.length,
         activeTotal: activeCount + imported.length,

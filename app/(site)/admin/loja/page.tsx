@@ -82,6 +82,20 @@ const EMPTY_FORM = {
     rating: '', soldCount: '', isActive: true, featured: false, position: 0, tags: '',
 }
 
+function isOfficialMercadoLivreAffiliateUrl(value: string): boolean {
+    try {
+        const url = new URL(value)
+        const host = url.hostname.replace(/^www\./, '')
+        if (host === 'meli.la') return true
+        if (host !== 'mercadolivre.com.br') return false
+        return url.pathname.toLowerCase().startsWith('/social/')
+            && Boolean(url.searchParams.get('matt_word'))
+            && Boolean(url.searchParams.get('ref'))
+    } catch {
+        return false
+    }
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function AdminLojaPage() {
@@ -196,8 +210,9 @@ export default function AdminLojaPage() {
     const totalClicks = visibleProducts.reduce((total, product) => total + product.clickCount, 0)
     const productsWithoutClicks = visibleProducts.filter(product => product.clickCount === 0)
     const hiddenProducts = products.filter(product => product.isHidden)
-    const AFFILIATE_ID = '20379928'
-    const productsWithoutAffiliate = visibleProducts.filter(p => !p.affiliateUrl.includes(AFFILIATE_ID))
+    const productsWithoutAffiliate = visibleProducts.filter(p =>
+        p.store === 'mercadolivre' && !isOfficialMercadoLivreAffiliateUrl(p.affiliateUrl)
+    )
     const topClicked = [...visibleProducts]
         .filter(product => product.clickCount > 0)
         .sort((a, b) => b.clickCount - a.clickCount)
@@ -274,8 +289,8 @@ export default function AdminLojaPage() {
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-amber-400">{productsWithoutAffiliate.length} produto{productsWithoutAffiliate.length !== 1 ? 's' : ''} sem ID de afiliado</p>
                         <p className="text-xs text-muted mt-0.5">
-                            Esses links não contêm <code className="font-mono bg-black/20 px-1 rounded">affId={AFFILIATE_ID}</code> — cliques não geram comissão.
-                            Edite cada produto e cole o link gerado na Central de Afiliados do ML.
+                            Esses links não parecem ser links oficiais de afiliado do Mercado Livre (<code className="font-mono bg-black/20 px-1 rounded">meli.la</code> ou <code className="font-mono bg-black/20 px-1 rounded">/social/...</code> com <code className="font-mono bg-black/20 px-1 rounded">matt_word/ref</code>).
+                            Edite cada produto e cole o link gerado na Central de Afiliados do ML antes de considerar o anúncio pronto para monetização.
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {productsWithoutAffiliate.slice(0, 6).map(p => (
@@ -547,8 +562,8 @@ export default function AdminLojaPage() {
                                                             <p className="text-xs font-medium text-foreground line-clamp-1">{p.name}</p>
                                                             {p.badge && <span className="text-[10px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full">{p.badge}</span>}
                                                             {p.isHidden && <span className="ml-1 text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded-full">Oculto pelo sync</span>}
-                                                            {!p.affiliateUrl.includes(AFFILIATE_ID) && (
-                                                                <span className="ml-1 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full" title="Link sem ID de afiliado — não gera comissão">sem afiliado</span>
+                                                            {p.store === 'mercadolivre' && !isOfficialMercadoLivreAffiliateUrl(p.affiliateUrl) && (
+                                                                <span className="ml-1 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full" title="Link Mercado Livre sem formato oficial de afiliado">sem link oficial</span>
                                                             )}
                                                         </div>
                                                     </div>
