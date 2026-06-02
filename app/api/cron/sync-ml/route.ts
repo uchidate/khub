@@ -523,8 +523,11 @@ export async function POST(req: NextRequest) {
         }
     }
 
+    const activeTotal = activeCount + imported.length
+
     return NextResponse.json({
         ok: true,
+        message: `ML sync: imported=${imported.length}, activeTotal=${activeTotal}`,
         imported: imported.length,
         deactivated,
         priceUpdated,
@@ -534,7 +537,7 @@ export async function POST(req: NextRequest) {
         searchOffset,
         dynamicQueries: dynamicQueries.length,
         stoppedEarly,
-        activeTotal: activeCount + imported.length,
+        activeTotal,
     })
     } catch (e) {
         console.error('[sync-ml] error:', e)
