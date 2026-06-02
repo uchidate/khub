@@ -161,7 +161,7 @@ def import_to_db(products: list[dict], dry_run: bool = False):
         return True
 
     script = f"""
-import prisma from './lib/prisma'
+import prisma from '../lib/prisma'
 const products = {json.dumps(products, ensure_ascii=False)}
 async function main() {{
   let created = 0, updated = 0
@@ -191,9 +191,10 @@ async function main() {{
 }}
 main().catch(console.error).finally(() => process.exit())
 """
-    f = Path('/tmp/ml_bulk_import.ts')
+    project_root = Path(__file__).parent.parent.parent
+    f = project_root / 'scripts' / '_bulk_import_run.ts'
     f.write_text(script)
-    result = subprocess.run(['npx', 'tsx', str(f)], cwd=Path(__file__).parent.parent.parent)
+    result = subprocess.run(['npx', 'tsx', str(f)], cwd=project_root)
     f.unlink(missing_ok=True)
     return result.returncode == 0
 

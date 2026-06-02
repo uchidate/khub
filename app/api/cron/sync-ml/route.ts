@@ -185,16 +185,30 @@ function fmtPrice(price: number): string {
     return `R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
 }
 
+async function checkStock(pid: string, token: string): Promise<{ hasStock: boolean; price: string | null }> {
+    const res = await fetch(`${ML_API}/products/${pid}/items?limit=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => null)
+    if (!res?.ok) return { hasStock: false, price: null }
+    const data: { results?: Array<Record<string, unknown>> } = await res.json()
+    const items = data.results ?? []
+    if (items.length === 0) return { hasStock: false, price: null }
+    const price = typeof items[0].price === 'number' ? fmtPrice(items[0].price) : null
+    return { hasStock: true, price }
+}
+
 async function searchCatalogProducts(
     q: string,
     token: string,
     userId: string,
-    limit = 20
+    limit = 20,
+    offset = 0
 ): Promise<CatalogProduct[]> {
-    const res = await fetch(
-        `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&status=active`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    )
+    const params = new URLSearchParams({ site_id: 'MLB', q, limit: String(limit), status: 'active' })
+    if (offset > 0) params.set('offset', String(offset))
+    const res = await fetch(`${ML_API}/products/search?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
     if (!res.ok) return []
     const results: Array<Record<string, unknown>> = (await res.json()).results ?? []
 
@@ -204,16 +218,9 @@ async function searchCatalogProducts(
         const pid = String(r.catalog_product_id || r.id || '')
         if (!pid) continue
 
-        // 1. Valida estoque real: /products/{id}/items retorna sellers ativos
-        const itemsRes = await fetch(`${ML_API}/products/${pid}/items?limit=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => null)
-        if (!itemsRes?.ok) continue
-        const itemsData: { results?: Array<Record<string, unknown>> } = await itemsRes.json()
-        const items = itemsData.results ?? []
-        if (items.length === 0) continue  // sem vendedores ativos = sem estoque
-
-        const price = typeof items[0].price === 'number' ? fmtPrice(items[0].price) : null
+        // 1. Valida estoque real
+        const { hasStock, price } = await checkStock(pid, token)
+        if (!hasStock) continue
 
         // 2. Busca imagem do catálogo
         const detail = await fetch(`${ML_API}/products/${pid}`, {
@@ -258,11 +265,44 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Token ML indisponível. Configure ML_APP_ID, ML_SECRET_KEY e mlRefreshToken no banco.' }, { status: 503 })
     }
 
-    // Contagem atual de produtos ativos
+    // ── FASE 1: Verificar estoque dos produtos existentes ────────────────────
+    // A cada execução, verifica uma amostra de 20 produtos ML existentes.
+    // Se não tiver mais estoque, oculta. Se tiver, atualiza preço.
+    const existingProducts = await prisma.storeProduct.findMany({
+        where: { store: 'mercadolivre', isHidden: false, externalId: { not: null } },
+        select: { id: true, externalId: true, price: true },
+        orderBy: { updatedAt: 'asc' }, // os menos recentemente verificados primeiro
+        take: 20,
+    })
+
+    let deactivated = 0
+    let priceUpdated = 0
+    for (const p of existingProducts) {
+        if (!p.externalId) continue
+        const { hasStock, price } = await checkStock(p.externalId, token.access_token)
+        if (!hasStock) {
+            await prisma.storeProduct.update({
+                where: { id: p.id },
+                data: { isHidden: true, isActive: false },
+            })
+            deactivated++
+        } else if (price && price !== p.price) {
+            await prisma.storeProduct.update({
+                where: { id: p.id },
+                data: { price, updatedAt: new Date() },
+            })
+            priceUpdated++
+        } else {
+            // Toca updatedAt para rodar em lote sem re-verificar sempre os mesmos
+            await prisma.storeProduct.update({ where: { id: p.id }, data: { updatedAt: new Date() } })
+        }
+        await new Promise(r => setTimeout(r, 300))
+    }
+
+    // ── FASE 2: Importar novos produtos ──────────────────────────────────────
     const activeCount = await prisma.storeProduct.count({ where: { isHidden: false } })
     const slotsAvailable = MAX_TOTAL_ACTIVE - activeCount
 
-    // IDs já importados
     const existing = await prisma.storeProduct.findMany({
         where: { store: 'mercadolivre' },
         select: { id: true, externalId: true },
@@ -271,20 +311,23 @@ export async function POST(req: NextRequest) {
 
     const imported: string[] = []
     const skipped: string[] = []
-
     let totalImported = 0
 
-    // Rotação: cada execução processa uma fatia de QUERIES_PER_RUN queries.
-    // O índice de início é baseado na hora UTC atual, garantindo que ao longo
-    // do dia todas as queries sejam executadas sem sobrecarregar a API do ML.
-    const sliceStart = (Math.floor(Date.now() / (1000 * 60 * 60)) % Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
+    // Rotação de queries: cada run processa uma fatia diferente
+    const hourSlot = Math.floor(Date.now() / (1000 * 60 * 60))
+    const sliceStart = (hourSlot % Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
     const queriesToRun = SYNC_QUERIES.slice(sliceStart, sliceStart + QUERIES_PER_RUN)
+
+    // Offset rotativo: avança a cada ciclo completo de queries para descobrir produtos novos
+    // (20 resultados por página, varia entre 0–180 para cobrir ~200 produtos por query)
+    const cycleCount = Math.floor(hourSlot / Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN))
+    const searchOffset = (cycleCount * MAX_PER_QUERY) % 180
 
     for (const { q, category } of queriesToRun) {
         if (slotsAvailable - totalImported <= 0) break
 
-        // Busca catálogos com estoque real validado via /items endpoint
-        const results = await searchCatalogProducts(q, token.access_token, token.user_id, 20)
+        // Busca com offset rotativo para descobrir produtos além dos top-20
+        const results = await searchCatalogProducts(q, token.access_token, token.user_id, 20, searchOffset)
         const qualified = results.slice(0, MAX_PER_QUERY)
 
         for (const r of qualified) {
@@ -377,8 +420,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
         ok: true,
         imported: imported.length,
+        deactivated,
+        priceUpdated,
         skipped: skipped.length,
-        products: imported,
+        searchOffset,
         activeTotal: activeCount + imported.length,
     })
     } catch (e) {
