@@ -9,7 +9,7 @@ on:
   schedule:
     - cron: '*/5 * * * *'   # publish-scheduled, fetch-news, tag-news
     - cron: '*/15 * * * *'  # fetch-streaming-signals
-    - cron: '0 */6 * * *'   # update-trending
+    - cron: '0 */6 * * *'   # update-trending, sync-ml
     - cron: '0 * * * *'     # sync-discography, sync-cast
     - cron: '0 2 * * *'     # sync-social-links, artist-visibility, digest
     - cron: '0 3 * * *'     # fetch-streaming-shows, import-streaming-unmatched
@@ -41,6 +41,7 @@ on:
           - digest
           - sync-groups-discography
           - sync-filmography
+          - sync-ml
           - backfill-korean-flag
           - sync-hangul
           - sync-cast-resync
@@ -166,6 +167,27 @@ jobs:
         with:
           endpoint: /api/cron/update-trending
           max_time: '120'
+          cron_secret: ${{ secrets.CRON_SECRET }}
+
+  sync-ml:
+    name: 🛒 Sincronizar loja Mercado Livre
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    concurrency:
+      group: cron-sync-ml
+      cancel-in-progress: false
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'sync-ml')
+      || (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resumo
+        run: echo "| Job | HTTP | Resultado |" >> "$GITHUB_STEP_SUMMARY"; echo "|-----|------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+      - uses: ./.github/actions/cron-call
+        with:
+          endpoint: /api/cron/sync-ml
+          max_time: '300'
           cron_secret: ${{ secrets.CRON_SECRET }}
 
   # ─── A cada hora ───────────────────────────────────────────────────────────

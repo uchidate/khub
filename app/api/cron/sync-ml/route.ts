@@ -30,24 +30,76 @@ const ML_TOKEN_URL = 'https://api.mercadolibre.com/oauth/token'
 
 // Queries rotativas — cada execução percorre todas, pega os melhores de cada
 const SYNC_QUERIES = [
-    { q: 'album kpop bts',          category: 'kpop_album' },
-    { q: 'album kpop blackpink',     category: 'kpop_album' },
-    { q: 'album kpop twice',         category: 'kpop_album' },
-    { q: 'album kpop stray kids',    category: 'kpop_album' },
-    { q: 'album kpop aespa',         category: 'kpop_album' },
-    { q: 'album kpop newjeans',      category: 'kpop_album' },
-    { q: 'lightstick kpop',          category: 'lightstick' },
-    { q: 'photocard kpop',           category: 'photocard' },
-    { q: 'kpop merch camiseta',      category: 'clothing' },
-    { q: 'skincare coreano',         category: 'kbeauty' },
-    { q: 'cosmetico coreano',        category: 'kbeauty' },
+    // ── Álbuns por grupo ─────────────────────────────────────────────────────
+    { q: 'album kpop bts',            category: 'kpop_album' },
+    { q: 'album kpop blackpink',      category: 'kpop_album' },
+    { q: 'album kpop twice',          category: 'kpop_album' },
+    { q: 'album kpop stray kids',     category: 'kpop_album' },
+    { q: 'album kpop aespa',          category: 'kpop_album' },
+    { q: 'album kpop newjeans',       category: 'kpop_album' },
+    { q: 'album kpop ive',            category: 'kpop_album' },
+    { q: 'album kpop seventeen',      category: 'kpop_album' },
+    { q: 'album kpop le sserafim',    category: 'kpop_album' },
+    { q: 'album kpop enhypen',        category: 'kpop_album' },
+    { q: 'album kpop txt',            category: 'kpop_album' },
+    { q: 'album kpop nct',            category: 'kpop_album' },
+    { q: 'album kpop ateez',          category: 'kpop_album' },
+    { q: 'album kpop exo',            category: 'kpop_album' },
+    { q: 'album kpop shinee',         category: 'kpop_album' },
+    { q: 'album kpop got7',           category: 'kpop_album' },
+    { q: 'album kpop red velvet',     category: 'kpop_album' },
+    { q: 'album kpop mamamoo',        category: 'kpop_album' },
+    { q: 'album kpop itzy',           category: 'kpop_album' },
+    { q: 'album kpop nmixx',          category: 'kpop_album' },
+    { q: 'album kpop gidle',          category: 'kpop_album' },
+    { q: 'album kpop babymonster',    category: 'kpop_album' },
+    { q: 'album kpop zerobaseone',    category: 'kpop_album' },
+    { q: 'album kpop iu',             category: 'kpop_album' },
+    { q: 'album kpop bigbang',        category: 'kpop_album' },
+    { q: 'album kpop super junior',   category: 'kpop_album' },
+    { q: 'album kpop apink',          category: 'kpop_album' },
+    { q: 'album kpop the boyz',       category: 'kpop_album' },
+    { q: 'album kpop sf9',            category: 'kpop_album' },
+    { q: 'album kpop monsta x',       category: 'kpop_album' },
+    // ── Photocards ────────────────────────────────────────────────────────────
+    { q: 'photocard kpop blackpink',  category: 'photocard' },
+    { q: 'photocard kpop bts',        category: 'photocard' },
+    { q: 'photocard kpop stray kids', category: 'photocard' },
+    { q: 'photocard kpop twice',      category: 'photocard' },
+    { q: 'photocard kpop aespa',      category: 'photocard' },
+    { q: 'photocard kpop newjeans',   category: 'photocard' },
+    { q: 'photocard kpop ive',        category: 'photocard' },
+    { q: 'photocard kpop seventeen',  category: 'photocard' },
+    { q: 'photocard kpop enhypen',    category: 'photocard' },
+    // ── Lightsticks ───────────────────────────────────────────────────────────
+    { q: 'lightstick kpop blackpink', category: 'lightstick' },
+    { q: 'lightstick kpop bts',       category: 'lightstick' },
+    { q: 'lightstick kpop twice',     category: 'lightstick' },
+    { q: 'lightstick kpop aespa',     category: 'lightstick' },
+    { q: 'lightstick kpop seventeen', category: 'lightstick' },
+    { q: 'lightstick kpop ive',       category: 'lightstick' },
+    // ── K-Beauty ──────────────────────────────────────────────────────────────
+    { q: 'skincare coreano',          category: 'kbeauty' },
+    { q: 'cosmetico coreano',         category: 'kbeauty' },
+    { q: 'protetor solar coreano',    category: 'kbeauty' },
+    { q: 'essence coreana',           category: 'kbeauty' },
+    { q: 'snail mucin coreano',       category: 'kbeauty' },
+    // ── Roupas / Acessórios ───────────────────────────────────────────────────
+    { q: 'camiseta kpop',             category: 'clothing' },
+    { q: 'moletom kpop',              category: 'clothing' },
+    { q: 'poster kpop',               category: 'outros' },
+    { q: 'plush kpop',                category: 'outros' },
+    { q: 'keychain kpop',             category: 'acessorios' },
+    { q: 'mochila kpop',              category: 'acessorios' },
 ]
 
 // Mínimo para importar automaticamente
 const MIN_RATING = 0
 const MIN_REVIEWS = 0
-const MAX_PER_QUERY = 3   // top N por query
-const MAX_TOTAL_ACTIVE = 80 // limite máximo de produtos ativos na loja
+const MAX_PER_QUERY = 5     // top N por query
+const MAX_TOTAL_ACTIVE = 500 // limite máximo de produtos ativos na loja
+// Queries por execução (rotação): cada run processa uma fatia, evitando rate limit ML
+const QUERIES_PER_RUN = 8
 
 const KPOP_KEYWORDS = [
     'kpop', 'k-pop', 'album', 'lightstick', 'photocard', 'bts', 'blackpink',
@@ -218,7 +270,13 @@ export async function POST(req: NextRequest) {
 
     let totalImported = 0
 
-    for (const { q, category } of SYNC_QUERIES) {
+    // Rotação: cada execução processa uma fatia de QUERIES_PER_RUN queries.
+    // O índice de início é baseado na hora UTC atual, garantindo que ao longo
+    // do dia todas as queries sejam executadas sem sobrecarregar a API do ML.
+    const sliceStart = (Math.floor(Date.now() / (1000 * 60 * 60)) % Math.ceil(SYNC_QUERIES.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
+    const queriesToRun = SYNC_QUERIES.slice(sliceStart, sliceStart + QUERIES_PER_RUN)
+
+    for (const { q, category } of queriesToRun) {
         if (slotsAvailable - totalImported <= 0) break
 
         const results = await searchProducts(q, token.access_token, 20)
