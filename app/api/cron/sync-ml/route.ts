@@ -172,6 +172,9 @@ async function getValidToken(): Promise<{ access_token: string; user_id: string 
             mlRefreshToken: newToken.refresh_token,
             mlTokenExpiresAt: expiresAt,
             mlUserId: String(newToken.user_id),
+            homeSecondaryPostIds: [],
+            homeSidebarPostIds: [],
+            homeCarouselPostIds: [],
         },
         update: {
             mlAccessToken: newToken.access_token,
