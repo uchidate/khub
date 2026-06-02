@@ -173,6 +173,17 @@ export const CRON_JOBS = [
     defaultLimit: null,
     color: 'purple',
   },
+  {
+    id: 'sync-ml',
+    name: 'Sincronizar loja ML',
+    emoji: '🛒',
+    schedule: '0 */6 * * *',
+    frequencyLabel: 'A cada 6 horas',
+    description: 'Busca novos produtos K-Pop no Mercado Livre, atualiza preços, desativa esgotados e vincula a artistas/grupos automaticamente',
+    endpoint: '/api/cron/sync-ml',
+    defaultLimit: null,
+    color: 'amber',
+  },
 ] as const
 
 export type CronJobId = typeof CRON_JOBS[number]['id']

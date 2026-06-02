@@ -29,6 +29,7 @@ type ArtistSearchResult = {
 
 type GroupSearchResult = {
     id: string
+    slug: string | null
     name: string
     nameHangul: string | null
     profileImageUrl: string | null
@@ -110,7 +111,7 @@ export async function searchGroupsUnaccent(
     const pattern = `%${searchTerm}%`
 
     const rows = await prisma.$queryRaw<GroupSearchResult[]>`
-        SELECT g.id, g.name, g."nameHangul", g."profileImageUrl"
+        SELECT g.id, g.slug, g.name, g."nameHangul", g."profileImageUrl"
         FROM "MusicalGroup" g
         WHERE g."isHidden" = false
           AND (

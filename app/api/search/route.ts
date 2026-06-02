@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         imageUrl: a.primaryImageUrl,
       })),
       ...groups.map(g => ({
-        id: g.id,
+        id: g.slug ?? g.id,
         type: 'group' as const,
         title: g.name,
         subtitle: g.nameHangul,

@@ -50,8 +50,10 @@ export async function generateStaticParams() {
     return groups.map(g => ({ slug: g.slug! }))
 }
 
-// Detecta se o parâmetro é um CUID (legado) ou slug
-const isCuid = (param: string) => /^c[a-z0-9]{24}$/.test(param)
+// Detecta se o parâmetro é um ID (CUID ou UUID legado) ou slug
+const isCuid = (param: string) =>
+    /^c[a-z0-9]{24}$/.test(param) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param)
 
 // React.cache deduplica a query dentro do mesmo render pass (generateMetadata + page)
 const getGroup = cache(async (slugOrId: string) => {
