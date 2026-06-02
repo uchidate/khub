@@ -68,11 +68,13 @@ async function buildDynamicQueries(): Promise<Array<{ q: string; category: strin
     })
 }
 
-const MAX_PER_QUERY = 12
+const MAX_PER_QUERY = 6
 const MAX_TOTAL_ACTIVE = 500
-const QUERIES_PER_RUN = 28
+const QUERIES_PER_RUN = 10
 const SEARCH_LIMIT = 50
-const SEARCH_PAGES_PER_QUERY = 2
+const SEARCH_PAGES_PER_QUERY = 1
+const MAX_CANDIDATES_PER_PAGE = 10
+const RUN_TIME_BUDGET_MS = 85_000
 
 const GROUP_TAGS = [
     'blackpink', 'bts', 'twice', 'stray kids', 'aespa', 'ive', 'newjeans',
@@ -116,6 +118,10 @@ function detectCategory(title: string, defaultCategory: string): string {
 function isRelevantProductTitle(title: string): boolean {
     if (!title || NEGATIVE_TITLE_PATTERNS.some(pattern => pattern.test(title))) return false
     return RELEVANT_TITLE_PATTERNS.some(pattern => pattern.test(title))
+}
+
+function hasTimeLeft(startedAt: number, bufferMs = 15_000): boolean {
+    return Date.now() - startedAt < RUN_TIME_BUDGET_MS - bufferMs
 }
 
 async function refreshToken(settings: { mlRefreshToken: string | null }): Promise<{
@@ -239,24 +245,27 @@ async function searchCatalogProducts(
     const results: Array<Record<string, unknown>> = (await res.json()).results ?? []
 
     const products: CatalogProduct[] = []
+    let checkedCandidates = 0
 
     for (const r of results) {
         if (products.length >= maxResults) break
+        if (checkedCandidates >= MAX_CANDIDATES_PER_PAGE) break
         const pid = String(r.catalog_product_id || r.id || '')
         if (!pid) continue
         if (skipIds.has(pid)) continue
 
         const name = String(r.name ?? '')
         if (!isRelevantProductTitle(name)) continue
+        checkedCandidates++
 
-        // 1. Valida estoque real
-        const { hasStock, price } = await checkStock(pid, token)
-        if (!hasStock) continue
-
-        // 2. Busca imagem do catálogo
-        const detail = await fetch(`${ML_API}/products/${pid}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        }).then(d => d.ok ? d.json() : null).catch(() => null)
+        // Valida estoque e detalhes em paralelo para manter o cron abaixo do timeout.
+        const [stock, detail] = await Promise.all([
+            checkStock(pid, token),
+            fetch(`${ML_API}/products/${pid}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            }).then(d => d.ok ? d.json() : null).catch(() => null),
+        ])
+        if (!stock.hasStock) continue
         if (!detail || detail.status !== 'active') continue
 
         const pics: Array<{ url?: string }> = detail.pictures ?? []
@@ -269,7 +278,7 @@ async function searchCatalogProducts(
             name,
             imageUrl,
             affiliateUrl: makeAffiliateUrl(pid, userId),
-            price,
+            price: stock.price,
         })
     }
 
@@ -289,6 +298,7 @@ function auth(req: NextRequest): boolean {
 
 export async function POST(req: NextRequest) {
     if (!auth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const startedAt = Date.now()
     try {
 
     const token = await getValidToken()
@@ -345,26 +355,36 @@ export async function POST(req: NextRequest) {
     let searchedPages = 0
     let duplicateCandidates = 0
     let totalImported = 0
+    let stoppedEarly = false
 
     // Constrói lista de queries: dinâmicas (baseadas em trendingScore) + estáticas
     const dynamicQueries = await buildDynamicQueries()
     const allQueries = [...dynamicQueries, ...STATIC_QUERIES]
 
     // Rotação: cada run processa uma fatia diferente
-    const hourSlot = Math.floor(Date.now() / (1000 * 60 * 60))
-    const sliceStart = (hourSlot % Math.ceil(allQueries.length / QUERIES_PER_RUN)) * QUERIES_PER_RUN
+    const querySlices = Math.ceil(allQueries.length / QUERIES_PER_RUN)
+    const manualRunSeed = Math.floor(Date.now() / (1000 * 60 * 10)) + Math.floor(activeCount / 40)
+    const sliceStart = (manualRunSeed % querySlices) * QUERIES_PER_RUN
     const queriesToRun = allQueries.slice(sliceStart, sliceStart + QUERIES_PER_RUN)
 
     // Offset rotativo para descobrir produtos além dos top-20 de cada query
-    const cycleCount = Math.floor(hourSlot / Math.ceil(allQueries.length / QUERIES_PER_RUN))
-    const searchOffset = (cycleCount * MAX_PER_QUERY) % 180
+    const cycleCount = Math.floor(manualRunSeed / querySlices)
+    const searchOffset = (cycleCount * SEARCH_LIMIT) % 250
 
     for (const { q, category } of queriesToRun) {
         if (slotsAvailable - totalImported <= 0) break
+        if (!hasTimeLeft(startedAt)) {
+            stoppedEarly = true
+            break
+        }
 
         // Busca páginas rotativas e para cedo quando já há candidatos suficientes.
         const queryResults: CatalogProduct[] = []
         for (let page = 0; page < SEARCH_PAGES_PER_QUERY && queryResults.length < MAX_PER_QUERY; page++) {
+            if (!hasTimeLeft(startedAt)) {
+                stoppedEarly = true
+                break
+            }
             const pageOffset = searchOffset + page * SEARCH_LIMIT
             const pageResults = await searchCatalogProducts(
                 q,
@@ -377,7 +397,6 @@ export async function POST(req: NextRequest) {
             )
             searchedPages++
             queryResults.push(...pageResults)
-            if (pageResults.length === 0) break
             await new Promise(r => setTimeout(r, 350))
         }
         const qualified = queryResults.slice(0, MAX_PER_QUERY)
@@ -514,6 +533,7 @@ export async function POST(req: NextRequest) {
         duplicateCandidates,
         searchOffset,
         dynamicQueries: dynamicQueries.length,
+        stoppedEarly,
         activeTotal: activeCount + imported.length,
     })
     } catch (e) {
