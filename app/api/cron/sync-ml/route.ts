@@ -68,9 +68,9 @@ async function buildDynamicQueries(): Promise<Array<{ q: string; category: strin
     })
 }
 
-const MAX_PER_QUERY = 6
+const MAX_PER_QUERY = 20
 const MAX_TOTAL_ACTIVE = 500
-const QUERIES_PER_RUN = 10
+const QUERIES_PER_RUN = 16
 const SEARCH_LIMIT = 50
 const SEARCH_PAGES_PER_QUERY = 1
 const MAX_CANDIDATES_PER_PAGE = 10
@@ -207,6 +207,18 @@ function makeAffiliateUrl(pid: string, userId: string): string {
     return `https://www.mercadolivre.com.br/p/${pid}?${param}=${affiliateId}`
 }
 
+function makeAffiliateUrlFromPermalink(permalink: string, userId: string): string {
+    const affiliateId = process.env.ML_AFFILIATE_ID || process.env.ML_AFFILIATE_CID || userId
+    const param = process.env.ML_AFFILIATE_PARAM || 'affId'
+    try {
+        const url = new URL(permalink)
+        url.searchParams.set(param, affiliateId)
+        return url.toString()
+    } catch {
+        return permalink
+    }
+}
+
 function normalizeImageUrl(url: string): string {
     return url.replace('http://', 'https://').replace(/-[A-Z]\.jpg/, '-O.jpg')
 }
@@ -216,6 +228,17 @@ function fmtPrice(price: number): string {
 }
 
 async function checkStock(pid: string, token: string): Promise<{ hasStock: boolean; price: string | null }> {
+    const itemRes = await fetch(`${ML_API}/items/${pid}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => null)
+    if (itemRes?.ok) {
+        const item: Record<string, unknown> = await itemRes.json()
+        const status = String(item.status ?? '')
+        const availableQuantity = typeof item.available_quantity === 'number' ? item.available_quantity : 0
+        const price = typeof item.price === 'number' ? fmtPrice(item.price) : null
+        return { hasStock: status === 'active' && availableQuantity > 0, price }
+    }
+
     const res = await fetch(`${ML_API}/products/${pid}/items?limit=1`, {
         headers: { Authorization: `Bearer ${token}` },
     }).catch(() => null)
@@ -279,6 +302,54 @@ async function searchCatalogProducts(
             imageUrl,
             affiliateUrl: makeAffiliateUrl(pid, userId),
             price: stock.price,
+        })
+    }
+
+    return products
+}
+
+async function searchMarketplaceItems(
+    q: string,
+    token: string,
+    userId: string,
+    limit = SEARCH_LIMIT,
+    offset = 0,
+    maxResults = MAX_PER_QUERY,
+    skipIds: Set<string> = new Set()
+): Promise<CatalogProduct[]> {
+    const params = new URLSearchParams({ q, limit: String(limit), offset: String(offset) })
+    const res = await fetch(`${ML_API}/sites/MLB/search?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return []
+
+    const results: Array<Record<string, unknown>> = (await res.json()).results ?? []
+    const products: CatalogProduct[] = []
+
+    for (const r of results) {
+        if (products.length >= maxResults) break
+
+        const id = String(r.id ?? '')
+        if (!id || skipIds.has(id)) continue
+
+        const name = String(r.title ?? '')
+        if (!isRelevantProductTitle(name)) continue
+
+        const availableQuantity = typeof r.available_quantity === 'number' ? r.available_quantity : 0
+        if (availableQuantity <= 0) continue
+
+        const imageUrl = normalizeImageUrl(String(r.thumbnail ?? ''))
+        if (!imageUrl) continue
+
+        const permalink = String(r.permalink ?? '')
+        const price = typeof r.price === 'number' ? fmtPrice(r.price) : null
+
+        products.push({
+            id,
+            name,
+            imageUrl,
+            affiliateUrl: permalink ? makeAffiliateUrlFromPermalink(permalink, userId) : makeAffiliateUrl(id, userId),
+            price,
         })
     }
 
@@ -386,7 +457,7 @@ export async function POST(req: NextRequest) {
                 break
             }
             const pageOffset = searchOffset + page * SEARCH_LIMIT
-            const pageResults = await searchCatalogProducts(
+            const marketplaceResults = await searchMarketplaceItems(
                 q,
                 token.access_token,
                 token.user_id,
@@ -395,8 +466,22 @@ export async function POST(req: NextRequest) {
                 MAX_PER_QUERY - queryResults.length,
                 existingIds,
             )
+            queryResults.push(...marketplaceResults)
+
+            const remaining = MAX_PER_QUERY - queryResults.length
+            const catalogResults = remaining > 0
+                ? await searchCatalogProducts(
+                    q,
+                    token.access_token,
+                    token.user_id,
+                    SEARCH_LIMIT,
+                    pageOffset,
+                    remaining,
+                    existingIds,
+                )
+                : []
             searchedPages++
-            queryResults.push(...pageResults)
+            queryResults.push(...catalogResults)
             await new Promise(r => setTimeout(r, 350))
         }
         const qualified = queryResults.slice(0, MAX_PER_QUERY)
