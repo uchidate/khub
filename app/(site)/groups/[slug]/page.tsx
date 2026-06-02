@@ -61,7 +61,6 @@ const getGroup = cache(async (slugOrId: string) => {
         include: {
             agency: true,
             members: {
-                where: { artist: { isHidden: false } },
                 include: {
                     artist: {
                         select: {
