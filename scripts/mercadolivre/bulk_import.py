@@ -130,8 +130,23 @@ def fmt_price(price) -> str | None:
         return None
     return f"R$ {float(price):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
+def has_stock(pid: str, headers: dict) -> tuple[bool, float | None]:
+    """Verifica se o catálogo tem vendedores ativos. Retorna (tem_estoque, preco)."""
+    try:
+        r = requests.get(f'{ML_API}/products/{pid}/items',
+            params={'limit': 1}, headers=headers, timeout=10)
+        if not r.ok:
+            return False, None
+        items = r.json().get('results', [])
+        if not items:
+            return False, None
+        price = items[0].get('price') if items else None
+        return True, price
+    except Exception:
+        return False, None
+
 def fetch_product_detail(pid: str, headers: dict) -> dict | None:
-    """Busca detalhes do catálogo: imagem e preço."""
+    """Busca detalhes do catálogo: imagem."""
     try:
         r = requests.get(f'{ML_API}/products/{pid}', headers=headers, timeout=10)
         if r.ok:
@@ -239,18 +254,23 @@ def main():
 
             seen_ids.add(pid)
 
-            # Busca detalhes: imagem e preço
+            # 1. Valida estoque real antes de tudo
+            stock, item_price = has_stock(pid, headers)
+            if not stock:
+                continue  # sem vendedores ativos = pula
+
+            # 2. Busca imagem do catálogo
             detail = fetch_product_detail(pid, headers)
             img = ''
-            price = None
+            price = item_price  # preço real do item ativo
 
             if detail:
                 pictures = detail.get('pictures') or []
                 if pictures:
                     raw = pictures[0].get('url', '')
-                    # Converte para imagem de alta qualidade (-O)
                     img = re.sub(r'-[A-Z]\.jpg', '-O.jpg', raw).replace('http://', 'https://')
-                price = detail.get('price_from')
+                if not price:
+                    price = detail.get('price_from')
 
             # Fallback imagem do thumbnail da busca
             if not img:
