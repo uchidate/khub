@@ -15,12 +15,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import prisma from '@/lib/prisma'
 import { StoreProductRepository } from '@/lib/repositories/StoreProductRepository'
-import {
-    buildMercadoLivreAffiliateUrl,
-    isOfficialMercadoLivreAffiliateUrl,
-    resolveActiveMercadoLivreOffer,
-    type MlCatalogResult,
-} from '@/lib/store/mercadolivre'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -35,33 +29,7 @@ const SYNC_QUERIES = [
     { q: 'album kpop blackpink',      category: 'kpop_album' },
     { q: 'album kpop twice',          category: 'kpop_album' },
     { q: 'album kpop stray kids',     category: 'kpop_album' },
-    { q: 'album kpop aespa',          category: 'kpop_album' },
-    { q: 'album kpop newjeans',       category: 'kpop_album' },
-    { q: 'album kpop ive',            category: 'kpop_album' },
-    { q: 'album kpop seventeen',      category: 'kpop_album' },
-    { q: 'album kpop le sserafim',    category: 'kpop_album' },
-    { q: 'album kpop enhypen',        category: 'kpop_album' },
-    { q: 'album kpop txt',            category: 'kpop_album' },
-    { q: 'album kpop nct',            category: 'kpop_album' },
-    { q: 'album kpop ateez',          category: 'kpop_album' },
-    { q: 'album kpop exo',            category: 'kpop_album' },
-    { q: 'album kpop shinee',         category: 'kpop_album' },
-    { q: 'album kpop got7',           category: 'kpop_album' },
-    { q: 'album kpop red velvet',     category: 'kpop_album' },
-    { q: 'album kpop mamamoo',        category: 'kpop_album' },
-    { q: 'album kpop itzy',           category: 'kpop_album' },
-    { q: 'album kpop nmixx',          category: 'kpop_album' },
-    { q: 'album kpop gidle',          category: 'kpop_album' },
-    { q: 'album kpop babymonster',    category: 'kpop_album' },
-    { q: 'album kpop zerobaseone',    category: 'kpop_album' },
-    { q: 'album kpop iu',             category: 'kpop_album' },
-    { q: 'album kpop bigbang',        category: 'kpop_album' },
-    { q: 'album kpop super junior',   category: 'kpop_album' },
-    { q: 'album kpop apink',          category: 'kpop_album' },
-    { q: 'album kpop the boyz',       category: 'kpop_album' },
-    { q: 'album kpop sf9',            category: 'kpop_album' },
-    { q: 'album kpop monsta x',       category: 'kpop_album' },
-    // ── Photocards ────────────────────────────────────────────────────────────
+    // ── Photocards — alta disponibilidade de estoque (6-7/10) ────────────────
     { q: 'photocard kpop blackpink',  category: 'photocard' },
     { q: 'photocard kpop bts',        category: 'photocard' },
     { q: 'photocard kpop stray kids', category: 'photocard' },
@@ -71,64 +39,62 @@ const SYNC_QUERIES = [
     { q: 'photocard kpop ive',        category: 'photocard' },
     { q: 'photocard kpop seventeen',  category: 'photocard' },
     { q: 'photocard kpop enhypen',    category: 'photocard' },
-    // ── Lightsticks ───────────────────────────────────────────────────────────
-    { q: 'lightstick kpop blackpink', category: 'lightstick' },
-    { q: 'lightstick kpop bts',       category: 'lightstick' },
-    { q: 'lightstick kpop twice',     category: 'lightstick' },
-    { q: 'lightstick kpop aespa',     category: 'lightstick' },
-    { q: 'lightstick kpop seventeen', category: 'lightstick' },
-    { q: 'lightstick kpop ive',       category: 'lightstick' },
+    { q: 'photocard kpop le sserafim',category: 'photocard' },
+    { q: 'photocard kpop txt',        category: 'photocard' },
+    { q: 'photocard kpop ateez',      category: 'photocard' },
+    { q: 'photocard kpop nct',        category: 'photocard' },
+    { q: 'photocard kpop itzy',       category: 'photocard' },
+    { q: 'photocard kpop gidle',      category: 'photocard' },
+    // ── Comida Coreana — alta disponibilidade (5-7/10) ────────────────────────
+    { q: 'buldak',                    category: 'alimenta' },
+    { q: 'shin ramyun',               category: 'alimenta' },
+    { q: 'doce coreano',              category: 'alimenta' },
+    { q: 'pepero',                    category: 'alimenta' },
+    { q: 'choco pie coreano',         category: 'alimenta' },
+    { q: 'chapagetti',                category: 'alimenta' },
+    { q: 'tteokbokki',                category: 'alimenta' },
+    { q: 'snack coreano',             category: 'alimenta' },
+    { q: 'ramen coreano',             category: 'alimenta' },
     // ── K-Beauty ──────────────────────────────────────────────────────────────
     { q: 'skincare coreano',          category: 'kbeauty' },
-    { q: 'cosmetico coreano',         category: 'kbeauty' },
-    { q: 'protetor solar coreano',    category: 'kbeauty' },
-    { q: 'essence coreana',           category: 'kbeauty' },
-    { q: 'snail mucin coreano',       category: 'kbeauty' },
-    // ── Roupas / Acessórios ───────────────────────────────────────────────────
-    { q: 'camiseta kpop',             category: 'clothing' },
-    { q: 'moletom kpop',              category: 'clothing' },
-    { q: 'poster kpop',               category: 'outros' },
-    { q: 'plush kpop',                category: 'outros' },
-    { q: 'keychain kpop',             category: 'acessorios' },
-    { q: 'mochila kpop',              category: 'acessorios' },
+    { q: 'serum coreano',             category: 'kbeauty' },
+    { q: 'toner coreano',             category: 'kbeauty' },
+    // ── Álbuns — disponibilidade variável, mantém algumas queries ─────────────
+    { q: 'album kpop blackpink',      category: 'kpop_album' },
+    { q: 'album kpop bts',            category: 'kpop_album' },
+    { q: 'album kpop stray kids',     category: 'kpop_album' },
+    { q: 'album kpop twice',          category: 'kpop_album' },
+    { q: 'album kpop newjeans',       category: 'kpop_album' },
+    { q: 'album kpop aespa',          category: 'kpop_album' },
+    { q: 'mini album kpop',           category: 'kpop_album' },
 ]
 
-// Mínimo para importar automaticamente
-const MIN_RATING = 0
-const MIN_REVIEWS = 0
-const MAX_PER_QUERY = 5     // top N por query
-const MAX_TOTAL_ACTIVE = 500 // limite máximo de produtos ativos na loja
-// Queries por execução (rotação): cada run processa uma fatia, evitando rate limit ML
+const MAX_PER_QUERY = 5
+const MAX_TOTAL_ACTIVE = 500
 const QUERIES_PER_RUN = 8
 
-const KPOP_KEYWORDS = [
-    'kpop', 'k-pop', 'album', 'lightstick', 'photocard', 'bts', 'blackpink',
-    'twice', 'exo', 'nct', 'stray kids', 'aespa', 'itzy', 'txt', 'seventeen',
-    'newjeans', 'le sserafim', 'enhypen', 'ateez', 'skincare coreano',
-    'cosmetico coreano', 'k-beauty', 'kbeauty',
+const GROUP_TAGS = [
+    'blackpink', 'bts', 'twice', 'stray kids', 'aespa', 'ive', 'newjeans',
+    'seventeen', 'le sserafim', 'enhypen', 'txt', 'nct', 'ateez', 'exo',
+    'shinee', 'got7', 'red velvet', 'mamamoo', 'itzy', 'nmixx', 'babymonster',
+    'zerobaseone', 'bigbang', 'super junior', 'the boyz', 'sf9', 'monsta x',
+    'iu', 'gidle', 'g-idle',
 ]
 
-// Extrair tags de nomes de artistas/grupos presentes no título do produto
-// Retorna nomes normalizados (lowercase) encontrados
 function extractArtistTags(title: string): string[] {
     const t = title.toLowerCase()
-    return KPOP_KEYWORDS.filter(k => t.includes(k) && k.length > 3)
+    return GROUP_TAGS.filter(g => t.includes(g))
 }
 
-function isKpopRelevant(title: string): boolean {
-    const t = title.toLowerCase()
-    return KPOP_KEYWORDS.some(k => t.includes(k))
-}
-
-function detectCategory(title: string): string {
+function detectCategory(title: string, defaultCategory: string): string {
     const t = title.toLowerCase()
     if (['album', 'mini album', 'single album', 'full album'].some(w => t.includes(w))) return 'kpop_album'
     if (t.includes('lightstick')) return 'lightstick'
     if (t.includes('photocard')) return 'photocard'
-    if (['beauty', 'skin', 'essence', 'toner', 'creme', 'máscara', 'mask', 'skincare', 'cosmetico'].some(w => t.includes(w))) return 'kbeauty'
-    if (['drama', 'série', 'serie', 'bluray', 'dorama'].some(w => t.includes(w))) return 'kdrama'
-    if (['camiseta', 'moletom', 'roupa', 'hoodie'].some(w => t.includes(w))) return 'clothing'
-    return 'outros'
+    if (['skincare', 'serum', 'toner', 'essence', 'creme facial', 'mascara facial', 'cosmetico'].some(w => t.includes(w))) return 'kbeauty'
+    if (['ramen', 'ramyun', 'buldak', 'tteokbokki', 'pepero', 'doce', 'snack', 'macarrao', 'chapagetti'].some(w => t.includes(w))) return 'alimenta'
+    if (['camiseta', 'moletom', 'hoodie'].some(w => t.includes(w))) return 'clothing'
+    return defaultCategory
 }
 
 async function refreshToken(settings: { mlRefreshToken: string | null }): Promise<{
@@ -197,41 +163,79 @@ async function getValidToken(): Promise<{ access_token: string; user_id: string 
     return { access_token: newToken.access_token, user_id: String(newToken.user_id) }
 }
 
-async function searchProducts(
+type CatalogProduct = {
+    id: string
+    name: string
+    imageUrl: string
+    affiliateUrl: string
+    price: string | null
+}
+
+function makeAffiliateUrl(pid: string, userId: string): string {
+    const affiliateId = process.env.ML_AFFILIATE_ID || process.env.ML_AFFILIATE_CID || userId
+    const param = process.env.ML_AFFILIATE_PARAM || 'affId'
+    return `https://www.mercadolivre.com.br/p/${pid}?${param}=${affiliateId}`
+}
+
+function normalizeImageUrl(url: string): string {
+    return url.replace('http://', 'https://').replace(/-[A-Z]\.jpg/, '-O.jpg')
+}
+
+function fmtPrice(price: number): string {
+    return `R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+}
+
+async function searchCatalogProducts(
     q: string,
     token: string,
+    userId: string,
     limit = 20
-): Promise<Array<{
-    id: string; itemId: string; name: string; price: number | null
-    thumbnail: string; rating: number; reviews: number
-    permalink: string; soldQuantity: number | null
-}>> {
+): Promise<CatalogProduct[]> {
     const res = await fetch(
         `${ML_API}/products/search?site_id=MLB&q=${encodeURIComponent(q)}&limit=${limit}&status=active`,
         { headers: { Authorization: `Bearer ${token}` } }
     )
     if (!res.ok) return []
-    const data = await res.json()
+    const results: Array<Record<string, unknown>> = (await res.json()).results ?? []
 
-    const resolved = await Promise.all((data.results ?? []).map(async (r: MlCatalogResult) => {
-        const offer = await resolveActiveMercadoLivreOffer(r, { access_token: token })
-        if (!offer) return null
-        const rating = (r.rating as Record<string, unknown>)?.average as number | undefined
-        const reviews = (r.rating as Record<string, unknown>)?.total_ratings as number | undefined
-        return {
-            id: offer.catalogProductId,
-            itemId: offer.itemId,
-            name: r.name as string,
-            price: offer.price,
-            thumbnail: offer.imageUrl,
-            rating: rating ?? 0,
-            reviews: reviews ?? 0,
-            permalink: offer.permalink,
-            soldQuantity: offer.soldQuantity,
-        }
-    }))
+    const products: CatalogProduct[] = []
 
-    return resolved.filter((item): item is NonNullable<typeof item> => Boolean(item))
+    for (const r of results) {
+        const pid = String(r.catalog_product_id || r.id || '')
+        if (!pid) continue
+
+        // 1. Valida estoque real: /products/{id}/items retorna sellers ativos
+        const itemsRes = await fetch(`${ML_API}/products/${pid}/items?limit=1`, {
+            headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => null)
+        if (!itemsRes?.ok) continue
+        const itemsData: { results?: Array<Record<string, unknown>> } = await itemsRes.json()
+        const items = itemsData.results ?? []
+        if (items.length === 0) continue  // sem vendedores ativos = sem estoque
+
+        const price = typeof items[0].price === 'number' ? fmtPrice(items[0].price) : null
+
+        // 2. Busca imagem do catálogo
+        const detail = await fetch(`${ML_API}/products/${pid}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        }).then(d => d.ok ? d.json() : null).catch(() => null)
+        if (!detail || detail.status !== 'active') continue
+
+        const pics: Array<{ url?: string }> = detail.pictures ?? []
+        const rawImg = pics[0]?.url ?? ''
+        const imageUrl = normalizeImageUrl(rawImg)
+        if (!imageUrl) continue
+
+        products.push({
+            id: pid,
+            name: String(r.name ?? ''),
+            imageUrl,
+            affiliateUrl: makeAffiliateUrl(pid, userId),
+            price,
+        })
+    }
+
+    return products
 }
 
 function auth(req: NextRequest): boolean {
@@ -279,40 +283,22 @@ export async function POST(req: NextRequest) {
     for (const { q, category } of queriesToRun) {
         if (slotsAvailable - totalImported <= 0) break
 
-        const results = await searchProducts(q, token.access_token, 20)
-
-        // Filtrar: relevante para K-Pop, nota mínima, imagem obrigatória
-        const qualified = results
-            .filter(r =>
-                isKpopRelevant(r.name) &&
-                r.thumbnail &&
-                r.reviews >= MIN_REVIEWS &&
-                r.rating >= MIN_RATING
-            )
-            .slice(0, MAX_PER_QUERY)
+        // Busca catálogos com estoque real validado via /items endpoint
+        const results = await searchCatalogProducts(q, token.access_token, token.user_id, 20)
+        const qualified = results.slice(0, MAX_PER_QUERY)
 
         for (const r of qualified) {
             if (existingIds.has(r.id)) {
-                const affiliateUrl = buildMercadoLivreAffiliateUrl(r.permalink, {
-                    productId: r.id,
-                    itemId: r.itemId,
-                    tokenUserId: token.user_id,
-                })
-                const canPublish = isOfficialMercadoLivreAffiliateUrl(affiliateUrl)
-
+                // Atualiza preço e URL do produto existente
                 await prisma.storeProduct.updateMany({
                     where: { store: 'mercadolivre', externalId: r.id },
                     data: {
                         name: r.name,
-                        imageUrl: r.thumbnail,
-                        affiliateUrl,
-                        price: r.price ? `R$ ${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
-                        rating: r.rating ? Math.round(r.rating * 10) / 10 : null,
-                        reviewCount: r.reviews || null,
-                        soldCount: r.soldQuantity != null ? String(r.soldQuantity) : null,
+                        imageUrl: r.imageUrl,
+                        affiliateUrl: r.affiliateUrl,
+                        price: r.price,
                         isHidden: false,
-                        isActive: canPublish,
-                        featured: canPublish ? undefined : false,
+                        isActive: true,
                     },
                 })
                 continue
@@ -320,33 +306,22 @@ export async function POST(req: NextRequest) {
 
             if (totalImported >= slotsAvailable) break
 
-            const detectedCategory = detectCategory(r.name)
-            const finalCategory = detectedCategory !== 'outros' ? detectedCategory : category
-
-            const affiliateUrl = buildMercadoLivreAffiliateUrl(r.permalink, {
-                productId: r.id,
-                itemId: r.itemId,
-                tokenUserId: token.user_id,
-            })
-            const canPublish = isOfficialMercadoLivreAffiliateUrl(affiliateUrl)
+            const finalCategory = detectCategory(r.name, category)
             const productTags = extractArtistTags(r.name)
 
             const created = await prisma.storeProduct.create({
                 data: {
                     name: r.name,
-                    imageUrl: r.thumbnail,
-                    affiliateUrl,
+                    imageUrl: r.imageUrl,
+                    affiliateUrl: r.affiliateUrl,
                     store: 'mercadolivre',
                     category: finalCategory,
                     externalId: r.id,
-                    isActive: canPublish,
+                    isActive: true,
                     isHidden: false,
                     position: 9999,
-                    price: r.price ? `R$ ${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : null,
-                    rating: r.rating ? Math.round(r.rating * 10) / 10 : null,
-                    reviewCount: r.reviews || null,
-                    soldCount: r.soldQuantity != null ? String(r.soldQuantity) : null,
-                    tags: canPublish ? productTags : [...productTags, 'pendente link afiliado'],
+                    price: r.price,
+                    tags: productTags,
                 },
             })
 
