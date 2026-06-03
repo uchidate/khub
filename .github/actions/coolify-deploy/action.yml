@@ -28,27 +28,11 @@ runs:
         TOKEN: ${{ inputs.coolify_token }}
       run: |
         echo "Triggering deploy (uuid: $UUID)..."
-        for attempt in 1 2 3; do
-          echo "SSH attempt $attempt/3..."
-          RESPONSE=$(ssh -i ~/.ssh/id_rsa \
-            -o ConnectTimeout=15 \
-            -o ServerAliveInterval=5 \
-            -o ServerAliveCountMax=3 \
-            -o StrictHostKeyChecking=no \
-            -o BatchMode=yes \
-            root@31.97.255.107 \
-            "curl -s -w '\n%{http_code}' -X GET \
-              --connect-timeout 10 --max-time 30 \
-              'http://localhost:8000/api/v1/deploy?uuid=${UUID}&force=true' \
-              -H 'Authorization: Bearer ${TOKEN}' \
-              -H 'Content-Type: application/json'" 2>/dev/null) && break
-          echo "⚠️ SSH timeout (attempt $attempt), retrying in 10s..."
-          sleep 10
-        done
-        if [ -z "$RESPONSE" ]; then
-          echo "❌ Coolify deploy trigger failed: sem resposta após 3 tentativas SSH"
-          exit 1
-        fi
+        RESPONSE=$(curl -s -w '\n%{http_code}' -X GET \
+          --connect-timeout 10 --max-time 30 \
+          "http://localhost:8000/api/v1/deploy?uuid=${UUID}&force=true" \
+          -H "Authorization: Bearer ${TOKEN}" \
+          -H 'Content-Type: application/json')
         HTTP_CODE=$(echo "$RESPONSE" | tail -1)
         BODY=$(echo "$RESPONSE" | head -1)
         echo "Response: $BODY"

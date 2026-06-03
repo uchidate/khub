@@ -283,7 +283,7 @@ jobs:
     name: 🏷️ Promote Image to Production
     needs: validate-code
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
 
     permissions:
@@ -338,7 +338,7 @@ jobs:
     name: 🟡 Deploy to Staging (Coolify)
     needs: build-image
     if: github.ref != 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
 
     environment:
@@ -371,7 +371,7 @@ jobs:
     name: 🟢 Deploy to Production (Coolify)
     needs: promote-image
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
 
     environment:
@@ -468,7 +468,7 @@ jobs:
     name: ⏪ Auto-Rollback Production
     needs: deploy-production
     if: failure() && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
 
     environment:
