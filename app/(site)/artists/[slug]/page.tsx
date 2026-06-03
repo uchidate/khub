@@ -217,6 +217,104 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     }, 'artist', artist.id)
 }
 
+// ── Editorial block renderer ──────────────────────────────────────────────────
+// Parses [QUOTE]...[/QUOTE], [DESTAQUE]...[/DESTAQUE] and plain paragraphs
+// from the analiseEditorial field and renders rich visual blocks.
+
+type EditorialBlock =
+    | { type: 'quote'; text: string }
+    | { type: 'destaque'; text: string }
+    | { type: 'paragraph'; text: string }
+
+function parseEditorialBlocks(raw: string): EditorialBlock[] {
+    const blocks: EditorialBlock[] = []
+    let remaining = raw.trim()
+
+    while (remaining.length > 0) {
+        const quoteStart = remaining.indexOf('[QUOTE]')
+        const destaqueStart = remaining.indexOf('[DESTAQUE]')
+
+        const nextSpecial = [
+            quoteStart >= 0 ? quoteStart : Infinity,
+            destaqueStart >= 0 ? destaqueStart : Infinity,
+        ].reduce((a, b) => Math.min(a, b))
+
+        if (nextSpecial === Infinity) {
+            const text = remaining.trim()
+            if (text) blocks.push({ type: 'paragraph', text })
+            break
+        }
+
+        if (nextSpecial > 0) {
+            const text = remaining.slice(0, nextSpecial).trim()
+            if (text) blocks.push({ type: 'paragraph', text })
+            remaining = remaining.slice(nextSpecial)
+            continue
+        }
+
+        if (remaining.startsWith('[QUOTE]')) {
+            const end = remaining.indexOf('[/QUOTE]')
+            if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
+            const text = remaining.slice(7, end).trim()
+            if (text) blocks.push({ type: 'quote', text })
+            remaining = remaining.slice(end + 8).trim()
+            continue
+        }
+
+        if (remaining.startsWith('[DESTAQUE]')) {
+            const end = remaining.indexOf('[/DESTAQUE]')
+            if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
+            const text = remaining.slice(10, end).trim()
+            if (text) blocks.push({ type: 'destaque', text })
+            remaining = remaining.slice(end + 11).trim()
+            continue
+        }
+
+        break
+    }
+
+    return blocks
+}
+
+function renderEditorialBlocks(raw: string) {
+    const blocks = parseEditorialBlocks(raw)
+    return blocks.map((block, i) => {
+        if (block.type === 'quote') {
+            return (
+                <blockquote key={i} className="relative pl-5 border-l-2 border-accent my-6">
+                    <span className="absolute -top-4 -left-1 text-[72px] leading-none text-accent/20 font-black select-none">"</span>
+                    <p className="text-[18px] sm:text-[20px] italic leading-[1.5] text-foreground font-medium">
+                        {block.text}
+                    </p>
+                </blockquote>
+            )
+        }
+        if (block.type === 'destaque') {
+            return (
+                <div key={i} className="bg-accent/5 border-l-4 border-accent px-5 py-4 my-4">
+                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-foreground">
+                        {block.text}
+                    </p>
+                </div>
+            )
+        }
+        // plain paragraph — drop-cap on first
+        if (i === 0 || blocks.slice(0, i).every(b => b.type !== 'paragraph')) {
+            return (
+                <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
+                    <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
+                    {block.text.slice(1)}
+                </p>
+            )
+        }
+        return (
+            <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
+                {block.text}
+            </p>
+        )
+    })
+}
+
 export default async function ArtistDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
@@ -562,21 +660,30 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex flex-wrap items-center gap-2.5 mt-6">
-                            <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" />
-                            <ShareButtons title={artist.nameRomanized} url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`} />
-                            <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} />
-                            {Object.entries(socialLinks).slice(0, 3).map(([key, url]) => {
-                                const platform = getSocialPlatform(key)
-                                const Icon = typeof platform.icon === 'string' ? null : platform.icon
-                                return (
-                                    <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                        className={`flex items-center gap-1.5 px-3 py-2 border border-border text-[12px] font-semibold text-muted hover:text-foreground transition-colors ${platform.color}`}>
-                                        {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
-                                        {platform.label}
-                                    </a>
-                                )
-                            })}
+                        <div className="flex flex-col gap-3 mt-6">
+                            {/* Row 1: favorite + share + report */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" />
+                                <ShareButtons title={artist.nameRomanized} url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`} />
+                                <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} />
+                            </div>
+                            {/* Row 2: social follow links */}
+                            {Object.keys(socialLinks).length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Seguir</span>
+                                    {Object.entries(socialLinks).map(([key, url]) => {
+                                        const platform = getSocialPlatform(key)
+                                        const Icon = typeof platform.icon === 'string' ? null : platform.icon
+                                        return (
+                                            <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
+                                                className={`flex items-center gap-1.5 px-3 py-2 border border-border text-[12px] font-semibold text-muted transition-colors ${platform.bg} ${platform.color}`}>
+                                                {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
+                                                {platform.label}
+                                            </a>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -682,24 +789,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             {artist.nameRomanized}, em profundidade
                         </h2>
                         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
-                            {/* Long bio */}
-                            <div className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc] space-y-5">
-                                {profileSections.map((sec, i) => (
-                                    <p key={i} className={i === 0 ? 'before:float-left before:text-[72px] before:font-black before:leading-[0.8] before:mr-2.5 before:mt-1 before:tracking-[-3px] before:text-foreground' : ''}>
-                                        {i === 0 ? (
-                                            <>
-                                                <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px]">{sec.content[0]}</span>
-                                                {sec.content.slice(1)}
-                                            </>
-                                        ) : sec.content}
-                                    </p>
-                                ))}
-                                {profileSections.length === 0 && primaryBio && (
-                                    <p>
-                                        <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px]">{primaryBio[0]}</span>
-                                        {primaryBio.slice(1)}
-                                    </p>
-                                )}
+                            {/* Long bio — with rich editorial blocks */}
+                            <div className="space-y-5">
+                                {renderEditorialBlocks(artist.analiseEditorial ?? primaryBio ?? '')}
                             </div>
 
                             {/* Curiosidades */}
@@ -707,12 +799,25 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 <div>
                                     <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-3.5">Curiosidades</div>
                                     <ul className="divide-y divide-border/40">
-                                        {artist.curiosidades.map((c, i) => (
-                                            <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
-                                                <span className="font-mono text-[11px] text-muted/60 min-w-[24px] shrink-0">0{i + 1}</span>
-                                                <span>{c}</span>
-                                            </li>
-                                        ))}
+                                        {artist.curiosidades.map((c, i) => {
+                                            const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
+                                            if (historicoMatch) {
+                                                return (
+                                                    <li key={i} className="flex gap-3 py-3.5">
+                                                        <span className="font-mono text-[11px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 h-fit shrink-0 leading-tight">
+                                                            {historicoMatch[1]}
+                                                        </span>
+                                                        <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
+                                                    </li>
+                                                )
+                                            }
+                                            return (
+                                                <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
+                                                    <span className="font-mono text-[11px] text-muted/60 min-w-[24px] shrink-0 pt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                                                    <span>{c}</span>
+                                                </li>
+                                            )
+                                        })}
                                     </ul>
                                 </div>
                             )}
