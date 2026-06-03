@@ -218,67 +218,88 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 }
 
 // ── Editorial block renderer ──────────────────────────────────────────────────
-// Parses [QUOTE]...[/QUOTE], [DESTAQUE]...[/DESTAQUE] and plain paragraphs
-// from the analiseEditorial field and renders rich visual blocks.
+// Suporta os seguintes marcadores no campo analiseEditorial:
+//   **Título da seção**     → cabeçalho visual de seção
+//   [QUOTE]texto[/QUOTE]    → blockquote com aspas decorativas
+//   [DESTAQUE]texto[/DESTAQUE] → callout com border-left accent
+//   texto puro              → parágrafo (drop-cap no primeiro)
 
 type EditorialBlock =
+    | { type: 'section-title'; text: string }
     | { type: 'quote'; text: string }
     | { type: 'destaque'; text: string }
     | { type: 'paragraph'; text: string }
 
+const SECTION_TITLE_RE = /^\*\*(.+?)\*\*\s*$/m
+
 function parseEditorialBlocks(raw: string): EditorialBlock[] {
     const blocks: EditorialBlock[] = []
-    let remaining = raw.trim()
+    // Split on **Title** lines first, preserving the delimiter
+    const parts = raw.split(/(\n\*\*[^\n*]+\*\*\n?|\*\*[^\n*]+\*\*\n)/).filter(Boolean)
 
-    while (remaining.length > 0) {
-        const quoteStart = remaining.indexOf('[QUOTE]')
-        const destaqueStart = remaining.indexOf('[DESTAQUE]')
+    for (const part of parts) {
+        const titleMatch = part.match(SECTION_TITLE_RE)
+        if (titleMatch) {
+            blocks.push({ type: 'section-title', text: titleMatch[1].trim() })
+            continue
+        }
 
-        const nextSpecial = [
-            quoteStart >= 0 ? quoteStart : Infinity,
-            destaqueStart >= 0 ? destaqueStart : Infinity,
-        ].reduce((a, b) => Math.min(a, b))
+        // Within each part, parse inline tags
+        let remaining = part.trim()
+        while (remaining.length > 0) {
+            const quoteStart = remaining.indexOf('[QUOTE]')
+            const destaqueStart = remaining.indexOf('[DESTAQUE]')
+            const nextSpecial = Math.min(
+                quoteStart >= 0 ? quoteStart : Infinity,
+                destaqueStart >= 0 ? destaqueStart : Infinity,
+            )
 
-        if (nextSpecial === Infinity) {
-            const text = remaining.trim()
-            if (text) blocks.push({ type: 'paragraph', text })
+            if (nextSpecial === Infinity) {
+                const text = remaining.trim()
+                if (text) blocks.push({ type: 'paragraph', text })
+                break
+            }
+            if (nextSpecial > 0) {
+                const text = remaining.slice(0, nextSpecial).trim()
+                if (text) blocks.push({ type: 'paragraph', text })
+                remaining = remaining.slice(nextSpecial)
+                continue
+            }
+            if (remaining.startsWith('[QUOTE]')) {
+                const end = remaining.indexOf('[/QUOTE]')
+                if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
+                const text = remaining.slice(7, end).trim()
+                if (text) blocks.push({ type: 'quote', text })
+                remaining = remaining.slice(end + 8).trim()
+                continue
+            }
+            if (remaining.startsWith('[DESTAQUE]')) {
+                const end = remaining.indexOf('[/DESTAQUE]')
+                if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
+                const text = remaining.slice(10, end).trim()
+                if (text) blocks.push({ type: 'destaque', text })
+                remaining = remaining.slice(end + 11).trim()
+                continue
+            }
             break
         }
-
-        if (nextSpecial > 0) {
-            const text = remaining.slice(0, nextSpecial).trim()
-            if (text) blocks.push({ type: 'paragraph', text })
-            remaining = remaining.slice(nextSpecial)
-            continue
-        }
-
-        if (remaining.startsWith('[QUOTE]')) {
-            const end = remaining.indexOf('[/QUOTE]')
-            if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
-            const text = remaining.slice(7, end).trim()
-            if (text) blocks.push({ type: 'quote', text })
-            remaining = remaining.slice(end + 8).trim()
-            continue
-        }
-
-        if (remaining.startsWith('[DESTAQUE]')) {
-            const end = remaining.indexOf('[/DESTAQUE]')
-            if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
-            const text = remaining.slice(10, end).trim()
-            if (text) blocks.push({ type: 'destaque', text })
-            remaining = remaining.slice(end + 11).trim()
-            continue
-        }
-
-        break
     }
-
     return blocks
 }
 
 function renderEditorialBlocks(raw: string) {
     const blocks = parseEditorialBlocks(raw)
+    let paragraphCount = 0
     return blocks.map((block, i) => {
+        if (block.type === 'section-title') {
+            return (
+                <div key={i} className="pt-6 pb-1 border-t border-border/40 mt-4">
+                    <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-accent">
+                        {block.text}
+                    </h3>
+                </div>
+            )
+        }
         if (block.type === 'quote') {
             return (
                 <blockquote key={i} className="relative pl-5 border-l-2 border-accent my-6">
@@ -299,7 +320,8 @@ function renderEditorialBlocks(raw: string) {
             )
         }
         // plain paragraph — drop-cap on first
-        if (i === 0 || blocks.slice(0, i).every(b => b.type !== 'paragraph')) {
+        const isFirst = paragraphCount++ === 0
+        if (isFirst) {
             return (
                 <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
                     <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
