@@ -1,5 +1,5 @@
 name: Coolify Deploy + Smoke Test
-description: Dispara deploy no Coolify via SSH e aguarda health check
+description: Dispara deploy no Coolify via API direta e aguarda health check
 
 inputs:
   coolify_uuid:
@@ -29,19 +29,13 @@ runs:
       run: |
         echo "Triggering deploy (uuid: $UUID)..."
         for attempt in 1 2 3; do
-          echo "SSH attempt $attempt/3..."
-          RESPONSE=$(ssh -i ~/.ssh/id_rsa \
-            -o ConnectTimeout=20 \
-            -o ServerAliveInterval=10 \
-            -o ServerAliveCountMax=3 \
-            -o StrictHostKeyChecking=no \
-            root@31.97.255.107 \
-            "curl -s -w '\n%{http_code}' -X GET \
-              --connect-timeout 10 --max-time 60 \
-              \"https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true\" \
-              -H \"Authorization: Bearer ${TOKEN}\" \
-              -H 'Content-Type: application/json'" 2>/dev/null) && break
-          echo "⚠️ SSH timeout (attempt $attempt), retrying in 10s..."
+          echo "API attempt $attempt/3..."
+          RESPONSE=$(curl -s -w '\n%{http_code}' -X GET \
+            --connect-timeout 15 --max-time 30 \
+            "https://coolify.hallyuhub.com.br/api/v1/deploy?uuid=${UUID}&force=true" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H 'Content-Type: application/json' 2>/dev/null) && break
+          echo "⚠️ API timeout (attempt $attempt), retrying in 10s..."
           sleep 10
         done
         HTTP_CODE=$(echo "$RESPONSE" | tail -1)
