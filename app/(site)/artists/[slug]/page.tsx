@@ -316,102 +316,127 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
 
 // Tag color palette — cycles through distinct hues
 const TAG_COLORS = [
-    'bg-pink-500/10 text-pink-400 border-pink-500/20',
-    'bg-violet-500/10 text-violet-400 border-violet-500/20',
-    'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'bg-sky-500/10 text-sky-400 border-sky-500/20',
-    'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    'bg-pink-500/15 text-pink-300 border-pink-500/30',
+    'bg-violet-500/15 text-violet-300 border-violet-500/30',
+    'bg-blue-500/15 text-blue-300 border-blue-500/30',
+    'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    'bg-sky-500/15 text-sky-300 border-sky-500/30',
+    'bg-rose-500/15 text-rose-300 border-rose-500/30',
+    'bg-teal-500/15 text-teal-300 border-teal-500/30',
 ]
 
 function renderEditorialBlocks(raw: string) {
     const blocks = parseEditorialBlocks(raw)
     let paragraphCount = 0
     return blocks.map((block, i) => {
+
+        // ── Section title ──────────────────────────────────────────
         if (block.type === 'section-title') {
             return (
-                <div key={i} className="pt-6 pb-1 border-t border-border/40 mt-4">
-                    <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-accent">
+                <div key={i} className="flex items-center gap-3 pt-8 pb-2 mt-4">
+                    <div className="w-6 h-[3px] bg-accent shrink-0" />
+                    <h3 className="text-[13px] font-mono font-black uppercase tracking-[0.16em] text-accent">
                         {block.text}
                     </h3>
                 </div>
             )
         }
+
+        // ── Divisor ────────────────────────────────────────────────
         if (block.type === 'divisor') {
             return (
-                <div key={i} className="flex items-center gap-3 my-6">
-                    <div className="flex-1 h-px bg-border/50" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    <div className="flex-1 h-px bg-border/50" />
+                <div key={i} className="flex items-center gap-4 my-8">
+                    <div className="flex-1 h-px bg-border/60" />
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                        <span className="w-1 h-1 rounded-full bg-accent/40" />
+                        <span className="w-1 h-1 rounded-full bg-accent/20" />
+                    </div>
+                    <div className="flex-1 h-px bg-border/60" />
                 </div>
             )
         }
+
+        // ── Quote ──────────────────────────────────────────────────
         if (block.type === 'quote') {
             return (
-                <blockquote key={i} className="relative pl-5 border-l-2 border-accent my-6">
-                    <span className="absolute -top-4 -left-1 text-[72px] leading-none text-accent/20 font-black select-none">"</span>
-                    <p className="text-[18px] sm:text-[20px] italic leading-[1.5] text-foreground font-medium">
+                <blockquote key={i} className="relative my-8 pl-6 border-l-[4px] border-accent">
+                    <span className="absolute -top-3 left-4 text-[64px] leading-none text-accent/25 font-black select-none font-serif">"</span>
+                    <p className="relative z-10 text-[18px] sm:text-[20px] italic leading-[1.6] text-foreground font-medium pt-4">
                         {block.text}
                     </p>
                 </blockquote>
             )
         }
+
+        // ── Destaque ───────────────────────────────────────────────
         if (block.type === 'destaque') {
             return (
-                <div key={i} className="bg-accent/5 border-l-4 border-accent px-5 py-4 my-4">
-                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-foreground">
+                <div key={i} className="relative my-5 pl-5 pr-5 py-5 bg-accent/8 border-l-[5px] border-accent overflow-hidden">
+                    <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
+                    <p className="relative text-[15px] sm:text-[16px] font-semibold leading-[1.7] text-foreground">
                         {block.text}
                     </p>
                 </div>
             )
         }
+
+        // ── Recorde ────────────────────────────────────────────────
         if (block.type === 'recorde') {
             return (
-                <div key={i} className="flex gap-4 items-start bg-amber-500/5 border border-amber-500/25 px-5 py-4 my-4">
-                    <span className="text-[22px] leading-none mt-0.5 shrink-0">★</span>
-                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-amber-200">
+                <div key={i} className="flex gap-4 items-start my-5 border border-amber-400/25 bg-amber-500/5 overflow-hidden">
+                    <div className="shrink-0 w-11 flex flex-col items-center justify-center self-stretch bg-amber-500/15 border-r border-amber-400/20 py-4">
+                        <span className="text-amber-400 text-[20px] leading-none">★</span>
+                    </div>
+                    <p className="py-4 pr-4 text-[14px] sm:text-[15px] font-semibold leading-[1.7] text-amber-100/90">
                         {block.text}
                     </p>
                 </div>
             )
         }
+
+        // ── Tags ───────────────────────────────────────────────────
         if (block.type === 'tags') {
             return (
-                <div key={i} className="flex flex-wrap gap-2 my-5">
+                <div key={i} className="flex flex-wrap gap-2 my-6">
                     {block.items.map((tag, j) => (
-                        <span key={j} className={`inline-block font-mono text-[11px] font-bold px-3 py-1 border rounded-full ${TAG_COLORS[j % TAG_COLORS.length]}`}>
+                        <span key={j} className={`font-mono text-[11px] font-bold px-3.5 py-1.5 border rounded-full tracking-wide ${TAG_COLORS[j % TAG_COLORS.length]}`}>
                             {tag}
                         </span>
                     ))}
                 </div>
             )
         }
+
+        // ── Fatos ──────────────────────────────────────────────────
         if (block.type === 'fatos') {
             return (
-                <div key={i} className="grid grid-cols-2 gap-x-6 gap-y-0 my-5 border border-border/40 divide-y divide-border/40">
-                    {block.items.map((f, j) => (
-                        <div key={j} className={`flex flex-col px-4 py-3 ${j % 2 === 0 ? 'border-r border-border/40' : ''}`}>
-                            <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">{f.label}</span>
-                            <span className="text-[14px] font-semibold text-foreground mt-0.5">{f.valor}</span>
-                        </div>
-                    ))}
+                <div key={i} className="my-6 border border-border/50 overflow-hidden">
+                    <div className="grid grid-cols-2 sm:grid-cols-3">
+                        {block.items.map((f, j) => (
+                            <div key={j} className="px-4 py-3.5 border-b border-r border-border/40 last:border-r-0 [&:nth-child(2)]:sm:border-r [&:nth-child(3)]:border-r-0">
+                                <div className="font-mono text-[10px] text-muted uppercase tracking-[0.10em] mb-1">{f.label}</div>
+                                <div className="text-[13px] sm:text-[14px] font-bold text-foreground leading-snug">{f.valor}</div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )
         }
-        // plain paragraph — drop-cap on first
+
+        // ── Paragraph ──────────────────────────────────────────────
         const isFirst = paragraphCount++ === 0
         if (isFirst) {
             return (
-                <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
-                    <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
+                <p key={i} className="text-[16px] sm:text-[17px] leading-[1.65] text-[#222] dark:text-[#ccc]">
+                    <span className="float-left text-[68px] font-black leading-[0.82] mr-2 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
                     {block.text.slice(1)}
                 </p>
             )
         }
         return (
-            <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
+            <p key={i} className="text-[16px] sm:text-[17px] leading-[1.65] text-[#222] dark:text-[#ccc]">
                 {block.text}
             </p>
         )
@@ -891,7 +916,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         <h2 className="text-[36px] sm:text-[44px] font-bold tracking-[-0.04em] leading-tight mt-1.5 mb-8">
                             {artist.nameRomanized}, em profundidade
                         </h2>
-                        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+                        <div className="grid gap-10 lg:grid-cols-[2fr_1fr] lg:gap-12">
                             {/* Long bio — with rich editorial blocks */}
                             <div className="space-y-5">
                                 {renderEditorialBlocks(artist.analiseEditorial ?? primaryBio ?? '')}
