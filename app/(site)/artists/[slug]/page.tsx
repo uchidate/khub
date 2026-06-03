@@ -217,6 +217,207 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     }, 'artist', artist.id)
 }
 
+// ── Editorial block renderer ──────────────────────────────────────────────────
+// Marcadores suportados em analiseEditorial:
+//
+//   **Título da seção**                  → cabeçalho monospace accent com separador
+//   [QUOTE]texto[/QUOTE]                 → blockquote com aspas decorativas
+//   [DESTAQUE]texto[/DESTAQUE]           → callout border-left accent
+//   [RECORDE]texto[/RECORDE]             → caixa dourada com ★ (recordes/conquistas)
+//   [TAGS]tag1,tag2,tag3[/TAGS]          → pills coloridas (gênero, estilo, era, influências)
+//   [FATOS]label:valor|label:valor[/FATOS] → grid de fatos rápidos 2-col
+//   [DIVISOR]                            → separador decorativo com ponto accent
+//   texto puro                           → parágrafo (drop-cap no primeiro)
+
+type EditorialBlock =
+    | { type: 'section-title'; text: string }
+    | { type: 'quote'; text: string }
+    | { type: 'destaque'; text: string }
+    | { type: 'recorde'; text: string }
+    | { type: 'tags'; items: string[] }
+    | { type: 'fatos'; items: { label: string; valor: string }[] }
+    | { type: 'divisor' }
+    | { type: 'paragraph'; text: string }
+
+const SECTION_TITLE_RE = /^\*\*(.+?)\*\*\s*$/m
+
+// All self-closing or paired tags we parse inline
+const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[DIVISOR]']
+
+function nextTagPosition(s: string): number {
+    return Math.min(...INLINE_TAGS.map(t => { const i = s.indexOf(t); return i >= 0 ? i : Infinity }))
+}
+
+function parseEditorialBlocks(raw: string): EditorialBlock[] {
+    const blocks: EditorialBlock[] = []
+    const parts = raw.split(/(\n\*\*[^\n*]+\*\*\n?|\*\*[^\n*]+\*\*\n)/).filter(Boolean)
+
+    for (const part of parts) {
+        const titleMatch = part.match(SECTION_TITLE_RE)
+        if (titleMatch) {
+            blocks.push({ type: 'section-title', text: titleMatch[1].trim() })
+            continue
+        }
+
+        let remaining = part.trim()
+        while (remaining.length > 0) {
+            const next = nextTagPosition(remaining)
+
+            if (next === Infinity) {
+                const text = remaining.trim()
+                if (text) blocks.push({ type: 'paragraph', text })
+                break
+            }
+            if (next > 0) {
+                const text = remaining.slice(0, next).trim()
+                if (text) blocks.push({ type: 'paragraph', text })
+                remaining = remaining.slice(next)
+                continue
+            }
+
+            if (remaining.startsWith('[DIVISOR]')) {
+                blocks.push({ type: 'divisor' })
+                remaining = remaining.slice(9).trim()
+                continue
+            }
+
+            const pairs: Array<[string, string, (text: string) => EditorialBlock]> = [
+                ['[QUOTE]', '[/QUOTE]', (t) => ({ type: 'quote', text: t })],
+                ['[DESTAQUE]', '[/DESTAQUE]', (t) => ({ type: 'destaque', text: t })],
+                ['[RECORDE]', '[/RECORDE]', (t) => ({ type: 'recorde', text: t })],
+                ['[TAGS]', '[/TAGS]', (t) => ({ type: 'tags', items: t.split(',').map(s => s.trim()).filter(Boolean) })],
+                ['[FATOS]', '[/FATOS]', (t) => ({
+                    type: 'fatos',
+                    items: t.split('|').map(s => {
+                        const colon = s.indexOf(':')
+                        if (colon === -1) return { label: s.trim(), valor: '' }
+                        return { label: s.slice(0, colon).trim(), valor: s.slice(colon + 1).trim() }
+                    }).filter(f => f.label),
+                })],
+            ]
+
+            let matched = false
+            for (const [open, close, builder] of pairs) {
+                if (remaining.startsWith(open)) {
+                    const end = remaining.indexOf(close)
+                    if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); remaining = ''; break }
+                    const text = remaining.slice(open.length, end).trim()
+                    if (text) blocks.push(builder(text))
+                    remaining = remaining.slice(end + close.length).trim()
+                    matched = true
+                    break
+                }
+            }
+            if (!matched) break
+        }
+    }
+    return blocks
+}
+
+// Tag color palette — cycles through distinct hues
+const TAG_COLORS = [
+    'bg-pink-500/10 text-pink-400 border-pink-500/20',
+    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    'bg-sky-500/10 text-sky-400 border-sky-500/20',
+    'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    'bg-teal-500/10 text-teal-400 border-teal-500/20',
+]
+
+function renderEditorialBlocks(raw: string) {
+    const blocks = parseEditorialBlocks(raw)
+    let paragraphCount = 0
+    return blocks.map((block, i) => {
+        if (block.type === 'section-title') {
+            return (
+                <div key={i} className="pt-6 pb-1 border-t border-border/40 mt-4">
+                    <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-accent">
+                        {block.text}
+                    </h3>
+                </div>
+            )
+        }
+        if (block.type === 'divisor') {
+            return (
+                <div key={i} className="flex items-center gap-3 my-6">
+                    <div className="flex-1 h-px bg-border/50" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    <div className="flex-1 h-px bg-border/50" />
+                </div>
+            )
+        }
+        if (block.type === 'quote') {
+            return (
+                <blockquote key={i} className="relative pl-5 border-l-2 border-accent my-6">
+                    <span className="absolute -top-4 -left-1 text-[72px] leading-none text-accent/20 font-black select-none">"</span>
+                    <p className="text-[18px] sm:text-[20px] italic leading-[1.5] text-foreground font-medium">
+                        {block.text}
+                    </p>
+                </blockquote>
+            )
+        }
+        if (block.type === 'destaque') {
+            return (
+                <div key={i} className="bg-accent/5 border-l-4 border-accent px-5 py-4 my-4">
+                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-foreground">
+                        {block.text}
+                    </p>
+                </div>
+            )
+        }
+        if (block.type === 'recorde') {
+            return (
+                <div key={i} className="flex gap-4 items-start bg-amber-500/5 border border-amber-500/25 px-5 py-4 my-4">
+                    <span className="text-[22px] leading-none mt-0.5 shrink-0">★</span>
+                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-amber-200">
+                        {block.text}
+                    </p>
+                </div>
+            )
+        }
+        if (block.type === 'tags') {
+            return (
+                <div key={i} className="flex flex-wrap gap-2 my-5">
+                    {block.items.map((tag, j) => (
+                        <span key={j} className={`inline-block font-mono text-[11px] font-bold px-3 py-1 border rounded-full ${TAG_COLORS[j % TAG_COLORS.length]}`}>
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            )
+        }
+        if (block.type === 'fatos') {
+            return (
+                <div key={i} className="grid grid-cols-2 gap-x-6 gap-y-0 my-5 border border-border/40 divide-y divide-border/40">
+                    {block.items.map((f, j) => (
+                        <div key={j} className={`flex flex-col px-4 py-3 ${j % 2 === 0 ? 'border-r border-border/40' : ''}`}>
+                            <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">{f.label}</span>
+                            <span className="text-[14px] font-semibold text-foreground mt-0.5">{f.valor}</span>
+                        </div>
+                    ))}
+                </div>
+            )
+        }
+        // plain paragraph — drop-cap on first
+        const isFirst = paragraphCount++ === 0
+        if (isFirst) {
+            return (
+                <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
+                    <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
+                    {block.text.slice(1)}
+                </p>
+            )
+        }
+        return (
+            <p key={i} className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc]">
+                {block.text}
+            </p>
+        )
+    })
+}
+
 export default async function ArtistDetailPage(props: { params: Promise<{ slug: string }> }) {
     const params = await props.params;
     // Step 1: fetch artist (deduplica com generateMetadata via React.cache)
@@ -562,21 +763,30 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex flex-wrap items-center gap-2.5 mt-6">
-                            <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" />
-                            <ShareButtons title={artist.nameRomanized} url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`} />
-                            <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} />
-                            {Object.entries(socialLinks).slice(0, 3).map(([key, url]) => {
-                                const platform = getSocialPlatform(key)
-                                const Icon = typeof platform.icon === 'string' ? null : platform.icon
-                                return (
-                                    <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                        className={`flex items-center gap-1.5 px-3 py-2 border border-border text-[12px] font-semibold text-muted hover:text-foreground transition-colors ${platform.color}`}>
-                                        {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
-                                        {platform.label}
-                                    </a>
-                                )
-                            })}
+                        <div className="flex flex-col gap-3 mt-6">
+                            {/* Row 1: favorite + share + report */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" />
+                                <ShareButtons title={artist.nameRomanized} url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`} />
+                                <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} />
+                            </div>
+                            {/* Row 2: social follow links */}
+                            {Object.keys(socialLinks).length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Seguir</span>
+                                    {Object.entries(socialLinks).map(([key, url]) => {
+                                        const platform = getSocialPlatform(key)
+                                        const Icon = typeof platform.icon === 'string' ? null : platform.icon
+                                        return (
+                                            <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
+                                                className={`flex items-center gap-1.5 px-3 py-2 border border-border text-[12px] font-semibold text-muted transition-colors ${platform.bg} ${platform.color}`}>
+                                                {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
+                                                {platform.label}
+                                            </a>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -682,24 +892,9 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             {artist.nameRomanized}, em profundidade
                         </h2>
                         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
-                            {/* Long bio */}
-                            <div className="text-[16px] sm:text-[17px] leading-[1.6] text-[#222] dark:text-[#ccc] space-y-5">
-                                {profileSections.map((sec, i) => (
-                                    <p key={i} className={i === 0 ? 'before:float-left before:text-[72px] before:font-black before:leading-[0.8] before:mr-2.5 before:mt-1 before:tracking-[-3px] before:text-foreground' : ''}>
-                                        {i === 0 ? (
-                                            <>
-                                                <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px]">{sec.content[0]}</span>
-                                                {sec.content.slice(1)}
-                                            </>
-                                        ) : sec.content}
-                                    </p>
-                                ))}
-                                {profileSections.length === 0 && primaryBio && (
-                                    <p>
-                                        <span className="float-left text-[72px] font-black leading-[0.8] mr-2.5 mt-1 tracking-[-3px]">{primaryBio[0]}</span>
-                                        {primaryBio.slice(1)}
-                                    </p>
-                                )}
+                            {/* Long bio — with rich editorial blocks */}
+                            <div className="space-y-5">
+                                {renderEditorialBlocks(artist.analiseEditorial ?? primaryBio ?? '')}
                             </div>
 
                             {/* Curiosidades */}
@@ -707,12 +902,25 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 <div>
                                     <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-3.5">Curiosidades</div>
                                     <ul className="divide-y divide-border/40">
-                                        {artist.curiosidades.map((c, i) => (
-                                            <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
-                                                <span className="font-mono text-[11px] text-muted/60 min-w-[24px] shrink-0">0{i + 1}</span>
-                                                <span>{c}</span>
-                                            </li>
-                                        ))}
+                                        {artist.curiosidades.map((c, i) => {
+                                            const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
+                                            if (historicoMatch) {
+                                                return (
+                                                    <li key={i} className="flex gap-3 py-3.5">
+                                                        <span className="font-mono text-[11px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 h-fit shrink-0 leading-tight">
+                                                            {historicoMatch[1]}
+                                                        </span>
+                                                        <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
+                                                    </li>
+                                                )
+                                            }
+                                            return (
+                                                <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
+                                                    <span className="font-mono text-[11px] text-muted/60 min-w-[24px] shrink-0 pt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                                                    <span>{c}</span>
+                                                </li>
+                                            )
+                                        })}
                                     </ul>
                                 </div>
                             )}
