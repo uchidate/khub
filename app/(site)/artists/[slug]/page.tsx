@@ -218,23 +218,38 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 }
 
 // ── Editorial block renderer ──────────────────────────────────────────────────
-// Suporta os seguintes marcadores no campo analiseEditorial:
-//   **Título da seção**     → cabeçalho visual de seção
-//   [QUOTE]texto[/QUOTE]    → blockquote com aspas decorativas
-//   [DESTAQUE]texto[/DESTAQUE] → callout com border-left accent
-//   texto puro              → parágrafo (drop-cap no primeiro)
+// Marcadores suportados em analiseEditorial:
+//
+//   **Título da seção**                  → cabeçalho monospace accent com separador
+//   [QUOTE]texto[/QUOTE]                 → blockquote com aspas decorativas
+//   [DESTAQUE]texto[/DESTAQUE]           → callout border-left accent
+//   [RECORDE]texto[/RECORDE]             → caixa dourada com ★ (recordes/conquistas)
+//   [TAGS]tag1,tag2,tag3[/TAGS]          → pills coloridas (gênero, estilo, era, influências)
+//   [FATOS]label:valor|label:valor[/FATOS] → grid de fatos rápidos 2-col
+//   [DIVISOR]                            → separador decorativo com ponto accent
+//   texto puro                           → parágrafo (drop-cap no primeiro)
 
 type EditorialBlock =
     | { type: 'section-title'; text: string }
     | { type: 'quote'; text: string }
     | { type: 'destaque'; text: string }
+    | { type: 'recorde'; text: string }
+    | { type: 'tags'; items: string[] }
+    | { type: 'fatos'; items: { label: string; valor: string }[] }
+    | { type: 'divisor' }
     | { type: 'paragraph'; text: string }
 
 const SECTION_TITLE_RE = /^\*\*(.+?)\*\*\s*$/m
 
+// All self-closing or paired tags we parse inline
+const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[DIVISOR]']
+
+function nextTagPosition(s: string): number {
+    return Math.min(...INLINE_TAGS.map(t => { const i = s.indexOf(t); return i >= 0 ? i : Infinity }))
+}
+
 function parseEditorialBlocks(raw: string): EditorialBlock[] {
     const blocks: EditorialBlock[] = []
-    // Split on **Title** lines first, preserving the delimiter
     const parts = raw.split(/(\n\*\*[^\n*]+\*\*\n?|\*\*[^\n*]+\*\*\n)/).filter(Boolean)
 
     for (const part of parts) {
@@ -244,48 +259,72 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
             continue
         }
 
-        // Within each part, parse inline tags
         let remaining = part.trim()
         while (remaining.length > 0) {
-            const quoteStart = remaining.indexOf('[QUOTE]')
-            const destaqueStart = remaining.indexOf('[DESTAQUE]')
-            const nextSpecial = Math.min(
-                quoteStart >= 0 ? quoteStart : Infinity,
-                destaqueStart >= 0 ? destaqueStart : Infinity,
-            )
+            const next = nextTagPosition(remaining)
 
-            if (nextSpecial === Infinity) {
+            if (next === Infinity) {
                 const text = remaining.trim()
                 if (text) blocks.push({ type: 'paragraph', text })
                 break
             }
-            if (nextSpecial > 0) {
-                const text = remaining.slice(0, nextSpecial).trim()
+            if (next > 0) {
+                const text = remaining.slice(0, next).trim()
                 if (text) blocks.push({ type: 'paragraph', text })
-                remaining = remaining.slice(nextSpecial)
+                remaining = remaining.slice(next)
                 continue
             }
-            if (remaining.startsWith('[QUOTE]')) {
-                const end = remaining.indexOf('[/QUOTE]')
-                if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
-                const text = remaining.slice(7, end).trim()
-                if (text) blocks.push({ type: 'quote', text })
-                remaining = remaining.slice(end + 8).trim()
+
+            if (remaining.startsWith('[DIVISOR]')) {
+                blocks.push({ type: 'divisor' })
+                remaining = remaining.slice(9).trim()
                 continue
             }
-            if (remaining.startsWith('[DESTAQUE]')) {
-                const end = remaining.indexOf('[/DESTAQUE]')
-                if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); break }
-                const text = remaining.slice(10, end).trim()
-                if (text) blocks.push({ type: 'destaque', text })
-                remaining = remaining.slice(end + 11).trim()
-                continue
+
+            const pairs: Array<[string, string, (text: string) => EditorialBlock]> = [
+                ['[QUOTE]', '[/QUOTE]', (t) => ({ type: 'quote', text: t })],
+                ['[DESTAQUE]', '[/DESTAQUE]', (t) => ({ type: 'destaque', text: t })],
+                ['[RECORDE]', '[/RECORDE]', (t) => ({ type: 'recorde', text: t })],
+                ['[TAGS]', '[/TAGS]', (t) => ({ type: 'tags', items: t.split(',').map(s => s.trim()).filter(Boolean) })],
+                ['[FATOS]', '[/FATOS]', (t) => ({
+                    type: 'fatos',
+                    items: t.split('|').map(s => {
+                        const colon = s.indexOf(':')
+                        if (colon === -1) return { label: s.trim(), valor: '' }
+                        return { label: s.slice(0, colon).trim(), valor: s.slice(colon + 1).trim() }
+                    }).filter(f => f.label),
+                })],
+            ]
+
+            let matched = false
+            for (const [open, close, builder] of pairs) {
+                if (remaining.startsWith(open)) {
+                    const end = remaining.indexOf(close)
+                    if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); remaining = ''; break }
+                    const text = remaining.slice(open.length, end).trim()
+                    if (text) blocks.push(builder(text))
+                    remaining = remaining.slice(end + close.length).trim()
+                    matched = true
+                    break
+                }
             }
-            break
+            if (!matched) break
         }
     }
     return blocks
 }
+
+// Tag color palette — cycles through distinct hues
+const TAG_COLORS = [
+    'bg-pink-500/10 text-pink-400 border-pink-500/20',
+    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    'bg-sky-500/10 text-sky-400 border-sky-500/20',
+    'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    'bg-teal-500/10 text-teal-400 border-teal-500/20',
+]
 
 function renderEditorialBlocks(raw: string) {
     const blocks = parseEditorialBlocks(raw)
@@ -297,6 +336,15 @@ function renderEditorialBlocks(raw: string) {
                     <h3 className="text-[11px] font-mono font-bold uppercase tracking-[0.12em] text-accent">
                         {block.text}
                     </h3>
+                </div>
+            )
+        }
+        if (block.type === 'divisor') {
+            return (
+                <div key={i} className="flex items-center gap-3 my-6">
+                    <div className="flex-1 h-px bg-border/50" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    <div className="flex-1 h-px bg-border/50" />
                 </div>
             )
         }
@@ -316,6 +364,39 @@ function renderEditorialBlocks(raw: string) {
                     <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-foreground">
                         {block.text}
                     </p>
+                </div>
+            )
+        }
+        if (block.type === 'recorde') {
+            return (
+                <div key={i} className="flex gap-4 items-start bg-amber-500/5 border border-amber-500/25 px-5 py-4 my-4">
+                    <span className="text-[22px] leading-none mt-0.5 shrink-0">★</span>
+                    <p className="text-[15px] sm:text-[16px] font-semibold leading-[1.6] text-amber-200">
+                        {block.text}
+                    </p>
+                </div>
+            )
+        }
+        if (block.type === 'tags') {
+            return (
+                <div key={i} className="flex flex-wrap gap-2 my-5">
+                    {block.items.map((tag, j) => (
+                        <span key={j} className={`inline-block font-mono text-[11px] font-bold px-3 py-1 border rounded-full ${TAG_COLORS[j % TAG_COLORS.length]}`}>
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            )
+        }
+        if (block.type === 'fatos') {
+            return (
+                <div key={i} className="grid grid-cols-2 gap-x-6 gap-y-0 my-5 border border-border/40 divide-y divide-border/40">
+                    {block.items.map((f, j) => (
+                        <div key={j} className={`flex flex-col px-4 py-3 ${j % 2 === 0 ? 'border-r border-border/40' : ''}`}>
+                            <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">{f.label}</span>
+                            <span className="text-[14px] font-semibold text-foreground mt-0.5">{f.valor}</span>
+                        </div>
+                    ))}
                 </div>
             )
         }
