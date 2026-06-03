@@ -329,14 +329,16 @@ const TAG_COLORS = [
 function renderEditorialBlocks(raw: string) {
     const blocks = parseEditorialBlocks(raw)
     let paragraphCount = 0
+
     return blocks.map((block, i) => {
 
         // ── Section title ──────────────────────────────────────────
+        // Linha com traço accent + texto monospace bold
         if (block.type === 'section-title') {
             return (
-                <div key={i} className="flex items-center gap-3 pt-8 pb-2 mt-4">
-                    <div className="w-6 h-[3px] bg-accent shrink-0" />
-                    <h3 className="text-[13px] font-mono font-black uppercase tracking-[0.16em] text-accent">
+                <div key={i} className="flex items-center gap-3 mt-10 mb-3">
+                    <div className="w-5 h-[2px] bg-accent shrink-0" />
+                    <h3 className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-accent">
                         {block.text}
                     </h3>
                 </div>
@@ -344,38 +346,41 @@ function renderEditorialBlocks(raw: string) {
         }
 
         // ── Divisor ────────────────────────────────────────────────
+        // Linha sutil com três pontos em gradiente
         if (block.type === 'divisor') {
             return (
-                <div key={i} className="flex items-center gap-4 my-8">
-                    <div className="flex-1 h-px bg-border/60" />
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                        <span className="w-1 h-1 rounded-full bg-accent/40" />
-                        <span className="w-1 h-1 rounded-full bg-accent/20" />
+                <div key={i} className="flex items-center gap-4 my-10">
+                    <div className="flex-1 h-px bg-border/40" />
+                    <div className="flex items-center gap-1">
+                        <span className="w-[5px] h-[5px] rounded-full bg-accent" />
+                        <span className="w-[4px] h-[4px] rounded-full bg-accent/40" />
+                        <span className="w-[3px] h-[3px] rounded-full bg-accent/15" />
                     </div>
-                    <div className="flex-1 h-px bg-border/60" />
+                    <div className="flex-1 h-px bg-border/40" />
                 </div>
             )
         }
 
         // ── Quote ──────────────────────────────────────────────────
+        // Texto em itálico com aspas tipográficas, sem decoração flutuante
         if (block.type === 'quote') {
             return (
-                <blockquote key={i} className="relative my-8 pl-6 border-l-[4px] border-accent">
-                    <span className="absolute -top-3 left-4 text-[64px] leading-none text-accent/25 font-black select-none font-serif">"</span>
-                    <p className="relative z-10 text-[18px] sm:text-[20px] italic leading-[1.6] text-foreground font-medium pt-4">
-                        {block.text}
-                    </p>
-                </blockquote>
+                <figure key={i} className="my-7 mx-0">
+                    <blockquote className="border-l-[3px] border-accent pl-5 py-1">
+                        <p className="text-[17px] sm:text-[18px] italic leading-[1.65] text-foreground/90 font-medium">
+                            &ldquo;{block.text}&rdquo;
+                        </p>
+                    </blockquote>
+                </figure>
             )
         }
 
         // ── Destaque ───────────────────────────────────────────────
+        // Fundo sutil, borda esquerda accent, texto em negrito
         if (block.type === 'destaque') {
             return (
-                <div key={i} className="relative my-5 pl-5 pr-5 py-5 bg-accent/8 border-l-[5px] border-accent overflow-hidden">
-                    <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-accent/5 to-transparent pointer-events-none" />
-                    <p className="relative text-[15px] sm:text-[16px] font-semibold leading-[1.7] text-foreground">
+                <div key={i} className="my-5 px-5 py-4 bg-foreground/[0.04] dark:bg-accent/[0.06] border-l-4 border-accent">
+                    <p className="text-[15px] sm:text-[15px] font-semibold leading-[1.7] text-foreground">
                         {block.text}
                     </p>
                 </div>
@@ -383,13 +388,14 @@ function renderEditorialBlocks(raw: string) {
         }
 
         // ── Recorde ────────────────────────────────────────────────
+        // Faixa dourada com estrela e texto
         if (block.type === 'recorde') {
             return (
-                <div key={i} className="flex gap-4 items-start my-5 border border-amber-400/25 bg-amber-500/5 overflow-hidden">
-                    <div className="shrink-0 w-11 flex flex-col items-center justify-center self-stretch bg-amber-500/15 border-r border-amber-400/20 py-4">
-                        <span className="text-amber-400 text-[20px] leading-none">★</span>
+                <div key={i} className="my-5 flex items-stretch border border-amber-500/20 overflow-hidden">
+                    <div className="w-10 shrink-0 bg-amber-500/10 flex items-center justify-center border-r border-amber-500/20">
+                        <span className="text-amber-400 text-[15px]">★</span>
                     </div>
-                    <p className="py-4 pr-4 text-[14px] sm:text-[15px] font-semibold leading-[1.7] text-amber-100/90">
+                    <p className="px-4 py-3 text-[13px] sm:text-[14px] font-medium leading-[1.65] text-foreground/80">
                         {block.text}
                     </p>
                 </div>
@@ -397,11 +403,12 @@ function renderEditorialBlocks(raw: string) {
         }
 
         // ── Tags ───────────────────────────────────────────────────
+        // Pills coloridas com bordas suaves
         if (block.type === 'tags') {
             return (
-                <div key={i} className="flex flex-wrap gap-2 my-6">
+                <div key={i} className="flex flex-wrap gap-1.5 my-5">
                     {block.items.map((tag, j) => (
-                        <span key={j} className={`font-mono text-[11px] font-bold px-3.5 py-1.5 border rounded-full tracking-wide ${TAG_COLORS[j % TAG_COLORS.length]}`}>
+                        <span key={j} className={`text-[11px] font-mono font-semibold px-3 py-1 border rounded-full ${TAG_COLORS[j % TAG_COLORS.length]}`}>
                             {tag}
                         </span>
                     ))}
@@ -410,14 +417,15 @@ function renderEditorialBlocks(raw: string) {
         }
 
         // ── Fatos ──────────────────────────────────────────────────
+        // Grade de dados com bordas internas, estilo tabela editorial
         if (block.type === 'fatos') {
             return (
-                <div key={i} className="my-6 border border-border/50 overflow-hidden">
-                    <div className="grid grid-cols-2 sm:grid-cols-3">
+                <div key={i} className="my-5 border border-border/40 overflow-hidden">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-border/30">
                         {block.items.map((f, j) => (
-                            <div key={j} className="px-4 py-3.5 border-b border-r border-border/40 last:border-r-0 [&:nth-child(2)]:sm:border-r [&:nth-child(3)]:border-r-0">
-                                <div className="font-mono text-[10px] text-muted uppercase tracking-[0.10em] mb-1">{f.label}</div>
-                                <div className="text-[13px] sm:text-[14px] font-bold text-foreground leading-snug">{f.valor}</div>
+                            <div key={j} className="px-4 py-3 bg-background">
+                                <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted mb-1">{f.label}</div>
+                                <div className="text-[13px] font-bold text-foreground">{f.valor}</div>
                             </div>
                         ))}
                     </div>
@@ -426,17 +434,20 @@ function renderEditorialBlocks(raw: string) {
         }
 
         // ── Paragraph ──────────────────────────────────────────────
-        const isFirst = paragraphCount++ === 0
-        if (isFirst) {
+        // Primeiro parágrafo curto (título do editorial) → lead text
+        // Demais → corpo de texto normal, sem drop-cap
+        const isFirstParagraph = paragraphCount++ === 0
+        const isLeadText = isFirstParagraph && block.text.length < 100
+
+        if (isLeadText) {
             return (
-                <p key={i} className="text-[16px] sm:text-[17px] leading-[1.65] text-[#222] dark:text-[#ccc]">
-                    <span className="float-left text-[68px] font-black leading-[0.82] mr-2 mt-1 tracking-[-3px] text-foreground">{block.text[0]}</span>
-                    {block.text.slice(1)}
+                <p key={i} className="text-[17px] sm:text-[18px] font-semibold leading-[1.5] text-foreground/60 mb-4">
+                    {block.text}
                 </p>
             )
         }
         return (
-            <p key={i} className="text-[16px] sm:text-[17px] leading-[1.65] text-[#222] dark:text-[#ccc]">
+            <p key={i} className="text-[15px] sm:text-[16px] leading-[1.7] text-[#333] dark:text-[#bbb]">
                 {block.text}
             </p>
         )
@@ -928,20 +939,24 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-3.5">Curiosidades</div>
                                     <ul className="divide-y divide-border/40">
                                         {artist.curiosidades.map((c, i) => {
+                                            const num = String(i + 1).padStart(2, '0')
                                             const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
                                             if (historicoMatch) {
                                                 return (
                                                     <li key={i} className="flex gap-3 py-3.5">
-                                                        <span className="font-mono text-[11px] font-bold text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 h-fit shrink-0 leading-tight">
-                                                            {historicoMatch[1]}
-                                                        </span>
+                                                        <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
+                                                            <span className="font-mono text-[10px] text-muted/50">{num}</span>
+                                                            <span className="font-mono text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 leading-tight">
+                                                                {historicoMatch[1]}
+                                                            </span>
+                                                        </div>
                                                         <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
                                                     </li>
                                                 )
                                             }
                                             return (
                                                 <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
-                                                    <span className="font-mono text-[11px] text-muted/60 min-w-[24px] shrink-0 pt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                                                    <span className="font-mono text-[11px] text-muted/50 min-w-[24px] shrink-0 pt-0.5">{num}</span>
                                                     <span>{c}</span>
                                                 </li>
                                             )
