@@ -14,7 +14,7 @@ import { StatCard } from '@/components/admin'
 import {
     Tag, RefreshCw, Pencil, Trash2, Check, X, Search,
     Newspaper, Film, GitMerge, AlertTriangle, ArrowUpDown, SortAsc,
-    ChevronDown, ChevronUp,
+    ChevronDown, ChevronUp, BookOpen, ShoppingBag, ExternalLink, Loader2,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,11 +23,116 @@ interface TagEntry {
     tag: string
     newsCount: number
     productionCount: number
+    blogCount: number
+    storeCount: number
     total: number
 }
 
-type FilterType = 'all' | 'news' | 'productions'
+type FilterType = 'all' | 'news' | 'productions' | 'blog' | 'store' | 'unused'
 type SortType = 'usage' | 'az' | 'za'
+
+interface TagContent {
+    news: { id: string; title: string; slug: string }[]
+    productions: { id: string; title: string; slug: string }[]
+    blogPosts: { id: string; title: string; slug: string }[]
+    storeProducts: { id: string; name: string }[]
+}
+
+// ─── Tag Content Modal (click-through) ────────────────────────────────────────
+
+function TagContentModal({ tag, onClose }: { tag: string; onClose: () => void }) {
+    const [content, setContent] = useState<TagContent | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetch(`/api/admin/tags?tag=${encodeURIComponent(tag)}`)
+            .then(r => r.json())
+            .then(setContent)
+            .finally(() => setLoading(false))
+    }, [tag])
+
+    return (
+        <AdminModalOverlay
+            open={true}
+            onClose={onClose}
+            title={`Conteúdos com "${tag}"`}
+            maxWidth="md"
+            icon={<Tag className="w-4 h-4 text-accent" />}
+        >
+            {loading ? (
+                <div className="flex justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted" />
+                </div>
+            ) : !content ? (
+                <p className="text-sm text-muted text-center py-6">Erro ao carregar conteúdos.</p>
+            ) : (
+                <div className="space-y-4">
+                    {content.news.length > 0 && (
+                        <ContentSection
+                            icon={<Newspaper className="w-3.5 h-3.5 text-blue-400" />}
+                            label="Notícias"
+                            items={content.news.map(n => ({ label: n.title, href: `/noticias/${n.slug}` }))}
+                        />
+                    )}
+                    {content.productions.length > 0 && (
+                        <ContentSection
+                            icon={<Film className="w-3.5 h-3.5 text-accent" />}
+                            label="Produções"
+                            items={content.productions.map(p => ({ label: p.title, href: `/producoes/${p.slug}` }))}
+                        />
+                    )}
+                    {content.blogPosts.length > 0 && (
+                        <ContentSection
+                            icon={<BookOpen className="w-3.5 h-3.5 text-green-400" />}
+                            label="Blog"
+                            items={content.blogPosts.map(b => ({ label: b.title, href: `/blog/${b.slug}` }))}
+                        />
+                    )}
+                    {content.storeProducts.length > 0 && (
+                        <ContentSection
+                            icon={<ShoppingBag className="w-3.5 h-3.5 text-purple-400" />}
+                            label="Loja"
+                            items={content.storeProducts.map(s => ({ label: s.name }))}
+                        />
+                    )}
+                    {content.news.length + content.productions.length + content.blogPosts.length + content.storeProducts.length === 0 && (
+                        <p className="text-sm text-muted text-center py-4">Nenhum conteúdo encontrado.</p>
+                    )}
+                </div>
+            )}
+        </AdminModalOverlay>
+    )
+}
+
+function ContentSection({
+    icon, label, items,
+}: {
+    icon: React.ReactNode
+    label: string
+    items: { label: string; href?: string }[]
+}) {
+    return (
+        <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+                {icon}
+                <span className="text-xs font-bold text-muted uppercase tracking-wider">{label}</span>
+                <span className="text-xs text-muted">({items.length})</span>
+            </div>
+            <div className="space-y-1">
+                {items.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-surface text-sm">
+                        <span className="text-foreground truncate">{item.label}</span>
+                        {item.href && (
+                            <a href={item.href} target="_blank" rel="noreferrer" className="flex-shrink-0 text-muted hover:text-accent transition-colors">
+                                <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
 
 // ─── Merge Modal ──────────────────────────────────────────────────────────────
 
@@ -133,12 +238,34 @@ function DuplicatesPanel({
 }) {
     const [expanded, setExpanded] = useState(true)
     const [merging, setMerging] = useState<string | null>(null)
+    const [resolvingAll, setResolvingAll] = useState(false)
 
     const handleQuickMerge = async (source: string, target: string) => {
         setMerging(source)
         try { await onMerge(source, target) }
         finally { setMerging(null) }
     }
+
+    const handleResolveAll = async () => {
+        setResolvingAll(true)
+        try {
+            for (const group of groups) {
+                const sorted = [...group].sort((a, b) => {
+                    const ua = tagMap.get(a)?.total ?? 0
+                    const ub = tagMap.get(b)?.total ?? 0
+                    return ub - ua || a.localeCompare(b)
+                })
+                const [preferred, ...variants] = sorted
+                for (const v of variants) {
+                    await onMerge(v, preferred)
+                }
+            }
+        } finally {
+            setResolvingAll(false)
+        }
+    }
+
+    const totalVariants = groups.reduce((acc, g) => acc + g.length - 1, 0)
 
     return (
         <div className="bg-amber-500/5 border border-amber-500/25 rounded-xl overflow-hidden">
@@ -160,8 +287,21 @@ function DuplicatesPanel({
 
             {expanded && (
                 <div className="px-4 pb-4 space-y-2">
+                    {/* Resolve all button */}
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleResolveAll}
+                            disabled={resolvingAll}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-colors disabled:opacity-50"
+                        >
+                            {resolvingAll
+                                ? <><RefreshCw className="w-3 h-3 animate-spin" /> Resolvendo...</>
+                                : <><GitMerge className="w-3 h-3" /> Resolver todos ({totalVariants} variantes)</>
+                            }
+                        </button>
+                    </div>
+
                     {groups.map((group) => {
-                        // Suggest keeping the one with most usage, or alphabetically first
                         const sorted = [...group].sort((a, b) => {
                             const ua = tagMap.get(a)?.total ?? 0
                             const ub = tagMap.get(b)?.total ?? 0
@@ -181,7 +321,7 @@ function DuplicatesPanel({
                                         <button
                                             key={v}
                                             onClick={() => handleQuickMerge(v, preferred)}
-                                            disabled={merging === v}
+                                            disabled={merging === v || resolvingAll}
                                             title={`Mesclar "${v}" em "${preferred}"`}
                                             className="inline-flex items-center gap-1 font-mono text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded hover:bg-amber-500/20 transition-colors disabled:opacity-50"
                                         >
@@ -225,6 +365,10 @@ export default function TagsAdminPage() {
 
     // Delete
     const [deletingTag, setDeletingTag] = useState<string | null>(null)
+    const [deletingUnused, setDeletingUnused] = useState(false)
+
+    // Click-through
+    const [viewingTag, setViewingTag] = useState<string | null>(null)
 
     const fetchTags = useCallback(async () => {
         setLoading(true)
@@ -252,9 +396,11 @@ export default function TagsAdminPage() {
         }
         if (filterType === 'news') list = list.filter(t => t.newsCount > 0)
         if (filterType === 'productions') list = list.filter(t => t.productionCount > 0)
+        if (filterType === 'blog') list = list.filter(t => t.blogCount > 0)
+        if (filterType === 'store') list = list.filter(t => t.storeCount > 0)
+        if (filterType === 'unused') list = list.filter(t => t.total === 0)
         if (sortType === 'az') list = [...list].sort((a, b) => a.tag.localeCompare(b.tag))
         if (sortType === 'za') list = [...list].sort((a, b) => b.tag.localeCompare(a.tag))
-        // 'usage' is already sorted by API
         return list
     }, [tags, search, filterType, sortType])
 
@@ -262,16 +408,21 @@ export default function TagsAdminPage() {
 
     // Stats
     const totalUsage = tags.reduce((acc, t) => acc + t.total, 0)
-    const newsOnly = tags.filter(t => t.newsCount > 0 && t.productionCount === 0).length
-    const prodsOnly = tags.filter(t => t.productionCount > 0 && t.newsCount === 0).length
-    const shared = tags.filter(t => t.newsCount > 0 && t.productionCount > 0).length
+    const unusedCount = tags.filter(t => t.total === 0).length
+    const shared = tags.filter(t => {
+        const sources = [t.newsCount > 0, t.productionCount > 0, t.blogCount > 0, t.storeCount > 0].filter(Boolean).length
+        return sources > 1
+    }).length
 
     // ── Rename ──
-    const startEdit = (tag: string) => { setEditingTag(tag); setEditValue(tag) }
+    const startEdit = (tag: string) => {
+        setEditingTag(tag)
+        setEditValue(tag)
+    }
     const cancelEdit = () => { setEditingTag(null); setEditValue(''); setMergeConflict(null) }
 
     const saveRename = async (oldTag: string, force = false) => {
-        const newTag = editValue.trim()
+        const newTag = editValue.trim().toLowerCase().replace(/\s+/g, ' ')
         if (!newTag || newTag === oldTag) { cancelEdit(); return }
         setSaving(true)
         try {
@@ -283,7 +434,6 @@ export default function TagsAdminPage() {
             const data = await res.json()
             if (!res.ok) {
                 if (data.conflict) {
-                    // Target exists → ask for merge confirmation
                     setMergeConflict({ oldTag, newTag })
                     return
                 }
@@ -302,51 +452,63 @@ export default function TagsAdminPage() {
 
     // ── Merge ──
     const handleMerge = async (source: string, target: string) => {
-        try {
-            const res = await fetch('/api/admin/tags', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldTag: source, newTag: target, merge: true }),
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                toast.error(err.error || 'Erro ao mesclar')
-                return
-            }
-            toast.success(`"${source}" mesclada em "${target}"`)
-            setMergingTag(null)
-            cancelEdit()
-            await fetchTags()
-        } catch (err) {
-            toast.error((err as Error).message || 'Erro ao mesclar tags')
+        const res = await fetch('/api/admin/tags', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ oldTag: source, newTag: target, merge: true }),
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            toast.error(err.error || 'Erro ao mesclar')
+            throw new Error(err.error)
         }
+        toast.success(`"${source}" mesclada em "${target}"`)
+        setMergingTag(null)
+        cancelEdit()
+        await fetchTags()
     }
 
     // ── Delete ──
     const confirmDelete = async (tag: string) => {
-        try {
-            const res = await fetch('/api/admin/tags', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tag }),
-            })
-            if (!res.ok) {
-                const err = await res.json()
-                toast.error(err.error || 'Erro ao deletar tag')
-                return
-            }
-            toast.deleted('Tag')
-            setDeletingTag(null)
-            await fetchTags()
-        } catch (err) {
-            toast.error((err as Error).message || 'Erro ao deletar tag')
+        const res = await fetch('/api/admin/tags', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tag }),
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            toast.error(err.error || 'Erro ao deletar tag')
+            return
         }
+        toast.deleted('Tag')
+        setDeletingTag(null)
+        await fetchTags()
+    }
+
+    // ── Bulk delete unused ──
+    const unusedTags = useMemo(() => tags.filter(t => t.total === 0).map(t => t.tag), [tags])
+
+    const confirmDeleteUnused = async () => {
+        if (unusedTags.length === 0) return
+        const res = await fetch('/api/admin/tags', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tags: unusedTags }),
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            toast.error(err.error || 'Erro ao deletar tags')
+            return
+        }
+        toast.success(`${unusedTags.length} tags sem uso removidas`)
+        setDeletingUnused(false)
+        await fetchTags()
     }
 
     return (
         <AdminLayout
             title="Gestão de Tags"
-            subtitle="Taxonomia compartilhada entre notícias e produções, com foco em limpeza, deduplicação e consistência editorial."
+            subtitle="Taxonomia compartilhada entre notícias, produções, blog e loja — com foco em limpeza, deduplicação e consistência editorial."
             actions={
                 <div className="flex flex-wrap gap-2">
                     <Link
@@ -368,19 +530,12 @@ export default function TagsAdminPage() {
             }
         >
             <div className="space-y-5">
-                <div className="bg-surface border border-border rounded-xl p-4">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted mb-2">Escopo</p>
-                    <p className="text-sm text-muted leading-relaxed">
-                        Tags ficam em Conteúdo porque afetam descoberta, curadoria e busca. Use esta tela para resolver duplicatas, padronizar nomes e reduzir ruído taxonômico.
-                    </p>
-                </div>
-
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <StatCard label="Tags únicas"  value={tags.length}          color="text-foreground" />
-                    <StatCard label="Usos totais"  value={totalUsage}           color="text-accent" />
-                    <StatCard label="Partilhadas"  value={shared}               color="text-blue-400" />
-                    <StatCard label="Exclusivas"   value={newsOnly + prodsOnly} color="text-amber-400" />
+                    <StatCard label="Tags únicas"  value={tags.length}   color="text-foreground" />
+                    <StatCard label="Usos totais"  value={totalUsage}    color="text-accent" />
+                    <StatCard label="Partilhadas"  value={shared}        color="text-blue-400" />
+                    <StatCard label="Sem uso"      value={unusedCount}   color="text-red-400" />
                 </div>
 
                 {/* Duplicates panel */}
@@ -388,7 +543,7 @@ export default function TagsAdminPage() {
                     <DuplicatesPanel
                         groups={duplicateGroups}
                         tagMap={tagMap}
-                        onMerge={async (source, target) => { await handleMerge(source, target) }}
+                        onMerge={handleMerge}
                     />
                 )}
 
@@ -405,17 +560,18 @@ export default function TagsAdminPage() {
                         />
                     </div>
                     <div className="flex gap-1.5 flex-wrap">
-                        {/* Type filter */}
                         <FilterPills
                             pills={[
                                 { value: 'all' as const, label: 'Todas' },
                                 { value: 'news' as const, label: 'Notícias' },
                                 { value: 'productions' as const, label: 'Produções' },
+                                { value: 'blog' as const, label: 'Blog' },
+                                { value: 'store' as const, label: 'Loja' },
+                                { value: 'unused' as const, label: 'Sem uso' },
                             ]}
                             active={filterType}
                             onChange={setFilterType}
                         />
-                        {/* Sort */}
                         <button
                             onClick={() => setSortType(s => s === 'usage' ? 'az' : s === 'az' ? 'za' : 'usage')}
                             title={sortType === 'usage' ? 'Ordenado por uso' : sortType === 'az' ? 'A → Z' : 'Z → A'}
@@ -424,7 +580,6 @@ export default function TagsAdminPage() {
                             {sortType === 'usage' ? <ArrowUpDown className="w-3.5 h-3.5" /> : <SortAsc className="w-3.5 h-3.5" />}
                             {sortType === 'usage' ? 'Uso' : sortType === 'az' ? 'A→Z' : 'Z→A'}
                         </button>
-                        {/* Refresh */}
                         <button onClick={fetchTags} disabled={loading}
                             className="px-3 py-2 bg-surface border border-border hover:border-border text-muted rounded-lg transition-colors disabled:opacity-50">
                             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -432,13 +587,24 @@ export default function TagsAdminPage() {
                     </div>
                 </div>
 
-                {/* Result count */}
+                {/* Result count + bulk delete unused */}
                 {!loading && (
-                    <p className="text-xs text-muted -mt-2">
-                        {filtered.length === tags.length
-                            ? `${tags.length} tags`
-                            : `${filtered.length} de ${tags.length} tags`}
-                    </p>
+                    <div className="flex items-center justify-between -mt-2">
+                        <p className="text-xs text-muted">
+                            {filtered.length === tags.length
+                                ? `${tags.length} tags`
+                                : `${filtered.length} de ${tags.length} tags`}
+                        </p>
+                        {unusedCount > 0 && (
+                            <button
+                                onClick={() => setDeletingUnused(true)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/15 border border-red-500/20 transition-colors"
+                            >
+                                <Trash2 className="w-3 h-3" />
+                                Limpar {unusedCount} sem uso
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {/* Tag list */}
@@ -510,7 +676,6 @@ export default function TagsAdminPage() {
                                 <div className="flex items-center gap-3">
                                     <Tag className="w-3.5 h-3.5 text-muted flex-shrink-0" />
 
-                                    {/* Tag name or edit input */}
                                     {editingTag === entry.tag ? (
                                         <div className="flex-1 flex items-center gap-2 min-w-0">
                                             <input
@@ -524,7 +689,6 @@ export default function TagsAdminPage() {
                                                 autoFocus
                                                 className="flex-1 min-w-0 bg-background border border-accent/50 rounded-xl px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-accent/50"
                                             />
-                                            {/* Merge conflict warning */}
                                             {mergeConflict && (
                                                 <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 flex-shrink-0 hidden sm:inline">
                                                     Tag existe — mesclar?
@@ -532,7 +696,13 @@ export default function TagsAdminPage() {
                                             )}
                                         </div>
                                     ) : (
-                                        <span className="flex-1 text-sm font-bold text-foreground font-mono truncate">{entry.tag}</span>
+                                        <button
+                                            onClick={() => setViewingTag(entry.tag)}
+                                            className="flex-1 text-sm font-bold text-foreground font-mono truncate text-left hover:text-accent transition-colors"
+                                            title="Ver conteúdos com esta tag"
+                                        >
+                                            {entry.tag}
+                                        </button>
                                     )}
 
                                     {/* Usage badges */}
@@ -549,6 +719,18 @@ export default function TagsAdminPage() {
                                                 <span className="tabular-nums">{entry.productionCount}</span>
                                             </span>
                                         )}
+                                        {entry.blogCount > 0 && (
+                                            <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2 py-0.5">
+                                                <BookOpen className="w-3 h-3" />
+                                                <span className="tabular-nums">{entry.blogCount}</span>
+                                            </span>
+                                        )}
+                                        {entry.storeCount > 0 && (
+                                            <span className="flex items-center gap-1 text-xs text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-2 py-0.5">
+                                                <ShoppingBag className="w-3 h-3" />
+                                                <span className="tabular-nums">{entry.storeCount}</span>
+                                            </span>
+                                        )}
                                         <span className="text-xs text-muted w-7 text-right tabular-nums hidden sm:block">
                                             {entry.total}×
                                         </span>
@@ -559,6 +741,11 @@ export default function TagsAdminPage() {
                     </div>
                 )}
             </div>
+
+            {/* Click-through modal */}
+            {viewingTag && (
+                <TagContentModal tag={viewingTag} onClose={() => setViewingTag(null)} />
+            )}
 
             {/* Merge modal */}
             {mergingTag && (
@@ -579,6 +766,17 @@ export default function TagsAdminPage() {
                 variant="danger"
                 onConfirm={() => { if (deletingTag) confirmDelete(deletingTag) }}
                 onCancel={() => setDeletingTag(null)}
+            />
+
+            {/* Bulk delete unused confirm */}
+            <ConfirmDialog
+                open={deletingUnused}
+                title="Limpar tags sem uso"
+                description={`Remover ${unusedTags.length} tags que não estão associadas a nenhum conteúdo? Esta ação não pode ser desfeita.`}
+                confirmLabel={`Remover ${unusedTags.length} tags`}
+                variant="danger"
+                onConfirm={confirmDeleteUnused}
+                onCancel={() => setDeletingUnused(false)}
             />
         </AdminLayout>
     )
