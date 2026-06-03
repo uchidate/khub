@@ -4,16 +4,15 @@ import { cache } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { getRoleLabels } from "@/lib/utils/role-labels"
-import { getStreamingConfig } from "@/lib/config/streaming-platforms"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
+import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
 import { ReportButton } from "@/components/ui/ReportButton"
 import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
-import { ShareButtons } from "@/components/ui/ShareButtons"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
@@ -85,7 +84,7 @@ const getArtist = cache(async (slugOrId: string) => {
                     { production: { year: { sort: 'desc', nulls: 'last' } } },
                     { production: { createdAt: 'desc' } },
                 ],
-                take: 24,
+                take: 60,
             },
             memberships: {
                 include: { group: { select: { id: true, slug: true, name: true, nameHangul: true, profileImageUrl: true } } },
@@ -226,6 +225,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 //   [RECORDE]texto[/RECORDE]             → caixa dourada com ★ (recordes/conquistas)
 //   [TAGS]tag1,tag2,tag3[/TAGS]          → pills coloridas (gênero, estilo, era, influências)
 //   [FATOS]label:valor|label:valor[/FATOS] → grid de fatos rápidos 2-col
+//   [TIMELINE]ano:texto|ano:texto[/TIMELINE] → linha do tempo compacta
+//   [MOMENTO]rótulo:texto[/MOMENTO]       → bloco editorial com rótulo
 //   [DIVISOR]                            → separador decorativo com ponto accent
 //   texto puro                           → parágrafo (drop-cap no primeiro)
 
@@ -236,16 +237,26 @@ type EditorialBlock =
     | { type: 'recorde'; text: string }
     | { type: 'tags'; items: string[] }
     | { type: 'fatos'; items: { label: string; valor: string }[] }
+    | { type: 'timeline'; items: { label: string; valor: string }[] }
+    | { type: 'momento'; label: string; text: string }
     | { type: 'divisor' }
     | { type: 'paragraph'; text: string }
 
 const SECTION_TITLE_RE = /^\*\*(.+?)\*\*\s*$/m
 
 // All self-closing or paired tags we parse inline
-const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[DIVISOR]']
+const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[TIMELINE]', '[MOMENTO]', '[DIVISOR]']
 
 function nextTagPosition(s: string): number {
     return Math.min(...INLINE_TAGS.map(t => { const i = s.indexOf(t); return i >= 0 ? i : Infinity }))
+}
+
+function createParagraphBlocks(text: string): EditorialBlock[] {
+    return text
+        .split(/\n{2,}/)
+        .map(part => part.replace(/\s*\n\s*/g, ' ').trim())
+        .filter(Boolean)
+        .map(part => ({ type: 'paragraph', text: part }))
 }
 
 function parseEditorialBlocks(raw: string): EditorialBlock[] {
@@ -265,12 +276,12 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
 
             if (next === Infinity) {
                 const text = remaining.trim()
-                if (text) blocks.push({ type: 'paragraph', text })
+                if (text) blocks.push(...createParagraphBlocks(text))
                 break
             }
             if (next > 0) {
                 const text = remaining.slice(0, next).trim()
-                if (text) blocks.push({ type: 'paragraph', text })
+                if (text) blocks.push(...createParagraphBlocks(text))
                 remaining = remaining.slice(next)
                 continue
             }
@@ -294,6 +305,20 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
                         return { label: s.slice(0, colon).trim(), valor: s.slice(colon + 1).trim() }
                     }).filter(f => f.label),
                 })],
+                ['[TIMELINE]', '[/TIMELINE]', (t) => ({
+                    type: 'timeline',
+                    items: t.split('|').map(s => {
+                        const colon = s.indexOf(':')
+                        if (colon === -1) return { label: s.trim(), valor: '' }
+                        return { label: s.slice(0, colon).trim(), valor: s.slice(colon + 1).trim() }
+                    }).filter(f => f.label),
+                })],
+                ['[MOMENTO]', '[/MOMENTO]', (t) => {
+                    const colon = t.indexOf(':')
+                    return colon === -1
+                        ? { type: 'momento', label: 'Momento-chave', text: t }
+                        : { type: 'momento', label: t.slice(0, colon).trim(), text: t.slice(colon + 1).trim() }
+                }],
             ]
 
             let matched = false
@@ -314,144 +339,190 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
     return blocks
 }
 
-// Tag color palette — cycles through distinct hues
-const TAG_COLORS = [
-    'bg-pink-500/15 text-pink-300 border-pink-500/30',
-    'bg-violet-500/15 text-violet-300 border-violet-500/30',
-    'bg-blue-500/15 text-blue-300 border-blue-500/30',
-    'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    'bg-sky-500/15 text-sky-300 border-sky-500/30',
-    'bg-rose-500/15 text-rose-300 border-rose-500/30',
-    'bg-teal-500/15 text-teal-300 border-teal-500/30',
-]
+function renderPlainBio(raw: string) {
+    const paragraphs = parseEditorialBlocks(raw)
+        .filter(block => block.type === 'paragraph')
 
-function renderEditorialBlocks(raw: string) {
+    return paragraphs.map((block, i) => (
+        <p key={i} className={i === 0
+            ? "text-[16px] sm:text-[18px] leading-[1.7] font-semibold text-foreground"
+            : "text-[15px] sm:text-[16px] leading-[1.78] text-[#2b2b2b] dark:text-[#d0d0d0]"
+        }>
+            {block.text}
+        </p>
+    ))
+}
+
+function renderBiographyContent(options: { bioText: string | null }) {
+    const { bioText } = options
+    if (!bioText) return null
+    return (
+        <div className="border border-border/60 bg-background">
+            <div className="p-5 sm:p-7">
+                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent mb-4">Perfil</div>
+                <div className="space-y-4 max-w-[760px]">
+                    {renderPlainBio(bioText)}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function getFirstTimelineBlock(raw: string | null): Extract<EditorialBlock, { type: 'timeline' }> | null {
+    if (!raw) return null
+    return parseEditorialBlocks(raw).find((block): block is Extract<EditorialBlock, { type: 'timeline' }> => block.type === 'timeline') ?? null
+}
+
+function getFirstTagsBlock(raw: string | null): Extract<EditorialBlock, { type: 'tags' }> | null {
+    if (!raw) return null
+    return parseEditorialBlocks(raw).find((block): block is Extract<EditorialBlock, { type: 'tags' }> => block.type === 'tags') ?? null
+}
+
+function getFirstFactsBlock(raw: string | null): Extract<EditorialBlock, { type: 'fatos' }> | null {
+    if (!raw) return null
+    return parseEditorialBlocks(raw).find((block): block is Extract<EditorialBlock, { type: 'fatos' }> => block.type === 'fatos') ?? null
+}
+
+function getStarterBlocks(raw: string | null): EditorialBlock[] {
+    if (!raw) return []
     const blocks = parseEditorialBlocks(raw)
-    let paragraphCount = 0
+    const start = blocks.findIndex(block => block.type === 'section-title' && /por onde começar/i.test(block.text))
+    if (start === -1) return []
 
-    return blocks.map((block, i) => {
+    const items: EditorialBlock[] = []
+    for (let i = start + 1; i < blocks.length; i++) {
+        const block = blocks[i]
+        if (block.type === 'section-title') break
+        if (block.type !== 'divisor') items.push(block)
+    }
+    return items
+}
 
-        // ── Section title ──────────────────────────────────────────
-        // Linha com traço accent + texto monospace bold
-        if (block.type === 'section-title') {
-            return (
-                <div key={i} className="flex items-center gap-3 mt-10 mb-3">
-                    <div className="w-5 h-[2px] bg-accent shrink-0" />
-                    <h3 className="text-[11px] font-mono font-black uppercase tracking-[0.18em] text-accent">
-                        {block.text}
-                    </h3>
-                </div>
-            )
-        }
+function getEditorialImpactCards(raw: string | null) {
+    if (!raw) return []
+    const cards: { label: string; text: string; tone: 'moment' | 'highlight' | 'record' }[] = []
 
-        // ── Divisor ────────────────────────────────────────────────
-        // Linha sutil com três pontos em gradiente
-        if (block.type === 'divisor') {
-            return (
-                <div key={i} className="flex items-center gap-4 my-10">
-                    <div className="flex-1 h-px bg-border/40" />
-                    <div className="flex items-center gap-1">
-                        <span className="w-[5px] h-[5px] rounded-full bg-accent" />
-                        <span className="w-[4px] h-[4px] rounded-full bg-accent/40" />
-                        <span className="w-[3px] h-[3px] rounded-full bg-accent/15" />
+    for (const block of parseEditorialBlocks(raw)) {
+        if (block.type === 'momento') cards.push({ label: block.label, text: block.text, tone: 'moment' })
+        if (block.type === 'destaque') cards.push({ label: 'Por que importa', text: block.text, tone: 'highlight' })
+        if (block.type === 'recorde') cards.push({ label: 'Conquista', text: block.text, tone: 'record' })
+        if (cards.length >= 2) break
+    }
+
+    return cards
+}
+
+function renderImpactCards(cards: ReturnType<typeof getEditorialImpactCards>) {
+    if (cards.length === 0) return null
+
+    return (
+        <div className="grid gap-3 sm:grid-cols-2">
+            {cards.map((card, i) => (
+                <div key={`${card.label}-${i}`} className="border border-border bg-background px-4 py-4">
+                    <div className={`font-mono text-[9px] uppercase tracking-[0.14em] mb-2 ${
+                        card.tone === 'record' ? 'text-amber-600 dark:text-amber-300' : 'text-accent'
+                    }`}>
+                        {card.label}
                     </div>
-                    <div className="flex-1 h-px bg-border/40" />
-                </div>
-            )
-        }
-
-        // ── Quote ──────────────────────────────────────────────────
-        // Texto em itálico com aspas tipográficas, sem decoração flutuante
-        if (block.type === 'quote') {
-            return (
-                <figure key={i} className="my-7 mx-0">
-                    <blockquote className="border-l-[3px] border-accent pl-5 py-1">
-                        <p className="text-[17px] sm:text-[18px] italic leading-[1.65] text-foreground/90 font-medium">
-                            &ldquo;{block.text}&rdquo;
-                        </p>
-                    </blockquote>
-                </figure>
-            )
-        }
-
-        // ── Destaque ───────────────────────────────────────────────
-        // Fundo sutil, borda esquerda accent, texto em negrito
-        if (block.type === 'destaque') {
-            return (
-                <div key={i} className="my-5 px-5 py-4 bg-foreground/[0.04] dark:bg-accent/[0.06] border-l-4 border-accent">
-                    <p className="text-[15px] sm:text-[15px] font-semibold leading-[1.7] text-foreground">
-                        {block.text}
+                    <p className="text-[14px] leading-[1.55] font-semibold text-foreground">
+                        {card.text}
                     </p>
                 </div>
-            )
-        }
+            ))}
+        </div>
+    )
+}
 
-        // ── Recorde ────────────────────────────────────────────────
-        // Faixa dourada com estrela e texto
-        if (block.type === 'recorde') {
-            return (
-                <div key={i} className="my-5 flex items-stretch border border-amber-500/20 overflow-hidden">
-                    <div className="w-10 shrink-0 bg-amber-500/10 flex items-center justify-center border-r border-amber-500/20">
-                        <span className="text-amber-400 text-[15px]">★</span>
-                    </div>
-                    <p className="px-4 py-3 text-[13px] sm:text-[14px] font-medium leading-[1.65] text-foreground/80">
-                        {block.text}
-                    </p>
+function renderEditorialSignals(options: {
+    tagsBlock: Extract<EditorialBlock, { type: 'tags' }> | null
+    factsBlock: Extract<EditorialBlock, { type: 'fatos' }> | null
+}) {
+    const { tagsBlock, factsBlock } = options
+    const editorialFacts = (factsBlock?.items ?? []).filter(item => {
+        const label = item.label.trim().toLowerCase()
+        return !/^(debut|estreia|ag[eê]ncia|nascimento|anivers[aá]rio|local|altura|tipo sangu[ií]neo|nacionalidade)$/.test(label)
+    })
+    if (!tagsBlock && editorialFacts.length === 0) return null
+
+    return (
+        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.75fr)]">
+            {editorialFacts.length > 0 && (
+                <div className="grid grid-cols-2 border border-border bg-background sm:grid-cols-4">
+                    {editorialFacts.slice(0, 4).map((item, index) => (
+                        <div key={`${item.label}-${index}`} className={`px-4 py-3 ${index % 2 === 0 ? 'border-r border-border/40 sm:border-r' : ''} ${index < 2 ? 'border-b border-border/40 sm:border-b-0' : ''} sm:border-r sm:last:border-r-0`}>
+                            <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">{item.label}</div>
+                            <div className="mt-1 text-[13px] font-black leading-tight text-foreground">{item.valor}</div>
+                        </div>
+                    ))}
                 </div>
-            )
-        }
-
-        // ── Tags ───────────────────────────────────────────────────
-        // Pills coloridas com bordas suaves
-        if (block.type === 'tags') {
-            return (
-                <div key={i} className="flex flex-wrap gap-1.5 my-5">
-                    {block.items.map((tag, j) => (
-                        <span key={j} className={`text-[11px] font-mono font-semibold px-3 py-1 border rounded-full ${TAG_COLORS[j % TAG_COLORS.length]}`}>
+            )}
+            {tagsBlock && (
+                <div className="flex flex-wrap content-center gap-1.5 border border-border bg-background px-4 py-3">
+                    {tagsBlock.items.slice(0, 6).map(tag => (
+                        <span key={tag} className="rounded-full border border-accent/25 bg-accent/[0.06] px-3 py-1 font-mono text-[10px] font-semibold text-accent">
                             {tag}
                         </span>
                     ))}
                 </div>
-            )
-        }
+            )}
+        </div>
+    )
+}
 
-        // ── Fatos ──────────────────────────────────────────────────
-        // Grade de dados com bordas internas, estilo tabela editorial
-        if (block.type === 'fatos') {
-            return (
-                <div key={i} className="my-5 border border-border/40 overflow-hidden">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-y divide-border/30">
-                        {block.items.map((f, j) => (
-                            <div key={j} className="px-4 py-3 bg-background">
-                                <div className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted mb-1">{f.label}</div>
-                                <div className="text-[13px] font-bold text-foreground">{f.valor}</div>
-                            </div>
-                        ))}
+function renderTimelineBlock(block: Extract<EditorialBlock, { type: 'timeline' }>) {
+    return (
+        <div className="border border-border/60 bg-background">
+            <div className="border-b border-border/50 px-5 py-4 sm:px-6">
+                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent">Viradas</div>
+            </div>
+            <div className="px-5 py-1 sm:px-6">
+                {block.items.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="grid grid-cols-[56px_1fr] gap-4 border-b border-border/35 py-4 last:border-b-0">
+                        <div className="font-mono text-[12px] font-black text-accent">{item.label}</div>
+                        <div className="text-[14px] leading-[1.55] font-medium text-foreground/85">{item.valor}</div>
                     </div>
-                </div>
-            )
-        }
+                ))}
+            </div>
+        </div>
+    )
+}
 
-        // ── Paragraph ──────────────────────────────────────────────
-        // Primeiro parágrafo curto (título do editorial) → lead text
-        // Demais → corpo de texto normal, sem drop-cap
-        const isFirstParagraph = paragraphCount++ === 0
-        const isLeadText = isFirstParagraph && block.text.length < 100
-
-        if (isLeadText) {
-            return (
-                <p key={i} className="text-[17px] sm:text-[18px] font-semibold leading-[1.5] text-foreground/60 mb-4">
-                    {block.text}
-                </p>
-            )
-        }
-        return (
-            <p key={i} className="text-[15px] sm:text-[16px] leading-[1.7] text-[#333] dark:text-[#bbb]">
-                {block.text}
-            </p>
-        )
-    })
+function renderStarterBlocks(blocks: EditorialBlock[]) {
+    if (blocks.length === 0) return null
+    return (
+        <div className="border border-foreground bg-foreground text-background">
+            <div className="border-b border-background/20 px-5 py-4 sm:px-6">
+                <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-background/70">Por onde começar</div>
+            </div>
+            <div className="space-y-4 px-5 py-5 sm:px-6">
+                {blocks.map((block, index) => {
+                    if (block.type === 'destaque' || block.type === 'recorde' || block.type === 'momento') {
+                        return (
+                            <p key={index} className="border-l-2 border-accent pl-4 text-[15px] leading-[1.6] font-semibold">
+                                {block.type === 'momento' ? block.text : block.text}
+                            </p>
+                        )
+                    }
+                    if (block.type === 'paragraph') {
+                        return <p key={index} className="text-[14px] sm:text-[15px] leading-[1.65] text-background/85">{block.text}</p>
+                    }
+                    if (block.type === 'timeline') {
+                        return (
+                            <div key={index} className="grid gap-2">
+                                {block.items.map((item, itemIndex) => (
+                                    <div key={`${item.label}-${itemIndex}`} className="grid grid-cols-[52px_1fr] gap-3 text-[13px] leading-[1.5]">
+                                        <span className="font-mono font-black text-accent">{item.label}</span>
+                                        <span className="text-background/85">{item.valor}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    }
+                    return null
+                })}
+            </div>
+        </div>
+    )
 }
 
 export default async function ArtistDetailPage(props: { params: Promise<{ slug: string }> }) {
@@ -588,11 +659,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         })),
     }))
 
-    // Mapa de tmdbId → sinal de streaming (melhor rank por produção)
-    const streamingByTmdbId = new Map(
-        (artist.streamingSignals ?? []).map(s => [s.showTmdbId, s])
-    )
-
     const roles = artist.roles || []
     const stageNames = artist.stageNames || []
     const socialLinks = (artist.socialLinks as Record<string, string>) || {}
@@ -606,58 +672,129 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const activeGroup = artist.memberships.find(m => m.isActive)?.group ?? null
     const allGroups = artist.memberships
 
-    // Profile sections: bio as "Perfil" + analiseEditorial sections
     const GENERIC_BIO_RE = /conhecido\(a\) na ind[uú]stria|talentoso\(a\).*ind[uú]stria|de destaque na ind[uú]stria/i
-    const profileSections: { title: string; content: string }[] = []
     const cleanBioPt = bioPt && !GENERIC_BIO_RE.test(bioPt) ? bioPt : null
     const cleanBioRaw = artist.bio && !GENERIC_BIO_RE.test(artist.bio) ? artist.bio : null
     const bioText = cleanBioPt ?? cleanBioRaw
-    if (artist.analiseEditorial) {
-        const pattern = /\*\*([^*\n]{1,30})\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/g
-        let m: RegExpExecArray | null
-        while ((m = pattern.exec(artist.analiseEditorial)) !== null) {
-            const content = m[2].trim()
-            if (content) profileSections.push({ title: m[1].trim(), content })
-        }
-    }
-    // Adiciona bio como "Perfil" apenas se analise não tiver essa seção (evita duplicata)
-    const hasPerfilInAnalise = profileSections.some(s => s.title.toLowerCase() === 'perfil')
-    if (bioText && !hasPerfilInAnalise) profileSections.unshift({ title: 'Perfil', content: bioText })
-
-    const primaryBio = profileSections[0]?.content ?? bioText ?? null
+    const primaryBio = bioText ?? null
     const debutYear = artist.debutDate ? new Date(artist.debutDate).getUTCFullYear() : null
-    const yearsActive = debutYear ? new Date().getFullYear() - debutYear : null
-    const dramaCount = artist.productions.filter(({ production: p }) =>
-        ['drama', 'mini-série', 'série', 'k-drama', 'sitcom'].some(t => p.type?.toLowerCase().includes(t))
-    ).length
-    const filmCount = artist.productions.filter(({ production: p }) =>
-        ['filme', 'film', 'movie'].some(t => p.type?.toLowerCase().includes(t))
-    ).length
-    const avgRating = (() => {
-        const rated = artist.productions.filter(({ production: p }) => p.voteAverage && p.voteAverage > 0)
-        if (!rated.length) return null
-        return (rated.reduce((sum, { production: p }) => sum + (p.voteAverage ?? 0), 0) / rated.length)
-    })()
     const awardsData = artist.awards as Array<{ premio: string; categoria: string; ano: number }> | null
-    const awardsCount = awardsData?.length ?? 0
-    const statsBar = [
-        { label: 'Avaliação', value: avgRating ? (avgRating / 2).toFixed(1) : '—', sub: avgRating ? `de 5.0 · ${totalProductions} produções` : null },
-        { label: 'Favoritos', value: artist.favoriteCount > 999 ? `${(artist.favoriteCount / 1000).toFixed(1)}k` : String(artist.favoriteCount), sub: 'fãs no HallyuHub' },
-        { label: 'Prêmios', value: String(awardsCount), sub: awardsCount === 1 ? 'premiação' : 'premiações' },
-        { label: 'Telas', value: String(totalProductions), sub: totalProductions === 1 ? 'produção' : 'produções' },
-        { label: 'Discografia', value: String(discographyReleases.length), sub: discographyReleases.length === 1 ? 'lançamento' : 'lançamentos' },
-        { label: 'Artigos', value: String(blogArticles.length), sub: blogArticles.length === 1 ? 'artigo publicado' : 'artigos publicados' },
-    ]
     const quickFacts = [
-        ['Nascimento', birthDateFormatted ?? '—'],
-        ['Local', artist.placeOfBirth ?? '—'],
-        ['Altura', artist.height ? `${artist.height} cm` : '—'],
-        ['Agência', artist.agency?.name ?? '—'],
         ['Estreia', debutYear ? String(debutYear) : '—'],
-        ['Anos ativos', yearsActive ? String(yearsActive) : '—'],
-        ['Dramas', String(dramaCount)],
-        ['Filmes', String(filmCount)],
+        ['Obras', String(totalProductions)],
+        ['Nascimento', birthDateFormatted ?? '—'],
     ] as [string, string][]
+    const heroFacts = quickFacts
+    const hiddenProductionsCount = Math.max(totalProductions - 10, 0)
+    const visibleCuriosidades = (artist.curiosidades ?? []).slice(0, 6)
+    const hiddenCuriosidadesCount = Math.max((artist.curiosidades?.length ?? 0) - visibleCuriosidades.length, 0)
+    const socialPriority = ['instagram', 'youtube', 'twitter', 'spotify', 'weverse', 'tiktok']
+    const socialEntries = Object.entries(socialLinks)
+        .sort(([a], [b]) => {
+            const ai = socialPriority.findIndex(key => a.toLowerCase().includes(key))
+            const bi = socialPriority.findIndex(key => b.toLowerCase().includes(key))
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+        })
+        .slice(0, 4)
+    const pageAnchors = [
+        { href: '#biografia', label: 'Biografia' },
+        ...(artist.productions.length > 0 ? [{ href: '#filmografia', label: 'Filmografia' }] : []),
+        ...(discographyReleases.length > 0 ? [{ href: '#discografia', label: 'Discografia' }] : []),
+        ...(blogArticles.length > 0 ? [{ href: '#artigos', label: 'Artigos' }] : []),
+    ]
+    const heroRoles = getRoleLabels(roles, artist.gender).slice(0, 3).map(label => label.toLowerCase())
+    const heroMeta = [
+        artist.nameHangul,
+        ...(stageNames.length > 0 ? [stageNames.join(', ')] : []),
+        ...(age !== null ? [`${age} anos${deathDate ? ' †' : ''}`] : []),
+        ...(artist.agency?.name ? [artist.agency.name] : []),
+    ].filter(Boolean)
+    const hasMusicRole = roles.some(role => ['CANTOR', 'CANTORA', 'SINGER', 'IDOL', 'RAPPER', 'VOCALIST', 'DANÇARINO', 'DANCER'].includes(role.toUpperCase()))
+    const hasActingRole = roles.some(role => ['ATOR', 'ATRIZ', 'ACTOR', 'ACTRESS'].includes(role.toUpperCase()))
+    const fallbackHeroCopy = hasMusicRole && hasActingRole
+        ? `${artist.nameRomanized} construiu uma carreira entre canções, palcos e personagens desde ${debutYear ?? 'o debut'}.`
+        : `${artist.nameRomanized} é ${heroRoles.length > 0 ? heroRoles.join(', ') : 'artista'} sul-coreana em atividade desde ${debutYear ?? 'o debut'}.`
+    const heroCopy = bioText
+        ? bioText.split(/\n+/)[0]?.split(/(?<=[.!?])\s+/)[0] ?? fallbackHeroCopy
+        : fallbackHeroCopy
+    const impactCards = getEditorialImpactCards(artist.analiseEditorial)
+    const timelineBlock = getFirstTimelineBlock(artist.analiseEditorial)
+    const tagsBlock = getFirstTagsBlock(artist.analiseEditorial)
+    const factsBlock = getFirstFactsBlock(artist.analiseEditorial)
+    const starterBlocks = getStarterBlocks(artist.analiseEditorial)
+    const biographySection = (primaryBio || visibleCuriosidades.length > 0) ? (
+        <section id="biografia" className="scroll-mt-20 border-t border-border/40 bg-[#fafafa] dark:bg-surface">
+            <div className="page-wrap py-10 sm:py-14">
+                <div className="mb-7 max-w-[900px]">
+                    <div className="font-mono text-[11px] text-muted tracking-[0.06em]">01 · BIOGRAFIA</div>
+                    <h2 className="text-[32px] sm:text-[44px] font-bold tracking-[-0.04em] leading-[0.98] sm:leading-tight mt-1.5">
+                        A trajetória de {artist.nameRomanized}
+                    </h2>
+                </div>
+                {(impactCards.length > 0 || tagsBlock || factsBlock) && (
+                    <div className="mb-7">
+                        <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Essência</div>
+                        {renderImpactCards(impactCards)}
+                        {renderEditorialSignals({ tagsBlock, factsBlock })}
+                    </div>
+                )}
+                <div className="grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] lg:gap-12">
+                    <div className="min-w-0 space-y-6">
+                        {renderBiographyContent({
+                            bioText: bioText ?? (!artist.analiseEditorial ? primaryBio : null),
+                        })}
+                        {timelineBlock && renderTimelineBlock(timelineBlock)}
+                        {starterBlocks.length > 0 && renderStarterBlocks(starterBlocks)}
+                    </div>
+
+                    {visibleCuriosidades.length > 0 && (
+                        <aside className="lg:sticky lg:top-[120px] lg:self-start lg:border-l lg:border-border/40 lg:pl-8">
+                            <div className="flex items-center justify-between gap-4 border-b border-foreground pb-3">
+                                <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Detalhes</div>
+                                <div className="font-mono text-[10px] text-muted/70">{visibleCuriosidades.length} de {artist.curiosidades?.length ?? visibleCuriosidades.length}</div>
+                            </div>
+                            <ul className="divide-y divide-border/40">
+                                {visibleCuriosidades.map((c, i) => {
+                                    const num = String(i + 1).padStart(2, '0')
+                                    const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
+                                    if (historicoMatch) {
+                                        return (
+                                            <li key={i} className="flex gap-3 py-3.5">
+                                                <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
+                                                    <span className="font-mono text-[10px] text-muted/50">{num}</span>
+                                                    <span className="font-mono text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 leading-tight">
+                                                        {historicoMatch[1]}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
+                                            </li>
+                                        )
+                                    }
+                                    return (
+                                        <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
+                                            <span className="font-mono text-[11px] text-muted/50 min-w-[24px] shrink-0 pt-0.5">{num}</span>
+                                            <span>{c}</span>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
+                            {hiddenCuriosidadesCount > 0 && (
+                                <div className="mt-4 border border-border bg-background px-4 py-3 text-[12px] leading-relaxed text-muted">
+                                    Mais {hiddenCuriosidadesCount} curiosidade{hiddenCuriosidadesCount === 1 ? '' : 's'} ficam guardadas para próximas versões do perfil.
+                                </div>
+                            )}
+                        </aside>
+                    )}
+                </div>
+
+                {discographyReleases.length > 0 && (
+                    <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
+                        <DiscographySection albums={discographyReleases} />
+                    </div>
+                )}
+            </div>
+        </section>
+    ) : null
 
     return (
         <div className="min-h-screen bg-background">
@@ -725,10 +862,10 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             </div>
 
             {/* ── HERO ── */}
-            <section className="page-wrap py-9">
-                <div className="grid gap-8 lg:grid-cols-[360px_1fr] lg:gap-10">
+            <section className="page-wrap py-5 sm:py-9">
+                <div className="grid grid-cols-[124px_minmax(0,1fr)] gap-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-7 lg:grid-cols-[320px_minmax(0,720px)] lg:gap-9">
                     {/* Portrait */}
-                    <div className="relative aspect-[3/4] w-full max-w-[280px] sm:max-w-[360px] mx-auto lg:mx-0 overflow-hidden"
+                    <div className="relative aspect-[3/4] w-full max-w-[124px] sm:max-w-[200px] lg:max-w-[320px] mx-auto lg:mx-0 overflow-hidden"
                         style={{ background: 'repeating-linear-gradient(135deg, #f0f0f0 0 12px, #e8e8e8 12px 24px)' }}>
                         {artist.primaryImageUrl && (
                             <Image
@@ -736,7 +873,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                 alt={artist.nameRomanized}
                                 fill
                                 priority
-                                sizes="(max-width: 640px) 280px, (max-width: 1024px) 360px, 360px"
+                                sizes="(max-width: 640px) 248px, (max-width: 1024px) 400px, 320px"
                                 className="object-cover object-top"
                             />
                         )}
@@ -750,7 +887,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     {/* Hero content */}
                     <div className="flex flex-col min-w-0">
                         {/* Tags */}
-                        <div className="flex flex-wrap gap-1.5 mb-4">
+                        <div className="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
                             {getRoleLabels(roles, artist.gender).map(role => (
                                 <span key={role} className="font-mono text-[11px] px-2 py-1 border border-border rounded-full text-muted">{role}</span>
                             ))}
@@ -770,209 +907,134 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         </div>
 
                         {/* Name */}
-                        <h1 className="font-black tracking-[-0.04em] leading-[0.92] text-[clamp(48px,7vw,88px)]">
+                        <h1 className="font-black tracking-[-0.04em] leading-[0.92] text-[clamp(36px,9vw,88px)]">
                             {artist.nameRomanized}<BrandDot />
                         </h1>
-                        {artist.nameHangul && (
-                            <div className="text-[20px] sm:text-[22px] text-muted mt-2 font-medium">
-                                {artist.nameHangul}
-                                {stageNames.length > 0 && <span className="text-[16px]"> · {stageNames.join(', ')}</span>}
-                                {age !== null && <span className="text-[16px]"> · {age} anos{deathDate ? ' †' : ''}</span>}
+                        {heroMeta.length > 0 && (
+                            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] sm:text-[15px] font-medium leading-snug text-muted">
+                                {heroMeta.map((item, index) => (
+                                    <span key={`${item}-${index}`} className="inline-flex items-center gap-2">
+                                        {index > 0 && <span className="text-muted/40">/</span>}
+                                        {item}
+                                    </span>
+                                ))}
                             </div>
                         )}
 
-                        {/* Bio blurb */}
-                        {primaryBio && (
-                            <p className="text-[16px] sm:text-[17px] leading-[1.5] mt-6 text-[#333] dark:text-[#ccc] max-w-[620px]">
-                                {primaryBio.slice(0, 320)}
-                            </p>
-                        )}
+                        <p className="text-[14px] sm:text-[16px] leading-[1.5] mt-3 sm:mt-4 text-[#333] dark:text-[#ccc] max-w-[620px]">
+                            {heroCopy}
+                        </p>
 
-                        {/* Quick facts grid 4×2 */}
-                        <div className="mt-auto pt-8 grid grid-cols-2 sm:grid-cols-4">
-                            {quickFacts.map(([k, v], i) => (
-                                <div key={k} className={`border-t border-border py-3 ${i % 2 === 0 ? 'pr-4 sm:pr-0' : ''} ${i % 4 !== 3 ? 'sm:border-r sm:border-border sm:pr-4' : ''}`}>
+                        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/60 pb-3">
+                            {pageAnchors.map(anchor => (
+                                <Link key={anchor.href} href={anchor.href}
+                                    className="font-mono text-[11px] font-semibold text-muted underline-offset-4 transition-colors hover:text-accent hover:underline">
+                                    {anchor.label}
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Quick facts */}
+                        <div className="col-span-2 mt-4 flex flex-wrap items-start gap-y-3 sm:col-span-1">
+                            {(heroFacts).map(([k, v], i) => (
+                                <div key={k} className={`min-w-[92px] ${i < heroFacts.length - 1 ? 'mr-4 border-r border-border/60 pr-4' : ''}`}>
                                     <div className="font-mono text-[10px] text-muted uppercase tracking-[0.06em]">{k}</div>
                                     <div className="text-[15px] font-semibold mt-1 text-foreground">{v}</div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Action buttons */}
-                        <div className="flex flex-col gap-3 mt-6">
-                            {/* Row 1: favorite + share + report */}
-                            <div className="flex flex-wrap items-center gap-2">
-                                <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" />
-                                <ShareButtons title={artist.nameRomanized} url={`${BASE_URL}/artists/${artist.slug ?? artist.id}`} />
-                                <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} />
-                            </div>
-                            {/* Row 2: social follow links */}
-                            {Object.keys(socialLinks).length > 0 && (
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Seguir</span>
-                                    {Object.entries(socialLinks).map(([key, url]) => {
-                                        const platform = getSocialPlatform(key)
-                                        const Icon = typeof platform.icon === 'string' ? null : platform.icon
-                                        return (
-                                            <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                                className={`flex items-center gap-1.5 px-3 py-2 border border-border text-[12px] font-semibold text-muted transition-colors ${platform.bg} ${platform.color}`}>
-                                                {Icon ? <Icon className="w-3.5 h-3.5" /> : <span className="text-sm leading-none">{platform.icon as string}</span>}
-                                                {platform.label}
-                                            </a>
-                                        )
-                                    })}
+                        {socialEntries.length > 0 && (
+                            <div className="hidden sm:flex mt-5 flex-wrap items-center justify-between gap-x-5 gap-y-3 border-t border-border/60 pt-4">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Redes</span>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        {socialEntries.map(([key, url], i) => {
+                                            const platform = getSocialPlatform(key)
+                                            return (
+                                                <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
+                                                    className="text-[12px] font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline">
+                                                    {platform.label}{i < socialEntries.length - 1 ? <span className="ml-3 text-muted/40">/</span> : null}
+                                                </a>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                                        <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" className="rounded-none border border-border p-1.5" />
+                                        <span>Favoritar</span>
+                                    </div>
+                                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                                        <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} className="rounded-none border border-border p-1.5" />
+                                        <span>Sugerir correção</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
+                {socialEntries.length > 0 && (
+                    <div className="sm:hidden mt-4 border-t border-border/60 pt-3">
+                        <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-2">Redes</div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            {socialEntries.map(([key, url], i) => {
+                                const platform = getSocialPlatform(key)
+                                return (
+                                    <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
+                                        className="text-[12px] font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline">
+                                        {platform.label}{i < socialEntries.length - 1 ? <span className="ml-3 text-muted/40">/</span> : null}
+                                    </a>
+                                )
+                            })}
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                                <FavoriteButton id={artist.id} itemName={artist.nameRomanized} itemType="artista" className="rounded-none border border-border p-1.5" />
+                                <span>Favoritar</span>
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                                <ReportButton entityType="artist" entityId={artist.id} entityName={artist.nameRomanized} className="rounded-none border border-border p-1.5" />
+                                <span>Sugerir correção</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </section>
 
-            {/* ── STATS BAR ── */}
-            <section className="border-t border-foreground border-b border-foreground">
-                <div className="page-wrap grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-                    {statsBar.map((stat, i) => (
-                        <div key={stat.label} className={`px-5 py-5 ${i < statsBar.length - 1 ? 'border-r border-border/60' : ''}`}>
-                            <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">{stat.label}</div>
-                            <div className="text-[38px] sm:text-[42px] font-bold tracking-[-0.04em] leading-none mt-1.5 text-foreground">{stat.value}</div>
-                            {stat.sub && <div className="font-mono text-[11px] text-muted mt-1">{stat.sub}</div>}
-                        </div>
-                    ))}
-                </div>
-            </section>
+            {biographySection}
 
             {/* ── FILMOGRAFIA ── */}
             {artist.productions.length > 0 && (
                 <section id="filmografia" className="page-wrap scroll-mt-20 py-14">
                     <div className="mb-7">
-                        <div className="font-mono text-[11px] text-muted tracking-[0.06em]">01 · FILMOGRAFIA</div>
+                        <div className="font-mono text-[11px] text-muted tracking-[0.06em]">02 · FILMOGRAFIA</div>
                         <h2 className="text-[36px] sm:text-[44px] font-bold tracking-[-0.04em] leading-tight mt-1.5">Toda a obra, listada</h2>
-                    </div>
-
-                    {/* Table — desktop */}
-                    <div className="hidden sm:block">
-                        <div className="grid font-mono text-[10px] text-muted uppercase tracking-[0.08em] py-2.5 border-b border-foreground"
-                            style={{ gridTemplateColumns: '64px 2fr 1fr 120px 48px' }}>
-                            <span>Ano</span><span>Título</span><span>Tipo</span><span>Avaliação</span><span className="text-right">★</span>
-                        </div>
-                        {artist.productions.map(({ production }) => {
-                            const rating = production.voteAverage ?? 0
-                            const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
-                            const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
-                            return (
-                                <Link key={production.id} href={`/productions/${production.slug ?? production.id}`}
-                                    className="grid items-center py-3.5 border-b border-border/40 text-[14px] hover:bg-surface/50 transition-colors group"
-                                    style={{ gridTemplateColumns: '64px 2fr 1fr 120px 48px' }}>
-                                    <span className="font-mono text-[13px] text-muted">{production.year ?? '—'}</span>
-                                    <span className="font-semibold text-foreground group-hover:text-accent transition-colors pr-4 min-w-0">
-                                        <span className="block truncate">{production.titlePt}</span>
-                                        {streamSignal && (
-                                            <span className="text-[10px] font-black text-accent font-mono">TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}</span>
-                                        )}
-                                    </span>
-                                    <span className="text-muted text-[12px] pr-4">{production.type}</span>
-                                    <span className="flex items-center gap-2 pr-4">
-                                        <span className="flex-1 h-1 bg-border overflow-hidden">
-                                            <span className="block h-full" style={{ width: `${Math.min((rating / 10) * 100, 100)}%`, background: rating >= 8 ? 'var(--accent, #ee2244)' : '#0a0a0a' }} />
-                                        </span>
-                                    </span>
-                                    <span className="text-right font-mono font-semibold text-[13px]">{rating > 0 ? rating.toFixed(1) : '—'}</span>
-                                </Link>
-                            )
-                        })}
-                    </div>
-
-                    {/* Mobile: compact list */}
-                    <div className="sm:hidden flex flex-col gap-2">
-                        {artist.productions.map(({ production }) => {
-                            const streamSignalRaw = production.tmdbId ? streamingByTmdbId.get(production.tmdbId) : null
-                            const streamSignal = streamSignalRaw?.source !== 'internal_production' ? streamSignalRaw : null
-                            return (
-                                <Link key={production.id} href={`/productions/${production.slug ?? production.id}`}
-                                    className="flex items-center gap-3 py-3 border-b border-border/40 group">
-                                    <div className="relative w-10 h-[54px] shrink-0 overflow-hidden bg-[#efefef]">
-                                        {production.imageUrl && (
-                                            <Image src={production.imageUrl} alt={production.titlePt} fill sizes="40px" className="object-cover" />
-                                        )}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-[14px] text-foreground group-hover:text-accent transition-colors truncate">{production.titlePt}</p>
-                                        <p className="font-mono text-[11px] text-muted">
-                                            {production.year} · {production.type}
-                                            {production.voteAverage && production.voteAverage > 0 ? ` · ★ ${production.voteAverage.toFixed(1)}` : ''}
-                                            {streamSignal ? ` · TOP ${streamSignal.rank}` : ''}
-                                        </p>
-                                    </div>
-                                </Link>
-                            )
-                        })}
-                    </div>
-
-                    {totalProductions > 24 && (
-                        <div className="mt-6">
-                            <Link href={`/productions?artistId=${artist.id}`}
-                                className="font-mono text-[11px] text-muted hover:text-foreground transition-colors border border-border px-4 py-2 inline-flex items-center gap-1">
-                                Ver todos os {totalProductions} trabalhos →
-                            </Link>
-                        </div>
-                    )}
-                </section>
-            )}
-
-            {/* ── BIOGRAFIA ── */}
-            {(primaryBio || (artist.curiosidades && artist.curiosidades.length > 0)) && (
-                <section className="border-t border-border/40 bg-[#fafafa] dark:bg-surface">
-                    <div className="page-wrap py-14">
-                        <div className="font-mono text-[11px] text-muted tracking-[0.06em]">02 · BIOGRAFIA</div>
-                        <h2 className="text-[36px] sm:text-[44px] font-bold tracking-[-0.04em] leading-tight mt-1.5 mb-8">
-                            {artist.nameRomanized}, em profundidade
-                        </h2>
-                        <div className="grid gap-10 lg:grid-cols-[2fr_1fr] lg:gap-12">
-                            {/* Long bio — with rich editorial blocks */}
-                            <div className="space-y-5">
-                                {renderEditorialBlocks(artist.analiseEditorial ?? primaryBio ?? '')}
-                            </div>
-
-                            {/* Curiosidades */}
-                            {artist.curiosidades && artist.curiosidades.length > 0 && (
-                                <div>
-                                    <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-3.5">Curiosidades</div>
-                                    <ul className="divide-y divide-border/40">
-                                        {artist.curiosidades.map((c, i) => {
-                                            const num = String(i + 1).padStart(2, '0')
-                                            const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
-                                            if (historicoMatch) {
-                                                return (
-                                                    <li key={i} className="flex gap-3 py-3.5">
-                                                        <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                                                            <span className="font-mono text-[10px] text-muted/50">{num}</span>
-                                                            <span className="font-mono text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 leading-tight">
-                                                                {historicoMatch[1]}
-                                                            </span>
-                                                        </div>
-                                                        <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
-                                                    </li>
-                                                )
-                                            }
-                                            return (
-                                                <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
-                                                    <span className="font-mono text-[11px] text-muted/50 min-w-[24px] shrink-0 pt-0.5">{num}</span>
-                                                    <span>{c}</span>
-                                                </li>
-                                            )
-                                        })}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Discography */}
-                        {discographyReleases.length > 0 && (
-                            <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
-                                <DiscographySection albums={discographyReleases} />
-                            </div>
+                        {hiddenProductionsCount > 0 && (
+                            <p className="mt-2 max-w-[620px] text-[14px] leading-relaxed text-muted">
+                                Começa pelos trabalhos mais recentes e expande sem tirar o leitor do perfil.
+                            </p>
                         )}
                     </div>
+
+                    <ArtistFilmographyList
+                        productions={artist.productions.map(({ production }) => ({
+                            id: production.id,
+                            slug: production.slug,
+                            titlePt: production.titlePt,
+                            type: production.type,
+                            year: production.year,
+                            imageUrl: production.imageUrl,
+                            voteAverage: production.voteAverage,
+                            tmdbId: production.tmdbId,
+                        }))}
+                        streamingSignals={(artist.streamingSignals ?? []).map(signal => ({
+                            showTitle: signal.showTitle,
+                            showTmdbId: signal.showTmdbId,
+                            rank: signal.rank,
+                            source: signal.source,
+                        }))}
+                    />
                 </section>
             )}
 
