@@ -45,10 +45,14 @@ runs:
           echo "⚠️ SSH timeout (attempt $attempt), retrying in 10s..."
           sleep 10
         done
+        if [ -z "$RESPONSE" ]; then
+          echo "❌ Coolify deploy trigger failed: sem resposta após 3 tentativas SSH"
+          exit 1
+        fi
         HTTP_CODE=$(echo "$RESPONSE" | tail -1)
         BODY=$(echo "$RESPONSE" | head -1)
         echo "Response: $BODY"
-        if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+        if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] || [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
           echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
           exit 1
         fi
