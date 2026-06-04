@@ -22,7 +22,7 @@ const EnrichSchema = z.object({
     placeOfBirth: z.string().optional().nullable(),
     bio: z.string().min(100, 'Bio muito curta (mín. 100 chars)').optional(),
     analiseEditorial: z.string().min(100, 'Análise muito curta (mín. 100 chars)').optional(),
-    curiosidades: z.array(z.string().min(20, 'Curiosidade muito curta')).min(3).max(10).optional(),
+    curiosidades: z.array(z.string().min(20, 'Curiosidade muito curta')).min(3).max(15).optional(),
     musicalStyle: z.string().optional().nullable(),
     fanInfo: z.object({
         fanName: z.string().optional().nullable(),
@@ -104,6 +104,8 @@ export async function GET(
             debutDate: true,
             enrichedAt: true,
             editorialGeneratedAt: true,
+            videos: true,
+            faq: true,
             agency: { select: { name: true } },
         },
     })
