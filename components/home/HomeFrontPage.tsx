@@ -74,10 +74,10 @@ const EDITORIAL_HUBS = [
 ]
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
-    if (!slug) return { color: "#ee2244", bg: "#fff0f4" }
+    if (!slug) return { color: "#ff246e", bg: "#ff246e20" }
     const key = slug.toLowerCase().replace(/\s/g, "-")
     const cat = BLOG_CATEGORY_BY_SLUG[key]
-    return cat ? { color: cat.color, bg: cat.bg } : { color: "#ee2244", bg: "#fff0f4" }
+    return cat ? { color: cat.color, bg: cat.bg } : { color: "#ff246e", bg: "#ff246e20" }
 }
 
 function formatDate(value: string | null | undefined) {
@@ -105,7 +105,7 @@ function StoryImage({ story, className, priority = false }: { story: FeaturedSto
     const imageUrl = story.coverImageUrl?.trim()
 
     return (
-        <div className={`relative overflow-hidden bg-[#f6f6f7] ${className ?? ""}`}>
+        <div className={`relative overflow-hidden bg-surface ${className ?? ""}`}>
             {imageUrl ? (
                 <BlogImage
                     src={imageUrl}
@@ -114,14 +114,13 @@ function StoryImage({ story, className, priority = false }: { story: FeaturedSto
                     sizes="(max-width: 768px) 100vw, 52vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     priority={priority}
-                    fallbackGradient="linear-gradient(135deg, #f6f6f7 0%, #e8e8ec 100%)"
                 />
             ) : (
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,#fbfbfc_0_16px,#eeeeF1_16px_32px)]">
+                <div className="absolute inset-0 bg-surface">
                     <span className="absolute left-4 top-4 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
                         capa editorial
                     </span>
-                    <span className="absolute bottom-3 left-3 right-3 font-serif text-[26px] font-medium leading-[0.95] tracking-[-0.06em] text-black/12 sm:bottom-4 sm:left-4 sm:right-4 sm:text-[42px]">
+                    <span className="absolute bottom-3 left-3 right-3 font-serif text-[26px] font-medium leading-[0.95] tracking-[-0.06em] text-foreground/10 sm:bottom-4 sm:left-4 sm:right-4 sm:text-[42px]">
                         HallyuHub
                     </span>
                     <span className="absolute right-3 top-3 text-[58px] font-black leading-none tracking-[-0.1em] text-accent/10 sm:right-4 sm:top-4 sm:text-[86px]">

@@ -30,7 +30,7 @@ function CategoryPill({ category }: { category: EditorialPost["category"] }) {
     return (
         <span
             className="inline-flex w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]"
-            style={{ color: cfg?.color ?? "#374151", backgroundColor: cfg?.bg ?? "#f3f4f6" }}
+            style={{ color: cfg?.color ?? 'var(--color-muted)', backgroundColor: cfg?.bg ?? 'rgba(156,163,175,0.15)' }}
         >
             {category.name}
         </span>
