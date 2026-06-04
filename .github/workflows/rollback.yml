@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════
 # Acionado manualmente via GitHub Actions → Run workflow
 # Promove rollback-latest → latest (ou rollback-staging → staging)
-# e dispara redeploy no Coolify.
+# e dispara redeploy no Coolify local do runner self-hosted.
 # ═══════════════════════════════════════════════════════════════════
 
 name: ⏪ Rollback
@@ -27,7 +27,7 @@ env:
 jobs:
   rollback:
     name: ⏪ Rollback ${{ github.event.inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, hallyuhub]
     timeout-minutes: 10
 
     environment:
@@ -51,11 +51,9 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" = "production" ]; then
             ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-latest"
             TARGET_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
-            COOLIFY_UUID="${{ vars.COOLIFY_PRODUCTION_UUID }}"
           else
             ROLLBACK_TAG="ghcr.io/${{ env.IMAGE_NAME }}:rollback-staging"
             TARGET_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
-            COOLIFY_UUID="${{ vars.COOLIFY_STAGING_UUID }}"
           fi
 
           echo "Pulling rollback image: $ROLLBACK_TAG"
@@ -77,9 +75,11 @@ jobs:
           UUID=$(echo "$COOLIFY_UUID" | tr -d '[:space:]')
           echo "Triggering Coolify rollback deploy (uuid: $UUID)..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            "http://31.97.255.107:8000/api/v1/deploy?uuid=${UUID}&force=false" \
+            --connect-timeout 10 --max-time 30 \
+            "http://localhost:8000/api/v1/deploy?uuid=${UUID}&force=false" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" \
+            2>/dev/null || printf "\n000")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -1)
           echo "Response: $BODY"
@@ -93,13 +93,15 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.environment }}" = "production" ]; then
             HEALTH_URL="https://www.hallyuhub.com.br/api/health"
+            RESOLVE=(--resolve www.hallyuhub.com.br:443:31.97.255.107)
           else
             HEALTH_URL="https://staging.hallyuhub.com.br/api/health"
+            RESOLVE=(--resolve staging.hallyuhub.com.br:443:31.97.255.107)
           fi
           echo "Aguardando container subir..."
           for i in $(seq 1 12); do
             sleep 10
-            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+            HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 10 "${RESOLVE[@]}" "$HEALTH_URL" 2>/dev/null || echo "000")
             if [ "$HTTP" = "200" ]; then
               echo "✅ Health check OK após $((i * 10))s — rollback bem-sucedido"
               exit 0
@@ -112,5 +114,5 @@ jobs:
       - name: 📊 Summary
         if: always()
         run: |
-          echo "### ⏪ Rollback ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "Imagem \`rollback-${{ github.event.inputs.environment == 'production' && 'latest' || 'staging' }}\` promovida e Coolify notificado." >> $GITHUB_STEP_SUMMARY
+          echo "### ⏪ Rollback ${{ github.event.inputs.environment }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Imagem \`rollback-${{ github.event.inputs.environment == 'production' && 'latest' || 'staging' }}\` promovida e Coolify notificado." >> "$GITHUB_STEP_SUMMARY"
