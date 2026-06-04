@@ -212,7 +212,7 @@ export function HomeFrontPage({
                             {/* lg+: gradiente leve */}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-28 bg-gradient-to-t from-black/30 to-transparent lg:block" />
                             {/* <lg: barra sólida estilo editorial */}
-                            <div className="absolute inset-x-0 bottom-0 lg:hidden bg-foreground px-4 py-3">
+                            <div className="absolute inset-x-0 bottom-0 lg:hidden px-4 py-3" style={{ backgroundColor: 'var(--color-ink-panel)' }}>
                                 <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-white/50">
                                     <span>Capa</span>
                                     <span>·</span>
