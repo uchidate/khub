@@ -7,6 +7,7 @@ import { getRoleLabels } from "@/lib/utils/role-labels"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
 import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
+import { GroupMVPlayer } from "@/components/groups/GroupMVPlayer"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -110,7 +111,7 @@ const SOCIAL_PLATFORMS: Record<string, SocialPlatform> = {
     instagram:  { icon: Instagram, label: 'Instagram', action: 'Seguir',    color: 'text-pink-400',    bg: 'hover:border-pink-500/50 hover:bg-pink-500/10' },
     twitter:    { icon: Twitter,   label: 'Twitter / X', action: 'Seguir',  color: 'text-sky-400',     bg: 'hover:border-sky-500/50 hover:bg-sky-500/10' },
     youtube:    { icon: Youtube,   label: 'YouTube',   action: 'Inscrever', color: 'text-red-400',     bg: 'hover:border-red-500/50 hover:bg-red-500/10' },
-    tiktok:     { icon: '▶',       label: 'TikTok',    action: 'Seguir',    color: 'text-white',       bg: 'hover:border-white/30 hover:bg-white/5' },
+    tiktok:     { icon: '▶',       label: 'TikTok',    action: 'Seguir',    color: 'text-zinc-700 dark:text-white', bg: 'hover:border-zinc-500/40 hover:bg-zinc-500/10' },
     weverse:    { icon: '⬡',       label: 'Weverse',   action: 'Entrar',    color: 'text-green-400',   bg: 'hover:border-green-500/50 hover:bg-green-500/10' },
     fancafe:    { icon: '☕',       label: 'Fancafe',   action: 'Entrar',    color: 'text-yellow-400',  bg: 'hover:border-yellow-500/50 hover:bg-yellow-500/10' },
     naverBlog:  { icon: 'N',       label: 'Naver Blog', action: 'Visitar',  color: 'text-emerald-400', bg: 'hover:border-emerald-500/50 hover:bg-emerald-500/10' },
@@ -129,6 +130,67 @@ function getSocialPlatform(key: string): SocialPlatform {
     if (lower.includes('naver')) return SOCIAL_PLATFORMS.naverBlog
     if (lower.includes('spotify')) return SOCIAL_PLATFORMS.spotify
     return { icon: Globe, label: key, action: 'Visitar', color: 'text-muted', bg: 'hover:border-border' }
+}
+
+type OfficialProfileLink = {
+    key: string
+    url: string
+    platform: SocialPlatform
+}
+
+function normalizeOfficialLinkKey(key: string, url: string) {
+    const lower = key.toLowerCase().replace(/[_\s]+/g, '-')
+    const value = url.toLowerCase()
+    if (lower.includes('instagram') || value.includes('instagram.com')) return 'instagram'
+    if (lower.includes('youtube') || value.includes('youtube.com') || value.includes('youtu.be')) return 'youtube'
+    if (lower.includes('twitter') || lower === 'x' || value.includes('twitter.com') || value.includes('x.com')) return 'twitter'
+    if (lower.includes('spotify') || value.includes('open.spotify.com')) return 'spotify'
+    if (lower.includes('weverse') || value.includes('weverse.io')) return 'weverse'
+    if (lower.includes('tiktok') || value.includes('tiktok.com')) return 'tiktok'
+    if (lower.includes('naver') || value.includes('naver.com')) return 'naverBlog'
+    if (lower.includes('fancafe') || value.includes('cafe.daum.net')) return 'fancafe'
+    return lower
+}
+
+function buildOfficialProfileLinks(options: {
+    socialLinks: Record<string, unknown> | null
+    musicProfileLinks: { platform: string; platformName: string; url: string }[]
+}): OfficialProfileLink[] {
+    const merged: Array<[string, string]> = []
+
+    for (const [key, value] of Object.entries(options.socialLinks ?? {})) {
+        if (typeof value === 'string' && value.trim()) merged.push([key, value.trim()])
+    }
+    for (const link of options.musicProfileLinks) {
+        if (link.url.trim()) merged.push([link.platform, link.url.trim()])
+    }
+
+    const byKey = new Map<string, OfficialProfileLink>()
+    const seenUrls = new Set<string>()
+    for (const [rawKey, url] of merged) {
+        const normalizedUrl = url.replace(/\/+$/, '')
+        const urlKey = normalizedUrl.toLowerCase()
+        if (seenUrls.has(urlKey)) continue
+
+        const key = normalizeOfficialLinkKey(rawKey, normalizedUrl)
+        if (byKey.has(key)) continue
+
+        seenUrls.add(urlKey)
+        byKey.set(key, {
+            key,
+            url: normalizedUrl,
+            platform: getSocialPlatform(key),
+        })
+    }
+
+    const priority = ['instagram', 'youtube', 'twitter', 'spotify', 'weverse', 'tiktok', 'naverBlog', 'fancafe']
+    return [...byKey.values()]
+        .sort((a, b) => {
+            const ai = priority.indexOf(a.key)
+            const bi = priority.indexOf(b.key)
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+        })
+        .slice(0, 8)
 }
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -653,12 +715,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
     const roles = artist.roles || []
     const stageNames = artist.stageNames || []
-    const spotifyArtistUrl = musicCatalog.profileLinks.find(link => link.platform === 'spotify')?.url
-        ?? (artist.socialLinks as Record<string, string> | null)?.spotify
-    const socialLinks = {
-        ...((artist.socialLinks as Record<string, string> | null) ?? {}),
-        ...(spotifyArtistUrl ? { spotify: spotifyArtistUrl } : {}),
-    }
+    const videos = (artist.videos as Array<{ title: string; url: string }> | null) ?? []
+    const officialProfileLinks = buildOfficialProfileLinks({
+        socialLinks: artist.socialLinks as Record<string, unknown> | null,
+        musicProfileLinks: musicCatalog.profileLinks,
+    })
+    const spotifyArtistUrl = officialProfileLinks.find(link => link.key === 'spotify')?.url
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
     const deathDate = artist.deathDate ? new Date(artist.deathDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
@@ -685,17 +747,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const hiddenProductionsCount = Math.max(totalProductions - 10, 0)
     const visibleCuriosidades = (artist.curiosidades ?? []).slice(0, 6)
     const hiddenCuriosidadesCount = Math.max((artist.curiosidades?.length ?? 0) - visibleCuriosidades.length, 0)
-    const socialPriority = ['instagram', 'youtube', 'twitter', 'spotify', 'weverse', 'tiktok']
-    const socialEntries = Object.entries(socialLinks)
-        .sort(([a], [b]) => {
-            const ai = socialPriority.findIndex(key => a.toLowerCase().includes(key))
-            const bi = socialPriority.findIndex(key => b.toLowerCase().includes(key))
-            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
-        })
-        .slice(0, 6)
+    const socialEntries = officialProfileLinks
     const pageAnchors = [
         { href: '#biografia', label: 'Biografia' },
         ...(artist.productions.length > 0 ? [{ href: '#filmografia', label: 'Filmografia' }] : []),
+        ...(videos.length > 0 ? [{ href: '#mvs', label: 'Vídeos' }] : []),
         ...(discographyReleases.length > 0 ? [{ href: '#discografia', label: 'Discografia' }] : []),
         ...(blogArticles.length > 0 ? [{ href: '#artigos', label: 'Artigos' }] : []),
     ]
@@ -800,6 +856,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
                     </div>
                 )}
+                {videos.length > 0 && (
+                    <div className="mt-12 pt-10 border-t border-border/40">
+                        <GroupMVPlayer videos={videos} accent="#ef4444" embedFeaturedByDefault />
+                    </div>
+                )}
                 {discographyReleases.length > 0 && (
                     <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
                         <DiscographySection albums={discographyReleases} />
@@ -833,8 +894,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
                 ...(() => {
-                    const links = (artist.socialLinks as Record<string, string> | null) ?? {}
-                    const sameAs = Object.values(links).filter(Boolean)
+                    const sameAs = officialProfileLinks.map(link => link.url).filter(Boolean)
                     return sameAs.length > 0 ? { "sameAs": sameAs } : {}
                 })(),
             }} />
@@ -960,14 +1020,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {socialEntries.length > 0 && (
                             <div className="hidden sm:flex mt-5 flex-wrap items-center justify-between gap-x-5 gap-y-3 border-t border-border/60 pt-4">
                                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Redes</span>
+                                    <span className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Links oficiais</span>
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                        {socialEntries.map(([key, url], i) => {
-                                            const platform = getSocialPlatform(key)
+                                        {socialEntries.map((link, i) => {
+                                            const Icon = link.platform.icon
                                             return (
-                                                <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                                    className="text-[12px] font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline">
-                                                    {platform.label}{i < socialEntries.length - 1 ? <span className="ml-3 text-muted/40">/</span> : null}
+                                                <a key={link.key} href={link.url} target="_blank" rel="noopener noreferrer"
+                                                    className={`inline-flex items-center gap-1.5 text-[12px] font-semibold underline-offset-4 hover:underline ${link.platform.color}`}>
+                                                    {typeof Icon === 'string'
+                                                        ? <span className="font-mono text-[11px]">{Icon}</span>
+                                                        : <Icon className="h-3.5 w-3.5" />}
+                                                    {link.platform.label}{i < socialEntries.length - 1 ? <span className="ml-2 text-muted/40">/</span> : null}
                                                 </a>
                                             )
                                         })}
@@ -989,14 +1052,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 </div>
                 {socialEntries.length > 0 && (
                     <div className="sm:hidden mt-4 border-t border-border/60 pt-3">
-                        <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-2">Redes</div>
+                        <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em] mb-2">Links oficiais</div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            {socialEntries.map(([key, url], i) => {
-                                const platform = getSocialPlatform(key)
+                            {socialEntries.map((link, i) => {
+                                const Icon = link.platform.icon
                                 return (
-                                    <a key={key} href={url as string} target="_blank" rel="noopener noreferrer"
-                                        className="text-[12px] font-semibold text-foreground underline-offset-4 hover:text-accent hover:underline">
-                                        {platform.label}{i < socialEntries.length - 1 ? <span className="ml-3 text-muted/40">/</span> : null}
+                                    <a key={link.key} href={link.url} target="_blank" rel="noopener noreferrer"
+                                        className={`inline-flex items-center gap-1.5 text-[12px] font-semibold underline-offset-4 hover:underline ${link.platform.color}`}>
+                                        {typeof Icon === 'string'
+                                            ? <span className="font-mono text-[11px]">{Icon}</span>
+                                            : <Icon className="h-3.5 w-3.5" />}
+                                        {link.platform.label}{i < socialEntries.length - 1 ? <span className="ml-2 text-muted/40">/</span> : null}
                                     </a>
                                 )
                             })}

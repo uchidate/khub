@@ -79,7 +79,7 @@ export function toSpotifyEmbedUrl(url: string | null | undefined): string | null
     const parsed = new URL(normalized)
     if (parsed.hostname !== 'open.spotify.com') return null
     const embedPath = parsed.pathname.startsWith('/embed') ? parsed.pathname : `/embed${parsed.pathname}`
-    return `https://open.spotify.com${embedPath}?utm_source=generator&theme=0`
+    return `https://open.spotify.com${embedPath}`
   } catch {
     return null
   }
