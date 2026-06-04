@@ -22,7 +22,7 @@ const EnrichSchema = z.object({
     placeOfBirth: z.string().optional().nullable(),
     bio: z.string().min(100, 'Bio muito curta (mín. 100 chars)').optional(),
     analiseEditorial: z.string().min(100, 'Análise muito curta (mín. 100 chars)').optional(),
-    curiosidades: z.array(z.string().min(20, 'Curiosidade muito curta')).min(3).max(10).optional(),
+    curiosidades: z.array(z.string().min(20, 'Curiosidade muito curta')).min(3).max(15).optional(),
     musicalStyle: z.string().optional().nullable(),
     fanInfo: z.object({
         fanName: z.string().optional().nullable(),
@@ -62,6 +62,10 @@ const EnrichSchema = z.object({
     metaDescription: z.string().min(140).max(158).optional().nullable(),
     tags: z.array(z.string()).min(1).max(15).optional(),
     faq: z.array(z.object({ pergunta: z.string(), resposta: z.string() })).min(1).max(10).optional().nullable(),
+    videos: z.array(z.object({
+        title: z.string().min(1),
+        url: z.string().url().refine(u => u.includes('youtube.com/watch') || u.includes('youtu.be'), 'URL deve ser do YouTube'),
+    })).max(6).optional().nullable(),
 })
 
 /**
@@ -100,6 +104,8 @@ export async function GET(
             debutDate: true,
             enrichedAt: true,
             editorialGeneratedAt: true,
+            videos: true,
+            faq: true,
             agency: { select: { name: true } },
         },
     })
@@ -204,6 +210,7 @@ export async function POST(
     }
     if (data.tags?.length)  update.seoTags = data.tags
     if (data.faq)           update.faq     = data.faq
+    if (data.videos)        update.videos  = data.videos
 
     try {
         const updated = await prisma.artist.update({

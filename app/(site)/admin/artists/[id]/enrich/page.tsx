@@ -21,6 +21,8 @@ interface ArtistCurrent {
     fanInfo: unknown
     awards: unknown
     destaques: unknown
+    videos: unknown
+    faq: unknown
     nationality: string | null
     debutDate: string | null
     enrichedAt: string | null
@@ -72,6 +74,8 @@ function buildDiff(current: ArtistCurrent, incoming: Record<string, unknown>): D
         { key: 'fanInfo', label: 'Info do Fandom' },
         { key: 'awards', label: 'Prêmios' },
         { key: 'destaques', label: 'Destaques' },
+        { key: 'videos', label: 'Vídeos YouTube' },
+        { key: 'faq', label: 'FAQ' },
     ]
 
     return fields

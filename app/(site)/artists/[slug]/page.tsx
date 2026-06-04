@@ -6,6 +6,7 @@ import Link from "next/link"
 import { getRoleLabels } from "@/lib/utils/role-labels"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
+import { CuriosidadesAside } from "@/components/features/CuriosidadesAside"
 import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
 import { GroupMVPlayer } from "@/components/groups/GroupMVPlayer"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
@@ -745,8 +746,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     ] as [string, string][]
     const heroFacts = quickFacts
     const hiddenProductionsCount = Math.max(totalProductions - 10, 0)
-    const visibleCuriosidades = (artist.curiosidades ?? []).slice(0, 6)
-    const hiddenCuriosidadesCount = Math.max((artist.curiosidades?.length ?? 0) - visibleCuriosidades.length, 0)
     const socialEntries = officialProfileLinks
     const pageAnchors = [
         { href: '#biografia', label: 'Biografia' },
@@ -777,7 +776,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const factsBlock = getFirstFactsBlock(artist.analiseEditorial)
     const starterBlocks = getStarterBlocks(artist.analiseEditorial)
     const spotifyEmbedUrl = toSpotifyEmbedUrl(spotifyArtistUrl)
-    const biographySection = (primaryBio || visibleCuriosidades.length > 0) ? (
+    const biographySection = (primaryBio || (artist.curiosidades?.length ?? 0) > 0) ? (
         <section id="biografia" className="scroll-mt-20 border-t border-border/40 bg-[#fafafa] dark:bg-surface">
             <div className="page-wrap py-10 sm:py-14">
                 <div className="mb-7 max-w-[900px]">
@@ -803,43 +802,8 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {starterBlocks.length > 0 && renderStarterBlocks(starterBlocks)}
                     </div>
 
-                    {visibleCuriosidades.length > 0 && (
-                        <aside className="lg:sticky lg:top-[120px] lg:self-start lg:border-l lg:border-border/40 lg:pl-8">
-                            <div className="flex items-center justify-between gap-4 border-b border-foreground pb-3">
-                                <div className="font-mono text-[10px] text-muted uppercase tracking-[0.08em]">Detalhes</div>
-                                <div className="font-mono text-[10px] text-muted/70">{visibleCuriosidades.length} de {artist.curiosidades?.length ?? visibleCuriosidades.length}</div>
-                            </div>
-                            <ul className="divide-y divide-border/40">
-                                {visibleCuriosidades.map((c, i) => {
-                                    const num = String(i + 1).padStart(2, '0')
-                                    const historicoMatch = c.match(/^HISTÓRICO\|(\d{4})\|\s*(.+)$/)
-                                    if (historicoMatch) {
-                                        return (
-                                            <li key={i} className="flex gap-3 py-3.5">
-                                                <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                                                    <span className="font-mono text-[10px] text-muted/50">{num}</span>
-                                                    <span className="font-mono text-[10px] font-bold text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 leading-tight">
-                                                        {historicoMatch[1]}
-                                                    </span>
-                                                </div>
-                                                <span className="text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">{historicoMatch[2]}</span>
-                                            </li>
-                                        )
-                                    }
-                                    return (
-                                        <li key={i} className="flex gap-4 py-3.5 text-[14px] leading-[1.5] text-[#222] dark:text-[#ccc]">
-                                            <span className="font-mono text-[11px] text-muted/50 min-w-[24px] shrink-0 pt-0.5">{num}</span>
-                                            <span>{c}</span>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                            {hiddenCuriosidadesCount > 0 && (
-                                <div className="mt-4 border border-border bg-background px-4 py-3 text-[12px] leading-relaxed text-muted">
-                                    Mais {hiddenCuriosidadesCount} curiosidade{hiddenCuriosidadesCount === 1 ? '' : 's'} ficam guardadas para próximas versões do perfil.
-                                </div>
-                            )}
-                        </aside>
+                    {(artist.curiosidades?.length ?? 0) > 0 && (
+                        <CuriosidadesAside curiosidades={artist.curiosidades ?? []} />
                     )}
                 </div>
 
@@ -857,7 +821,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     </div>
                 )}
                 {videos.length > 0 && (
-                    <div className="mt-12 pt-10 border-t border-border/40">
+                    <div id="mvs" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
                         <GroupMVPlayer videos={videos} accent="#ef4444" embedFeaturedByDefault />
                     </div>
                 )}
