@@ -62,6 +62,10 @@ const EnrichSchema = z.object({
     metaDescription: z.string().min(140).max(158).optional().nullable(),
     tags: z.array(z.string()).min(1).max(15).optional(),
     faq: z.array(z.object({ pergunta: z.string(), resposta: z.string() })).min(1).max(10).optional().nullable(),
+    videos: z.array(z.object({
+        title: z.string().min(1),
+        url: z.string().url().refine(u => u.includes('youtube.com/watch') || u.includes('youtu.be'), 'URL deve ser do YouTube'),
+    })).max(6).optional().nullable(),
 })
 
 /**
@@ -204,6 +208,7 @@ export async function POST(
     }
     if (data.tags?.length)  update.seoTags = data.tags
     if (data.faq)           update.faq     = data.faq
+    if (data.videos)        update.videos  = data.videos
 
     try {
         const updated = await prisma.artist.update({
