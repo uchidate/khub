@@ -128,6 +128,7 @@ model Artist {
   fanInfo            Json?                       // { fanName, fanColor, lightstick }
   awards             Json?                       // [{ premio, categoria, ano }]
   destaques          Json?                       // { dramas: [], filmes: [], albuns: [] }
+  videos             Json?                       // [{ title, url }] — vídeos/MVs principais embedados no perfil
   editorialGeneratedAt DateTime?                 // quando o conteúdo editorial foi gerado/atualizado
   editorialCuratedAt   DateTime?                 // quando a curadoria humana foi concluída
   enrichedAt           DateTime?                 // quando o enriquecimento via Gemini foi aplicado

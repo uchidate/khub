@@ -7,6 +7,7 @@ import { getRoleLabels } from "@/lib/utils/role-labels"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
 import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
+import { GroupMVPlayer } from "@/components/groups/GroupMVPlayer"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -714,6 +715,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
     const roles = artist.roles || []
     const stageNames = artist.stageNames || []
+    const videos = (artist.videos as Array<{ title: string; url: string }> | null) ?? []
     const officialProfileLinks = buildOfficialProfileLinks({
         socialLinks: artist.socialLinks as Record<string, unknown> | null,
         musicProfileLinks: musicCatalog.profileLinks,
@@ -749,6 +751,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const pageAnchors = [
         { href: '#biografia', label: 'Biografia' },
         ...(artist.productions.length > 0 ? [{ href: '#filmografia', label: 'Filmografia' }] : []),
+        ...(videos.length > 0 ? [{ href: '#mvs', label: 'Vídeos' }] : []),
         ...(discographyReleases.length > 0 ? [{ href: '#discografia', label: 'Discografia' }] : []),
         ...(blogArticles.length > 0 ? [{ href: '#artigos', label: 'Artigos' }] : []),
     ]
@@ -851,6 +854,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                             loading="lazy"
                             className="border-0 rounded-xl"
                         />
+                    </div>
+                )}
+                {videos.length > 0 && (
+                    <div className="mt-12 pt-10 border-t border-border/40">
+                        <GroupMVPlayer videos={videos} accent="#ef4444" embedFeaturedByDefault />
                     </div>
                 )}
                 {discographyReleases.length > 0 && (

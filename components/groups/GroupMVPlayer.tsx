@@ -26,6 +26,7 @@ interface MV {
 interface GroupMVPlayerProps {
     videos: MV[]
     accent: string
+    embedFeaturedByDefault?: boolean
 }
 
 function toRgba(hex: string, alpha: number): string {
@@ -48,12 +49,11 @@ function extractYoutubeId(url: string): string | null {
     } catch { return null }
 }
 
-export function GroupMVPlayer({ videos, accent }: GroupMVPlayerProps) {
-    const [activeId, setActiveId] = useState<string | null>(null)
-
+export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }: GroupMVPlayerProps) {
     const mvs = videos
         .map(mv => ({ ...mv, videoId: extractYoutubeId(mv.url) }))
         .filter(mv => mv.videoId)
+    const [activeId, setActiveId] = useState<string | null>(() => embedFeaturedByDefault ? mvs[0]?.videoId ?? null : null)
 
     if (mvs.length === 0) return null
 
@@ -81,7 +81,7 @@ export function GroupMVPlayer({ videos, accent }: GroupMVPlayerProps) {
                     {activeId === mvs[0].videoId ? (
                         <div className="relative aspect-video">
                             <iframe
-                                src={`https://www.youtube.com/embed/${mvs[0].videoId}?autoplay=1&rel=0`}
+                                src={`https://www.youtube.com/embed/${mvs[0].videoId}?${embedFeaturedByDefault ? '' : 'autoplay=1&'}rel=0`}
                                 className="absolute inset-0 w-full h-full"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
