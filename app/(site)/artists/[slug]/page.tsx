@@ -239,13 +239,14 @@ type EditorialBlock =
     | { type: 'fatos'; items: { label: string; valor: string }[] }
     | { type: 'timeline'; items: { label: string; valor: string }[] }
     | { type: 'momento'; label: string; text: string }
+    | { type: 'video'; url: string }
     | { type: 'divisor' }
     | { type: 'paragraph'; text: string }
 
 const SECTION_TITLE_RE = /^\*\*(.+?)\*\*\s*$/m
 
 // All self-closing or paired tags we parse inline
-const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[TIMELINE]', '[MOMENTO]', '[DIVISOR]']
+const INLINE_TAGS = ['[QUOTE]', '[DESTAQUE]', '[RECORDE]', '[TAGS]', '[FATOS]', '[TIMELINE]', '[MOMENTO]', '[VIDEO]', '[DIVISOR]']
 
 function nextTagPosition(s: string): number {
     return Math.min(...INLINE_TAGS.map(t => { const i = s.indexOf(t); return i >= 0 ? i : Infinity }))
@@ -289,6 +290,15 @@ function parseEditorialBlocks(raw: string): EditorialBlock[] {
             if (remaining.startsWith('[DIVISOR]')) {
                 blocks.push({ type: 'divisor' })
                 remaining = remaining.slice(9).trim()
+                continue
+            }
+
+            if (remaining.startsWith('[VIDEO]')) {
+                const end = remaining.indexOf('[/VIDEO]')
+                if (end === -1) { blocks.push({ type: 'paragraph', text: remaining.trim() }); remaining = ''; break }
+                const url = remaining.slice(7, end).trim()
+                if (url) blocks.push({ type: 'video', url })
+                remaining = remaining.slice(end + 8).trim()
                 continue
             }
 
@@ -366,6 +376,11 @@ function renderBiographyContent(options: { bioText: string | null }) {
             </div>
         </div>
     )
+}
+
+function getFirstVideoBlock(raw: string | null): Extract<EditorialBlock, { type: 'video' }> | null {
+    if (!raw) return null
+    return parseEditorialBlocks(raw).find((block): block is Extract<EditorialBlock, { type: 'video' }> => block.type === 'video') ?? null
 }
 
 function getFirstTimelineBlock(raw: string | null): Extract<EditorialBlock, { type: 'timeline' }> | null {
@@ -483,6 +498,28 @@ function renderTimelineBlock(block: Extract<EditorialBlock, { type: 'timeline' }
                     </div>
                 ))}
             </div>
+        </div>
+    )
+}
+
+function youtubeId(url: string): string | null {
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/)
+    return m?.[1] ?? null
+}
+
+function renderVideoBlock(url: string) {
+    const id = youtubeId(url)
+    if (!id) return null
+    return (
+        <div className="my-6 overflow-hidden border border-border/50 aspect-video w-full">
+            <iframe
+                src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
+                title="Vídeo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+                loading="lazy"
+            />
         </div>
     )
 }
@@ -719,9 +756,14 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         : fallbackHeroCopy
     const impactCards = getEditorialImpactCards(artist.analiseEditorial)
     const timelineBlock = getFirstTimelineBlock(artist.analiseEditorial)
+    const videoBlock = getFirstVideoBlock(artist.analiseEditorial)
     const tagsBlock = getFirstTagsBlock(artist.analiseEditorial)
     const factsBlock = getFirstFactsBlock(artist.analiseEditorial)
     const starterBlocks = getStarterBlocks(artist.analiseEditorial)
+    const spotifyArtistUrl = (socialLinks['spotify'] as string | undefined) ?? null
+    const spotifyEmbedUrl = spotifyArtistUrl
+        ? spotifyArtistUrl.replace('open.spotify.com/', 'open.spotify.com/embed/')
+        : null
     const biographySection = (primaryBio || visibleCuriosidades.length > 0) ? (
         <section id="biografia" className="scroll-mt-20 border-t border-border/40 bg-[#fafafa] dark:bg-surface">
             <div className="page-wrap py-10 sm:py-14">
@@ -743,6 +785,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {renderBiographyContent({
                             bioText: bioText ?? (!artist.analiseEditorial ? primaryBio : null),
                         })}
+                        {videoBlock && renderVideoBlock(videoBlock.url)}
                         {timelineBlock && renderTimelineBlock(timelineBlock)}
                         {starterBlocks.length > 0 && renderStarterBlocks(starterBlocks)}
                     </div>
@@ -787,6 +830,19 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     )}
                 </div>
 
+                {spotifyEmbedUrl && (
+                    <div className="mt-8 pt-8 border-t border-border/40">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted mb-3">Ouça no Spotify</div>
+                        <iframe
+                            src={`${spotifyEmbedUrl}?utm_source=generator&theme=0`}
+                            width="100%"
+                            height="152"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="border-0 rounded-xl"
+                        />
+                    </div>
+                )}
                 {discographyReleases.length > 0 && (
                     <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
                         <DiscographySection albums={discographyReleases} />
