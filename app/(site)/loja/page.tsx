@@ -33,7 +33,7 @@ async function getData() {
         select: {
             id: true, name: true, description: true, price: true, originalPrice: true,
             imageUrl: true, affiliateUrl: true, store: true, category: true,
-            badge: true, rating: true, soldCount: true, tags: true,
+            badge: true, rating: true, reviewCount: true, soldCount: true, tags: true,
             featured: true, position: true, createdAt: true,
         },
     }).catch(() => [])
@@ -97,19 +97,35 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
         description: 'Produtos K-Pop, K-Beauty e K-Drama selecionados pela curadoria HallyuHub',
         url: `${SITE_URL}/loja`,
         numberOfItems: products.length,
-        itemListElement: products.slice(0, 20).map((p, i) => ({
-            '@type': 'ListItem', position: i + 1,
-            item: {
-                '@type': 'Product', name: p.name, image: p.imageUrl,
-                ...(p.description ? { description: p.description } : {}),
-                offers: {
-                    '@type': 'Offer',
-                    ...(p.price ? { price: p.price.replace(/[^0-9,.]/g, '').replace(',', '.'), priceCurrency: 'BRL' } : {}),
-                    availability: 'https://schema.org/InStock',
-                    url: p.affiliateUrl,
+        itemListElement: products
+            .filter(p => !!p.price)
+            .slice(0, 20)
+            .map((p, i) => ({
+                '@type': 'ListItem', position: i + 1,
+                item: {
+                    '@type': 'Product',
+                    name: p.name.slice(0, 100),
+                    image: p.imageUrl,
+                    ...(p.description ? { description: p.description.slice(0, 300) } : {}),
+                    offers: {
+                        '@type': 'Offer',
+                        price: p.price!.replace(/[^0-9,.]/g, '').replace(',', '.'),
+                        priceCurrency: 'BRL',
+                        availability: 'https://schema.org/InStock',
+                        url: p.affiliateUrl,
+                    },
+                    ...(p.rating && p.rating > 0 ? {
+                        aggregateRating: {
+                            '@type': 'AggregateRating',
+                            ratingValue: p.rating.toFixed(1),
+                            bestRating: '5',
+                            worstRating: '1',
+                            ratingCount: p.reviewCount ?? 1,
+                            reviewCount: p.reviewCount ?? 1,
+                        },
+                    } : {}),
                 },
-            },
-        })),
+            })),
     } : null
     const activeFilterLabel = sp.search
         ? 'busca ativa'
