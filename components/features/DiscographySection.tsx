@@ -6,6 +6,12 @@ import { CalendarDays, ExternalLink, LayoutGrid, List, Music, Play } from 'lucid
 
 type AlbumType = 'ALBUM' | 'EP' | 'SINGLE'
 
+interface MusicPlatformLink {
+    platform: string
+    platformName: string
+    url: string
+}
+
 interface Album {
     id: string
     title: string
@@ -16,12 +22,14 @@ interface Album {
     appleMusicUrl: string | null
     youtubeUrl: string | null
     mbid: string | null
+    links?: MusicPlatformLink[]
     tracks?: Array<{
         id: string
         title: string
         trackNumber: number | null
         durationMs: number | null
         spotifyUrl: string | null
+        links?: MusicPlatformLink[]
     }>
 }
 
@@ -53,6 +61,41 @@ function formatDuration(durationMs: number | null) {
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
     return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function legacyLinks(album: Album): MusicPlatformLink[] {
+    return [
+        album.spotifyUrl ? { platform: 'spotify', platformName: 'Spotify', url: album.spotifyUrl } : null,
+        album.appleMusicUrl ? { platform: 'apple-music', platformName: 'Apple Music', url: album.appleMusicUrl } : null,
+        album.youtubeUrl ? { platform: 'youtube', platformName: 'YouTube', url: album.youtubeUrl } : null,
+    ].filter(Boolean) as MusicPlatformLink[]
+}
+
+function releaseLinks(album: Album): MusicPlatformLink[] {
+    return album.links?.length ? album.links : legacyLinks(album)
+}
+
+function trackLinks(track: NonNullable<Album['tracks']>[number]): MusicPlatformLink[] {
+    return track.links?.length
+        ? track.links
+        : track.spotifyUrl
+            ? [{ platform: 'spotify', platformName: 'Spotify', url: track.spotifyUrl }]
+            : []
+}
+
+function primaryLink(links: MusicPlatformLink[]): MusicPlatformLink | null {
+    return links.find(link => link.platform === 'spotify')
+        ?? links.find(link => link.platform.includes('apple'))
+        ?? links.find(link => link.platform.includes('youtube'))
+        ?? links[0]
+        ?? null
+}
+
+function platformTone(platform: string) {
+    if (platform === 'spotify') return 'bg-green-500/10 text-green-400 hover:bg-green-500/15'
+    if (platform.includes('youtube')) return 'bg-red-500/10 text-red-400 hover:bg-red-500/15'
+    if (platform.includes('apple')) return 'bg-zinc-500/10 text-zinc-200 hover:bg-zinc-500/15'
+    return 'bg-surface text-muted hover:text-foreground'
 }
 
 export function DiscographySection({ albums }: DiscographySectionProps) {
@@ -142,6 +185,7 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
                     {filtered.map(album => {
                         const year = formatYear(album.releaseDate)
+                        const listenLink = primaryLink(releaseLinks(album))
                         return (
                             <div key={album.id} className="album-card group border border-border bg-background transition-all duration-200">
                                 <div className="relative aspect-square bg-surface overflow-hidden">
@@ -159,12 +203,13 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                                             <Music className="w-6 h-6 text-muted/40" />
                                         </div>
                                     )}
-                                    {album.spotifyUrl && (
+                                    {listenLink && (
                                         <a
-                                            href={album.spotifyUrl}
+                                            href={listenLink.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 group-hover:opacity-100 group-hover:bg-black/40 transition-all duration-200"
+                                            title={`Ouvir em ${listenLink.platformName}`}
                                         >
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500 shadow-lg">
                                                 <Play className="w-4 h-4 text-white fill-white ml-0.5" />
@@ -190,6 +235,7 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                     const visibleTracks = expandedIds.has(album.id) ? tracks : tracks.slice(0, 4)
                     const remainingTracks = tracks.length - visibleTracks.length
                     const year = formatYear(album.releaseDate)
+                    const links = releaseLinks(album)
 
                     return (
                         <article
@@ -236,47 +282,55 @@ export function DiscographySection({ albums }: DiscographySectionProps) {
                                             <h4 className="text-base font-bold text-foreground leading-snug">{album.title}</h4>
                                         </div>
 
-                                        {album.spotifyUrl && (
-                                            <a
-                                                href={album.spotifyUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/15 text-xs font-bold whitespace-nowrap"
-                                            >
-                                                <Play className="w-3.5 h-3.5" />
-                                                Ouvir no Spotify
-                                            </a>
+                                        {links.length > 0 && (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {links.slice(0, 3).map(link => (
+                                                    <a
+                                                        key={`${album.id}-${link.platform}`}
+                                                        href={link.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-bold whitespace-nowrap ${platformTone(link.platform)}`}
+                                                    >
+                                                        <Play className="w-3.5 h-3.5" />
+                                                        {link.platformName}
+                                                    </a>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
 
                                     {tracks.length > 0 && (
                                         <div className="mt-4 border-t border-border pt-3">
                                             <div className="space-y-1">
-                                                {visibleTracks.map(track => (
-                                                    <div
-                                                        key={track.id}
-                                                        className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-2 py-1.5 text-sm"
-                                                    >
-                                                        <span className="text-xs text-muted tabular-nums text-right">
-                                                            {track.trackNumber ?? '·'}
-                                                        </span>
-                                                        <span className="truncate text-foreground">{track.title}</span>
-                                                        <span className="text-xs text-muted tabular-nums">
-                                                            {formatDuration(track.durationMs)}
-                                                        </span>
-                                                        {track.spotifyUrl && (
-                                                            <a
-                                                                href={track.spotifyUrl}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
-                                                            >
-                                                                Ouvir
-                                                                <ExternalLink className="w-3 h-3" />
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                                {visibleTracks.map(track => {
+                                                    const firstTrackLink = primaryLink(trackLinks(track))
+                                                    return (
+                                                        <div
+                                                            key={track.id}
+                                                            className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-2 py-1.5 text-sm"
+                                                        >
+                                                            <span className="text-xs text-muted tabular-nums text-right">
+                                                                {track.trackNumber ?? '·'}
+                                                            </span>
+                                                            <span className="truncate text-foreground">{track.title}</span>
+                                                            <span className="text-xs text-muted tabular-nums">
+                                                                {formatDuration(track.durationMs)}
+                                                            </span>
+                                                            {firstTrackLink && (
+                                                                <a
+                                                                    href={firstTrackLink.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
+                                                                >
+                                                                    {firstTrackLink.platformName}
+                                                                    <ExternalLink className="w-3 h-3" />
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
 
                                             {tracks.length > 4 && (

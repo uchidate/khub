@@ -20,26 +20,35 @@ function parseSpotifyDate(value: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
-export async function syncSpotifyCatalogForArtist(artistId: string) {
+type SpotifyCatalogSyncOptions = {
+  maxReleases?: number
+  includeTracks?: boolean
+}
+
+export async function syncSpotifyCatalogForArtist(artistId: string, options: SpotifyCatalogSyncOptions = {}) {
   return syncSpotifyCatalog({
     where: { artistId },
     missingLinkMessage: 'Artista ainda não tem perfil Spotify vinculado',
+    options,
   })
 }
 
-export async function syncSpotifyCatalogForGroup(groupId: string) {
+export async function syncSpotifyCatalogForGroup(groupId: string, options: SpotifyCatalogSyncOptions = {}) {
   return syncSpotifyCatalog({
     where: { groupId },
     missingLinkMessage: 'Grupo ainda não tem perfil Spotify vinculado',
+    options,
   })
 }
 
 async function syncSpotifyCatalog({
   where,
   missingLinkMessage,
+  options,
 }: {
   where: { artistId: string } | { groupId: string }
   missingLinkMessage: string
+  options: SpotifyCatalogSyncOptions
 }) {
   const musicArtist = await prisma.musicCatalogArtist.findUnique({
     where,
@@ -64,10 +73,14 @@ async function syncSpotifyCatalog({
     select: { id: true },
   })
   const spotify = getSpotifyService()
-  const albums = await spotify.getArtistAlbums(musicArtist.externalLinks[0].externalId)
+  const albums = await spotify.getArtistAlbums(musicArtist.externalLinks[0].externalId, {
+    limit: options.maxReleases,
+  })
 
   let releasesSynced = 0
   let tracksSynced = 0
+  const errors: Array<{ releaseId?: string; releaseName?: string; message: string }> = []
+  const includeTracks = options.includeTracks ?? true
 
   for (const album of albums) {
     const releaseLink = await prisma.externalMusicEntity.findUnique({
@@ -143,7 +156,24 @@ async function syncSpotifyCatalog({
       },
     })
 
-    const tracks = await spotify.getAlbumTracks(album.id)
+    if (!includeTracks) {
+      releasesSynced++
+      continue
+    }
+
+    let tracks
+    try {
+      tracks = await spotify.getAlbumTracks(album.id)
+    } catch (error) {
+      errors.push({
+        releaseId: album.id,
+        releaseName: album.name,
+        message: error instanceof Error ? error.message : String(error),
+      })
+      releasesSynced++
+      continue
+    }
+
     for (const track of tracks) {
       const trackLink = await prisma.externalMusicEntity.findUnique({
         where: {
@@ -223,5 +253,5 @@ async function syncSpotifyCatalog({
     releasesSynced++
   }
 
-  return { releasesSynced, tracksSynced }
+  return { releasesSynced, tracksSynced, errors }
 }

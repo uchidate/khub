@@ -1,9 +1,9 @@
 # ═══════════════════════════════════════════════════════════════════
-# BUILD & DEPLOY — HallyuHub (Coolify)
+# BUILD & DEPLOY — HallyuHub (Self-hosted runner + Coolify local)
 # ═══════════════════════════════════════════════════════════════════
 # Fluxo:
 #   feat/* ou staging → validate → build image → push ghcr.io:staging → deploy Coolify staging
-#   main (PR merge)   → validate → promote staging→latest (sem rebuild) → deploy Coolify production
+#   main (PR merge)   → validate → build image → push ghcr.io:latest/main-sha → deploy Coolify production
 #
 # Desenvolvimento:
 #   1. git checkout -b feat/minha-feature
@@ -11,10 +11,10 @@
 #   3. git push origin feat/minha-feature   → CI valida + deploya em staging automaticamente
 #   4. Testa em staging.hallyuhub.com.br
 #   5. Abre PR feat/minha-feature → main no GitHub
-#   6. Merge do PR → CI deploya em produção (mesma imagem testada, sem rebuild)
+#   6. Merge do PR → CI builda a imagem do commit em main e deploya em produção
 # ═══════════════════════════════════════════════════════════════════
 
-name: 🚀 Validate, Build and Deploy (Coolify)
+name: 🚀 Validate, Build and Deploy
 
 on:
   push:
@@ -126,7 +126,7 @@ jobs:
         run: npx vitest run --coverage
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2a: Build da imagem Docker (feat/*, fix/*, chore/*, staging — não main)
+  # FASE 2a: Build da imagem Docker de staging (feat/*, fix/*, chore/*, staging)
   # ════════════════════════════════════════════════════════════════
 
   build-image:
@@ -135,6 +135,9 @@ jobs:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    environment:
+      name: staging
 
     permissions:
       contents: read
@@ -206,8 +209,8 @@ jobs:
 
       - name: 📊 Summary
         run: |
-          echo "### 🐳 Imagem buildada e enviada para ghcr.io" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Imagem buildada e enviada para ghcr.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> "$GITHUB_STEP_SUMMARY"
 
   # ════════════════════════════════════════════════════════════════
   # FASE 2c: E2E Tests — roda contra staging após deploy
@@ -276,21 +279,31 @@ jobs:
           retention-days: 7
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 2b: Promote staging → production (apenas main, sem rebuild)
+  # FASE 2b: Build da imagem Docker de produção (main)
   # ════════════════════════════════════════════════════════════════
 
-  promote-image:
-    name: 🏷️ Promote Image to Production
+  build-production-image:
+    name: 🐳 Build Production Image
     needs: validate-code
     if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted
-    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    environment:
+      name: production
+      url: https://www.hallyuhub.com.br
 
     permissions:
       contents: read
       packages: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
@@ -308,37 +321,60 @@ jobs:
             echo "✅ Rollback image saved: $ROLLBACK_TAG" || \
             echo "⚠️ No previous image to save (first deploy)"
 
-      - name: Promote staging → latest
-        run: |
-          STAGING_TAG="ghcr.io/${{ env.IMAGE_NAME }}:staging"
-          LATEST_TAG="ghcr.io/${{ env.IMAGE_NAME }}:latest"
-          SHA_TAG="ghcr.io/${{ env.IMAGE_NAME }}:main-${{ github.sha }}"
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=main-${{ github.sha }}
 
-          echo "Pulling staging image..."
-          docker pull "$STAGING_TAG" || { echo "❌ Imagem staging não encontrada — faça push para staging primeiro"; exit 1; }
-
-          echo "Promoting $STAGING_TAG → $LATEST_TAG"
-          docker tag "$STAGING_TAG" "$LATEST_TAG"
-          docker tag "$STAGING_TAG" "$SHA_TAG"
-          docker push "$LATEST_TAG"
-          docker push "$SHA_TAG"
-          echo "✅ Imagem promovida para production (sem rebuild)"
+      - name: Build and Push Production Image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_ADSENSE_CLIENT=${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT }}
+            NEXT_PUBLIC_ADSENSE_SLOT_AUTO=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_AUTO }}
+            NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_ANCHOR }}
+            NEXT_PUBLIC_ADSENSE_SLOT_SIDE_RAIL=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_SIDE_RAIL }}
+            NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR }}
+            NEXT_PUBLIC_ADSENSE_SLOT_FLUID=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_FLUID }}
+            NEXT_PUBLIC_ADSENSE_SLOT_HOME=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_HOME }}
+            NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX=${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX }}
+            NEXT_PUBLIC_GA_ID=${{ vars.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+            NEXT_PUBLIC_BING_SITE_VERIFICATION=${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}
+            NEXT_PUBLIC_UMAMI_WEBSITE_ID=${{ vars.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+          cache-from: |
+            type=gha
+            type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:latest
+            type=registry,ref=ghcr.io/${{ env.IMAGE_NAME }}:staging
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
 
       - name: 📊 Summary
         run: |
-          echo "### 🏷️ Imagem promovida staging → production" >> $GITHUB_STEP_SUMMARY
-          echo "A mesma imagem testada em staging foi para production — sem rebuild." >> $GITHUB_STEP_SUMMARY
-          echo "**SHA tag:** \`main-${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Imagem production buildada e enviada para ghcr.io" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Tags:** \`${{ steps.meta.outputs.tags }}\`" >> "$GITHUB_STEP_SUMMARY"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 3a: Deploy STAGING — Coolify faz pull da imagem pronta
+  # FASE 3a: Deploy STAGING — Coolify local faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-staging:
-    name: 🟡 Deploy to Staging (Coolify)
+    name: 🟡 Deploy to Staging
     needs: build-image
     if: github.ref != 'refs/heads/main'
-    runs-on: self-hosted
+    runs-on: [self-hosted, hallyuhub]
     timeout-minutes: 10
 
     environment:
@@ -347,9 +383,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-ssh
-        with:
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - uses: ./.github/actions/coolify-deploy
         with:
@@ -360,18 +393,18 @@ jobs:
 
       - name: 📊 Summary
         run: |
-          echo "### 🟡 Deploy Staging Concluído" >> $GITHUB_STEP_SUMMARY
-          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          echo "### 🟡 Deploy Staging Concluído" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> "$GITHUB_STEP_SUMMARY"
 
   # ════════════════════════════════════════════════════════════════
-  # FASE 3b: Deploy PRODUCTION — Coolify faz pull da imagem pronta
+  # FASE 3b: Deploy PRODUCTION — Coolify local faz pull da imagem pronta
   # ════════════════════════════════════════════════════════════════
 
   deploy-production:
-    name: 🟢 Deploy to Production (Coolify)
-    needs: promote-image
+    name: 🟢 Deploy to Production
+    needs: build-production-image
     if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted
+    runs-on: [self-hosted, hallyuhub]
     timeout-minutes: 10
 
     environment:
@@ -380,9 +413,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-ssh
-        with:
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - uses: ./.github/actions/coolify-deploy
         with:
@@ -395,12 +425,12 @@ jobs:
         run: |
           # 1. Aquece conexões Prisma via /api/health (SELECT 1 no pool)
           # 2. Renderiza páginas-chave para popular o ISR cache antes do primeiro usuário
-          RESOLVE="--resolve www.hallyuhub.com.br:443:31.97.255.107"
+          RESOLVE=(--resolve www.hallyuhub.com.br:443:31.97.255.107)
           BASE="https://www.hallyuhub.com.br"
 
           echo "Aquecendo pool de conexões Prisma..."
-          for i in 1 2 3; do
-            curl -sf -o /dev/null --max-time 10 $RESOLVE "$BASE/api/health" 2>/dev/null && break
+          for _ in 1 2 3; do
+            curl -sf -o /dev/null --max-time 10 "${RESOLVE[@]}" "$BASE/api/health" 2>/dev/null && break
             sleep 2
           done
 
@@ -409,7 +439,7 @@ jobs:
 
           # Homepage primeiro (mais pesada) — depois as demais em paralelo
           START=$(date +%s%3N)
-          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 45 $RESOLVE "$BASE/" 2>/dev/null || echo "000")
+          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 45 "${RESOLVE[@]}" "$BASE/" 2>/dev/null || echo "000")
           MS=$(( $(date +%s%3N) - START ))
           ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
           echo "$ICON  / → HTTP $HTTP (${MS}ms)"
@@ -419,7 +449,7 @@ jobs:
           for PAGE in /blog /artists /productions /calendario; do
             (
               START=$(date +%s%3N)
-              HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 $RESOLVE "$BASE$PAGE" 2>/dev/null || echo "000")
+              HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "${RESOLVE[@]}" "$BASE$PAGE" 2>/dev/null || echo "000")
               MS=$(( $(date +%s%3N) - START ))
               ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
               echo "$ICON  $PAGE → HTTP $HTTP (${MS}ms)"
@@ -433,32 +463,31 @@ jobs:
           # Após deploy, o container recebe um novo nome — atualizar todas as tasks
           APP_UUID="e6h2xvvpu8i2jmzcb3tpzmxo"
           TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-          CONTAINER=$(ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-            "curl -s 'http://localhost:8000/api/v1/applications/${APP_UUID}/containers' \
-              -H 'Authorization: Bearer ${TOKEN}' | jq -r '.[0].Names // .[0].name // empty' | head -1 | tr -d '/'" 2>/dev/null)
+          CONTAINER=$(curl -s "http://localhost:8000/api/v1/applications/${APP_UUID}/containers" \
+            -H "Authorization: Bearer ${TOKEN}" | jq -r '.[0].Names // .[0].name // empty' | head -1 | tr -d '/' 2>/dev/null)
           if [ -z "$CONTAINER" ]; then
             echo "⚠️ Não foi possível detectar o container name — tasks não atualizadas"
             exit 0
           fi
           echo "Container detectado: $CONTAINER"
           CRON_SECRET="${{ secrets.CRON_SECRET }}"
-          ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-            "docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\"" 2>/dev/null \
+          docker exec coolify-db psql -U coolify coolify -c "UPDATE scheduled_tasks SET container = '${CONTAINER}' WHERE application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');" 2>/dev/null \
             && echo "✅ Scheduled tasks atualizadas com container: $CONTAINER" \
             || echo "⚠️ Falha ao atualizar scheduled tasks (não crítico)"
           # Garantir que CRON_SECRET está populado em todos os comandos
           if [ -n "$CRON_SECRET" ]; then
-            ssh -i ~/.ssh/id_rsa root@31.97.255.107 \
-              "docker exec coolify-db psql -U coolify coolify -c \"UPDATE scheduled_tasks SET command = REGEXP_REPLACE(command, 'Bearer [^ '']*', 'Bearer ${CRON_SECRET}') WHERE enabled = true AND application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');\"" 2>/dev/null \
+            docker exec coolify-db psql -U coolify coolify -c "UPDATE scheduled_tasks SET command = REGEXP_REPLACE(command, 'Bearer [^ '']*', 'Bearer ${CRON_SECRET}') WHERE enabled = true AND application_id = (SELECT id FROM applications WHERE uuid = '${APP_UUID}');" 2>/dev/null \
               && echo "✅ CRON_SECRET atualizado nos comandos" \
               || echo "⚠️ Falha ao atualizar CRON_SECRET (não crítico)"
           fi
 
       - name: 📊 Summary
         run: |
-          echo "### 🟢 Deploy Production Concluído" >> $GITHUB_STEP_SUMMARY
-          echo "Coolify fez pull da imagem e o container está respondendo." >> $GITHUB_STEP_SUMMARY
-          echo "[Acompanhe aqui](http://31.97.255.107:8000)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### 🟢 Deploy Production Concluído"
+            echo "Coolify local fez pull da imagem e o container está respondendo."
+            echo "[Acompanhe aqui](http://31.97.255.107:8000)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ════════════════════════════════════════════════════════════════
   # ROLLBACK AUTOMÁTICO — acionado se deploy-production falhar
@@ -468,7 +497,7 @@ jobs:
     name: ⏪ Auto-Rollback Production
     needs: deploy-production
     if: failure() && github.ref == 'refs/heads/main'
-    runs-on: self-hosted
+    runs-on: [self-hosted, hallyuhub]
     timeout-minutes: 10
 
     environment:
@@ -477,20 +506,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-ssh
-        with:
-          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: ⏪ Rollback — restaurar imagem anterior
         run: |
           REGISTRY="ghcr.io/${{ env.IMAGE_NAME }}"
           echo "🔄 Restaurando rollback-latest → latest..."
-          ssh -i ~/.ssh/id_rsa root@31.97.255.107 "
-            docker pull ${REGISTRY}:rollback-latest && \
-            docker tag ${REGISTRY}:rollback-latest ${REGISTRY}:latest && \
-            docker push ${REGISTRY}:latest && \
+          if docker pull "${REGISTRY}:rollback-latest" && \
+            docker tag "${REGISTRY}:rollback-latest" "${REGISTRY}:latest" && \
+            docker push "${REGISTRY}:latest"; then
             echo '✅ Imagem restaurada'
-          " || { echo '❌ Falha ao restaurar imagem'; exit 1; }
+          else
+            echo '❌ Falha ao restaurar imagem'
+            exit 1
+          fi
 
       - uses: ./.github/actions/coolify-deploy
         with:
@@ -524,8 +552,9 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEPLOYS }}
           STATUS: ${{ needs.deploy-production.result }}
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | cut -c1-80)
+          COMMIT_MSG=$(echo "$HEAD_COMMIT_MESSAGE" | head -1 | cut -c1-80)
           ACTOR="${{ github.actor }}"
           SHA="${{ github.sha }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

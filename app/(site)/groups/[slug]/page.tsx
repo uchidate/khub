@@ -32,7 +32,7 @@ import { GroupColorIdentity } from '@/components/groups/GroupColorIdentity'
 import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
 import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
-import { ExternalMusicEntityType } from '@prisma/client'
+import { getPrimaryMusicLink, getPublicMusicCatalog } from '@/lib/music/public-music-catalog'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -177,7 +177,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const relevanceTerms = [group.name, group.nameHangul].filter(Boolean) as string[]
 
     // Step 2: queries secundárias todas em paralelo
-    const [bioPt, themeColorFetched, relatedGroups, linkedPosts, fallbackPosts, catalogReleases, spotifyProfileLink] = await Promise.all([
+    const [bioPt, themeColorFetched, relatedGroups, linkedPosts, fallbackPosts, musicCatalog] = await Promise.all([
         getTranslation('group', group.id, 'bio', 'pt-BR').catch(() => null),
         !officialColorRaw && websiteUrl ? fetchGroupThemeColor(websiteUrl) : Promise.resolve(null),
         prisma.musicalGroup.findMany({
@@ -222,63 +222,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 select: postSelect,
             }).catch(() => [])
             : Promise.resolve([]),
-        prisma.musicRelease.findMany({
-            where: {
-                credits: {
-                    some: {
-                        musicCatalogArtist: { groupId: group.id },
-                    },
-                },
-                externalLinks: {
-                    some: {
-                        entityType: ExternalMusicEntityType.RELEASE,
-                        platform: { slug: 'spotify' },
-                    },
-                },
-            },
-            select: {
-                id: true,
-                title: true,
-                releaseType: true,
-                releaseDate: true,
-                coverUrl: true,
-                externalLinks: {
-                    where: {
-                        entityType: ExternalMusicEntityType.RELEASE,
-                        platform: { slug: 'spotify' },
-                    },
-                    select: { url: true },
-                    take: 1,
-                },
-                tracks: {
-                    orderBy: [{ discNumber: 'asc' }, { trackNumber: 'asc' }],
-                    select: {
-                        id: true,
-                        title: true,
-                        trackNumber: true,
-                        durationMs: true,
-                        externalLinks: {
-                            where: {
-                                entityType: ExternalMusicEntityType.TRACK,
-                                platform: { slug: 'spotify' },
-                            },
-                            select: { url: true },
-                            take: 1,
-                        },
-                    },
-                },
-            },
-            orderBy: { releaseDate: 'desc' },
-            take: 20,
-        }).catch(() => []),
-        prisma.externalMusicEntity.findFirst({
-            where: {
-                entityType: ExternalMusicEntityType.ARTIST,
-                musicCatalogArtist: { groupId: group.id },
-                platform: { slug: 'spotify' },
-            },
-            select: { url: true },
-        }).catch(() => null),
+        getPublicMusicCatalog({ groupId: group.id }),
     ])
 
     const linkedPostIds = new Set(linkedPosts.map((p) => p.id))
@@ -288,13 +232,15 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             .filter((p) => !linkedPostIds.has(p.id))
             .map((p) => ({ ...p, source: 'recommended' as const })),
     ].slice(0, 6)
-    const discographyReleases = catalogReleases.map(release => ({
+    const discographyReleases = musicCatalog.releases.map(release => {
+        const releasePrimaryLink = getPrimaryMusicLink(release.links)
+        return {
         id: release.id,
         title: release.title,
-        type: release.releaseType,
+        type: release.type,
         releaseDate: release.releaseDate,
         coverUrl: release.coverUrl,
-        spotifyUrl: release.externalLinks[0]?.url ?? null,
+        spotifyUrl: release.links.find(link => link.platform === 'spotify')?.url ?? releasePrimaryLink?.url ?? null,
         appleMusicUrl: null,
         youtubeUrl: null,
         mbid: null,
@@ -303,10 +249,12 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             title: track.title,
             trackNumber: track.trackNumber,
             durationMs: track.durationMs,
-            spotifyUrl: track.externalLinks[0]?.url ?? null,
+            spotifyUrl: getPrimaryMusicLink(track.links)?.url ?? null,
+            links: track.links,
         })),
-    }))
-    const spotifyUrl = spotifyProfileLink?.url ?? null
+        links: release.links,
+    }})
+    const spotifyUrl = musicCatalog.profileLinks.find(link => link.platform === 'spotify')?.url ?? null
     const visibleSocialLinks = Object.entries(socialLinks)
         .filter(([key]) => !['website', 'Website', 'official'].includes(key))
         .filter(([key]) => !key.toLowerCase().includes('spotify'))

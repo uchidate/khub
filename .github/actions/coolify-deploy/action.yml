@@ -1,5 +1,5 @@
 name: Coolify Deploy + Smoke Test
-description: Dispara deploy no Coolify via API direta e aguarda health check
+description: Dispara deploy no Coolify local do runner self-hosted e aguarda health check
 
 inputs:
   coolify_uuid:
@@ -17,6 +17,9 @@ inputs:
   max_wait_seconds:
     description: "Tempo máximo de espera em segundos"
     default: '180'
+  force:
+    description: "Forçar deploy no Coolify"
+    default: 'true'
 
 runs:
   using: composite
@@ -26,15 +29,27 @@ runs:
       env:
         UUID: ${{ inputs.coolify_uuid }}
         TOKEN: ${{ inputs.coolify_token }}
+        FORCE: ${{ inputs.force }}
       run: |
+        UUID=$(echo "$UUID" | tr -d '[:space:]')
+        if [ -z "$UUID" ]; then
+          echo "❌ Coolify UUID vazio"
+          exit 1
+        fi
+        if [ -z "$TOKEN" ]; then
+          echo "❌ Coolify token vazio"
+          exit 1
+        fi
+
         echo "Triggering deploy (uuid: $UUID)..."
         RESPONSE=$(curl -s -w '\n%{http_code}' -X GET \
           --connect-timeout 10 --max-time 30 \
-          "http://localhost:8000/api/v1/deploy?uuid=${UUID}&force=true" \
+          "http://localhost:8000/api/v1/deploy?uuid=${UUID}&force=${FORCE}" \
           -H "Authorization: Bearer ${TOKEN}" \
-          -H 'Content-Type: application/json')
+          -H 'Content-Type: application/json' \
+          2>/dev/null || printf '\n000')
         HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-        BODY=$(echo "$RESPONSE" | head -1)
+        BODY=$(echo "$RESPONSE" | sed '$d' | head -c 1000)
         echo "Response: $BODY"
         if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]] || [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
           echo "❌ Coolify deploy trigger failed (HTTP $HTTP_CODE)"
@@ -49,7 +64,8 @@ runs:
         RESOLVE: ${{ inputs.resolve }}
         MAX_WAIT: ${{ inputs.max_wait_seconds }}
       run: |
-        ITERATIONS=$(( MAX_WAIT / 10 ))
+        ITERATIONS=$(( (MAX_WAIT + 9) / 10 ))
+        if [ "$ITERATIONS" -lt 1 ]; then ITERATIONS=1; fi
         echo "Aguardando container subir (máx ${MAX_WAIT}s)..."
         for i in $(seq 1 "$ITERATIONS"); do
           sleep 10

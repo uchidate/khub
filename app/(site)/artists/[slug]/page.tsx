@@ -21,12 +21,12 @@ import { Music, Globe } from 'lucide-react'
 import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import type { Metadata } from "next"
 import { permanentRedirect } from "next/navigation"
-import { ExternalMusicEntityType } from "@prisma/client"
 
 import { SITE_URL } from '@/lib/constants/site'
 import { StoreProductsRail } from '@/components/store/StoreProductsRail'
 import { inferContentType } from '@/lib/store/product-matcher'
 import { BrandDot } from '@/components/ui/BrandDot'
+import { getPrimaryMusicLink, getPublicMusicCatalog, toSpotifyEmbedUrl } from '@/lib/music/public-music-catalog'
 const BASE_URL = SITE_URL
 
 type ArtistWithExtras = Awaited<ReturnType<typeof getArtist>> & {
@@ -62,7 +62,6 @@ const getArtist = cache(async (slugOrId: string) => {
         where,
         include: {
             agency: { select: { id: true, name: true, slug: true, logoUrl: true } },
-            albums: { orderBy: { releaseDate: 'desc' }, take: 20 },
             productions: {
                 where: {
                     production: {
@@ -598,7 +597,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             ],
         },
     }
-    const [_newsCount, bioPt, _productionTranslations, relatedArtists, blogArticles, totalProductions, catalogReleases] = await Promise.all([
+    const [_newsCount, bioPt, _productionTranslations, relatedArtists, blogArticles, totalProductions, musicCatalog] = await Promise.all([
         prisma.news.count({ where: { isHidden: false, status: 'published', artists: { some: { artistId: artist.id } } } }).catch(() => 0),
         getTranslation('artist', artist.id, 'bio', 'pt-BR').catch(() => null),
         getTranslations('production', productionIds, ['synopsis']).catch(() => new Map<string, Map<string, string>>()),
@@ -626,64 +625,18 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             take: 6,
         }).catch(() => []),
         prisma.artistProduction.count({ where: productionWhere }).catch(() => artist.productions.length),
-        prisma.musicRelease.findMany({
-            where: {
-                credits: {
-                    some: {
-                        musicCatalogArtist: { artistId: artist.id },
-                    },
-                },
-                externalLinks: {
-                    some: {
-                        entityType: ExternalMusicEntityType.RELEASE,
-                        platform: { slug: 'spotify' },
-                    },
-                },
-            },
-            select: {
-                id: true,
-                title: true,
-                releaseType: true,
-                releaseDate: true,
-                coverUrl: true,
-                externalLinks: {
-                    where: {
-                        entityType: ExternalMusicEntityType.RELEASE,
-                        platform: { slug: 'spotify' },
-                    },
-                    select: { url: true },
-                    take: 1,
-                },
-                tracks: {
-                    orderBy: [{ discNumber: 'asc' }, { trackNumber: 'asc' }],
-                    select: {
-                        id: true,
-                        title: true,
-                        trackNumber: true,
-                        durationMs: true,
-                        externalLinks: {
-                            where: {
-                                entityType: ExternalMusicEntityType.TRACK,
-                                platform: { slug: 'spotify' },
-                            },
-                            select: { url: true },
-                            take: 1,
-                        },
-                    },
-                },
-            },
-            orderBy: { releaseDate: 'desc' },
-            take: 20,
-        }).catch(() => []),
+        getPublicMusicCatalog({ artistId: artist.id }),
     ])
 
-    const discographyReleases = catalogReleases.map(release => ({
+    const discographyReleases = musicCatalog.releases.map(release => {
+        const releasePrimaryLink = getPrimaryMusicLink(release.links)
+        return {
         id: release.id,
         title: release.title,
-        type: release.releaseType,
+        type: release.type,
         releaseDate: release.releaseDate,
         coverUrl: release.coverUrl,
-        spotifyUrl: release.externalLinks[0]?.url ?? null,
+        spotifyUrl: release.links.find(link => link.platform === 'spotify')?.url ?? releasePrimaryLink?.url ?? null,
         appleMusicUrl: null,
         youtubeUrl: null,
         mbid: null,
@@ -692,13 +645,20 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             title: track.title,
             trackNumber: track.trackNumber,
             durationMs: track.durationMs,
-            spotifyUrl: track.externalLinks[0]?.url ?? null,
+            spotifyUrl: getPrimaryMusicLink(track.links)?.url ?? null,
+            links: track.links,
         })),
-    }))
+        links: release.links,
+    }})
 
     const roles = artist.roles || []
     const stageNames = artist.stageNames || []
-    const socialLinks = (artist.socialLinks as Record<string, string>) || {}
+    const spotifyArtistUrl = musicCatalog.profileLinks.find(link => link.platform === 'spotify')?.url
+        ?? (artist.socialLinks as Record<string, string> | null)?.spotify
+    const socialLinks = {
+        ...((artist.socialLinks as Record<string, string> | null) ?? {}),
+        ...(spotifyArtistUrl ? { spotify: spotifyArtistUrl } : {}),
+    }
     const birthDate = artist.birthDate ? new Date(artist.birthDate) : null
     const deathDate = artist.deathDate ? new Date(artist.deathDate) : null
     const birthDateFormatted = birthDate?.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
@@ -732,7 +692,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             const bi = socialPriority.findIndex(key => b.toLowerCase().includes(key))
             return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
         })
-        .slice(0, 4)
+        .slice(0, 6)
     const pageAnchors = [
         { href: '#biografia', label: 'Biografia' },
         ...(artist.productions.length > 0 ? [{ href: '#filmografia', label: 'Filmografia' }] : []),
@@ -760,10 +720,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const tagsBlock = getFirstTagsBlock(artist.analiseEditorial)
     const factsBlock = getFirstFactsBlock(artist.analiseEditorial)
     const starterBlocks = getStarterBlocks(artist.analiseEditorial)
-    const spotifyArtistUrl = (socialLinks['spotify'] as string | undefined) ?? null
-    const spotifyEmbedUrl = spotifyArtistUrl
-        ? spotifyArtistUrl.replace('open.spotify.com/', 'open.spotify.com/embed/')
-        : null
+    const spotifyEmbedUrl = toSpotifyEmbedUrl(spotifyArtistUrl)
     const biographySection = (primaryBio || visibleCuriosidades.length > 0) ? (
         <section id="biografia" className="scroll-mt-20 border-t border-border/40 bg-[#fafafa] dark:bg-surface">
             <div className="page-wrap py-10 sm:py-14">

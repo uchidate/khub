@@ -3,6 +3,9 @@ import { Agent, fetch as undiciFetch } from 'undici'
 
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
 const SPOTIFY_API_BASE = 'https://api.spotify.com/v1'
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000
+const DEFAULT_RATE_LIMIT_WAIT_MS = 5_000
+const DEFAULT_RATE_LIMIT_ATTEMPTS = 2
 
 export interface SpotifyArtistCandidate {
   id: string
@@ -32,6 +35,10 @@ export interface SpotifyTrack {
   discNumber: number | null
   durationMs: number | null
   isrc: string | null
+}
+
+export interface SpotifyArtistAlbumsOptions {
+  limit?: number
 }
 
 interface SpotifyTokenResponse {
@@ -140,6 +147,7 @@ class SpotifyService {
         },
         body: new URLSearchParams({ grant_type: 'client_credentials' }),
         cache: 'no-store',
+        signal: this.getRequestSignal(),
         ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
       } as Parameters<typeof undiciFetch>[1]) as unknown as Response
     } catch {
@@ -162,16 +170,35 @@ class SpotifyService {
     await new Promise(resolve => setTimeout(resolve, ms))
   }
 
+  private getRequestSignal() {
+    const timeout = Number(process.env.SPOTIFY_REQUEST_TIMEOUT_MS)
+    return AbortSignal.timeout(Number.isFinite(timeout) && timeout > 0 ? timeout : DEFAULT_REQUEST_TIMEOUT_MS)
+  }
+
+  private getRateLimitWaitCapMs() {
+    const wait = Number(process.env.SPOTIFY_RATE_LIMIT_WAIT_MS)
+    return Number.isFinite(wait) && wait > 0 ? wait : DEFAULT_RATE_LIMIT_WAIT_MS
+  }
+
+  private getRateLimitAttempts() {
+    const attempts = Number(process.env.SPOTIFY_RATE_LIMIT_ATTEMPTS)
+    return Number.isFinite(attempts) && attempts > 0 ? Math.floor(attempts) : DEFAULT_RATE_LIMIT_ATTEMPTS
+  }
+
   private async requestApi(url: string, token: string): Promise<Response> {
     const minGapMs = 250
     const elapsed = Date.now() - this.lastApiRequestAt
     if (elapsed < minGapMs) await this.wait(minGapMs - elapsed)
 
-    for (let attempt = 0; attempt < 5; attempt++) {
+    const attempts = this.getRateLimitAttempts()
+    const rateLimitWaitCapMs = this.getRateLimitWaitCapMs()
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
       this.lastApiRequestAt = Date.now()
       const response = await undiciFetch(url, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
+        signal: this.getRequestSignal(),
         ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
       } as Parameters<typeof undiciFetch>[1]) as unknown as Response
 
@@ -179,16 +206,23 @@ class SpotifyService {
 
       const retryAfter = Number(response.headers.get('retry-after'))
       const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
-        ? retryAfter * 1000
-        : Math.min(30_000, 1_000 * (attempt + 1))
+        ? Math.min(rateLimitWaitCapMs, retryAfter * 1000)
+        : Math.min(rateLimitWaitCapMs, 1_000 * (attempt + 1))
       await this.wait(waitMs)
     }
 
     return undiciFetch(url, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
+      signal: this.getRequestSignal(),
       ...(this.getDispatcher() ? { dispatcher: this.getDispatcher() } : {}),
     } as Parameters<typeof undiciFetch>[1]) as unknown as Response
+  }
+
+  private spotifyErrorMessage(operation: string, response: Response) {
+    const retryAfter = response.headers.get('retry-after')
+    const retryText = retryAfter ? `; retry-after=${retryAfter}s` : ''
+    return `${operation} failed (${response.status}${retryText})`
   }
 
   async searchArtists(query: string, limit = 8): Promise<SpotifyArtistCandidate[]> {
@@ -206,7 +240,7 @@ class SpotifyService {
     }
 
     if (!response.ok) {
-      throw new Error(`Spotify artist search failed (${response.status})`)
+      throw new Error(this.spotifyErrorMessage('Spotify artist search', response))
     }
 
     const data = await response.json() as SpotifyArtistSearchResponse
@@ -223,19 +257,20 @@ class SpotifyService {
       }))
   }
 
-  async getArtistAlbums(artistId: string): Promise<SpotifyAlbum[]> {
+  async getArtistAlbums(artistId: string, options: SpotifyArtistAlbumsOptions = {}): Promise<SpotifyAlbum[]> {
     const token = await this.getAccessToken()
     const items: SpotifyArtistAlbumsResponse['items'] = []
+    const maxItems = options.limit && options.limit > 0 ? Math.floor(options.limit) : null
     let nextUrl: string | null = `${SPOTIFY_API_BASE}/artists/${artistId}/albums?${new URLSearchParams({
       include_groups: 'album,single',
-      limit: '50',
+      limit: String(maxItems ? Math.min(maxItems, 50) : 50),
     })}`
 
-    while (nextUrl) {
+    while (nextUrl && (!maxItems || items.length < maxItems)) {
       const response = await this.requestApi(nextUrl, token)
 
       if (!response.ok) {
-        throw new Error(`Spotify artist albums request failed (${response.status})`)
+        throw new Error(this.spotifyErrorMessage('Spotify artist albums request', response))
       }
 
       const data = await response.json() as SpotifyArtistAlbumsResponse
@@ -245,6 +280,7 @@ class SpotifyService {
 
     const seen = new Set<string>()
     return items
+      .slice(0, maxItems ?? undefined)
       .filter(item => item.external_urls.spotify)
       .filter(item => !seen.has(item.id) && seen.add(item.id))
       .map(item => ({
@@ -263,7 +299,7 @@ class SpotifyService {
     const response = await this.requestApi(`${SPOTIFY_API_BASE}/albums/${albumId}/tracks?limit=50`, token)
 
     if (!response.ok) {
-      throw new Error(`Spotify album tracks request failed (${response.status})`)
+      throw new Error(this.spotifyErrorMessage('Spotify album tracks request', response))
     }
 
     const data = await response.json() as SpotifyAlbumTracksResponse
