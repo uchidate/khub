@@ -857,7 +857,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     </div>
                 )}
                 {videos.length > 0 && (
-                    <div className="mt-12 pt-10 border-t border-border/40">
+                    <div id="mvs" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
                         <GroupMVPlayer videos={videos} accent="#ef4444" embedFeaturedByDefault />
                     </div>
                 )}
