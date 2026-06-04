@@ -106,7 +106,7 @@ export function HomeDiscoverySection({
                                             href={item.href}
                                             className="group flex items-center gap-3 border-b border-border/40 py-3 transition-opacity last:border-b-0 hover:opacity-75"
                                         >
-                                            <div className="relative h-8 w-8 shrink-0 overflow-hidden bg-[#efefef]">
+                                            <div className="relative h-8 w-8 shrink-0 overflow-hidden bg-surface">
                                                 {item.imageUrl ? (
                                                     <Image src={item.imageUrl} alt={item.title} fill sizes="32px" className="object-cover" />
                                                 ) : (
@@ -141,7 +141,7 @@ export function HomeDiscoverySection({
                                     href={entity.href}
                                     className={`group flex items-center gap-4 py-3 transition-opacity hover:opacity-75 ${i < entities.length - 1 ? "border-b border-border/40" : ""}`}
                                 >
-                                    <div className="relative h-9 w-9 shrink-0 overflow-hidden bg-[#efefef]">
+                                    <div className="relative h-9 w-9 shrink-0 overflow-hidden bg-surface">
                                         {entity.img ? (
                                             <Image src={entity.img} alt={entity.title} fill sizes="36px" className="object-cover" />
                                         ) : (

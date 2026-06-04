@@ -46,9 +46,9 @@ const TABS = [
 ]
 
 function getCategoryStyle(slug: string | undefined): { color: string; bg: string } {
-    if (!slug) return { color: '#9ca3af', bg: '#f3f4f6' }
+    if (!slug) return { color: '#9ca3af', bg: 'rgba(156,163,175,0.15)' }
     const cat = BLOG_CATEGORY_BY_SLUG[slug.toLowerCase()]
-    return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: '#f3f4f6' }
+    return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: 'rgba(156,163,175,0.15)' }
 }
 
 function getCategoryThumbBg(slug: string | undefined): string {

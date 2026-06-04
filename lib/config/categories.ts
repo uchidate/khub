@@ -19,15 +19,15 @@ export interface BlogCategoryConfig {
  *   Camada 2 → tags de lib/config/tags.ts (2–4 por artigo, vocabulário controlado)
  */
 export const BLOG_CATEGORIES: BlogCategoryConfig[] = [
-    { name: 'K-pop',         slug: 'k-pop',          color: '#ec4899', bg: '#fce7f3' },
-    { name: 'K-drama',       slug: 'k-drama',         color: '#8b5cf6', bg: '#ede9fe' },
-    { name: 'K-film',        slug: 'k-film',          color: '#0ea5e9', bg: '#e0f2fe' },
-    { name: 'K-beauty',      slug: 'k-beauty',        color: '#f59e0b', bg: '#fef3c7' },
-    { name: 'Reality Shows', slug: 'reality-shows',   color: '#f97316', bg: '#ffedd5' },
-    { name: 'Webtoons',      slug: 'webtoons',        color: '#10b981', bg: '#d1fae5' },
-    { name: 'Grupos',        slug: 'grupos',          color: '#a855f7', bg: '#f3e8ff' },
-    { name: 'Artistas',      slug: 'artistas',        color: '#f43f5e', bg: '#ffe4e6' },
-    { name: 'Cultura',       slug: 'cultura',         color: '#06b6d4', bg: '#cffafe' },
+    { name: 'K-pop',         slug: 'k-pop',          color: '#ec4899', bg: '#ec489920' },
+    { name: 'K-drama',       slug: 'k-drama',         color: '#8b5cf6', bg: '#8b5cf620' },
+    { name: 'K-film',        slug: 'k-film',          color: '#0ea5e9', bg: '#0ea5e920' },
+    { name: 'K-beauty',      slug: 'k-beauty',        color: '#f59e0b', bg: '#f59e0b20' },
+    { name: 'Reality Shows', slug: 'reality-shows',   color: '#f97316', bg: '#f9731620' },
+    { name: 'Webtoons',      slug: 'webtoons',        color: '#10b981', bg: '#10b98120' },
+    { name: 'Grupos',        slug: 'grupos',          color: '#a855f7', bg: '#a855f720' },
+    { name: 'Artistas',      slug: 'artistas',        color: '#f43f5e', bg: '#f43f5e20' },
+    { name: 'Cultura',       slug: 'cultura',         color: '#06b6d4', bg: '#06b6d420' },
 ]
 
 /**

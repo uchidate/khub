@@ -23,7 +23,7 @@ test.describe('Páginas Públicas', () => {
     expect(href).toBeTruthy()
     await page.goto(href!)
     await expect(page).toHaveURL(new RegExp('/blog/'))
-    await expect(page.locator('h1')).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 15_000 })
   })
 
   test('página /search — carrega e exibe resultados', async ({ page }) => {

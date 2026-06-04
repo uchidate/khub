@@ -322,12 +322,14 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         "@type": "VideoObject",
                         "name": `Trailer — ${production.titlePt}`,
                         "embedUrl": production.trailerUrl,
-                        "thumbnailUrl": production.imageUrl ?? undefined,
-                        "uploadDate": production.releaseDate
-                            ? new Date(production.releaseDate).toISOString()
-                            : production.year
-                                ? `${production.year}-01-01T00:00:00+00:00`
-                                : new Date().toISOString(),
+                        "thumbnailUrl": production.imageUrl ?? production.backdropUrl ?? `${BASE_URL}/opengraph-image`,
+                        "uploadDate": (() => {
+                            try {
+                                if (production.releaseDate) return new Date(production.releaseDate).toISOString()
+                                if (production.year) return `${production.year}-01-01T00:00:00Z`
+                                return new Date().toISOString()
+                            } catch { return new Date().toISOString() }
+                        })(),
                         "description": `Trailer oficial de ${production.titlePt}`,
                     }
                 } : {}),
@@ -338,6 +340,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         "bestRating": "10",
                         "worstRating": "0",
                         "ratingCount": production.voteCount,
+                        "reviewCount": production.voteCount,
                     }
                 } : {}),
             }} />

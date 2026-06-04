@@ -26,7 +26,7 @@ function CategoryPill({ category }: { category: ArticleItem["category"] }) {
     return (
         <span
             className="inline-flex w-fit px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]"
-            style={{ color: cfg?.color ?? "#374151", backgroundColor: cfg?.bg ?? "#f3f4f6" }}
+            style={{ color: cfg?.color ?? 'var(--color-muted)', backgroundColor: cfg?.bg ?? 'rgba(156,163,175,0.15)' }}
         >
             {category.name}
         </span>
@@ -67,7 +67,7 @@ export function HomeLatestArticles({ posts }: { posts: ArticleItem[] }) {
                                         fill
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                                        fallbackGradient={categoryConfig ? `linear-gradient(135deg, ${categoryConfig.bg}, ${categoryConfig.color}55)` : "#f3f4f6"}
+                                        fallbackGradient={categoryConfig ? `linear-gradient(135deg, ${categoryConfig.color}18 0%, ${categoryConfig.color}35 100%)` : undefined}
                                     />
                                 </div>
                                 <div className={isLead ? "p-4" : "p-3"}>

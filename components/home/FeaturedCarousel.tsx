@@ -23,7 +23,7 @@ function getCategoryStyle(slug: string | undefined): { color: string; bg: string
     if (!slug) return { color: '#9ca3af', bg: 'transparent' }
     const key = slug.toLowerCase().replace(/\s/g, '-')
     const cat = BLOG_CATEGORY_BY_SLUG[key]
-    return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: '#f3f4f6' }
+    return cat ? { color: cat.color, bg: cat.bg } : { color: '#9ca3af', bg: 'rgba(156,163,175,0.15)' }
 }
 
 const INTERVAL_MS = 6000
