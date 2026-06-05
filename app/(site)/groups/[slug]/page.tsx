@@ -33,6 +33,7 @@ import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
 import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
 import { GroupMembershipHistory } from '@/components/groups/GroupMembershipHistory'
+import { EditorialRenderer } from '@/components/editorial/EditorialRenderer'
 import { getPrimaryMusicLink, getPublicMusicCatalog } from '@/lib/music/public-music-catalog'
 import { buildGroupMembershipHistory } from '@/lib/groups/membership-history'
 const BASE_URL = SITE_URL
@@ -723,46 +724,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             <GroupTrophyWall curiosidades={curiosidades} accent={accent} groupName={group.name} />
                         )}
 
-                        {/* ── ANÁLISE EDITORIAL — parsing de blocos ── */}
+                        {/* ── ANÁLISE EDITORIAL ── */}
                         {analiseEditorial && (
                             <section id="analise">
                                 <SectionHeader icon={<Music className="w-5 h-5" />} title="Análise Editorial" accent={accent} />
-                                <div className="space-y-4">
-                                    {analiseEditorial.split('\n\n').map((para, i) => {
-                                        const quoteMatch = para.match(/^\[QUOTE\]([\s\S]*?)\[\/QUOTE\]/)
-                                        const destaqueMatch = para.match(/^\[DESTAQUE\]([\s\S]*?)\[\/DESTAQUE\]/)
-                                        if (quoteMatch) {
-                                            return (
-                                                <blockquote key={i} className="pl-5 py-4 pr-5 italic"
-                                                    style={{ borderLeft: `4px solid ${accent}`, background: toRgba(accent, 0.05) }}>
-                                                    <p className="text-sm leading-relaxed sm:text-base" style={{ color: accent }}>
-                                                        &ldquo;{quoteMatch[1].trim()}&rdquo;
-                                                    </p>
-                                                </blockquote>
-                                            )
-                                        }
-                                        if (destaqueMatch) {
-                                            return (
-                                                <div key={i} className="py-8 px-6 text-center"
-                                                    style={{
-                                                        background: `linear-gradient(135deg, ${toRgba(accent, 0.07)}, ${toRgba(accent, 0.02)})`,
-                                                        border: `1px solid ${toRgba(accent, 0.2)}`,
-                                                    }}>
-                                                    <p className="text-xl sm:text-2xl font-black leading-snug text-foreground italic">
-                                                        &ldquo;{destaqueMatch[1].trim()}&rdquo;
-                                                    </p>
-                                                </div>
-                                            )
-                                        }
-                                        return (
-                                            <p key={i} className="text-sm leading-[1.9] text-foreground sm:text-[15px]">{para}</p>
-                                        )
-                                    })}
-                                    <div className="flex items-center gap-2 pt-2" style={{ borderTop: `1px solid ${toRgba(accent, 0.15)}` }}>
-                                        <div className="h-0.5 w-6 flex-shrink-0" style={{ background: accent }} />
-                                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted">Editorial HallyuHub — análise independente</p>
-                                    </div>
-                                </div>
+                                <EditorialRenderer raw={analiseEditorial} accent={accent} />
                             </section>
                         )}
 
