@@ -68,10 +68,11 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
             if (!host) return
 
             const rect = host.getBoundingClientRect()
-            const stickyOffset = 112
-            const hasScrolledPastPlayer = rect.bottom < stickyOffset
+            const topOffset = 112
+            const bottomOffset = 96
+            const isOutsideViewport = rect.bottom < topOffset || rect.top > window.innerHeight - bottomOffset
             const isLargeEnough = window.innerWidth >= 360 && window.innerHeight >= 520
-            setIsMini(hasScrolledPastPlayer && isLargeEnough)
+            setIsMini(isOutsideViewport && isLargeEnough)
         }
 
         updateMiniState()
