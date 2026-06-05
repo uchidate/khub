@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Play, X, ExternalLink } from 'lucide-react'
+import { Play, X, ExternalLink, Minimize2 } from 'lucide-react'
 
 function YTThumb({ videoId, title, sizes, className }: { videoId: string; title: string; sizes: string; className?: string }) {
     const [src, setSrc] = useState(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`)
@@ -54,6 +54,39 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
         .map(mv => ({ ...mv, videoId: extractYoutubeId(mv.url) }))
         .filter(mv => mv.videoId)
     const [activeId, setActiveId] = useState<string | null>(() => embedFeaturedByDefault ? mvs[0]?.videoId ?? null : null)
+    const [isMini, setIsMini] = useState(false)
+    const activePlayerHostRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        if (!activeId) {
+            setIsMini(false)
+            return
+        }
+
+        const updateMiniState = () => {
+            const host = activePlayerHostRef.current
+            if (!host) return
+
+            const rect = host.getBoundingClientRect()
+            const stickyOffset = 112
+            const hasScrolledPastPlayer = rect.bottom < stickyOffset
+            const isLargeEnough = window.innerWidth >= 360 && window.innerHeight >= 520
+            setIsMini(hasScrolledPastPlayer && isLargeEnough)
+        }
+
+        updateMiniState()
+        window.addEventListener('scroll', updateMiniState, { passive: true })
+        window.addEventListener('resize', updateMiniState)
+        return () => {
+            window.removeEventListener('scroll', updateMiniState)
+            window.removeEventListener('resize', updateMiniState)
+        }
+    }, [activeId])
+
+    const closeActiveVideo = () => {
+        setActiveId(null)
+        setIsMini(false)
+    }
 
     if (mvs.length === 0) return null
 
@@ -79,20 +112,48 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                 <div className="mb-4 relative overflow-hidden border border-border bg-black"
                     style={{ borderTopColor: accent, borderTopWidth: 2 }}>
                     {activeId === mvs[0].videoId ? (
-                        <div className="relative aspect-video">
-                            <iframe
-                                src={`https://www.youtube.com/embed/${mvs[0].videoId}?${embedFeaturedByDefault ? '' : 'autoplay=1&'}rel=0`}
-                                className="absolute inset-0 w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title={mvs[0].title}
-                            />
-                            <button
-                                onClick={() => setActiveId(null)}
-                                className="absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center bg-black/70 text-white hover:bg-black transition-colors"
+                        <div ref={activePlayerHostRef} className="relative aspect-video">
+                            <div
+                                className={isMini
+                                    ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(420px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl shadow-black/35 sm:bottom-5 sm:right-5"
+                                    : "absolute inset-0"
+                                }
                             >
-                                <X className="h-4 w-4" />
-                            </button>
+                                <div className="relative aspect-video">
+                                    {isMini && (
+                                        <div className="absolute left-0 right-0 top-0 z-20 flex h-8 items-center justify-between bg-black/80 px-2.5 text-white">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <Minimize2 className="h-3.5 w-3.5 shrink-0" />
+                                                <span className="truncate text-[11px] font-bold">{mvs[0].title}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={closeActiveVideo}
+                                                className="flex h-6 w-6 shrink-0 items-center justify-center text-white/80 transition-colors hover:text-white"
+                                                aria-label="Fechar vídeo"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${mvs[0].videoId}?${embedFeaturedByDefault ? '' : 'autoplay=1&'}rel=0`}
+                                        className="absolute inset-0 h-full w-full"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        title={mvs[0].title}
+                                    />
+                                    {!isMini && (
+                                        <button
+                                            onClick={closeActiveVideo}
+                                            className="absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center bg-black/70 text-white hover:bg-black transition-colors"
+                                            aria-label="Fechar vídeo"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <button
@@ -130,20 +191,48 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                     {mvs.slice(1).map(mv => (
                         <div key={mv.videoId} className="relative overflow-hidden border border-border bg-black group">
                             {activeId === mv.videoId ? (
-                                <div className="relative aspect-video">
-                                    <iframe
-                                        src={`https://www.youtube.com/embed/${mv.videoId}?autoplay=1&rel=0`}
-                                        className="absolute inset-0 w-full h-full"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                        title={mv.title}
-                                    />
-                                    <button
-                                        onClick={() => setActiveId(null)}
-                                        className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center bg-black/70 text-white"
+                                <div ref={activePlayerHostRef} className="relative aspect-video">
+                                    <div
+                                        className={isMini
+                                            ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(420px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl shadow-black/35 sm:bottom-5 sm:right-5"
+                                            : "absolute inset-0"
+                                        }
                                     >
-                                        <X className="h-3 w-3" />
-                                    </button>
+                                        <div className="relative aspect-video">
+                                            {isMini && (
+                                                <div className="absolute left-0 right-0 top-0 z-20 flex h-8 items-center justify-between bg-black/80 px-2.5 text-white">
+                                                    <div className="flex min-w-0 items-center gap-2">
+                                                        <Minimize2 className="h-3.5 w-3.5 shrink-0" />
+                                                        <span className="truncate text-[11px] font-bold">{mv.title}</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={closeActiveVideo}
+                                                        className="flex h-6 w-6 shrink-0 items-center justify-center text-white/80 transition-colors hover:text-white"
+                                                        aria-label="Fechar vídeo"
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <iframe
+                                                src={`https://www.youtube.com/embed/${mv.videoId}?autoplay=1&rel=0`}
+                                                className="absolute inset-0 h-full w-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                title={mv.title}
+                                            />
+                                            {!isMini && (
+                                                <button
+                                                    onClick={closeActiveVideo}
+                                                    className="absolute top-2 right-2 z-20 flex h-6 w-6 items-center justify-center bg-black/70 text-white"
+                                                    aria-label="Fechar vídeo"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <button
