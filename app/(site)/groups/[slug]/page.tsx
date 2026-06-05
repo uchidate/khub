@@ -336,9 +336,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     background: `linear-gradient(to bottom, ${toRgba(accent, 0.15)} 0%, transparent 25%, rgba(0,0,0,0.15) 55%, var(--color-background, #0a0a0a) 100%)`
                 }} />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
-                {/* Left accent stripe */}
-                <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ background: accent }} />
-                {/* Content overlay */}
+{/* Content overlay */}
                 <div className="absolute inset-0 flex flex-col justify-end">
                     <div className="page-wrap pb-8 sm:pb-10">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
