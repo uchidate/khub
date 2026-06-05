@@ -33,22 +33,44 @@ function toRgba(hex: string, alpha: number): string {
     return `rgba(${r},${g},${b},${alpha})`
 }
 
-function extractYoutubeId(url: string): string | null {
+type VideoType = 'youtube' | 'tiktok'
+
+function detectVideo(url: string): { type: VideoType; id: string } | null {
     try {
         const u = new URL(url)
-        const v = u.searchParams.get('v')
-        if (v) return v
-        if (u.hostname === 'youtu.be') return u.pathname.slice(1)
-        const m = u.pathname.match(/\/embed\/([^/?]+)/)
-        if (m) return m[1]
+        // YouTube
+        if (u.hostname.includes('youtube.com') || u.hostname === 'youtu.be') {
+            const v = u.searchParams.get('v')
+            if (v) return { type: 'youtube', id: v }
+            if (u.hostname === 'youtu.be') return { type: 'youtube', id: u.pathname.slice(1) }
+            const m = u.pathname.match(/\/embed\/([^/?]+)/)
+            if (m) return { type: 'youtube', id: m[1] }
+        }
+        // TikTok
+        if (u.hostname.includes('tiktok.com')) {
+            const m = u.pathname.match(/\/video\/(\d+)/)
+            if (m) return { type: 'tiktok', id: m[1] }
+        }
         return null
     } catch { return null }
 }
 
+function TikTokThumb({ title, accent }: { title: string; accent: string }) {
+    return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #010101 0%, #1a1a2e 100%)' }}>
+            <svg viewBox="0 0 24 24" className="h-8 w-8 fill-white opacity-90"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+            <p className="px-3 text-center text-[11px] font-bold text-white/80 line-clamp-2">{title}</p>
+            <span className="rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-white/50"
+                style={{ border: `1px solid ${accent}40` }}>TikTok</span>
+        </div>
+    )
+}
+
 export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }: GroupMVPlayerProps) {
     const mvs = videos
-        .map(mv => ({ ...mv, videoId: extractYoutubeId(mv.url) }))
-        .filter((mv): mv is typeof mv & { videoId: string } => !!mv.videoId)
+        .map(mv => { const v = detectVideo(mv.url); return v ? { ...mv, ...v } : null })
+        .filter((mv): mv is NonNullable<typeof mv> => !!mv)
 
     const [activeIndex, setActiveIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(embedFeaturedByDefault)
@@ -107,13 +129,16 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                 style={{ borderTopColor: accent, borderTopWidth: 2 }}
             >
                 {isPlaying ? (
-                    <div className="relative aspect-video">
-                        {/* Mini player flutuante quando scroll sai da view */}
+                    // TikTok: portrait centrado com max-w; YouTube: landscape full width
+                    <div className={featured.type === 'tiktok'
+                        ? "flex justify-center bg-black py-2"
+                        : "relative aspect-video"
+                    }>
                         <div className={isMini
-                            ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(420px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl shadow-black/35 sm:bottom-5 sm:right-5"
-                            : "absolute inset-0"
+                            ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(340px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl shadow-black/35 sm:bottom-5 sm:right-5"
+                            : featured.type === 'tiktok' ? "relative w-full max-w-[340px]" : "absolute inset-0"
                         }>
-                            <div className="relative aspect-video">
+                            <div className={featured.type === 'tiktok' ? "relative aspect-[9/16]" : "relative aspect-video"}>
                                 {isMini && (
                                     <div className="absolute left-0 right-0 top-0 z-20 flex h-8 items-center justify-between bg-black/80 px-2.5 text-white">
                                         <div className="flex min-w-0 items-center gap-2">
@@ -128,8 +153,11 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                                     </div>
                                 )}
                                 <iframe
-                                    key={`${featured.videoId}-${activeIndex}`}
-                                    src={`https://www.youtube.com/embed/${featured.videoId}?autoplay=1&rel=0`}
+                                    key={`${featured.id}-${activeIndex}`}
+                                    src={featured.type === 'tiktok'
+                                        ? `https://www.tiktok.com/embed/v2/${featured.id}`
+                                        : `https://www.youtube.com/embed/${featured.id}?autoplay=1&rel=0`
+                                    }
                                     className="absolute inset-0 h-full w-full"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
@@ -148,21 +176,31 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                 ) : (
                     <button
                         onClick={() => setIsPlaying(true)}
-                        className="group relative block w-full aspect-video text-left"
+                        className={`group relative block w-full text-left ${featured.type === 'tiktok' ? 'flex justify-center bg-black' : 'aspect-video'}`}
                     >
-                        <YTThumb videoId={featured.videoId} title={featured.title} sizes="100vw"
-                            className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                        <div className={featured.type === 'tiktok' ? 'relative w-full max-w-[340px] aspect-[9/16]' : 'absolute inset-0 w-full h-full'}>
+                            {featured.type === 'youtube' ? (
+                                <YTThumb videoId={featured.id} title={featured.title} sizes="100vw"
+                                    className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300" />
+                            ) : (
+                                <TikTokThumb title={featured.title} accent={accent} />
+                            )}
+                        </div>
+                        {featured.type === 'youtube' && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="flex h-16 w-16 items-center justify-center transition-transform duration-200 group-hover:scale-110"
                                 style={{ background: toRgba(accent, 0.9) }}>
                                 <Play className="h-7 w-7 text-white fill-white ml-1" />
                             </div>
                         </div>
-                        <div className="absolute bottom-4 left-4 right-4">
-                            <p className="font-mono text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">Em destaque</p>
-                            <p className="text-base font-black text-white leading-tight">{featured.title}</p>
-                        </div>
+                        {featured.type === 'youtube' && (
+                            <div className="absolute bottom-4 left-4 right-4">
+                                <p className="font-mono text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">Em destaque</p>
+                                <p className="text-base font-black text-white leading-tight">{featured.title}</p>
+                            </div>
+                        )}
                     </button>
                 )}
             </div>
@@ -174,7 +212,7 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                         const isActive = i === activeIndex
                         return (
                             <button
-                                key={mv.videoId}
+                                key={mv.id}
                                 onClick={() => selectVideo(i)}
                                 className="group relative aspect-video overflow-hidden border bg-black text-left transition-all"
                                 style={{
@@ -183,12 +221,16 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                                 }}
                                 title={mv.title}
                             >
-                                <YTThumb
-                                    videoId={mv.videoId}
-                                    title={mv.title}
-                                    sizes="(max-width: 640px) 33vw, 25vw"
-                                    className={`object-cover transition-all duration-200 ${isActive ? 'brightness-50' : 'brightness-70 group-hover:brightness-90'}`}
-                                />
+                                {mv.type === 'youtube' ? (
+                                    <YTThumb
+                                        videoId={mv.id}
+                                        title={mv.title}
+                                        sizes="(max-width: 640px) 33vw, 25vw"
+                                        className={`object-cover transition-all duration-200 ${isActive ? 'brightness-50' : 'brightness-70 group-hover:brightness-90'}`}
+                                    />
+                                ) : (
+                                    <TikTokThumb title={mv.title} accent={accent} />
+                                )}
                                 {/* Indicador de ativo */}
                                 {isActive && isPlaying ? (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
