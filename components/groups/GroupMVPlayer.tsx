@@ -2,27 +2,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Play, X, ExternalLink, Minimize2 } from 'lucide-react'
+import { Play, X, Minimize2 } from 'lucide-react'
 
-function YTThumb({ videoId, title, sizes, className }: { videoId: string; title: string; sizes: string; className?: string }) {
-    const [src, setSrc] = useState(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`)
-    return (
-        <Image
-            src={src}
-            alt={title}
-            fill
-            sizes={sizes}
-            className={className}
-            onError={() => setSrc(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`)}
-        />
-    )
+// ── Types & helpers ───────────────────────────────────────────────────────────
+
+export interface VideoItem {
+    title: string
+    url: string
 }
 
-interface MV { title: string; url: string }
-interface GroupMVPlayerProps {
-    videos: MV[]
-    accent: string
-    embedFeaturedByDefault?: boolean
+export function extractYoutubeId(url: string): string | null {
+    try {
+        const u = new URL(url)
+        if (u.hostname.includes('youtube.com') || u.hostname === 'youtu.be') {
+            const v = u.searchParams.get('v')
+            if (v) return v
+            if (u.hostname === 'youtu.be') return u.pathname.slice(1)
+            const m = u.pathname.match(/\/embed\/([^/?]+)/)
+            if (m) return m[1]
+        }
+        return null
+    } catch { return null }
 }
 
 function toRgba(hex: string, alpha: number): string {
@@ -33,72 +33,75 @@ function toRgba(hex: string, alpha: number): string {
     return `rgba(${r},${g},${b},${alpha})`
 }
 
-type VideoType = 'youtube' | 'tiktok'
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function detectVideo(url: string): { type: VideoType; id: string } | null {
-    try {
-        const u = new URL(url)
-        // YouTube
-        if (u.hostname.includes('youtube.com') || u.hostname === 'youtu.be') {
-            const v = u.searchParams.get('v')
-            if (v) return { type: 'youtube', id: v }
-            if (u.hostname === 'youtu.be') return { type: 'youtube', id: u.pathname.slice(1) }
-            const m = u.pathname.match(/\/embed\/([^/?]+)/)
-            if (m) return { type: 'youtube', id: m[1] }
-        }
-        // TikTok
-        if (u.hostname.includes('tiktok.com')) {
-            const m = u.pathname.match(/\/video\/(\d+)/)
-            if (m) return { type: 'tiktok', id: m[1] }
-        }
-        return null
-    } catch { return null }
+function YTThumb({ id, title, sizes, className }: { id: string; title: string; sizes: string; className?: string }) {
+    const [src, setSrc] = useState(`https://img.youtube.com/vi/${id}/maxresdefault.jpg`)
+    return (
+        <Image src={src} alt={title} fill sizes={sizes} className={className}
+            onError={() => setSrc(`https://img.youtube.com/vi/${id}/hqdefault.jpg`)} />
+    )
 }
 
-function TikTokThumb({ title, accent }: { title: string; accent: string }) {
+function PlayButton({ size = 'lg', accent }: { size?: 'lg' | 'sm'; accent: string }) {
     return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #010101 0%, #1a1a2e 100%)' }}>
-            <svg viewBox="0 0 24 24" className="h-8 w-8 fill-white opacity-90"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
-            <p className="px-3 text-center text-[11px] font-bold text-white/80 line-clamp-2">{title}</p>
-            <span className="rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-white/50"
-                style={{ border: `1px solid ${accent}40` }}>TikTok</span>
+        <div className={`flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${size === 'lg' ? 'h-16 w-16' : 'h-8 w-8'}`}
+            style={{ background: toRgba(accent, 0.9) }}>
+            <Play className={`text-white fill-white ${size === 'lg' ? 'h-7 w-7 ml-1' : 'h-3.5 w-3.5 ml-0.5'}`} />
         </div>
     )
 }
 
+function EqualizerBars({ accent }: { accent: string }) {
+    return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <div className="flex items-end gap-[3px] h-4">
+                {[0, 150, 300].map(delay => (
+                    <span key={delay} className="w-[3px] rounded-full animate-equalizador"
+                        style={{ background: accent, animationDelay: `${delay}ms` }} />
+                ))}
+            </div>
+            <p className="font-mono text-[8px] uppercase tracking-widest text-white/80">Reproduzindo</p>
+        </div>
+    )
+}
+
+// ── Main component (YouTube only) ─────────────────────────────────────────────
+
+interface GroupMVPlayerProps {
+    videos: VideoItem[]
+    accent: string
+    embedFeaturedByDefault?: boolean
+}
+
 export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }: GroupMVPlayerProps) {
     const mvs = videos
-        .map(mv => { const v = detectVideo(mv.url); return v ? { ...mv, ...v } : null })
-        .filter((mv): mv is NonNullable<typeof mv> => !!mv)
+        .map(mv => { const id = extractYoutubeId(mv.url); return id ? { ...mv, id } : null })
+        .filter((mv): mv is VideoItem & { id: string } => mv !== null)
 
     const [activeIndex, setActiveIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(embedFeaturedByDefault)
     const [isMini, setIsMini] = useState(false)
     const featuredRef = useRef<HTMLDivElement | null>(null)
 
-    // Mini player: ativa quando o featured scroll sai da viewport
     useEffect(() => {
         if (!isPlaying) { setIsMini(false); return }
         const update = () => {
             const el = featuredRef.current
             if (!el) return
-            const rect = el.getBoundingClientRect()
-            const out = rect.bottom < 100 || rect.top > window.innerHeight - 80
-            setIsMini(out && window.innerWidth >= 360 && window.innerHeight >= 520)
+            const { top, bottom } = el.getBoundingClientRect()
+            setIsMini(
+                (bottom < 100 || top > window.innerHeight - 80) &&
+                window.innerWidth >= 360 && window.innerHeight >= 520
+            )
         }
         update()
         window.addEventListener('scroll', update, { passive: true })
         window.addEventListener('resize', update)
         return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
-    }, [isPlaying])
+    }, [isPlaying, activeIndex])
 
-    const selectVideo = (index: number) => {
-        setActiveIndex(index)
-        setIsPlaying(true)
-        setIsMini(false)
-    }
-
+    const select = (i: number) => { setActiveIndex(i); setIsPlaying(true); setIsMini(false) }
     const close = () => { setIsPlaying(false); setIsMini(false) }
 
     if (mvs.length === 0) return null
@@ -106,7 +109,6 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
 
     return (
         <section id="mvs">
-            {/* Header */}
             <div className="mb-5 flex items-end justify-between gap-4 border-b border-foreground pb-3">
                 <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center border border-border bg-background">
@@ -122,51 +124,37 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                 </p>
             </div>
 
-            {/* Featured slot */}
-            <div
-                ref={featuredRef}
-                className="relative mb-4 overflow-hidden border border-border bg-black"
-                style={{ borderTopColor: accent, borderTopWidth: 2 }}
-            >
+            {/* Featured */}
+            <div ref={featuredRef} className="mb-4 overflow-hidden border border-border bg-black"
+                style={{ borderTopColor: accent, borderTopWidth: 2 }}>
                 {isPlaying ? (
-                    // TikTok: portrait centrado com max-w; YouTube: landscape full width
-                    <div className={featured.type === 'tiktok'
-                        ? "flex justify-center bg-black py-2"
-                        : "relative aspect-video"
-                    }>
+                    <div className="relative aspect-video">
                         <div className={isMini
-                            ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(340px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl shadow-black/35 sm:bottom-5 sm:right-5"
-                            : featured.type === 'tiktok' ? "relative w-full max-w-[340px]" : "absolute inset-0"
+                            ? "fixed bottom-[calc(var(--bottom-nav-h,0px)+1rem)] right-3 z-[260] w-[min(420px,calc(100vw-1.5rem))] overflow-hidden border border-white/15 bg-black shadow-2xl sm:bottom-5 sm:right-5"
+                            : "absolute inset-0"
                         }>
-                            <div className={featured.type === 'tiktok' ? "relative aspect-[9/16]" : "relative aspect-video"}>
+                            <div className="relative aspect-video">
                                 {isMini && (
                                     <div className="absolute left-0 right-0 top-0 z-20 flex h-8 items-center justify-between bg-black/80 px-2.5 text-white">
                                         <div className="flex min-w-0 items-center gap-2">
                                             <Minimize2 className="h-3.5 w-3.5 shrink-0" />
                                             <span className="truncate text-[11px] font-bold">{featured.title}</span>
                                         </div>
-                                        <button type="button" onClick={close}
-                                            className="flex h-6 w-6 shrink-0 items-center justify-center text-white/80 hover:text-white"
-                                            aria-label="Fechar vídeo">
+                                        <button type="button" onClick={close} aria-label="Fechar"
+                                            className="flex h-6 w-6 shrink-0 items-center justify-center text-white/80 hover:text-white">
                                             <X className="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 )}
-                                <iframe
-                                    key={`${featured.id}-${activeIndex}`}
-                                    src={featured.type === 'tiktok'
-                                        ? `https://www.tiktok.com/embed/v2/${featured.id}`
-                                        : `https://www.youtube.com/embed/${featured.id}?autoplay=1&rel=0`
-                                    }
+                                <iframe key={`${featured.id}-${activeIndex}`}
+                                    src={`https://www.youtube.com/embed/${featured.id}?autoplay=1&rel=0`}
                                     className="absolute inset-0 h-full w-full"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    title={featured.title}
+                                    allowFullScreen title={featured.title}
                                 />
                                 {!isMini && (
-                                    <button onClick={close}
-                                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center bg-black/70 text-white hover:bg-black transition-colors"
-                                        aria-label="Fechar vídeo">
+                                    <button onClick={close} aria-label="Fechar"
+                                        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center bg-black/70 text-white hover:bg-black transition-colors">
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
@@ -174,78 +162,37 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                         </div>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => setIsPlaying(true)}
-                        className={`group relative block w-full text-left ${featured.type === 'tiktok' ? 'flex justify-center bg-black' : 'aspect-video'}`}
-                    >
-                        <div className={featured.type === 'tiktok' ? 'relative w-full max-w-[340px] aspect-[9/16]' : 'absolute inset-0 w-full h-full'}>
-                            {featured.type === 'youtube' ? (
-                                <YTThumb videoId={featured.id} title={featured.title} sizes="100vw"
-                                    className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300" />
-                            ) : (
-                                <TikTokThumb title={featured.title} accent={accent} />
-                            )}
-                        </div>
-                        {featured.type === 'youtube' && (
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                        )}
+                    <button onClick={() => setIsPlaying(true)} className="group relative block w-full aspect-video text-left">
+                        <YTThumb id={featured.id} title={featured.title} sizes="100vw"
+                            className="object-cover brightness-75 group-hover:brightness-90 transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="flex h-16 w-16 items-center justify-center transition-transform duration-200 group-hover:scale-110"
-                                style={{ background: toRgba(accent, 0.9) }}>
-                                <Play className="h-7 w-7 text-white fill-white ml-1" />
-                            </div>
+                            <PlayButton size="lg" accent={accent} />
                         </div>
-                        {featured.type === 'youtube' && (
-                            <div className="absolute bottom-4 left-4 right-4">
-                                <p className="font-mono text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">Em destaque</p>
-                                <p className="text-base font-black text-white leading-tight">{featured.title}</p>
-                            </div>
-                        )}
+                        <div className="absolute bottom-4 left-4 right-4">
+                            <p className="font-mono text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">Em destaque</p>
+                            <p className="text-base font-black text-white leading-tight">{featured.title}</p>
+                        </div>
                     </button>
                 )}
             </div>
 
-            {/* Thumbnails — todas, incluindo a ativa */}
+            {/* Grid de thumbnails */}
             {mvs.length > 1 && (
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {mvs.map((mv, i) => {
                         const isActive = i === activeIndex
                         return (
-                            <button
-                                key={mv.id}
-                                onClick={() => selectVideo(i)}
+                            <button key={mv.id} onClick={() => select(i)} title={mv.title}
                                 className="group relative aspect-video overflow-hidden border bg-black text-left transition-all"
-                                style={{
-                                    borderColor: isActive ? accent : 'var(--color-border)',
-                                    borderWidth: isActive ? 2 : 1,
-                                }}
-                                title={mv.title}
-                            >
-                                {mv.type === 'youtube' ? (
-                                    <YTThumb
-                                        videoId={mv.id}
-                                        title={mv.title}
-                                        sizes="(max-width: 640px) 33vw, 25vw"
-                                        className={`object-cover transition-all duration-200 ${isActive ? 'brightness-50' : 'brightness-70 group-hover:brightness-90'}`}
-                                    />
-                                ) : (
-                                    <TikTokThumb title={mv.title} accent={accent} />
-                                )}
-                                {/* Indicador de ativo */}
-                                {isActive && isPlaying ? (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                                        <div className="flex items-end gap-[3px] h-4">
-                                            <span className="w-[3px] rounded-full animate-[equalizador_0.6s_ease-in-out_infinite]" style={{ background: accent, animationDelay: '0ms', height: '40%' }} />
-                                            <span className="w-[3px] rounded-full animate-[equalizador_0.6s_ease-in-out_infinite]" style={{ background: accent, animationDelay: '150ms', height: '100%' }} />
-                                            <span className="w-[3px] rounded-full animate-[equalizador_0.6s_ease-in-out_infinite]" style={{ background: accent, animationDelay: '300ms', height: '60%' }} />
-                                        </div>
-                                        <p className="font-mono text-[8px] uppercase tracking-widest text-white/80">Reproduzindo</p>
-                                    </div>
-                                ) : isActive ? (
+                                style={{ borderColor: isActive ? accent : 'var(--color-border)', borderWidth: isActive ? 2 : 1 }}>
+                                <YTThumb id={mv.id} title={mv.title}
+                                    sizes="(max-width: 640px) 33vw, 25vw"
+                                    className={`object-cover transition-all duration-200 ${isActive ? 'brightness-50' : 'brightness-70 group-hover:brightness-90'}`}
+                                />
+                                {isActive && isPlaying ? <EqualizerBars accent={accent} /> : isActive ? (
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="flex h-8 w-8 items-center justify-center" style={{ background: toRgba(accent, 0.9) }}>
-                                            <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
-                                        </div>
+                                        <PlayButton size="sm" accent={accent} />
                                     </div>
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -254,16 +201,11 @@ export function GroupMVPlayer({ videos, accent, embedFeaturedByDefault = false }
                                         </div>
                                     </div>
                                 )}
-                                {/* Link externo */}
-                                <a href={mv.url} target="_blank" rel="noopener noreferrer"
-                                    onClick={e => e.stopPropagation()}
-                                    className="absolute right-1.5 top-1.5 z-10 flex h-5 w-5 items-center justify-center bg-black/60 text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ExternalLink className="h-2.5 w-2.5" />
-                                </a>
-                                {/* Título no hover */}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent px-2 py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                                    <p className="text-[10px] font-bold text-white line-clamp-1">{mv.title}</p>
-                                </div>
+                                {!isActive && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent px-2 py-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                                        <p className="text-[10px] font-bold text-white line-clamp-1">{mv.title}</p>
+                                    </div>
+                                )}
                             </button>
                         )
                     })}

@@ -8,7 +8,8 @@ import { ViewTracker } from "@/components/features/ViewTracker"
 import { DiscographySection } from "@/components/features/DiscographySection"
 import { CuriosidadesAside } from "@/components/features/CuriosidadesAside"
 import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
-import { GroupMVPlayer } from "@/components/groups/GroupMVPlayer"
+import { GroupMVPlayer, extractYoutubeId } from "@/components/groups/GroupMVPlayer"
+import { TikTokSection } from "@/components/groups/TikTokSection"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -820,15 +821,25 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     </div>
                 )}
                 {(() => {
-                    // Merge videoBlock da biografia com a lista de vídeos do DB (sem duplicatas)
                     const allVideos = videoBlock
                         ? [{ title: 'Vídeo em Destaque', url: videoBlock.url }, ...videos.filter(v => v.url !== videoBlock.url)]
                         : videos
-                    return allVideos.length > 0 ? (
-                        <div id="mvs" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
-                            <GroupMVPlayer videos={allVideos} accent="#ef4444" embedFeaturedByDefault />
-                        </div>
-                    ) : null
+                    const youtubeVideos = allVideos.filter(v => !!extractYoutubeId(v.url))
+                    const tiktokVideos = allVideos.filter(v => v.url.includes('tiktok.com'))
+                    return (
+                        <>
+                            {youtubeVideos.length > 0 && (
+                                <div className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
+                                    <GroupMVPlayer videos={youtubeVideos} accent="#ef4444" embedFeaturedByDefault />
+                                </div>
+                            )}
+                            {tiktokVideos.length > 0 && (
+                                <div id="tiktoks" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
+                                    <TikTokSection videos={tiktokVideos} accent="#ef4444" />
+                                </div>
+                            )}
+                        </>
+                    )
                 })()}
                 {discographyReleases.length > 0 && (
                     <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
