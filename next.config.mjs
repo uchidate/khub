@@ -5,6 +5,7 @@ const nextConfig = {
         staleTimes: {
             dynamic: 0,
         },
+        staticGenerationMaxConcurrency: 2,
     },
     async rewrites() {
         // /um/api/send é servido pela route handler em app/um/api/send/route.ts
