@@ -73,6 +73,24 @@ grep -o "TERMO_NOVO" /tmp/page.html | sort | uniq -c
 - Antes de SQL direto em produção, conferir `\d "Tabela"` ou `prisma/schema.prisma`.
 - Em produção, usar transação. Se uma coluna não existir, garantir rollback antes de repetir.
 
+### Conferir artista duplicado antes de corrigir slug
+
+**Erro observado:** ao corrigir IZ*ONE, havia uma artista `Hitomi` sem slug e outra canônica `hitomi-honda`. Tentar atribuir o slug canônico direto na duplicada bateria na restrição única.
+
+**Causa:** importações anteriores podem criar artistas parciais sem slug, enquanto o perfil correto já existe com histórico, papéis e conteúdo editorial.
+
+**Como evitar:**
+
+- Antes de alterar slug em produção, buscar nomes parecidos e slugs existentes.
+- Quando existir perfil canônico, mover `ArtistGroupMembership` para esse artista em vez de criar conflito de slug.
+- Ocultar o registro órfão apenas depois de confirmar que não sobrou membership vinculado a ele.
+
+**Correção aplicada em 2026-06-05:**
+
+- Membership histórica da Hitomi em IZ*ONE movida para `hitomi-honda`.
+- Registro órfão `Hitomi` sem slug ocultado após ficar sem vínculos.
+- IZ*ONE marcado como grupo encerrado em 2021-04-29 com as 12 integrantes históricas inativas e ordenadas.
+
 ## Build e validação
 
 ### `.env.local` pode apontar para túnel remoto
