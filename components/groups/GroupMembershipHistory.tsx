@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { CalendarDays, History, UserCheck, UserMinus } from 'lucide-react'
+import { History, UserCheck, UserMinus } from 'lucide-react'
 import type { GroupMembershipHistory as GroupMembershipHistoryModel, GroupMembershipRecord, MembershipHistoryEvent } from '@/lib/groups/membership-history'
 
 function toRgba(hex: string, alpha: number) {
@@ -130,73 +130,31 @@ export function GroupMembershipHistory({ history, accent }: {
     history: GroupMembershipHistoryModel
     accent: string
 }) {
-    if (history.allMembers.length === 0) return null
-
-    const recentEvents = history.events.slice(0, 8)
+    if (history.formerMembers.length === 0) return null
 
     return (
         <section id="historico-integrantes">
-            <div className="mb-5 flex items-end justify-between gap-4 border-b border-foreground pb-3">
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center border border-border bg-background">
-                        <History className="h-5 w-5" style={{ color: accent }} />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Dossiê</p>
-                        <h2 className="text-xl font-black tracking-[-0.03em] text-foreground">Histórico de integrantes</h2>
-                    </div>
-                </div>
-                <p className="shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
-                    {history.allMembers.length} {history.allMembers.length === 1 ? 'registro' : 'registros'}
+            <div className="mb-4 flex items-center gap-3 border-b border-foreground pb-3">
+                <History className="h-4 w-4 shrink-0" style={{ color: accent }} />
+                <p className="font-mono text-[10px] font-black uppercase tracking-[0.12em] text-muted">
+                    Ex-integrantes · {history.formerMembers.length}
                 </p>
             </div>
-
-            <div className="overflow-hidden border border-border bg-background">
-                <div className="grid grid-cols-2 border-b border-border bg-surface/50 sm:grid-cols-4">
-                    <HistoryStat label="Formação atual" value={history.currentMembers.length} accent={accent} />
-                    <HistoryStat label="Ex-integrantes" value={history.formerMembers.length} accent={accent} />
-                    <HistoryStat label="Total histórico" value={history.allMembers.length} accent={accent} />
-                    <HistoryStat label="Desde" value={history.firstKnownYear ?? '—'} accent={accent} />
-                </div>
-
-                <div className="divide-y divide-border">
-                    {history.allMembers.map((member) => (
-                        <MembershipHistoryRow key={member.id} member={member} accent={accent} />
-                    ))}
-                </div>
-
-                {recentEvents.length > 0 && (
-                    <div className="border-t border-border">
-                        <div className="flex items-center gap-2 px-4 py-3">
-                            <CalendarDays className="h-4 w-4" style={{ color: accent }} />
-                            <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Mudanças registradas</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {history.formerMembers.map((member) => (
+                    <Link
+                        key={member.id}
+                        href={`/artists/${member.artist.slug ?? member.artist.id}`}
+                        className="flex items-center gap-3 border border-border bg-background p-3 opacity-70 transition-opacity hover:opacity-100"
+                    >
+                        <MemberAvatar member={member} accent={accent} />
+                        <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-foreground">{member.artist.nameRomanized}</p>
+                            <p className="truncate text-[10px] font-mono uppercase tracking-[0.08em] text-muted">{periodLabel(member)}</p>
                         </div>
-                        <div className="divide-y divide-border">
-                            {recentEvents.map((event) => (
-                                <MembershipEventRow key={event.id} event={event} accent={accent} />
-                            ))}
-                        </div>
-                    </div>
-                )}
+                    </Link>
+                ))}
             </div>
-
-            {history.formerMembers.length > 0 && (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {history.formerMembers.map((member) => (
-                        <Link
-                            key={member.id}
-                            href={`/artists/${member.artist.slug ?? member.artist.id}`}
-                            className="flex items-center gap-3 border border-border bg-background p-3 opacity-80 transition-opacity hover:opacity-100"
-                        >
-                            <MemberAvatar member={member} accent={accent} />
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-black text-foreground">{member.artist.nameRomanized}</p>
-                                <p className="truncate text-[10px] font-mono uppercase tracking-[0.08em] text-muted">{periodLabel(member)}</p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            )}
         </section>
     )
 }
