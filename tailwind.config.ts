@@ -94,6 +94,7 @@ const config: Config = {
                 'home-marquee': 'home-marquee 24s linear infinite',
                 'slideUp': 'slideUp 300ms ease-out',
                 'fadeInUp': 'fadeInUp 350ms ease-out',
+                'equalizador': 'equalizador 0.6s ease-in-out infinite',
             },
             keyframes: {
                 float: {
@@ -127,6 +128,10 @@ const config: Config = {
                 fadeInUp: {
                     '0%': { transform: 'translateY(24px)', opacity: '0' },
                     '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                equalizador: {
+                    '0%, 100%': { transform: 'scaleY(0.4)' },
+                    '50%': { transform: 'scaleY(1)' },
                 },
             }
         },
