@@ -158,15 +158,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const nameMeaning = group.nameMeaning ?? null
     const videos = (group.videos as Array<{ title: string; url: string }>) || []
     const websiteUrl = socialLinks.website ?? socialLinks.Website ?? socialLinks.official ?? null
-    const roleBreakdown = Array.from(
-        activeMembers.reduce((map, member) => {
-            const role = member.role?.trim() || 'Membro'
-            map.set(role, (map.get(role) ?? 0) + 1)
-            return map
-        }, new Map<string, number>())
-    )
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6)
 
     const postSelect = {
         id: true,
@@ -571,28 +562,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             )}
                         </div>
 
-                        {/* Formação — role breakdown */}
-                        {roleBreakdown.length > 0 && (
-                            <div className="border border-border bg-background p-4">
-                                <h3 className="mb-3 font-mono text-[10px] font-black uppercase tracking-[0.14em] text-muted">Composição atual</h3>
-                                <div className="space-y-2">
-                                    {roleBreakdown.map(([role, count]) => {
-                                        const pct = Math.max(8, Math.round((count / activeMembers.length) * 100))
-                                        return (
-                                            <div key={role}>
-                                                <div className="flex items-center justify-between text-xs mb-1">
-                                                    <span className="font-semibold text-foreground">{role}</span>
-                                                    <span className="text-muted font-mono">{count}</span>
-                                                </div>
-                                                <div className="h-1 overflow-hidden bg-surface">
-                                                    <div className="h-full transition-all" style={{ width: `${pct}%`, background: accent }} />
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        )}
 
                         {/* Links externos — compacto */}
                         {(websiteUrl || spotifyUrl || visibleSocialLinks.length > 0) && (
