@@ -462,22 +462,11 @@ export function HomeFrontPage({
                             )}
                         </div>
                         {spotlightArtist && (
-                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="group relative mt-6 block overflow-hidden border border-foreground bg-foreground text-background transition-opacity hover:opacity-95">
-                                {spotlightArtist.primaryImageUrl && (
-                                    <>
-                                        <Image
-                                            src={spotlightArtist.primaryImageUrl}
-                                            alt={spotlightArtist.nameRomanized}
-                                            fill
-                                            sizes="330px"
-                                            className="object-cover object-top opacity-30 transition-transform duration-700 group-hover:scale-[1.04]"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/70 to-foreground/30" />
-                                    </>
-                                )}
-                                <div className="relative p-5">
+                            <Link href={`/artists/${spotlightArtist.slug ?? spotlightArtist.id}`} className="group mt-6 flex overflow-hidden border border-foreground bg-foreground text-background transition-opacity hover:opacity-95">
+                                {/* Informações — lado esquerdo */}
+                                <div className="flex flex-1 flex-col justify-center p-5">
                                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-accent">Destaque da semana</p>
-                                    <h3 className="mt-2 text-2xl font-black tracking-[-0.04em]">{spotlightArtist.nameRomanized}</h3>
+                                    <h3 className="mt-2 text-2xl font-black tracking-[-0.04em] leading-tight">{spotlightArtist.nameRomanized}</h3>
                                     <p className="mt-1 text-xs text-background/65">{spotlightArtist.nameHangul ?? spotlightArtist.agency?.name ?? "Perfil em foco"}</p>
                                     {spotlightProduction && (
                                         <p className="mt-4 border-t border-background/20 pt-3 text-xs text-background/75">
@@ -485,6 +474,18 @@ export function HomeFrontPage({
                                         </p>
                                     )}
                                 </div>
+                                {/* Foto — lado direito */}
+                                {spotlightArtist.primaryImageUrl && (
+                                    <div className="relative w-28 shrink-0 overflow-hidden">
+                                        <Image
+                                            src={spotlightArtist.primaryImageUrl}
+                                            alt={spotlightArtist.nameRomanized}
+                                            fill
+                                            sizes="112px"
+                                            className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.04]"
+                                        />
+                                    </div>
+                                )}
                             </Link>
                         )}
                     </aside>
