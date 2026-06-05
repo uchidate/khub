@@ -797,7 +797,6 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         {renderBiographyContent({
                             bioText: bioText ?? (!artist.analiseEditorial ? primaryBio : null),
                         })}
-                        {videoBlock && renderVideoBlock(videoBlock.url)}
                         {timelineBlock && renderTimelineBlock(timelineBlock)}
                         {starterBlocks.length > 0 && renderStarterBlocks(starterBlocks)}
                     </div>
@@ -820,11 +819,17 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
                     </div>
                 )}
-                {videos.length > 0 && (
-                    <div id="mvs" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
-                        <GroupMVPlayer videos={videos} accent="#ef4444" embedFeaturedByDefault />
-                    </div>
-                )}
+                {(() => {
+                    // Merge videoBlock da biografia com a lista de vídeos do DB (sem duplicatas)
+                    const allVideos = videoBlock
+                        ? [{ title: 'Vídeo em Destaque', url: videoBlock.url }, ...videos.filter(v => v.url !== videoBlock.url)]
+                        : videos
+                    return allVideos.length > 0 ? (
+                        <div id="mvs" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
+                            <GroupMVPlayer videos={allVideos} accent="#ef4444" embedFeaturedByDefault />
+                        </div>
+                    ) : null
+                })()}
                 {discographyReleases.length > 0 && (
                     <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
                         <DiscographySection albums={discographyReleases} />
