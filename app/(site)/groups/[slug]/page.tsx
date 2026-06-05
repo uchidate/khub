@@ -32,7 +32,9 @@ import { GroupColorIdentity } from '@/components/groups/GroupColorIdentity'
 import { GroupMemberCard } from '@/components/groups/GroupMemberCard'
 import { GroupMemberPoll } from '@/components/groups/GroupMemberPoll'
 import { GroupErasTimeline } from '@/components/groups/GroupErasTimeline'
+import { GroupMembershipHistory } from '@/components/groups/GroupMembershipHistory'
 import { getPrimaryMusicLink, getPublicMusicCatalog } from '@/lib/music/public-music-catalog'
+import { buildGroupMembershipHistory } from '@/lib/groups/membership-history'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -139,12 +141,14 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
 
     if (!group || group.isHidden) notFound()
 
-    const activeMembers = group.members.filter(m => m.isActive)
-    const formerMembers = group.members.filter(m => !m.isActive)
     const curiosidades = group.curiosidades ?? []
     const analiseEditorial = group.analiseEditorial ?? null
     const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
     const disbandYear = group.disbandDate ? new Date(group.disbandDate).getUTCFullYear() : null
+    const membershipHistory = buildGroupMembershipHistory(group.members, debutYear)
+    const activeMembers = membershipHistory.currentMembers
+    const formerMembers = membershipHistory.formerMembers
+    const shouldShowMembershipHistory = formerMembers.length > 0 || membershipHistory.hasKnownDates
     const currentYear = new Date().getFullYear()
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
     const socialLinks = (group.socialLinks as Record<string, string>) || {}
@@ -465,8 +469,8 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             {(Object.keys(socialLinks).length > 0 || spotifyUrl) && (
                                 <a href="#redes" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Redes</a>
                             )}
-                            {formerMembers.length > 0 && (
-                                <a href="#ex-membros" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Ex-membros</a>
+                            {shouldShowMembershipHistory && (
+                                <a href="#historico-integrantes" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Histórico</a>
                             )}
                         </div>
                     </div>
@@ -638,7 +642,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         {/* Membros atuais */}
                         {activeMembers.length > 0 && (
                             <section id="membros">
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Membros" count={activeMembers.length} countLabel={activeMembers.length === 1 ? 'membro' : 'membros'} accent={accent} />
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Formação atual" count={activeMembers.length} countLabel={activeMembers.length === 1 ? 'membro' : 'membros'} accent={accent} />
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                                     {activeMembers.map(member => (
                                         <GroupMemberCard
@@ -666,6 +670,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                 accent={accent}
                                 groupName={group.name}
                             />
+                        )}
+
+                        {/* Histórico de integrantes */}
+                        {shouldShowMembershipHistory && (
+                            <GroupMembershipHistory history={membershipHistory} accent={accent} />
                         )}
 
                         {/* ── NÚMEROS DE IMPACTO — extraído dos facts (não HISTÓRICO) ── */}
@@ -929,18 +938,6 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                 accent={accent}
                                 groupName={group.name}
                             />
-                        )}
-
-                        {/* Ex-membros */}
-                        {formerMembers.length > 0 && (
-                            <section id="ex-membros">
-                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Ex-Membros" count={formerMembers.length} countLabel={formerMembers.length === 1 ? 'membro' : 'membros'} muted accent={accent} />
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                                    {formerMembers.map(member => (
-                                        <GroupMemberCard key={member.id} member={member} faded accent={accent} />
-                                    ))}
-                                </div>
-                            </section>
                         )}
 
                         {/* Estado vazio */}

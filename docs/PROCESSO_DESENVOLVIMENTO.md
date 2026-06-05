@@ -4,6 +4,8 @@
 
 Este documento define o processo obrigatório para desenvolvimento para **prevenir erros em produção**.
 
+**Memória operacional:** sempre que um erro novo for descoberto, registre causa e prevenção em [APRENDIZADOS_OPERACIONAIS.md](APRENDIZADOS_OPERACIONAIS.md) no mesmo PR/commit da correção.
+
 ---
 
 ## 🚨 FLUXO OBRIGATÓRIO DE BRANCHES
