@@ -139,8 +139,8 @@ export function GscInsightsPanel() {
                         </div>
                     ))}
                     {opportunities.length > 8 && (
-                        <Link href="/admin/analytics" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
-                            + {opportunities.length - 8} mais no analytics completo
+                        <Link href="/admin/analytics/gsc" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
+                            + {opportunities.length - 8} mais no GSC completo
                         </Link>
                     )}
                 </div>
@@ -161,7 +161,7 @@ export function GscInsightsPanel() {
                         </div>
                     ))}
                     {pagesNoClick.length > 8 && (
-                        <Link href="/admin/analytics" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
+                        <Link href="/admin/analytics/gsc" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
                             + {pagesNoClick.length - 8} mais no analytics completo
                         </Link>
                     )}
@@ -183,7 +183,7 @@ export function GscInsightsPanel() {
                         </div>
                     ))}
                     {fallingQueries.length > 8 && (
-                        <Link href="/admin/analytics" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
+                        <Link href="/admin/analytics/gsc" className="block text-center text-[10px] text-muted hover:text-foreground pt-1 transition-colors">
                             + {fallingQueries.length - 8} mais no analytics completo
                         </Link>
                     )}
