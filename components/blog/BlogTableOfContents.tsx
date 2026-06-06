@@ -44,11 +44,28 @@ export function BlogTableOfContents() {
     })
   }
 
-  // Auto-scroll do item ativo dentro da lista do TOC
+  // Auto-scroll do item ativo — rola APENAS o container overflow da sidebar,
+  // nunca a página. listRef.current não tem overflow próprio; usamos scrollTop
+  // diretamente no ancestral mais próximo que tenha overflow-y-auto.
   useEffect(() => {
     if (!active || !open) return
-    const el = listRef.current?.querySelector<HTMLElement>(`[data-id="${active}"]`)
-    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    const item = listRef.current?.querySelector<HTMLElement>(`[data-id="${active}"]`)
+    if (!item) return
+    // Encontra o primeiro ancestral com overflow scroll/auto (sidebar div)
+    let container: HTMLElement | null = item.parentElement
+    while (container && container !== document.body) {
+      const { overflowY } = getComputedStyle(container)
+      if (overflowY === 'auto' || overflowY === 'scroll') break
+      container = container.parentElement
+    }
+    if (!container || container === document.body) return
+    const itemTop = item.offsetTop
+    const containerScrollTop = container.scrollTop
+    const containerHeight = container.clientHeight
+    const itemHeight = item.clientHeight
+    if (itemTop < containerScrollTop || itemTop + itemHeight > containerScrollTop + containerHeight) {
+      container.scrollTop = itemTop - containerHeight / 2 + itemHeight / 2
+    }
   }, [active, open])
 
   useEffect(() => {
