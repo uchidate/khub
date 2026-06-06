@@ -1,10 +1,17 @@
 import prisma from '@/lib/prisma'
 
+const DEFAULTS = { adsGloballyPaused: false, adsAutoAdsEnabled: true, adsMultiplexEnabled: true, adsSidebarEnabled: true }
+
 // Server Component — injeta window.__adSettings no cliente uma vez por page load.
-// isAdmin NÃO é lido aqui (auth() quebraria SSG em /groups, /artists etc).
-// O AdBannerAdminGuard (client component) lê a sessão e zera os ads para admins.
+// Skip durante build (SKIP_BUILD_STATIC_GENERATION) — DB não está disponível no builder.
+// isAdmin NÃO é lido aqui: auth() quebraria SSG em /groups, /artists etc.
+// AdBanner usa useSession() diretamente para o check de admin.
 export async function AdSettingsScript() {
-    let settings = { adsGloballyPaused: false, adsAutoAdsEnabled: true, adsMultiplexEnabled: true, adsSidebarEnabled: true }
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) {
+        return <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `window.__adSettings=${JSON.stringify(DEFAULTS)};` }} />
+    }
+
+    let settings = { ...DEFAULTS }
     try {
         const row = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
         if (row) {
