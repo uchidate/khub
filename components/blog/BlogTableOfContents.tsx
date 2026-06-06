@@ -44,6 +44,13 @@ export function BlogTableOfContents() {
     })
   }
 
+  // Auto-scroll do item ativo dentro da lista do TOC
+  useEffect(() => {
+    if (!active || !open) return
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-id="${active}"]`)
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [active, open])
+
   useEffect(() => {
     function init() {
       const headings = Array.from(
@@ -73,11 +80,9 @@ export function BlogTableOfContents() {
             }
           })
           if (visibleMap.size > 0) {
-            // Ativa o heading mais próximo do topo
             const topmost = [...visibleMap.entries()].sort((a, b) => a[1] - b[1])[0]
             setActive(topmost[0])
           } else {
-            // Nenhum heading visível — ativa o último que passou pelo topo
             const scrollY = window.scrollY
             const passed = headings
               .filter(h => h.getBoundingClientRect().top + scrollY < scrollY + 120)
@@ -85,15 +90,19 @@ export function BlogTableOfContents() {
             if (passed) setActive(passed.id)
           }
         },
-        { rootMargin: '-100px 0px -40% 0px', threshold: 0 }
+        // rootMargin: detecta headings que entram na faixa 80px-70% do viewport
+        { rootMargin: '-80px 0px -30% 0px', threshold: 0 }
       )
       headings.forEach(h => observerRef.current!.observe(h))
       return true
     }
 
     if (!init()) {
-      const t = setTimeout(init, 400)
-      return () => { clearTimeout(t); observerRef.current?.disconnect() }
+      // Retry com MutationObserver em vez de timeout fixo — detecta quando o conteúdo monta
+      const mo = new MutationObserver(() => { if (init()) mo.disconnect() })
+      mo.observe(document.body, { childList: true, subtree: true })
+      const fallback = setTimeout(() => { init(); mo.disconnect() }, 1500)
+      return () => { mo.disconnect(); clearTimeout(fallback); observerRef.current?.disconnect() }
     }
     return () => observerRef.current?.disconnect()
   }, [])
@@ -129,39 +138,44 @@ export function BlogTableOfContents() {
       >
         <div style={{ overflow: 'hidden' }}>
           <ul ref={listRef} className="py-2">
-            {items.map((item, idx) => {
-              const isActive = active === item.id
-              return (
-                <li key={item.id} data-id={item.id}>
-                  <a
-                    href={`#${item.id}`}
-                    onClick={e => {
-                      e.preventDefault()
-                      const el = document.getElementById(item.id)
-                      if (el) {
-                        const offset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--site-header-h') || '92') + 48 + 16
-                        const top = el.getBoundingClientRect().top + window.scrollY - offset
-                        window.scrollTo({ top, behavior: 'smooth' })
-                      }
-                      setActive(item.id)
-                    }}
-                    className={[
-                      'group relative flex items-start gap-2 px-4 py-1.5 text-[12px] leading-snug transition-all',
-                      item.level === 3 ? 'pl-8' : '',
-                      isActive ? 'text-accent font-semibold' : 'text-muted hover:text-foreground',
-                    ].join(' ')}
-                  >
-                    <span className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-r transition-all duration-200 ${isActive ? 'bg-accent' : 'bg-transparent group-hover:bg-border'}`} />
-                    {item.level === 2 && (
-                      <span className={`shrink-0 text-[10px] font-mono mt-0.5 transition-colors ${isActive ? 'text-accent' : 'text-muted/50'}`}>
-                        {String(idx + 1).padStart(2, '0')}
-                      </span>
-                    )}
-                    <span className="flex-1 min-w-0">{item.text}</span>
-                  </a>
-                </li>
-              )
-            })}
+            {(() => {
+              let h2Count = 0
+              return items.map((item) => {
+                const isActive = active === item.id
+                if (item.level === 2) h2Count++
+                const num = item.level === 2 ? h2Count : null
+                return (
+                  <li key={item.id} data-id={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      onClick={e => {
+                        e.preventDefault()
+                        const el = document.getElementById(item.id)
+                        if (el) {
+                          const offset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--site-header-h') || '92') + 48 + 16
+                          const top = el.getBoundingClientRect().top + window.scrollY - offset
+                          window.scrollTo({ top, behavior: 'smooth' })
+                        }
+                        setActive(item.id)
+                      }}
+                      className={[
+                        'group relative flex items-start gap-2 px-4 py-1.5 text-[12px] leading-snug transition-all',
+                        item.level === 3 ? 'pl-8' : '',
+                        isActive ? 'text-accent font-semibold' : 'text-muted hover:text-foreground',
+                      ].join(' ')}
+                    >
+                      <span className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-r transition-all duration-200 ${isActive ? 'bg-accent' : 'bg-transparent group-hover:bg-border'}`} />
+                      {num !== null && (
+                        <span className={`shrink-0 text-[10px] font-mono mt-0.5 transition-colors ${isActive ? 'text-accent' : 'text-muted/50'}`}>
+                          {String(num).padStart(2, '0')}
+                        </span>
+                      )}
+                      <span className="flex-1 min-w-0">{item.text}</span>
+                    </a>
+                  </li>
+                )
+              })
+            })()}
           </ul>
         </div>
       </div>
