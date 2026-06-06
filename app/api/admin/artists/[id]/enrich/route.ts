@@ -198,26 +198,62 @@ export async function POST(
     }
 
     // Limpa URLs markdown [texto](url) → url, e rejeita redirects google.com/search
+    // Valida Spotify via oEmbed para descartar IDs inventados pelo LLM.
     if (body && typeof body === 'object' && 'socialLinks' in body && body.socialLinks && typeof body.socialLinks === 'object') {
         const cleaned: Record<string, string | null> = {}
         for (const [k, v] of Object.entries(body.socialLinks as Record<string, unknown>)) {
             if (!v || typeof v !== 'string') { cleaned[k] = null; continue }
             const url = normalizeGeneratedUrl(v)
-            cleaned[k] = url.includes('google.com/search') ? null : url.trim() || null
+            if (!url || url.includes('google.com/search')) { cleaned[k] = null; continue }
+
+            // Valida Spotify: verifica via oEmbed se o artista existe
+            if (k === 'spotify' && url.includes('open.spotify.com/artist/')) {
+                try {
+                    const res = await fetch(
+                        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
+                        { signal: AbortSignal.timeout(4000) }
+                    )
+                    cleaned[k] = res.ok ? url.trim() : null
+                } catch {
+                    cleaned[k] = null
+                }
+                continue
+            }
+
+            cleaned[k] = url.trim() || null
         }
         ;(body as Record<string, unknown>).socialLinks = cleaned
     }
 
     // Limpa vídeos gerados como markdown ou wrappers do Google antes da validação Zod.
+    // Também valida via oEmbed se o vídeo realmente existe — descarta IDs inventados pelo LLM.
     if (body && typeof body === 'object' && 'videos' in body && Array.isArray((body as Record<string, unknown>).videos)) {
-        ;(body as Record<string, unknown>).videos = ((body as Record<string, unknown>).videos as unknown[])
+        const rawVideos = ((body as Record<string, unknown>).videos as unknown[])
             .map(item => {
-                if (!item || typeof item !== 'object') return item
+                if (!item || typeof item !== 'object') return null
                 const video = item as Record<string, unknown>
-                if (typeof video.url !== 'string') return item
+                if (typeof video.url !== 'string') return null
                 const normalizedUrl = normalizeYoutubeUrl(video.url)
-                return normalizedUrl ? { ...video, url: normalizedUrl } : item
+                return normalizedUrl ? { ...video, url: normalizedUrl } : null
             })
+            .filter(Boolean)
+
+        // Valida existência via oEmbed (fire-and-forget por vídeo, paraleliza)
+        const validated = await Promise.all(
+            rawVideos.map(async (video) => {
+                const v = video as Record<string, unknown>
+                try {
+                    const res = await fetch(
+                        `https://www.youtube.com/oembed?url=${encodeURIComponent(v.url as string)}&format=json`,
+                        { signal: AbortSignal.timeout(4000) }
+                    )
+                    return res.ok ? v : null
+                } catch {
+                    return null // timeout ou rede — descarta
+                }
+            })
+        )
+        ;(body as Record<string, unknown>).videos = validated.filter(Boolean)
     }
 
     const parsed = EnrichSchema.safeParse(body)
