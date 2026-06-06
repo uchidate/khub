@@ -121,7 +121,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         openGraph: {
             title: `${group.name} | HallyuHub`,
             description: description.slice(0, 160),
-            images: group.profileImageUrl ? [{ url: group.profileImageUrl, width: 1200, height: 630, alt: group.name }] : [],
             type: 'website',
             url: `${BASE_URL}/groups/${canonicalSlug}`,
         },
@@ -129,7 +128,6 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
             card: 'summary_large_image',
             title: `${group.name} | HallyuHub`,
             description: description.slice(0, 160),
-            images: group.profileImageUrl ? [group.profileImageUrl] : [],
         },
     }, 'group', group.id)
 }
