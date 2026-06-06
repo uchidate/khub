@@ -422,37 +422,48 @@ jobs:
           resolve: www.hallyuhub.com.br:443:31.97.255.107
 
       - name: 🔥 Cache Warm-up
+        env:
+          WARMUP_SECRET: ${{ secrets.WARMUP_SECRET }}
         run: |
-          # 1. Aquece conexões Prisma via /api/health (SELECT 1 no pool)
-          # 2. Renderiza páginas-chave para popular o ISR cache antes do primeiro usuário
+          # Estratégia em 3 etapas:
+          # 1. /api/health — confirma que o pool Prisma está aceitando conexões
+          # 2. /api/warmup — executa buildHomeRuntimeData() server-side e popula o
+          #    unstable_cache da homepage ANTES de qualquer usuário real chegar.
+          #    Aguarda até 120s (a homepage fria pode levar 20-40s no primeiro render).
+          # 3. / e demais páginas em paralelo — verifica que o ISR cache foi populado
+          #    (deve responder em <5s agora que o cache está quente).
           RESOLVE=(--resolve www.hallyuhub.com.br:443:31.97.255.107)
           BASE="https://www.hallyuhub.com.br"
 
-          echo "Aquecendo pool de conexões Prisma..."
-          for _ in 1 2 3; do
+          echo "1. Aguardando pool Prisma..."
+          for _ in 1 2 3 4 5; do
             curl -sf -o /dev/null --max-time 10 "${RESOLVE[@]}" "$BASE/api/health" 2>/dev/null && break
-            sleep 2
+            sleep 3
           done
 
-          echo "| Página | HTTP | Tempo |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|--------|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Pré-aquecendo cache da homepage via /api/warmup..."
+          echo "| Endpoint | HTTP | Tempo |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|----------|------|-------|" >> "$GITHUB_STEP_SUMMARY"
 
-          # Homepage primeiro (mais pesada) — depois as demais em paralelo
           START=$(date +%s%3N)
-          HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 45 "${RESOLVE[@]}" "$BASE/" 2>/dev/null || echo "000")
+          WARMUP_RESP=$(curl -sf -w "\n%{http_code}" --max-time 120 \
+            "${RESOLVE[@]}" "$BASE/api/warmup?token=${WARMUP_SECRET}" 2>/dev/null || echo -e "\n000")
+          HTTP=$(echo "$WARMUP_RESP" | tail -1)
+          BODY=$(echo "$WARMUP_RESP" | head -1)
           MS=$(( $(date +%s%3N) - START ))
           ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
-          echo "$ICON  / → HTTP $HTTP (${MS}ms)"
-          echo "| $ICON \`/\` | \`$HTTP\` | ${MS}ms |" >> "$GITHUB_STEP_SUMMARY"
+          echo "$ICON  /api/warmup → HTTP $HTTP (${MS}ms) $BODY"
+          echo "| $ICON \`/api/warmup\` | \`$HTTP\` | ${MS}ms |" >> "$GITHUB_STEP_SUMMARY"
 
-          # Demais páginas em paralelo
-          for PAGE in /blog /artists /productions /calendario; do
+          echo "3. Verificando páginas (cache já deve estar quente)..."
+          for PAGE in / /blog /artists /productions /calendario; do
             (
               START=$(date +%s%3N)
               HTTP=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "${RESOLVE[@]}" "$BASE$PAGE" 2>/dev/null || echo "000")
               MS=$(( $(date +%s%3N) - START ))
               ICON="✅"; [ "$HTTP" != "200" ] && ICON="⚠️"
               echo "$ICON  $PAGE → HTTP $HTTP (${MS}ms)"
+              echo "| $ICON \`$PAGE\` | \`$HTTP\` | ${MS}ms |" >> "$GITHUB_STEP_SUMMARY"
             ) &
           done
           wait
