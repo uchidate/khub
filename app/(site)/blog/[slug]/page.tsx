@@ -255,6 +255,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         "description": post.excerpt ?? undefined,
         "image": post.coverImageUrl ?? undefined,
         "url": `${BASE_URL}/blog/${post.slug}`,
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}/blog/${post.slug}` },
         "datePublished": (post.publishedAt ?? post.createdAt).toISOString(),
         "dateModified": post.updatedAt.toISOString(),
         "inLanguage": "pt-BR",
@@ -264,7 +265,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           "name": "HallyuHub",
           "logo": { "@type": "ImageObject", "url": `${BASE_URL}/og-image.jpg` },
         },
+        ...(post.readingTimeMin ? { "timeRequired": `PT${post.readingTimeMin}M` } : {}),
+        ...(post.category ? { "articleSection": post.category.name } : {}),
         ...(post.tags.length > 0 ? { "keywords": post.tags.join(', ') } : {}),
+        ...(post.relatedArtists.length > 0 || post.relatedGroups.length > 0 ? {
+          "about": [
+            ...post.relatedArtists.map(ra => ({
+              "@type": "Person",
+              "name": ra.artist.nameRomanized,
+              "url": `${BASE_URL}/artists/${ra.artist.slug ?? ra.artist.id}`,
+            })),
+            ...post.relatedGroups.map(rg => ({
+              "@type": "MusicGroup",
+              "name": rg.group.name,
+              "url": `${BASE_URL}/groups/${rg.group.slug ?? rg.group.id}`,
+            })),
+          ]
+        } : {}),
       }} />
       <JsonLd data={{
         "@context": "https://schema.org",
