@@ -54,7 +54,7 @@ export async function generateStaticParams() {
         where: { isHidden: false, flaggedAsNonKorean: false, slug: { not: null } },
         select: { slug: true },
         orderBy: { trendingScore: 'desc' },
-        take: 200,
+        take: 500,
     })
     return artists.map(a => ({ slug: a.slug! }))
 }

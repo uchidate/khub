@@ -121,6 +121,15 @@ const nextConfig = {
             { source: '/kpop-4th-gen', destination: '/hubs/grupos-4a-geracao-kpop', permanent: true },
             { source: '/kpop-3a-geracao', destination: '/hubs/grupos-3a-geracao-kpop', permanent: true },
             { source: '/kpop-3rd-gen', destination: '/hubs/grupos-3a-geracao-kpop', permanent: true },
+            { source: '/hub/iu', destination: '/hubs/iu', permanent: true },
+            { source: '/hub/taeyeon', destination: '/hubs/taeyeon', permanent: true },
+            { source: '/hub/g-dragon', destination: '/hubs/g-dragon', permanent: true },
+            { source: '/hub/gd', destination: '/hubs/g-dragon', permanent: true },
+            { source: '/hub/taeyang', destination: '/hubs/taeyang', permanent: true },
+            { source: '/hub/zico', destination: '/hubs/zico', permanent: true },
+            { source: '/hub/hyuna', destination: '/hubs/hyuna', permanent: true },
+            { source: '/hub/sunmi', destination: '/hubs/sunmi', permanent: true },
+            { source: '/hub/baekhyun', destination: '/hubs/baekhyun', permanent: true },
         ]
     },
     async rewrites() {
