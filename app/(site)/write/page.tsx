@@ -204,7 +204,7 @@ function WritePageContent() {
     return localStorage.getItem(`seo_kw_${editId ?? 'new'}`) ?? ''
   })
   const [categoryId, setCategoryId] = useState<string | null>(null)
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; adsDisabled?: boolean }[]>([])
 
   const [draftBanner, setDraftBanner] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -993,6 +993,21 @@ function WritePageContent() {
               </button>
             </div>
           )}
+
+          {/* Aviso: ads desabilitados por herança de categoria */}
+          {(() => {
+            const selectedCategory = categories.find(c => c.id === categoryId)
+            if (!selectedCategory?.adsDisabled) return null
+            return (
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
+                <span className="text-red-400 text-xs mt-0.5">⚠</span>
+                <p className="text-[11px] text-red-400 leading-relaxed">
+                  Ads desabilitados pela categoria <strong>{selectedCategory.name}</strong>. Para reativar, vá em{' '}
+                  <a href="/admin/blog/categories" target="_blank" className="underline">Admin → Categorias</a>.
+                </p>
+              </div>
+            )
+          })()}
 
           {/* Conteúdo patrocinado */}
           {canPublish && (
