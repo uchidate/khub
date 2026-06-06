@@ -50,7 +50,7 @@ export function TwitterEmbed({ url }: { url: string }) {
     if (!tweetUrl) return null
 
     return (
-        <div className="flex justify-center my-6">
+        <div className="flex justify-center my-6 min-h-[300px]">
             <blockquote className="twitter-tweet" data-theme="dark">
                 <a href={tweetUrl} target="_blank" rel="noopener noreferrer">
                     Ver no X (Twitter)

@@ -88,7 +88,7 @@ export function InstagramEmbed({ url }: { url: string }) {
     if (!isPost) return <InstagramProfileCard url={url} />
 
     return (
-        <div className="flex justify-center my-6">
+        <div className="flex justify-center my-6 min-h-[540px]">
             <blockquote
                 className="instagram-media"
                 data-instgrm-permalink={url}
