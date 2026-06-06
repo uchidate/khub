@@ -320,6 +320,210 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             { question: 'A página é atualizada?', answer: 'Os hubs usam os dados públicos do catálogo; conforme perfis são atualizados, os links e dados ficam mais completos.' },
         ],
     },
+    {
+        slug: 'integrantes-do-bts',
+        kind: 'artists',
+        groupSlug: 'bts',
+        title: 'Integrantes do BTS',
+        shortTitle: 'BTS',
+        description: 'Conheça os integrantes do BTS com perfis, carreira solo, músicas, vídeos e curiosidades em português.',
+        intro: [
+            'BTS é o grupo de K-Pop mais conhecido no mundo, com sete integrantes que também constroem carreiras solo expressivas na música, atuação e entretenimento.',
+            'Este hub reúne os perfis dos membros cadastrados no HallyuHub para que fãs e novos descobridores possam navegar por cada trajetória individual com facilidade.',
+        ],
+        keywords: ['integrantes do bts', 'membros bts', 'bts kpop', 'rm jin suga jhope jimin v jungkook', 'bangtan boys'],
+        faq: [
+            { question: 'Quem são os integrantes do BTS?', answer: 'BTS tem sete integrantes: RM, Jin, Suga, J-Hope, Jimin, V e Jungkook. Todos têm perfis no HallyuHub com discografia, vídeos e carreira individual.' },
+            { question: 'Os membros do BTS têm carreira solo?', answer: 'Sim. Todos os membros do BTS lançaram projetos solo como álbuns, mixtapes, trilhas sonoras e colaborações internacionais. Os detalhes aparecem em cada perfil.' },
+            { question: 'BTS ainda está ativo?', answer: 'BTS pausou atividades coletivas enquanto os membros cumprem o serviço militar obrigatório na Coreia do Sul. A volta do grupo está prevista para 2025 e 2026.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-stray-kids',
+        kind: 'artists',
+        groupSlug: 'stray-kids',
+        title: 'Integrantes do Stray Kids',
+        shortTitle: 'Stray Kids',
+        description: 'Explore os integrantes do Stray Kids com perfis em português, carreira, músicas, vídeos e curiosidades sobre o grupo.',
+        intro: [
+            'Stray Kids é um dos grupos masculinos de maior impacto da quarta geração, reconhecido pela produção própria, sonoridade intensa e fanbase global chamada STAY.',
+            'Este hub organiza os membros cadastrados no HallyuHub para facilitar a navegação por perfis, atividades individuais e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do stray kids', 'membros stray kids', 'straykids kpop', 'bang chan felix hyunjin'],
+        faq: [
+            { question: 'Quem são os integrantes do Stray Kids?', answer: 'Stray Kids é formado por Bang Chan, Lee Know, Changbin, Hyunjin, Han, Felix, Seungmin e I.N. Os perfis disponíveis no HallyuHub trazem carreira, fotos e conexões.' },
+            { question: 'O Stray Kids produz as próprias músicas?', answer: 'Sim. A sub-unit 3RACHA — formada por Bang Chan, Changbin e Han — é responsável por grande parte da produção musical do grupo.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-girls-generation',
+        kind: 'artists',
+        groupSlug: 'girls-generation',
+        title: 'Integrantes do Girls\' Generation',
+        shortTitle: 'Girls\' Generation',
+        description: 'Conheça as integrantes do Girls\' Generation (SNSD) com perfis, carreira, músicas e curiosidades em português.',
+        intro: [
+            'Girls\' Generation, também conhecido como SNSD, é um dos grupos mais icônicos da segunda geração do K-Pop, com hits que marcaram gerações de fãs no mundo inteiro.',
+            'Este hub organiza as integrantes públicas no HallyuHub, facilitando a navegação por perfis, carreiras individuais e contexto histórico do grupo.',
+        ],
+        keywords: ['integrantes do girls generation', 'membros snsd', 'girls generation kpop', 'snsd taeyeon yoona', 'soshi'],
+        faq: [
+            { question: 'Girls\' Generation ainda está ativa?', answer: 'Girls\' Generation celebrou seu 15º aniversário em 2022 com o álbum "Forever 1". As integrantes também mantêm carreiras solo ativas em música, atuação e entretenimento.' },
+            { question: 'Por que o grupo também é chamado de SNSD?', answer: 'SNSD é a sigla do nome coreano do grupo, So Nyeo Shi Dae (소녀시대), que significa "Era das Garotas". Ambos os nomes são amplamente usados pela fanbase.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-red-velvet',
+        kind: 'artists',
+        groupSlug: 'red-velvet',
+        title: 'Integrantes do Red Velvet',
+        shortTitle: 'Red Velvet',
+        description: 'Explore as integrantes do Red Velvet com perfis em português, carreira, músicas, conceitos e curiosidades.',
+        intro: [
+            'Red Velvet é um dos grupos mais versáteis do K-Pop, alternando entre o conceito "Red" (pop energético) e "Velvet" (R&B suave), com uma discografia que impressiona por qualidade e variedade.',
+            'Este hub reúne as integrantes cadastradas no HallyuHub para quem quer descobrir perfis, carreira individual, músicas e conteúdos relacionados ao grupo.',
+        ],
+        keywords: ['integrantes do red velvet', 'membros red velvet', 'red velvet kpop', 'irene seulgi wendy joy yeri'],
+        faq: [
+            { question: 'Quem são as integrantes do Red Velvet?', answer: 'Red Velvet é formado por Irene, Seulgi, Wendy, Joy e Yeri, todas sob a SM Entertainment. Os perfis individuais no HallyuHub trazem detalhes de carreira, fotos e discografia.' },
+            { question: 'O que significa o conceito Red e Velvet?', answer: '"Red" representa um lado pop, colorido e animado, enquanto "Velvet" traz uma sonoridade mais suave, R&B e sofisticada. A dualidade é marca registrada do grupo.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-shinee',
+        kind: 'artists',
+        groupSlug: 'shinee',
+        title: 'Integrantes do SHINee',
+        shortTitle: 'SHINee',
+        description: 'Conheça os integrantes do SHINee com perfis em português, carreira, músicas, vídeos e curiosidades sobre o grupo.',
+        intro: [
+            'SHINee é um grupo icônico da segunda geração do K-Pop, reconhecido por vocais excepcionais, performances inovadoras e uma discografia que influenciou toda uma geração de artistas.',
+            'Este hub reúne os integrantes públicos no HallyuHub para que fãs e novos descobridores possam explorar perfis, histórico e conexões do grupo.',
+        ],
+        keywords: ['integrantes do shinee', 'membros shinee', 'shinee kpop', 'onew key minho taemin'],
+        faq: [
+            { question: 'Quem são os integrantes do SHINee?', answer: 'SHINee é formado por Onew, Key, Minho e Taemin (quatro membros ativos). Jonghyun, um dos fundadores do grupo, faleceu em 2017 e é lembrado com carinho pela fanbase.' },
+            { question: 'Os membros do SHINee têm carreiras solo?', answer: 'Sim. Todos os membros têm projetos individuais em música, atuação, MC e entretenimento. Taemin em particular tem uma das carreiras solo mais reconhecidas do K-Pop.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-mamamoo',
+        kind: 'artists',
+        groupSlug: 'mamamoo',
+        title: 'Integrantes do MAMAMOO',
+        shortTitle: 'MAMAMOO',
+        description: 'Conheça as integrantes do MAMAMOO com perfis em português, carreira, músicas e curiosidades sobre o grupo.',
+        intro: [
+            'MAMAMOO é conhecido por vocais excepcionais, personalidade forte e uma abordagem musical que foge dos padrões comuns do K-Pop.',
+            'Este hub reúne as integrantes cadastradas no HallyuHub para navegar por perfis, carreira individual e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do mamamoo', 'membros mamamoo', 'mamamoo kpop', 'solar moonbyul wheein hwasa'],
+        faq: [
+            { question: 'Quem são as integrantes do MAMAMOO?', answer: 'MAMAMOO é formado por Solar, Moonbyul, Wheein e Hwasa, todas com projetos solo expressivos em música, shows e entretenimento.' },
+            { question: 'As integrantes do MAMAMOO têm carreira solo?', answer: 'Sim. Todas as integrantes têm lançamentos solo, com destaque para Hwasa, que alcançou grande popularidade individual nacional e internacionalmente.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-got7',
+        kind: 'artists',
+        groupSlug: 'got7',
+        title: 'Integrantes do GOT7',
+        shortTitle: 'GOT7',
+        description: 'Explore os integrantes do GOT7 com perfis em português, carreira, músicas, vídeos e curiosidades.',
+        intro: [
+            'GOT7 construiu uma base de fãs global leal com sua mistura de pop, hip-hop e R&B, e cada integrante manteve projetos individuais ativos após o reagrupamento independente.',
+            'Este hub organiza os membros cadastrados no HallyuHub para quem quer explorar perfis, discografia e conexões do grupo.',
+        ],
+        keywords: ['integrantes do got7', 'membros got7', 'got7 kpop', 'mark jay b jackson jinyoung youngjae bambam yugyeom'],
+        faq: [
+            { question: 'O GOT7 voltou a atuar juntos?', answer: 'Sim. Após saírem da JYP Entertainment, os sete integrantes se reagruparam como grupo independente em 2022.' },
+            { question: 'Quem são os integrantes do GOT7?', answer: 'GOT7 é formado por Mark, Jay B, Jackson, Jinyoung, Youngjae, BamBam e Yugyeom. Cada um tem projetos solo e os perfis no HallyuHub detalham suas trajetórias individuais.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-seventeen',
+        kind: 'artists',
+        groupSlug: 'seventeen',
+        title: 'Integrantes do SEVENTEEN',
+        shortTitle: 'SEVENTEEN',
+        description: 'Conheça os integrantes do SEVENTEEN com perfis, carreira, músicas, unidades e curiosidades em português.',
+        intro: [
+            'SEVENTEEN é um dos maiores grupos de boy band da quarta geração, com treze integrantes divididos em três unidades: vocal, hip-hop e performance.',
+            'Este hub organiza os membros cadastrados no HallyuHub para facilitar a navegação por perfis, histórico e atividades individuais.',
+        ],
+        keywords: ['integrantes do seventeen', 'membros seventeen', 'seventeen kpop', 'svt carats', 's.coups woozi'],
+        faq: [
+            { question: 'Quantos integrantes tem o SEVENTEEN?', answer: 'SEVENTEEN tem 13 integrantes: S.Coups, Jeonghan, Joshua, Jun, Hoshi, Wonwoo, Woozi, DK, Mingyu, The8, Seungkwan, Vernon e Dino.' },
+            { question: 'O que são as unidades do SEVENTEEN?', answer: 'O grupo é dividido em três sub-unidades: Vocal Unit, Hip-hop Unit e Performance Unit, cada uma com lançamentos e shows próprios além das atividades coletivas.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-ateez',
+        kind: 'artists',
+        groupSlug: 'ateez',
+        title: 'Integrantes do ATEEZ',
+        shortTitle: 'ATEEZ',
+        description: 'Explore os integrantes do ATEEZ com perfis em português, carreira, músicas, performances e curiosidades.',
+        intro: [
+            'ATEEZ ganhou reconhecimento internacional por performances intensas, narrativas visuais elaboradas e uma base de fãs chamada ATINY que cresce globalmente.',
+            'Este hub organiza os membros cadastrados no HallyuHub para navegar por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do ateez', 'membros ateez', 'ateez kpop', 'atiny hongjoong mingi'],
+        faq: [
+            { question: 'Quem são os integrantes do ATEEZ?', answer: 'ATEEZ é formado por Hongjoong, Seonghwa, Yunho, Yeosang, San, Mingi, Wooyoung e Jongho, todos sob a KQ Entertainment.' },
+            { question: 'Por que o ATEEZ é tão popular internacionalmente?', answer: 'O grupo é conhecido por shows ao vivo poderosos, conceitos cinematográficos e uma conexão muito próxima com os fãs, o que impulsionou seu crescimento fora da Coreia.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-enhypen',
+        kind: 'artists',
+        groupSlug: 'enhypen',
+        title: 'Integrantes do ENHYPEN',
+        shortTitle: 'ENHYPEN',
+        description: 'Conheça os integrantes do ENHYPEN com perfis, carreira, músicas, vídeos e curiosidades em português.',
+        intro: [
+            'ENHYPEN surgiu do reality show I-Land e rapidamente se tornou um dos grupos mais comentados da quarta geração, com estética vampírica e músicas que misturam pop com dark concepts.',
+            'Este hub reúne os membros cadastrados no HallyuHub para facilitar a descoberta de perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do enhypen', 'membros enhypen', 'enhypen kpop', 'engene jungwon jay heeseung'],
+        faq: [
+            { question: 'Como o ENHYPEN foi formado?', answer: 'O ENHYPEN foi formado em 2020 pelo reality show I-Land, produzido pela BELIFT LAB (joint venture da Big Hit e CJ ENM).' },
+            { question: 'Quem são os integrantes do ENHYPEN?', answer: 'ENHYPEN é formado por Jungwon, Heeseung, Jay, Jake, Sunghoon, Sunoo e Ni-ki. Os perfis no HallyuHub trazem detalhes de cada integrante.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-zerobaseone',
+        kind: 'artists',
+        groupSlug: 'zerobaseone',
+        title: 'Integrantes do ZEROBASEONE',
+        shortTitle: 'ZEROBASEONE',
+        description: 'Explore os integrantes do ZEROBASEONE (ZB1) com perfis em português, carreira, músicas e curiosidades.',
+        intro: [
+            'ZEROBASEONE surgiu do reality Boys Planet e conquistou uma fanbase fiel chamada ZEROx1 com música, performance e presença digital marcante.',
+            'Este hub organiza os membros cadastrados no HallyuHub para facilitar a descoberta de perfis e conexões individuais.',
+        ],
+        keywords: ['integrantes do zerobaseone', 'membros zb1', 'zerobaseone kpop', 'boys planet zb1'],
+        faq: [
+            { question: 'Como o ZEROBASEONE foi formado?', answer: 'O grupo surgiu do reality show Boys Planet (2023), transmitido pela Mnet, com membros selecionados pela votação dos fãs.' },
+            { question: 'Quem são os integrantes do ZEROBASEONE?', answer: 'ZEROBASEONE é formado por Sung Hanbin, Zhang Hao, Seok Matthew, Kim Jiwoong, Ricky, Kim Gyuvin, Park Gunwook, Han Yujin e Cha Woongki.' },
+        ],
+    },
+    {
+        slug: 'grupos-masculinos-kpop',
+        kind: 'groups',
+        title: 'Boy groups de K-Pop',
+        shortTitle: 'Boy groups',
+        description: 'Descubra boy groups de K-Pop com perfis de integrantes, discografia, fandom, carreira e curiosidades em português.',
+        intro: [
+            'Boy groups são um pilar do K-Pop: de BTS a Stray Kids, de SHINee a SEVENTEEN, cada grupo traz uma identidade própria que conecta fãs ao redor do mundo.',
+            'Neste hub você encontra grupos masculinos com links para integrantes, músicas, vídeos e páginas relacionadas dentro do HallyuHub.',
+        ],
+        keywords: ['boy groups kpop', 'grupos masculinos kpop', 'boy bands coreanas', 'kpop masculino', 'integrantes boy group'],
+        faq: [
+            { question: 'O que é um boy group de K-Pop?', answer: 'É um grupo masculino da indústria coreana, normalmente formado por idols com foco em música, dança, performance e fandom ativo.' },
+            { question: 'O hub inclui grupos de todas as gerações?', answer: 'Sim. A lista pode incluir grupos ativos ou encerrados de diferentes gerações do K-Pop, quando eles têm perfil e relevância no catálogo HallyuHub.' },
+        ],
+    },
 ]
 
 export const ARCHIVE_HUB_BY_SLUG = Object.fromEntries(ARCHIVE_HUBS.map(hub => [hub.slug, hub]))
@@ -351,6 +555,7 @@ export function getRelatedGroupHubs(input: { slug?: string | null; femaleMembers
     const slugs = [
         input.slug ? `integrantes-do-${input.slug}` : null,
         femaleMembers >= Math.max(1, maleMembers) ? 'grupos-femininos-kpop' : null,
+        maleMembers > femaleMembers ? 'grupos-masculinos-kpop' : null,
     ].filter(Boolean) as string[]
     return slugs.map(slug => ARCHIVE_HUB_BY_SLUG[slug]).filter(Boolean)
 }
