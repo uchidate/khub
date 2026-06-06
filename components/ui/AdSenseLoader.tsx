@@ -15,7 +15,12 @@ const MAX_TOP_ANCHOR_OFFSET = 205
 declare global {
     interface Window {
         adsbygoogle?: unknown[]
+        __adSettings?: { adsGloballyPaused: boolean; adsAutoAdsEnabled: boolean; adsMultiplexEnabled: boolean; adsSidebarEnabled: boolean }
     }
+}
+
+function isAdsPaused() {
+    return window.__adSettings?.adsGloballyPaused === true || window.__adSettings?.adsAutoAdsEnabled === false
 }
 
 function ensureAdSenseScript() {
@@ -133,6 +138,8 @@ export function AdSenseLoader() {
         if (!currentRoute) return
         if (lastRoute.current === currentRoute) return
         lastRoute.current = currentRoute
+
+        if (isAdsPaused()) return
 
         if (isExcludedPath(pathname ?? '')) {
             // Remove AdSense script and all injected ad iframes so auto ads stop

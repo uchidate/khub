@@ -25,6 +25,14 @@ interface AdBannerProps {
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const IS_DEV = process.env.NODE_ENV === 'development'
+const SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR
+const MULTIPLEX_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX
+
+type RuntimeAdSettings = {
+    adsGloballyPaused: boolean
+    adsMultiplexEnabled: boolean
+    adsSidebarEnabled: boolean
+}
 
 const SLOT_NAMES: Record<string, string> = {
     [process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!]:       'Auto Geral',
@@ -45,6 +53,14 @@ function normalizeVariant(v: AdVariantLegacy = 'auto'): AdVariant {
     return v
 }
 
+function isDisabledBySettings(settings: RuntimeAdSettings | undefined, variant: AdVariant, slot: string) {
+    if (!settings) return false
+    if (settings.adsGloballyPaused) return true
+    if (settings.adsMultiplexEnabled === false && (variant === 'multiplex' || slot === MULTIPLEX_SLOT)) return true
+    if (settings.adsSidebarEnabled === false && slot === SIDEBAR_SLOT) return true
+    return false
+}
+
 export function AdBanner({
     slot,
     variant: rawVariant = 'auto',
@@ -58,11 +74,16 @@ export function AdBanner({
     const insRef = useRef<HTMLModElement>(null)
     const pushed = useRef(false)
     const [filled, setFilled] = useState<boolean | null>(null) // null = loading
+    const [settingsDisabled, setSettingsDisabled] = useState(false)
 
     const variant = normalizeVariant(rawVariant)
 
     // Push do ad via IntersectionObserver (ou eager)
     useEffect(() => {
+        const adSettings = window.__adSettings as RuntimeAdSettings | undefined
+        const disabled = isDisabledBySettings(adSettings, variant, slot)
+        setSettingsDisabled(disabled)
+        if (disabled) return
         if (IS_DEV || !CLIENT || !slot) return
 
         const pushOnce = () => {
@@ -91,11 +112,12 @@ export function AdBanner({
         )
         io.observe(el)
         return () => io.disconnect()
-    }, [slot, eager])
+    }, [slot, eager, variant])
 
     // Detectar se o AdSense preencheu ou não o slot
     // O AdSense seta data-ad-status="unfilled" quando não há anúncio disponível
     useEffect(() => {
+        if (settingsDisabled) return
         if (IS_DEV || !CLIENT || !slot) return
         const ins = insRef.current
         if (!ins) return
@@ -116,7 +138,9 @@ export function AdBanner({
         }, 6000)
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
-    }, [slot])
+    }, [slot, settingsDisabled])
+
+    if (settingsDisabled) return null
 
     if (IS_DEV) {
         const info = DEV_INFO[variant]

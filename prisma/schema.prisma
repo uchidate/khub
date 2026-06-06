@@ -914,6 +914,11 @@ model SystemSettings {
   allowAdultContent         Boolean  @default(false)   // Permite conteúdo 18+ no site
   allowUnclassifiedContent  Boolean  @default(false)   // Permite produções sem classificação
   maintenanceMode           Boolean  @default(false)   // Exibe aviso de manutenção para usuários
+  // Ad controls
+  adsGloballyPaused         Boolean  @default(false)   // Kill switch global — pausa todos os anúncios
+  adsMultiplexEnabled       Boolean  @default(true)    // Multiplex widget (discovery) no final das páginas
+  adsSidebarEnabled         Boolean  @default(true)    // Sidebar banner nos posts de blog
+  adsAutoAdsEnabled         Boolean  @default(true)    // Auto Ads do Google (script global)
   // Homepage editorial slots
   homeFeaturedPostId        String?  // card principal (1 post)
   homeSecondaryPostIds      String[] // 4 cards menores (ordenados)

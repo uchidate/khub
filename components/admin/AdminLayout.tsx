@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, GitMerge, AlertTriangle, Link2, UsersRound, RefreshCw, MessageSquare, Flag, Sparkles, EyeOff, Languages, Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink, PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3, Layers, Tv, Globe, FolderOpen, ServerIcon, ChevronDown, ShoppingBag, Image as ImageIcon, BookOpen, Inbox, ClipboardList } from 'lucide-react'
+import { Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, GitMerge, AlertTriangle, Link2, UsersRound, RefreshCw, MessageSquare, Flag, Sparkles, EyeOff, Languages, Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink, PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3, Layers, Tv, Globe, FolderOpen, ServerIcon, ChevronDown, ShoppingBag, Image as ImageIcon, BookOpen, Inbox, ClipboardList, Megaphone } from 'lucide-react'
 import { Instagram } from '@/components/ui/BrandIcons'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -135,6 +135,7 @@ const navSections: NavSection[] = [
     label: 'Negócio',
     items: [
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/admin/ads', label: 'Anúncios', icon: Megaphone },
       {
         href: '/admin/loja', label: 'Loja', icon: ShoppingBag, exact: true,
         subItems: [
