@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
             title: 'Grupos K-Pop',
             description: 'BTS, BLACKPINK, TWICE e muito mais — perfis completos de grupos K-Pop com formação, discografia e trajetória na indústria coreana.',
             keywords: 'grupos K-Pop, K-Pop, BTS, BLACKPINK, TWICE, idol coreano, fanclub, fandom, bias, comeback, HallyuHub',
-            alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
+            alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'pt-PT': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
         }
     }
     const total = await prisma.musicalGroup.count({ where: { isHidden: false } }).catch(() => 0)
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: 'Grupos K-Pop',
         description: desc,
         keywords: 'grupos K-Pop, K-Pop, BTS, BLACKPINK, TWICE, idol coreano, fanclub, fandom, bias, comeback, HallyuHub',
-        alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
+        alternates: { canonical: `${BASE_URL}/groups`, languages: { 'pt-BR': `${BASE_URL}/groups`, 'pt-PT': `${BASE_URL}/groups`, 'x-default': `${BASE_URL}/groups` } },
         openGraph: {
             title: 'Grupos K-Pop | HallyuHub',
             description: desc,

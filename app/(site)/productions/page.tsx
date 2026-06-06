@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: 'Doramas & Filmes Coreanos',
         description: desc,
         keywords: 'dorama, dorama coreano, K-Drama, série coreana, filme coreano, K-Pop, Hallyu, assistir dorama, HallyuHub',
-        alternates: { canonical: `${BASE_URL}/productions`, languages: { 'pt-BR': `${BASE_URL}/productions`, 'x-default': `${BASE_URL}/productions` } },
+        alternates: { canonical: `${BASE_URL}/productions`, languages: { 'pt-BR': `${BASE_URL}/productions`, 'pt-PT': `${BASE_URL}/productions`, 'x-default': `${BASE_URL}/productions` } },
         openGraph: { title: 'Dramas & Filmes Coreanos | HallyuHub', description: desc, url: `${BASE_URL}/productions` },
     }
 }

@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         title: hub.title,
         description: hub.description,
         keywords: [...hub.keywords, 'HallyuHub', 'K-Pop', 'K-Drama'].join(', '),
-        alternates: { canonical, languages: { 'pt-BR': canonical, 'x-default': canonical } },
+        alternates: { canonical, languages: { 'pt-BR': canonical, 'pt-PT': canonical, 'x-default': canonical } },
         openGraph: {
             title: `${hub.title} | HallyuHub`,
             description: hub.description,

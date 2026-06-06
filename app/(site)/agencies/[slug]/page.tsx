@@ -90,7 +90,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         title: agency.name,
         description,
         keywords,
-        alternates: { canonical: canonicalUrl, languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl } },
+        alternates: { canonical: canonicalUrl, languages: { 'pt-BR': canonicalUrl, 'pt-PT': canonicalUrl, 'x-default': canonicalUrl } },
         openGraph: {
             title: `${agency.name} | HallyuHub`,
             description,
