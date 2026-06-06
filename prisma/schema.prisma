@@ -1228,6 +1228,7 @@ model BlogCategory {
   id          String       @id @default(cuid())
   name        String       @unique
   slug        String       @unique
+  adsDisabled Boolean      @default(false)
   posts       BlogPost[]
   productions Production[]
   createdAt   DateTime     @default(now())

@@ -13,22 +13,28 @@ function toSlug(name: string) {
         .replace(/^-|-$/g, '')
 }
 
-/** PATCH /api/admin/blog/categories/[id] — renomeia categoria */
+/** PATCH /api/admin/blog/categories/[id] — renomeia ou atualiza flags da categoria */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { error } = await requireAdmin()
     if (error) return error
 
     const { id } = await params
-    const { name } = await req.json()
-    if (!name || typeof name !== 'string' || name.trim().length < 2) {
-        return NextResponse.json({ error: 'Nome deve ter ao menos 2 caracteres' }, { status: 400 })
+    const body = await req.json()
+    const data: Record<string, unknown> = {}
+
+    if (body.name !== undefined) {
+        if (typeof body.name !== 'string' || body.name.trim().length < 2) {
+            return NextResponse.json({ error: 'Nome deve ter ao menos 2 caracteres' }, { status: 400 })
+        }
+        data.name = body.name.trim()
+        data.slug = toSlug(body.name.trim())
     }
 
-    const slug = toSlug(name.trim())
-    const updated = await prisma.blogCategory.update({
-        where: { id },
-        data: { name: name.trim(), slug },
-    })
+    if (typeof body.adsDisabled === 'boolean') {
+        data.adsDisabled = body.adsDisabled
+    }
+
+    const updated = await prisma.blogCategory.update({ where: { id }, data })
     return NextResponse.json(updated)
 }
 

@@ -101,6 +101,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await syncBlogPostEntityLinks(id, postFields.blocks)
   }
 
+  // Ping Google sitemap após publicação — acelera crawling e início de ad targeting
+  if (isPublishing) {
+    const SITE_URL = process.env.NEXTAUTH_URL ?? 'https://www.hallyuhub.com.br'
+    fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(`${SITE_URL}/sitemap.xml`)}`, {
+      method: 'GET',
+    }).catch(() => { /* fire-and-forget; não bloqueia resposta */ })
+  }
+
   return NextResponse.json(updated)
 }
 

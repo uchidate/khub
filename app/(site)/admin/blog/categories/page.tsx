@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { AdminEmptyState, AdminTableSkeleton, ConfirmDialog } from '@/components/admin'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { Tag, Plus, Pencil, Trash2, Check, X, Loader2, ArrowLeft, FileText } from 'lucide-react'
+import { Tag, Plus, Pencil, Trash2, Check, X, Loader2, ArrowLeft, FileText, Ban } from 'lucide-react'
 import Link from 'next/link'
 
 interface BlogCategory {
     id: string
     name: string
     slug: string
+    adsDisabled: boolean
     createdAt: string
     _count: { posts: number }
 }
@@ -75,6 +76,19 @@ export default function BlogCategoriesPage() {
             load()
         } catch { toast.error('Erro de rede') }
         finally { setSavingId(null) }
+    }
+
+    async function toggleAds(cat: BlogCategory) {
+        try {
+            const res = await fetch(`/api/admin/blog/categories/${cat.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adsDisabled: !cat.adsDisabled }),
+            })
+            if (!res.ok) { toast.error('Erro ao atualizar'); return }
+            toast.success(cat.adsDisabled ? `Ads habilitados em "${cat.name}"` : `Ads desabilitados em "${cat.name}"`)
+            load()
+        } catch { toast.error('Erro de rede') }
     }
 
     function remove(id: string, name: string) {
@@ -173,8 +187,11 @@ export default function BlogCategoriesPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <Tag size={13} className="text-muted shrink-0" />
+                                                        <Tag size={13} className="text-muted shrink-0" />
                                         <span className="flex-1 text-sm font-medium text-foreground">{cat.name}</span>
+                                        {cat.adsDisabled && (
+                                            <span className="text-[10px] font-semibold text-red-400 bg-red-400/10 rounded px-1.5 py-0.5">sem ads</span>
+                                        )}
                                         <span className="text-[11px] text-muted">{cat._count.posts} post{cat._count.posts !== 1 ? 's' : ''}</span>
                                         <Link
                                             href={`/admin/blog?category=${cat.slug}`}
@@ -183,6 +200,13 @@ export default function BlogCategoriesPage() {
                                         >
                                             <FileText size={12} />
                                         </Link>
+                                        <button
+                                            onClick={() => toggleAds(cat)}
+                                            className={`p-1 transition-colors ${cat.adsDisabled ? 'text-red-400 hover:text-red-300' : 'text-muted hover:text-red-400'}`}
+                                            title={cat.adsDisabled ? 'Habilitar ads nesta categoria' : 'Desabilitar ads nesta categoria'}
+                                        >
+                                            <Ban size={12} />
+                                        </button>
                                         <button
                                             onClick={() => { setEditId(cat.id); setEditName(cat.name) }}
                                             className="p-1 text-muted hover:text-foreground transition-colors"
