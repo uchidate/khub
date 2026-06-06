@@ -14,6 +14,8 @@ import { ToastContainer } from "@/components/features/ToastContainer"
 import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AdSettingsScript } from "@/components/ui/AdSettingsScript"
 import { AdFrequencyProvider } from "@/components/features/AdFrequencyProvider"
+import { AdBlockDetector } from "@/components/ui/AdBlockDetector"
+import { AdStickyBottom } from "@/components/ui/AdStickyBottom"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -254,6 +256,8 @@ export default async function RootLayout({
                         </ErrorBoundary>
                         <AdSettingsScript />
                         <AdSenseLoader />
+                        <AdBlockDetector />
+                        <AdStickyBottom />
                         <ToastContainer />
                         <AuthGateModal />
                         <PWAInstaller />

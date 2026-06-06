@@ -384,8 +384,28 @@ interface BlogBlockRendererProps {
     adsDisabled?: boolean
 }
 
-// Gate: mínimo de blocos de parágrafo para injetar ads in-article (Google Policy)
+// Gate: mínimo de blocos de parágrafo E word count total (Google Policy)
 const MIN_PARAGRAPH_BLOCKS_FOR_ADS = 6
+const MIN_WORDS_FOR_ADS = 300
+
+const TEXT_BLOCK_TYPES = new Set([
+    'blog_paragraph', 'blog_heading', 'blog_quote', 'blog_curiosity',
+    'blog_callout', 'blog_highlight', 'blog_list',
+])
+
+function countWordsInBlocks(blocks: BlogBlock[]): number {
+    let total = 0
+    for (const block of blocks) {
+        if (!TEXT_BLOCK_TYPES.has(block.type)) continue
+        const b = block as Record<string, unknown>
+        const texts: string[] = []
+        if (typeof b.text === 'string') texts.push(b.text)
+        if (typeof b.author === 'string') texts.push(b.author)
+        if (Array.isArray(b.items)) b.items.forEach(item => typeof item === 'string' && texts.push(item))
+        total += texts.join(' ').split(/\s+/).filter(Boolean).length
+    }
+    return total
+}
 
 // ── Interactive blocks ────────────────────────────────────────────────────────
 
@@ -798,7 +818,8 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisa
     // Rule: ad is scheduled at position P; find the next row >= P that is
     // not a heading and whose *next* row is also not a heading.
     const paragraphCount = blocks.filter(b => b.type === 'blog_paragraph').length
-    const adsAllowed = !adsDisabled && paragraphCount >= MIN_PARAGRAPH_BLOCKS_FOR_ADS
+    const wordCount = countWordsInBlocks(blocks)
+    const adsAllowed = !adsDisabled && paragraphCount >= MIN_PARAGRAPH_BLOCKS_FOR_ADS && wordCount >= MIN_WORDS_FOR_ADS
     const adAfter = new Set<number>()
     if (adsAllowed) for (const pos of AD_POSITIONS) {
         for (let i = pos - 1; i < rows.length; i++) {

@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { getRoleLabel } from '@/lib/utils/role-labels'
 import { Search, User, Film, Users, ArrowLeft, ChevronRight, Star, BookOpen, Compass, ShoppingBag } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { nameToGradient } from '@/lib/utils'
 
 
@@ -259,6 +260,14 @@ function SearchContent() {
                         resultado{total !== 1 ? 's' : ''} para{' '}
                         <span className="text-accent font-semibold">&quot;{query}&quot;</span>
                     </p>
+
+                    {/* Ad acima dos resultados — alta intenção de busca = RPM elevado */}
+                    <AdBanner
+                        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_AUTO!}
+                        variant="auto"
+                        channel="search-results"
+                        showFallback={false}
+                    />
 
                     {/* Atalhos */}
                     {showShortcuts && shortcuts.length > 0 && (

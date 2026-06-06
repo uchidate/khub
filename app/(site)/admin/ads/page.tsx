@@ -68,6 +68,14 @@ const SLOTS = [
         setting: 'adsAutoAdsEnabled' as keyof AdSettings,
     },
     {
+        key: 'NEXT_PUBLIC_ADSENSE_SLOT_STICKY',
+        label: 'Sticky Bottom Manual (mobile)',
+        format: 'Auto responsivo',
+        envVar: 'NEXT_PUBLIC_ADSENSE_SLOT_STICKY',
+        pages: ['Global (mobile, scroll > 400px, quando Auto Ads desativado)'],
+        setting: null,
+    },
+    {
         key: 'NEXT_PUBLIC_ADSENSE_SLOT_SIDE_RAIL_LEFT',
         label: 'Side Rail Esquerdo',
         format: 'Side rail',

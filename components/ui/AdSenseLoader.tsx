@@ -81,6 +81,39 @@ function setTopAnchorOffset() {
 
 const INTERACTION_EVENTS = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'] as const
 
+// Vignette: intervignette mínimo de 3 min; no máximo 1 por sessão na primeira navegação
+const VIGNETTE_COOLDOWN_MS = 3 * 60 * 1000
+let lastVignetteAt = 0
+let navCount = 0
+
+// Deriva tipo de página e categoria a partir do pathname para custom signals
+function derivePageContext(pathname: string): { pageType: string; category: string } {
+    if (pathname === '/' || pathname === '') return { pageType: 'home', category: 'home' }
+    if (pathname.startsWith('/blog/')) return { pageType: 'article', category: 'blog' }
+    if (pathname.startsWith('/blog'))  return { pageType: 'listing', category: 'blog' }
+    if (pathname.startsWith('/artists/')) return { pageType: 'profile', category: 'artists' }
+    if (pathname.startsWith('/artists'))  return { pageType: 'listing', category: 'artists' }
+    if (pathname.startsWith('/groups/'))  return { pageType: 'profile', category: 'groups' }
+    if (pathname.startsWith('/groups'))   return { pageType: 'listing', category: 'groups' }
+    if (pathname.startsWith('/productions/')) return { pageType: 'profile', category: 'productions' }
+    if (pathname.startsWith('/productions'))  return { pageType: 'listing', category: 'productions' }
+    if (pathname.startsWith('/search')) return { pageType: 'search', category: 'search' }
+    if (pathname.startsWith('/quiz'))   return { pageType: 'interactive', category: 'quiz' }
+    if (pathname.startsWith('/loja'))   return { pageType: 'commerce', category: 'loja' }
+    if (pathname.startsWith('/calendario')) return { pageType: 'listing', category: 'calendario' }
+    return { pageType: 'other', category: 'other' }
+}
+
+function tryVignette() {
+    const now = Date.now()
+    if (now - lastVignetteAt < VIGNETTE_COOLDOWN_MS) return
+    lastVignetteAt = now
+    try {
+        const adBreak = (window as unknown as { adBreak?: (o: object) => void }).adBreak
+        adBreak?.({ type: 'next', name: 'spa-page-nav' })
+    } catch { /* page-level ads não configurados */ }
+}
+
 export function AdSenseLoader() {
     const pathname = usePathname()
     const [routeKey, setRouteKey] = useState('')
@@ -177,6 +210,16 @@ export function AdSenseLoader() {
         }
 
         ensureAdSenseScript()
+
+        // Custom signals: expõe contexto de página para AdSense via dataset no html
+        const { pageType, category } = derivePageContext(pathname ?? '')
+        document.documentElement.dataset.adPageType = pageType
+        document.documentElement.dataset.adCategory = category
+
+        // Vignette interstitial na navegação SPA (Page-level Ads API)
+        // Ignora primeira navegação (montagem inicial) e respeita cooldown
+        navCount++
+        if (navCount > 1) tryVignette()
 
         const timers = ROUTE_PUSH_DELAYS.map(delay =>
             window.setTimeout(() => {
