@@ -88,6 +88,7 @@ const navSections: NavSection[] = [
         href: '/admin/seo', label: 'SEO', icon: Globe, exact: true,
         subItems: [
           { href: '/admin/seo/content-quality', label: 'Auditoria de conteúdo', icon: AlertTriangle },
+          { href: '/admin/seo/hubs', label: 'Relatório de hubs', icon: Layers },
         ],
       },
       { href: '/admin/tags',          label: 'Tags',           icon: Tag        },
