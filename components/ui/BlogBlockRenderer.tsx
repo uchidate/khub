@@ -381,7 +381,11 @@ interface BlogBlockRendererProps {
     blocks: BlogBlock[]
     className?: string
     resolvedEntities?: ResolvedEntities
+    adsDisabled?: boolean
 }
+
+// Gate: mínimo de blocos de parágrafo para injetar ads in-article (Google Policy)
+const MIN_PARAGRAPH_BLOCKS_FOR_ADS = 6
 
 // ── Interactive blocks ────────────────────────────────────────────────────────
 
@@ -763,7 +767,7 @@ function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
 }
 
 
-export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogBlockRendererProps) {
+export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisabled = false }: BlogBlockRendererProps) {
     // Group consecutive non-compact entity cards into a 2-col grid
     // Group consecutive compact cards into a 2-col desktop grid
     const rows: (BlogBlock | BlogBlock[] | PortraitGroupMarker)[] = []
@@ -793,8 +797,10 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities }: BlogB
     // Pre-compute which rows should show an ad AFTER them.
     // Rule: ad is scheduled at position P; find the next row >= P that is
     // not a heading and whose *next* row is also not a heading.
+    const paragraphCount = blocks.filter(b => b.type === 'blog_paragraph').length
+    const adsAllowed = !adsDisabled && paragraphCount >= MIN_PARAGRAPH_BLOCKS_FOR_ADS
     const adAfter = new Set<number>()
-    for (const pos of AD_POSITIONS) {
+    if (adsAllowed) for (const pos of AD_POSITIONS) {
         for (let i = pos - 1; i < rows.length; i++) {
             const cur = rows[i]
             const next = rows[i + 1]

@@ -237,6 +237,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }).slice(0, 4)
   const hasEntityLinks = post.relatedArtists.length > 0 || post.relatedGroups.length > 0 || post.relatedProductions.length > 0 || relatedHubs.length > 0
 
+  // Ads desabilitados: override manual, conteúdo patrocinado, ou tag "patrocinado"/"parceria"
+  const sponsoredTags = ['patrocinado', 'parceria', 'sponsored', 'publi']
+  const adsOff = (post as unknown as { adsDisabled?: boolean; isSponsored?: boolean }).adsDisabled === true
+    || (post as unknown as { isSponsored?: boolean }).isSponsored === true
+    || post.tags.some(t => sponsoredTags.includes(t.toLowerCase()))
+
   return (
     <PageTransition className="pb-10">
       <BlogReadingProgress />
@@ -416,7 +422,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Content */}
         <article className="w-full">
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
-            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} />
+            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} adsDisabled={adsOff} />
             : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
           }
         </article>
@@ -526,7 +532,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Multiplex — discovery widget após leitura */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" channel="blog" />
+        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" channel="blog" />}
 
         {/* Quiz */}
         <Link
@@ -553,7 +559,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         height: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
       }}>
         {/* Ad fica fixo no topo da sidebar — não rola com o TOC */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full shrink-0" channel="blog" refreshInterval={60} />
+        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full shrink-0" channel="blog" refreshInterval={60} />}
         {/* TOC e loja rolam abaixo do ad */}
         <div className="flex flex-col gap-4 overflow-y-auto mt-4 min-h-0">
           <BlogTableOfContents />

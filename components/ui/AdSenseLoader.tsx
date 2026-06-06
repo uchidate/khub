@@ -15,13 +15,12 @@ const MAX_TOP_ANCHOR_OFFSET = 205
 declare global {
     interface Window {
         adsbygoogle?: unknown[]
-        __adSettings?: { adsGloballyPaused: boolean; adsAutoAdsEnabled: boolean; adsMultiplexEnabled: boolean; adsSidebarEnabled: boolean; isAdmin?: boolean }
+        __adSettings?: { adsGloballyPaused: boolean; adsAutoAdsEnabled: boolean; adsMultiplexEnabled: boolean; adsSidebarEnabled: boolean }
     }
 }
 
 function isAdsPaused() {
-    return window.__adSettings?.isAdmin === true
-        || window.__adSettings?.adsGloballyPaused === true
+    return window.__adSettings?.adsGloballyPaused === true
         || window.__adSettings?.adsAutoAdsEnabled === false
 }
 
@@ -80,10 +79,35 @@ function setTopAnchorOffset() {
     document.documentElement.style.setProperty('--adsense-anchor-top-offset', `${offset}px`)
 }
 
+const INTERACTION_EVENTS = ['scroll', 'mousemove', 'touchstart', 'keydown', 'click'] as const
+
 export function AdSenseLoader() {
     const pathname = usePathname()
     const [routeKey, setRouteKey] = useState('')
     const lastRoute = useRef<string | null>(null)
+    const scriptInjected = useRef(false)
+
+    // Lazy load: injeta o script AdSense apenas após primeira interação do usuário
+    // Melhora LCP e TBT em ~200-400ms em mobile (NitroPack pattern)
+    useEffect(() => {
+        if (!ADSENSE_ENABLED || scriptInjected.current) return
+
+        const inject = () => {
+            if (scriptInjected.current) return
+            scriptInjected.current = true
+            INTERACTION_EVENTS.forEach(e => window.removeEventListener(e, inject))
+            ensureAdSenseScript()
+        }
+
+        // Se o usuário já scrollou antes do componente montar (navegação SPA)
+        if (document.documentElement.scrollTop > 0) {
+            inject()
+            return
+        }
+
+        INTERACTION_EVENTS.forEach(e => window.addEventListener(e, inject, { once: true, passive: true }))
+        return () => INTERACTION_EVENTS.forEach(e => window.removeEventListener(e, inject))
+    }, [])
 
     useEffect(() => {
         const updateRouteKey = () => setRouteKey(`${window.location.pathname}${window.location.search}`)

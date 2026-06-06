@@ -1265,6 +1265,8 @@ model BlogPost {
   status         BlogPostStatus @default(DRAFT)
   isPrivate      Boolean        @default(false) // Publicado mas visível apenas para admins
   featured       Boolean        @default(false)
+  isSponsored    Boolean        @default(false) // Conteúdo patrocinado — desativa AdSense automaticamente
+  adsDisabled    Boolean        @default(false) // Override manual — desativa AdSense independente de outros flags
   viewCount      Int            @default(0)
   readingTimeMin Int            @default(1)
   authorId       String

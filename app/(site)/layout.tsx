@@ -183,18 +183,13 @@ export default async function RootLayout({
                 {ADSENSE_ENABLED && (
                     <>
                         <meta key="adsense-account" name="google-adsense-account" content={ADSENSE_CLIENT} />
+                        {/* preconnect mantido — resolve DNS cedo sem bloquear parser */}
                         <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
                         {/* Consent default inline — deve rodar ANTES do AdSense carregar */}
                         <script key="gtag-consent-default" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{analytics_storage:'denied',ad_storage:'granted',ad_personalization:'granted'});` }} />
-                        <script
-                            key="adsense-auto-ads"
-                            async
-                            suppressHydrationWarning
-                            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-                            crossOrigin="anonymous"
-                        />
+                        {/* Script AdSense NÃO carregado aqui — AdSenseLoader injeta após primeira interação do usuário (lazy) */}
                     </>
                 )}
             </head>

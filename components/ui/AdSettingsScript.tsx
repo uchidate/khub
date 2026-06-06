@@ -1,24 +1,19 @@
 import prisma from '@/lib/prisma'
-import { auth } from '@/lib/auth'
 
-// Server Component — injeta window.__adSettings no cliente uma vez por page load
+// Server Component — injeta window.__adSettings no cliente uma vez por page load.
+// isAdmin NÃO é lido aqui (auth() quebraria SSG em /groups, /artists etc).
+// O AdBannerAdminGuard (client component) lê a sessão e zera os ads para admins.
 export async function AdSettingsScript() {
-    let settings = { adsGloballyPaused: false, adsAutoAdsEnabled: true, adsMultiplexEnabled: true, adsSidebarEnabled: true, isAdmin: false }
+    let settings = { adsGloballyPaused: false, adsAutoAdsEnabled: true, adsMultiplexEnabled: true, adsSidebarEnabled: true }
     try {
-        const [row, session] = await Promise.all([
-            prisma.systemSettings.findUnique({ where: { id: 'singleton' } }),
-            auth(),
-        ])
+        const row = await prisma.systemSettings.findUnique({ where: { id: 'singleton' } })
         if (row) {
             settings = {
                 adsGloballyPaused:   row.adsGloballyPaused   ?? false,
                 adsAutoAdsEnabled:   row.adsAutoAdsEnabled   ?? true,
                 adsMultiplexEnabled: row.adsMultiplexEnabled ?? true,
                 adsSidebarEnabled:   row.adsSidebarEnabled   ?? true,
-                isAdmin: session?.user?.role?.toLowerCase() === 'admin',
             }
-        } else {
-            settings.isAdmin = session?.user?.role?.toLowerCase() === 'admin'
         }
     } catch { /* fallback to defaults on DB error */ }
 
