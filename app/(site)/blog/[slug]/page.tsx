@@ -547,15 +547,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </div>{/* fim coluna principal */}
 
       {/* ── Sidebar (xl+) ── */}
-      <aside className="hidden xl:block">
-        <div
-          className="sticky flex flex-col gap-4 overflow-y-auto"
-          style={{
-            top: 'calc(var(--site-sticky-top, 92px) + var(--section-bar-h, 44px) + 36px + 8px)',
-            maxHeight: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
-          }}
-        >
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full" channel="blog" refreshInterval={60} />
+      <aside className="hidden xl:flex xl:flex-col" style={{
+        position: 'sticky',
+        top: 'calc(var(--site-sticky-top, 92px) + var(--section-bar-h, 44px) + 36px + 8px)',
+        height: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
+      }}>
+        {/* Ad fica fixo no topo da sidebar — não rola com o TOC */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full shrink-0" channel="blog" refreshInterval={60} />
+        {/* TOC e loja rolam abaixo do ad */}
+        <div className="flex flex-col gap-4 overflow-y-auto mt-4 min-h-0">
           <BlogTableOfContents />
           <LojaRelacionados tags={post.tags} title="Produtos relacionados" compact />
         </div>

@@ -42,6 +42,7 @@ type RuntimeAdSettings = {
     adsGloballyPaused: boolean
     adsMultiplexEnabled: boolean
     adsSidebarEnabled: boolean
+    isAdmin?: boolean
 }
 
 const SLOT_NAMES: Record<string, string> = {
@@ -65,6 +66,7 @@ function normalizeVariant(v: AdVariantLegacy = 'auto'): AdVariant {
 
 function isDisabledBySettings(settings: RuntimeAdSettings | undefined, variant: AdVariant, slot: string) {
     if (!settings) return false
+    if (settings.isAdmin) return true
     if (settings.adsGloballyPaused) return true
     if (settings.adsMultiplexEnabled === false && (variant === 'multiplex' || slot === MULTIPLEX_SLOT)) return true
     if (settings.adsSidebarEnabled === false && slot === SIDEBAR_SLOT) return true
@@ -215,6 +217,30 @@ export function AdBanner({
         if (ins.querySelector('iframe')) detectClick()
 
         return () => mo.disconnect()
+    }, [filled, slot, slotName, channel])
+
+    // CLS monitor — observa layout shifts próximos ao slot e reporta via GA4
+    useEffect(() => {
+        if (IS_DEV || !CLIENT || filled !== true) return
+        const el = containerRef.current
+        if (!('PerformanceObserver' in window)) return
+
+        let cumulativeCls = 0
+        const po = new PerformanceObserver(list => {
+            for (const entry of list.getEntries()) {
+                const ls = entry as PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: { node?: Element }[] }
+                if (ls.hadRecentInput) continue
+                const nearAd = ls.sources?.some(s => s.node && el?.contains(s.node)) ?? false
+                if (nearAd) {
+                    cumulativeCls += ls.value
+                    if (cumulativeCls > 0.1) {
+                        fireGa4('ad_cls_impact', { slot_id: slot, slot_name: slotName, channel: channel ?? 'default', cls: cumulativeCls.toFixed(3) })
+                    }
+                }
+            }
+        })
+        try { po.observe({ type: 'layout-shift', buffered: true }) } catch { /* não suportado */ }
+        return () => po.disconnect()
     }, [filled, slot, slotName, channel])
 
     // Ad refresh — repusha o slot a cada N segundos se em viewport

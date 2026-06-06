@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
-import { ExternalLink, AlertTriangle, CheckCircle2, Loader2, Copy, FileText } from 'lucide-react'
+import { ExternalLink, AlertTriangle, CheckCircle2, Loader2, Copy, FileText, BarChart3, Eye, MousePointer, TrendingUp } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -268,6 +268,50 @@ export default function AdsAdminPage() {
                                 </div>
                             )
                         })}
+                    </div>
+                </div>
+
+                {/* GA4 Analytics */}
+                <div className="bg-surface border border-border rounded-xl overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted">Analytics de Anúncios (GA4)</p>
+                        <a
+                            href="https://analytics.google.com/analytics/web/#/p465736399/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..selmet%3D%5B%22eventCount%22%5D%26_r.explorerCard..seldim%3D%5B%22eventName%22%5D&r=top-events&ruid=top-events,life-cycle,engagement"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
+                        >
+                            Abrir GA4 <ExternalLink size={10} />
+                        </a>
+                    </div>
+                    <div className="grid grid-cols-3 divide-x divide-border">
+                        {[
+                            { icon: Eye, label: 'ad_impression', desc: 'Slot preenchido e renderizado', color: 'text-emerald-400', href: 'https://analytics.google.com/analytics/web/#/p465736399/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..selmet%3D%5B%22eventCount%22%5D%26_r.explorerCard..filters%3D%5B%7B%22fieldName%22%3A%22eventName%22%2C%22filterType%22%3A%22EXACT%22%2C%22expressionList%22%3A%5B%22ad_impression%22%5D%7D%5D' },
+                            { icon: TrendingUp, label: 'ad_viewed', desc: 'Visível ≥50% por ≥1s (viewability)', color: 'text-blue-400', href: 'https://analytics.google.com/analytics/web/#/p465736399/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..selmet%3D%5B%22eventCount%22%5D%26_r.explorerCard..filters%3D%5B%7B%22fieldName%22%3A%22eventName%22%2C%22filterType%22%3A%22EXACT%22%2C%22expressionList%22%3A%5B%22ad_viewed%22%5D%7D%5D' },
+                            { icon: MousePointer, label: 'ad_click', desc: 'Clique no anúncio detectado', color: 'text-purple-400', href: 'https://analytics.google.com/analytics/web/#/p465736399/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..selmet%3D%5B%22eventCount%22%5D%26_r.explorerCard..filters%3D%5B%7B%22fieldName%22%3A%22eventName%22%2C%22filterType%22%3A%22EXACT%22%2C%22expressionList%22%3A%5B%22ad_click%22%5D%7D%5D' },
+                        ].map(({ icon: Icon, label, desc, color, href }) => (
+                            <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-1.5 px-5 py-4 hover:bg-surface-hover transition-colors group">
+                                <div className="flex items-center gap-2">
+                                    <Icon size={13} className={color} />
+                                    <p className="text-xs font-bold text-foreground font-mono">{label}</p>
+                                    <ExternalLink size={9} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+                                </div>
+                                <p className="text-[11px] text-muted">{desc}</p>
+                            </a>
+                        ))}
+                    </div>
+                    <div className="px-5 py-3 border-t border-border bg-surface/50">
+                        <div className="flex items-start gap-2">
+                            <BarChart3 size={11} className="text-muted shrink-0 mt-0.5" />
+                            <p className="text-[11px] text-muted">
+                                Para ver receita estimada por página, acesse{' '}
+                                <a href="https://www.google.com/adsense/new/u/0/pub-6015098995926392/reports/overview" target="_blank" rel="noopener noreferrer" className="text-foreground hover:underline">
+                                    AdSense → Relatórios
+                                </a>
+                                {' '}e filtre por URL. CLS causado por ads é reportado como evento{' '}
+                                <span className="font-mono">ad_cls_impact</span> no GA4.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
