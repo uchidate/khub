@@ -10,7 +10,6 @@ import { CuriosidadesAside } from "@/components/features/CuriosidadesAside"
 import { ArtistFilmographyList } from "@/components/features/ArtistFilmographyList"
 import { GroupMVPlayer } from "@/components/groups/GroupMVPlayer"
 import { extractYoutubeId } from "@/lib/utils/youtube"
-import { TikTokSection } from "@/components/groups/TikTokSection"
 import { ErrorMessage } from "@/components/ui/ErrorMessage"
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs"
 import { FavoriteButton } from "@/components/ui/FavoriteButton"
@@ -626,54 +625,26 @@ function renderStarterBlocks(blocks: EditorialBlock[]) {
     )
 }
 
-async function fetchTikTokThumbnail(url: string): Promise<string | null> {
-    try {
-        const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`, {
-            next: { revalidate: 86400 },
-        })
-        if (!res.ok) return null
-        const data = await res.json() as { thumbnail_url?: string }
-        return data.thumbnail_url ?? null
-    } catch { return null }
-}
-
-async function ArtistVideoSections({
+function ArtistVideoSections({
     videoBlock,
     videos,
     accent,
-    artistName,
-    artistImageUrl,
 }: {
     videoBlock: Extract<EditorialBlock, { type: 'video' }> | null | undefined
     videos: { title: string; url: string }[]
     accent: string
-    artistName?: string
-    artistImageUrl?: string | null
 }) {
     const allVideos = videoBlock
         ? [{ title: 'Vídeo em Destaque', url: videoBlock.url }, ...videos.filter(v => v.url !== videoBlock.url)]
         : videos
 
     const youtubeVideos = allVideos.filter(v => !!extractYoutubeId(v.url))
-    const rawTiktok = allVideos.filter(v => v.url.includes('tiktok.com'))
-
-    const tiktokVideos = await Promise.all(
-        rawTiktok.map(async v => ({
-            ...v,
-            thumbnail: await fetchTikTokThumbnail(v.url),
-        }))
-    )
 
     return (
         <>
             {youtubeVideos.length > 0 && (
                 <div className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
                     <GroupMVPlayer videos={youtubeVideos} accent={accent} embedFeaturedByDefault />
-                </div>
-            )}
-            {tiktokVideos.length > 0 && (
-                <div id="tiktoks" className="scroll-mt-24 mt-12 pt-10 border-t border-border/40">
-                    <TikTokSection videos={tiktokVideos} accent={accent} artistName={artistName} artistImageUrl={artistImageUrl} />
                 </div>
             )}
         </>
@@ -875,7 +846,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         />
                     </div>
                 )}
-                <ArtistVideoSections videoBlock={videoBlock} videos={videos} accent="#ef4444" artistName={artist.nameRomanized ?? undefined} artistImageUrl={artist.primaryImageUrl} />
+                <ArtistVideoSections videoBlock={videoBlock} videos={videos} accent="#ef4444" />
                 {discographyReleases.length > 0 && (
                     <div id="discografia" className="scroll-mt-20 mt-12 pt-10 border-t border-border/40">
                         <DiscographySection albums={discographyReleases} />
