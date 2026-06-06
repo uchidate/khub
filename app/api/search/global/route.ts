@@ -69,7 +69,7 @@ export const GET = withLogging(async function GET(request: NextRequest) {
             storeProducts,
             total,
             query: searchTerm
-        })
+        }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } })
 
     } catch (error: unknown) {
         log.error('Error in global search', { error: getErrorMessage(error) })
