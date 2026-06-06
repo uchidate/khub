@@ -58,6 +58,7 @@ const CONFIGS: Record<string, ListicleConfig> = {
 }
 
 export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
     return Object.keys(CONFIGS).map(tipo => ({ tipo }))
 }
 
@@ -79,6 +80,7 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
     const { tipo } = await props.params
     const config = CONFIGS[tipo]
     if (!config) notFound()
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return null
 
     const productions = await prisma.production.findMany({
         where: config.where,
