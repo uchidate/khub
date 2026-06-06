@@ -172,3 +172,15 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 - Incluir blocos `[MOMENTO]`, `[TAGS]`, `[FATOS]`, `[TIMELINE]`, `[DESTAQUE]`, `[RECORDE]`.
 - Escrever seções narrativas com leitura artística, não apenas lista de prêmios.
 - Curiosidades devem explicar relevância, não só repetir biografia.
+
+### URLs geradas por IA podem vir em markdown ou wrapper do Google
+
+**Erro observado:** o Gemini retornou `videos[].url` como `[https://www.youtube.com/watch?v=ID](https://www.google.com/search?q=...)`, e o validador rejeitou antes de aplicar o enriquecimento.
+
+**Causa:** o modelo às vezes transforma URLs em markdown ou em links de busca quando copia resultados da web.
+
+**Como evitar:**
+
+- No prompt, exigir URL plain text direta para `videos[].url`.
+- Antes do schema final, normalizar markdown `[texto](url)` e `google.com/search?q=URL_REAL`.
+- Para vídeos, aceitar apenas YouTube direto e converter `youtu.be/ID` para `https://www.youtube.com/watch?v=ID`.
