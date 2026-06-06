@@ -11,22 +11,33 @@ const BLOOD_TYPES = ['A', 'B', 'AB', 'O'] as const
 const VALID_ROLES = ['ATOR', 'CANTOR', 'MODELO', 'IDOL', 'APRESENTADOR', 'DANÇARINO', 'COMPOSITOR', 'PRODUTOR']
 
 function normalizeGeneratedUrl(value: string): string {
-    const trimmed = value.trim()
-    const markdownMatch = trimmed.match(/\[[^\]]*]\(([^)]+)\)/)
-    const candidate = (markdownMatch?.[1] ?? trimmed).trim()
+    let s = value.trim()
 
-    try {
-        const parsed = new URL(candidate)
-        const host = parsed.hostname.replace(/^www\./, '')
-        const queryUrl = parsed.searchParams.get('q') ?? parsed.searchParams.get('url')
-        if (host === 'google.com' && parsed.pathname.startsWith('/search') && queryUrl) {
-            return queryUrl.trim()
-        }
-    } catch {
-        return candidate
+    // Extrai URL de markdown [texto](url) — pode precisar de múltiplos passes
+    // (Gemini às vezes gera [url](google_redirect) onde o redirect contém outra url em ?q=)
+    for (let i = 0; i < 3; i++) {
+        const m = s.match(/\[[^\]]*\]\(([^)]+)\)/)
+        if (!m) break
+        s = m[1].trim()
     }
 
-    return candidate
+    // Remove qualquer colchete/parêntese residual
+    s = s.replace(/^\[+/, '').replace(/\]+$/, '').replace(/^\(+/, '').replace(/\)+$/, '').trim()
+
+    try {
+        const parsed = new URL(s)
+        const host = parsed.hostname.replace(/^www\./, '')
+        // Desembrulha redirects google.com/search?q=URL ou /url?url=URL
+        const queryUrl = parsed.searchParams.get('q') ?? parsed.searchParams.get('url')
+        if (host === 'google.com' && queryUrl) {
+            // Aplica recursão para o caso do q= também estar wrappeado
+            return normalizeGeneratedUrl(decodeURIComponent(queryUrl))
+        }
+    } catch {
+        return s
+    }
+
+    return s
 }
 
 function normalizeYoutubeUrl(value: string): string | null {
