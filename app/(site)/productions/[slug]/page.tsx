@@ -19,6 +19,7 @@ import { getRelatedProductionHubs } from '@/lib/seo/archive-hubs'
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { buildProductionSeoDescription, buildProductionSeoTitle, productionTypeLabel } from "@/lib/seo/metadata-builders"
 import type { Metadata } from "next"
 
@@ -1065,6 +1066,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     </div>
                 </div>
             </div>
+            {/* Multiplex — discovery após leitura completa */}
+            <div className="page-wrap py-6">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" />
+            </div>
+
             <ScrollToTop />
         </div>
     )

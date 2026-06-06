@@ -17,6 +17,7 @@ import { Globe, Users, Calendar, Eye, Music, ExternalLink, Play } from 'lucide-r
 import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import { AnniversaryCountdown } from '@/components/ui/AnniversaryCountdown'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { getTranslation } from '@/lib/translations'
 import type { Metadata } from 'next'
 import { permanentRedirect } from 'next/navigation'
@@ -943,6 +944,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     </div>
                 </div>
             </div>
+            {/* Multiplex — discovery após leitura completa do perfil */}
+            <div className="page-wrap py-6">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" />
+            </div>
+
             <ScrollToTop />
         </div>
     );
