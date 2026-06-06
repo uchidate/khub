@@ -56,6 +56,17 @@ export default async function ProductionsPage() {
             "url": `${BASE_URL}/productions`,
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
+            ...(featuredProductions.length > 0 ? {
+                "hasPart": featuredProductions.map((p, i) => ({
+                    "@type": p.type === 'MOVIE' ? "Movie" : "TVSeries",
+                    "position": i + 1,
+                    "name": p.titlePt,
+                    "url": `${BASE_URL}/productions/${p.slug ?? p.id}`,
+                    ...(p.imageUrl ? { "image": p.imageUrl } : {}),
+                    ...(p.year ? { "datePublished": String(p.year) } : {}),
+                    "countryOfOrigin": { "@type": "Country", "name": "Korea, Republic of" },
+                })),
+            } : {}),
         }} />
         <PageTransition className="pb-16">
             <Suspense>
