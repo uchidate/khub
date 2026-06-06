@@ -271,13 +271,11 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
             description: description.slice(0, 160),
             type: 'profile',
             url: `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
-            images: artist.primaryImageUrl ? [{ url: artist.primaryImageUrl, width: 1200, height: 630, alt: artist.nameRomanized }] : [],
         },
         twitter: {
             card: 'summary_large_image',
             title: `${artist.nameRomanized} | HallyuHub`,
             description: description.slice(0, 160),
-            images: artist.primaryImageUrl ? [artist.primaryImageUrl] : [],
         }
     }, 'artist', artist.id)
 }
