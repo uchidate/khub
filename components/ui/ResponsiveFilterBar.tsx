@@ -65,7 +65,8 @@ export function ResponsiveFilterBar({ label, value, children, className = '' }: 
         <div aria-hidden="true" className="h-[calc(var(--section-bar-h)+1px)] lg:hidden" />
 
         <div
-            className={`relative z-[20] hidden border-b border-border/70 bg-background lg:block ${className}`}
+            className={`sticky z-[190] hidden border-b border-border/70 bg-background lg:block ${className}`}
+            style={{ top: 'var(--site-sticky-top, 92px)' }}
         >
             <div className="page-wrap flex h-12 items-center overflow-x-auto py-0 scrollbar-none">
                 {children}
