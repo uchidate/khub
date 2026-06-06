@@ -69,7 +69,13 @@ const getTickerData = unstable_cache(
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" })
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" })
-const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" })
+const sora = Sora({
+    subsets: ["latin"],
+    variable: "--font-sora",
+    display: "swap",
+    preload: true,
+    weight: ["400", "600", "700"],
+})
 
 import { SITE_URL } from '@/lib/constants/site'
 const BASE_URL = SITE_URL
@@ -158,6 +164,8 @@ export default async function RootLayout({
                 <link key="alternate-rss" rel="alternate" type="application/rss+xml" title="HallyuHub - Blog" href={`${BASE_URL}/feed.xml`} />
                 <link key="sitemap-main" rel="sitemap" type="application/xml" title="Sitemap" href={`${BASE_URL}/sitemap_index.xml`} />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
+                <link key="preconnect-gfonts-1" rel="preconnect" href="https://fonts.googleapis.com" />
+                <link key="preconnect-gfonts-2" rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
                 <link key="preconnect-unsplash" rel="preconnect" href="https://images.unsplash.com" />
                 <link key="dns-unsplash" rel="dns-prefetch" href="https://images.unsplash.com" />
                 <link key="preconnect-tmdb" rel="preconnect" href="https://image.tmdb.org" />
@@ -166,8 +174,9 @@ export default async function RootLayout({
                 <link key="dns-youtube" rel="dns-prefetch" href="https://img.youtube.com" />
                 <link key="preconnect-wikimedia" rel="preconnect" href="https://upload.wikimedia.org" />
                 <link key="dns-wikimedia" rel="dns-prefetch" href="https://upload.wikimedia.org" />
+                <link key="preconnect-scdn" rel="preconnect" href="https://i.scdn.co" />
                 <link key="dns-soompi" rel="dns-prefetch" href="https://0.soompi.io" />
-                <link key="dns-r2" rel="dns-prefetch" href="https://pub-placeholder.r2.dev" />
+                <link key="dns-kpopping" rel="dns-prefetch" href="https://cdn.kpopping.com" />
                 {ADSENSE_ENABLED && (
                     <>
                         <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />

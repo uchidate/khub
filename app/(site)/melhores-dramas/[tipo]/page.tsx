@@ -9,7 +9,7 @@ import { ShareButtons } from '@/components/ui/ShareButtons'
 import { Star, Film, Tv, ExternalLink } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants/site'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 interface ListicleConfig {
     title: string
@@ -57,6 +57,11 @@ const CONFIGS: Record<string, ListicleConfig> = {
     },
 }
 
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    return Object.keys(CONFIGS).map(tipo => ({ tipo }))
+}
+
 export async function generateMetadata(props: { params: Promise<{ tipo: string }> }): Promise<Metadata> {
     const { tipo } = await props.params
     const config = CONFIGS[tipo]
@@ -75,6 +80,7 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
     const { tipo } = await props.params
     const config = CONFIGS[tipo]
     if (!config) notFound()
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return null
 
     const productions = await prisma.production.findMany({
         where: config.where,
