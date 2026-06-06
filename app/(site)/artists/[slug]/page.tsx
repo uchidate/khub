@@ -719,6 +719,23 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         getPublicMusicCatalog({ artistId: artist.id }),
     ])
 
+    // Fallback: se não há artigos linkados explicitamente, busca por nome do artista no título
+    const blogArticlesFinal = blogArticles.length > 0 ? blogArticles : await (async () => {
+        const primaryGroup = artist.memberships?.[0]?.group?.name
+        const searchTerms = [artist.nameRomanized, ...(primaryGroup ? [primaryGroup] : [])].filter(Boolean)
+        if (searchTerms.length === 0) return []
+        return prisma.blogPost.findMany({
+            where: {
+                status: 'PUBLISHED',
+                isPrivate: false,
+                OR: searchTerms.map(term => ({ title: { contains: term, mode: 'insensitive' as const } })),
+            },
+            select: { slug: true, title: true, excerpt: true, coverImageUrl: true, publishedAt: true, readingTimeMin: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 3,
+        }).catch(() => [])
+    })()
+
     const discographyReleases = musicCatalog.releases.map(release => {
         const releasePrimaryLink = getPrimaryMusicLink(release.links)
         return {
@@ -780,7 +797,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         ...(artist.productions.length > 0 ? [{ href: '#filmografia', label: 'Filmografia' }] : []),
         ...(videos.length > 0 ? [{ href: '#mvs', label: 'Vídeos' }] : []),
         ...(discographyReleases.length > 0 ? [{ href: '#discografia', label: 'Discografia' }] : []),
-        ...(blogArticles.length > 0 ? [{ href: '#artigos', label: 'Artigos' }] : []),
+        ...(blogArticlesFinal.length > 0 ? [{ href: '#artigos', label: 'Artigos' }] : []),
     ]
     const heroRoles = getRoleLabels(roles, artist.gender).slice(0, 3).map(label => label.toLowerCase())
     const heroMeta = [
@@ -1223,12 +1240,12 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             )}
 
             {/* ── ARTIGOS ── */}
-            {blogArticles.length > 0 && (
+            {blogArticlesFinal.length > 0 && (
                 <section id="artigos" className="page-wrap scroll-mt-20 border-t border-border/40 py-14">
                     <div className="font-mono text-[11px] text-muted tracking-[0.06em]">05 · LEITURAS</div>
                     <h2 className="text-[36px] sm:text-[44px] font-bold tracking-[-0.04em] leading-tight mt-1.5 mb-8">Artigos publicados</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6">
-                        {blogArticles.map((article, i) => (
+                        {blogArticlesFinal.map((article, i) => (
                             <Link key={article.slug} href={`/blog/${article.slug}`}
                                 className={`group flex gap-4 py-5 border-b border-border/40 hover:opacity-75 transition-opacity ${i < 3 ? 'border-t border-border/40' : ''}`}>
                                 {article.coverImageUrl && (

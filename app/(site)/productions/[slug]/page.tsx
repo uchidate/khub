@@ -60,7 +60,7 @@ const getProduction = cache(async (slugOrId: string) => {
                 where: { artist: { flaggedAsNonKorean: false } },
                 include: { artist: { select: {
                     id: true, slug: true, nameRomanized: true, nameHangul: true,
-                    primaryImageUrl: true, roles: true, gender: true,
+                    primaryImageUrl: true, roles: true, gender: true, bio: true,
                 } } },
                 orderBy: [{ castOrder: 'asc' }, { role: 'asc' }],
                 take: 30,
@@ -234,7 +234,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         ? production.artists.length
         : await prisma.artistProduction.count({ where: { productionId: production.id, artist: { flaggedAsNonKorean: false } } }).catch(() => production.artists.length)
 
-    const blogArticles = await prisma.blogPost.findMany({
+    const blogArticlesLinked = await prisma.blogPost.findMany({
         where: {
             status: 'PUBLISHED',
             isPrivate: false,
@@ -244,6 +244,22 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         orderBy: { publishedAt: 'desc' },
         take: 6,
     }).catch(() => [])
+
+    // Fallback: busca por título da produção quando sem links explícitos
+    const blogArticles = blogArticlesLinked.length > 0 ? blogArticlesLinked : await (async () => {
+        const searchTerms = [production.titlePt, production.titleKr].filter(Boolean) as string[]
+        if (searchTerms.length === 0) return []
+        return prisma.blogPost.findMany({
+            where: {
+                status: 'PUBLISHED',
+                isPrivate: false,
+                OR: searchTerms.map(term => ({ title: { contains: term, mode: 'insensitive' as const } })),
+            },
+            select: { slug: true, title: true, excerpt: true, coverImageUrl: true, publishedAt: true, readingTimeMin: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 3,
+        }).catch(() => [])
+    })()
 
     // Busca sinopse traduzida (PT-BR) — fallback para o campo original
     const synopsisPt = await getTranslation('production', production.id, 'synopsis').catch(() => null)
@@ -774,6 +790,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                                                 <div className="flex items-center justify-center h-full text-muted font-black text-sm">{artist.nameRomanized}</div>
                                                             )}
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                            {artist.bio && (
+                                                                <div className="absolute top-2 right-2 bg-[#ff2d78]/90 px-1.5 py-0.5 text-[9px] font-black text-white uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    Perfil
+                                                                </div>
+                                                            )}
                                                             <div className="absolute bottom-0 left-0 right-0 p-3">
                                                                 <p className="text-sm font-black text-white">{artist.nameRomanized}</p>
                                                                 {role && <p className="text-xs font-bold truncate text-[#ff2d78]">{role}</p>}

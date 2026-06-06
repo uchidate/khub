@@ -356,14 +356,16 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                 )}
             </section>
             {hub.faq.length > 0 && (
-                <section className="page-wrap pb-16">
+                <section className="page-wrap pb-16" itemScope itemType="https://schema.org/FAQPage">
                     <div className="border-t border-border/50 pt-10">
-                        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted">Perguntas frequentes</p>
+                        <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted">Perguntas frequentes</h2>
                         <div className="mt-5 grid gap-4 md:grid-cols-2">
                             {hub.faq.map(item => (
-                                <div key={item.question} className="border border-border bg-surface p-5">
-                                    <h2 className="text-sm font-black text-foreground">{item.question}</h2>
-                                    <p className="mt-2 text-sm leading-6 text-muted">{item.answer}</p>
+                                <div key={item.question} className="border border-border bg-surface p-5" itemScope itemType="https://schema.org/Question" itemProp="mainEntity">
+                                    <h3 className="text-sm font-black text-foreground" itemProp="name">{item.question}</h3>
+                                    <div itemScope itemType="https://schema.org/Answer" itemProp="acceptedAnswer">
+                                        <p className="mt-2 text-sm leading-6 text-muted" itemProp="text">{item.answer}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
