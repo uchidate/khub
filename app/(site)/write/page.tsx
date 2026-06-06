@@ -7,7 +7,7 @@ import Link from 'next/link'
 import {
     Save, Send, Eye, ArrowLeft, Loader2, CheckCircle, XCircle, Tag, X,
     Blocks, FileText, Layout, ImageIcon, PanelRightClose, PanelRightOpen,
-    Maximize2, Minimize2, Undo2, Redo2, Clock, History,
+    Maximize2, Minimize2, Undo2, Redo2, Clock, History, Link2,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 const BlogBlockEditor = dynamic(() => import('@/components/admin/BlogBlockEditor').then(m => m.BlogBlockEditor), { ssr: false })
@@ -23,6 +23,86 @@ import type { BlogBlock, BlogTemplate } from '@/lib/types/blocks'
 import { BLOG_TEMPLATE_BLOCKS, BLOG_TEMPLATE_LABELS } from '@/lib/types/blocks'
 
 const AUTOSAVE_KEY = 'blog_draft_autosave'
+
+// ─── Internal link suggestions ────────────────────────────────────────────────
+
+type LinkSuggestion = { label: string; url: string; type: 'artist' | 'group' | 'production' | 'post'; matchedTerm: string }
+
+function InternalLinkSuggestions({ title }: { title: string }) {
+  const [open, setOpen]           = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [suggestions, setSuggestions] = useState<LinkSuggestion[]>([])
+  const [copied, setCopied]       = useState<string | null>(null)
+
+  async function fetch_suggestions() {
+    if (!title.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/blog/suggest-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: title }),
+      })
+      const d = await res.json()
+      setSuggestions(d.suggestions ?? [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function copy(url: string) {
+    navigator.clipboard.writeText(url)
+    setCopied(url)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const TYPE_COLORS: Record<string, string> = {
+    artist: 'text-pink-400 bg-pink-400/10',
+    group: 'text-purple-400 bg-purple-400/10',
+    production: 'text-blue-400 bg-blue-400/10',
+    post: 'text-emerald-400 bg-emerald-400/10',
+  }
+
+  return (
+    <div className="rounded-xl border border-border overflow-hidden">
+      <button
+        onClick={() => { setOpen(v => !v); if (!open && suggestions.length === 0) fetch_suggestions() }}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Link2 className="w-3.5 h-3.5 text-muted" />
+          <span className="text-xs font-black uppercase tracking-wider text-foreground">Links Internos</span>
+          {suggestions.length > 0 && (
+            <span className="text-[10px] font-bold tabular-nums bg-surface-hover px-1.5 py-0.5 rounded-full text-muted">{suggestions.length}</span>
+          )}
+        </div>
+        <span className="text-[10px] text-muted">{open ? 'fechar' : 'sugerir'}</span>
+      </button>
+      {open && (
+        <div className="border-t border-border px-4 py-3 space-y-2">
+          <p className="text-[11px] text-muted">Links para artistas, grupos, produções e posts relacionados ao título.</p>
+          {loading && <div className="flex items-center gap-2 text-xs text-muted"><Loader2 size={11} className="animate-spin" /> Buscando...</div>}
+          {!loading && suggestions.length === 0 && <p className="text-xs text-muted italic">Nenhuma sugestão encontrada.</p>}
+          {suggestions.map(s => (
+            <div key={s.url} className="flex items-center gap-2 group">
+              <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 ${TYPE_COLORS[s.type] ?? 'text-muted bg-surface'}`}>{s.type}</span>
+              <span className="text-xs text-foreground truncate flex-1 font-medium">{s.label}</span>
+              <button
+                onClick={() => copy(s.url)}
+                className="shrink-0 text-[10px] px-2 py-0.5 rounded bg-surface border border-border hover:border-accent/30 text-muted hover:text-foreground transition-all"
+              >
+                {copied === s.url ? '✓' : 'copiar'}
+              </button>
+            </div>
+          ))}
+          {suggestions.length > 0 && (
+            <button onClick={fetch_suggestions} className="text-[10px] text-muted hover:text-foreground mt-1 transition-colors">↻ Atualizar</button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 type EditorMode = 'markdown' | 'blocks'
 
@@ -945,6 +1025,11 @@ function WritePageContent() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Internal link suggestions */}
+          {postId && (
+            <InternalLinkSuggestions title={title} />
           )}
 
           {/* Markdown cheat sheet (only in markdown mode) */}

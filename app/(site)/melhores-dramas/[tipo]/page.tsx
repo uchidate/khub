@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ShareButtons } from '@/components/ui/ShareButtons'
+import { JsonLd } from '@/components/seo/JsonLd'
 import { Star, Film, Tv, ExternalLink } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants/site'
 
@@ -55,6 +56,34 @@ const CONFIGS: Record<string, ListicleConfig> = {
         where: { isHidden: false, type: 'movie', voteAverage: { gte: 7 } },
         intro: 'O cinema coreano ganhou reconhecimento mundial com "Parasita" (2020), primeiro filme não em inglês a vencer o Oscar de Melhor Filme. Mas essa tradição de qualidade vem de décadas de produções extraordinárias.',
     },
+    '2025': {
+        title: 'Melhores K-Dramas de 2025',
+        description: 'Os K-Dramas mais bem avaliados e aclamados lançados em 2025.',
+        metaDesc: 'Lista dos melhores K-Dramas de 2025: as séries coreanas mais bem avaliadas, comentadas e maratonadas do ano.',
+        where: { isHidden: false, year: 2025, OR: [{ type: 'tv' }, { type: 'K-Drama' }] },
+        intro: '2025 continua a tradição coreana de produções de alta qualidade. De romances que pararam o mundo a thrillers impecáveis, o K-Drama de 2025 não decepciona. Aqui estão os títulos mais comentados e melhor avaliados do ano.',
+    },
+    '2024': {
+        title: 'Melhores K-Dramas de 2024',
+        description: 'Os K-Dramas mais bem avaliados e aclamados lançados em 2024.',
+        metaDesc: 'Lista dos melhores K-Dramas de 2024: as séries coreanas que dominaram as paradas de streaming e conquistaram o mundo.',
+        where: { isHidden: false, year: 2024, OR: [{ type: 'tv' }, { type: 'K-Drama' }] },
+        intro: '2024 foi um ano de K-Dramas excepcionais. De produções Netflix globais a clássicos de redes locais, o catálogo foi diverso e de alta qualidade. Esta lista reúne os títulos mais bem avaliados e celebrados do ano.',
+    },
+    '2023': {
+        title: 'Melhores K-Dramas de 2023',
+        description: 'Os K-Dramas mais bem avaliados e aclamados lançados em 2023.',
+        metaDesc: 'Os melhores K-Dramas de 2023: séries coreanas que conquistaram fãs ao redor do mundo.',
+        where: { isHidden: false, year: 2023, OR: [{ type: 'tv' }, { type: 'K-Drama' }] },
+        intro: '2023 marcou uma nova era para os K-Dramas, com produções cada vez mais ambiciosas e elencos estrelados. Esta lista reúne os títulos que mais se destacaram entre os fãs e críticos durante o ano.',
+    },
+    '2022': {
+        title: 'Melhores K-Dramas de 2022',
+        description: 'Os K-Dramas mais bem avaliados e aclamados lançados em 2022.',
+        metaDesc: 'Os melhores K-Dramas de 2022 — do sucesso global de "Extraordinary Attorney Woo" a outros títulos imperdíveis.',
+        where: { isHidden: false, year: 2022, OR: [{ type: 'tv' }, { type: 'K-Drama' }] },
+        intro: '2022 foi o ano de "Extraordinary Attorney Woo", "Twenty-Five Twenty-One" e muitos outros dramas que marcaram gerações de fãs. Uma safra excepcional com histórias que emocionaram o mundo.',
+    },
 }
 
 export async function generateStaticParams() {
@@ -66,13 +95,12 @@ export async function generateMetadata(props: { params: Promise<{ tipo: string }
     const { tipo } = await props.params
     const config = CONFIGS[tipo]
     if (!config) return {}
+    const canonical = `${SITE_URL}/melhores-dramas/${tipo}`
     return {
         title: `${config.title} | HallyuHub`,
         description: config.metaDesc,
-        openGraph: {
-            title: config.title,
-            description: config.metaDesc,
-        },
+        alternates: { canonical },
+        openGraph: { title: config.title, description: config.metaDesc, url: canonical },
     }
 }
 
@@ -95,9 +123,24 @@ export default async function ListiclePage(props: { params: Promise<{ tipo: stri
     })
 
     const pageUrl = `${SITE_URL}/melhores-dramas/${tipo}`
+    const itemListSchema = productions.length > 0 ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: config.title,
+        description: config.description,
+        url: pageUrl,
+        numberOfItems: productions.length,
+        itemListElement: productions.map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: p.titlePt,
+            url: `${SITE_URL}/productions/${p.slug ?? p.id}`,
+        })),
+    } : null
 
     return (
         <div className="min-h-screen bg-background">
+            {itemListSchema && <JsonLd data={itemListSchema} />}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-12">
                 <Breadcrumbs
                     items={[{ label: 'Melhores Dramas', href: '/melhores-dramas' }, { label: config.title }]}
