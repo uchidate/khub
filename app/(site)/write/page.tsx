@@ -257,6 +257,8 @@ function WritePageContent() {
   const [postId, setPostId] = useState<string | null>(editId)
   const [postStatus, setPostStatus] = useState<string>('DRAFT')
   const [isPrivate, setIsPrivate] = useState(false)
+  const [isSponsored, setIsSponsored] = useState(false)
+  const [adsDisabled, setAdsDisabled] = useState(false)
   const [scheduledAt, setScheduledAt] = useState<string>('')
 
   const role = session?.user?.role?.toLowerCase()
@@ -310,6 +312,8 @@ function WritePageContent() {
         setPostStatus(post.status)
         if (post.slug) setPostSlug(post.slug)
         setIsPrivate(post.isPrivate ?? false)
+        setIsSponsored((post as unknown as { isSponsored?: boolean }).isSponsored ?? false)
+        setAdsDisabled((post as unknown as { adsDisabled?: boolean }).adsDisabled ?? false)
         if (post.scheduledAt) {
           const d = new Date(post.scheduledAt)
           setScheduledAt(d.toISOString().slice(0, 16))
@@ -368,7 +372,7 @@ function WritePageContent() {
             blocks: editorMode === 'blocks' ? blocks : null,
             coverImageUrl: coverImageUrl || undefined,
             categoryId: categoryId || null,
-            tags, isPrivate,
+            tags, isPrivate, isSponsored, adsDisabled,
             noSnapshot: true,
           }),
         })
@@ -409,6 +413,8 @@ function WritePageContent() {
         categoryId: categoryId || null,
         tags,
         isPrivate,
+        isSponsored,
+        adsDisabled,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
         ...(postId && versionNote.trim() ? { versionNote: versionNote.trim() } : {}),
       }
@@ -984,6 +990,38 @@ function WritePageContent() {
                 className={`relative w-9 h-5 rounded-full transition-colors ${isPrivate ? 'bg-[#ff2d78]' : 'bg-surface-hover border border-border'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform shadow-sm ${isPrivate ? 'translate-x-4' : ''}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Conteúdo patrocinado */}
+          {canPublish && (
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-surface border border-border">
+              <div>
+                <p className="text-xs font-semibold text-muted">Conteúdo patrocinado</p>
+                <p className="text-[11px] text-muted mt-0.5">Publi / parceria — desativa AdSense automaticamente</p>
+              </div>
+              <button
+                onClick={() => setIsSponsored(v => !v)}
+                className={`relative w-9 h-5 rounded-full transition-colors ${isSponsored ? 'bg-amber-500' : 'bg-surface-hover border border-border'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform shadow-sm ${isSponsored ? 'translate-x-4' : ''}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Desativar ads manualmente */}
+          {canPublish && (
+            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-surface border border-border">
+              <div>
+                <p className="text-xs font-semibold text-muted">Desativar anúncios</p>
+                <p className="text-[11px] text-muted mt-0.5">Override manual — remove todos os ads deste post</p>
+              </div>
+              <button
+                onClick={() => setAdsDisabled(v => !v)}
+                className={`relative w-9 h-5 rounded-full transition-colors ${adsDisabled ? 'bg-red-500' : 'bg-surface-hover border border-border'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-background transition-transform shadow-sm ${adsDisabled ? 'translate-x-4' : ''}`} />
               </button>
             </div>
           )}

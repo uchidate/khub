@@ -19,6 +19,8 @@ const updateSchema = z.object({
   template: z.string().optional().nullable(),
   isPrivate: z.boolean().optional(),
   featured: z.boolean().optional(),
+  isSponsored: z.boolean().optional(),
+  adsDisabled: z.boolean().optional(),
   scheduledAt: z.string().datetime().optional().nullable(),
   status: z.string().optional(),
   versionNote: z.string().max(300).optional().nullable(),
