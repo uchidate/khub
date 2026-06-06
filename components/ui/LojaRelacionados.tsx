@@ -53,7 +53,8 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
 
     if (compact) {
         const STORE_LABELS: Record<string, string> = { shopee: 'Shopee', amazon: 'Amazon', mercadolivre: 'Mercado Livre', magalu: 'Magalu', shein: 'Shein' }
-        const featured = products.slice(0, 4)
+        // Sidebar estreita: lista vertical com 3 itens (imagem + nome lado a lado)
+        const featured = products.slice(0, 3)
 
         return (
             <section className="w-full overflow-hidden rounded-xl border border-border bg-surface">
@@ -69,33 +70,34 @@ export async function LojaRelacionados({ tags, title = 'Achados relacionados', e
 
                 <AffiliateNotice compact className="border-x-0 border-t-0" />
 
-                <div className="grid grid-cols-2 gap-px bg-border/40">
+                <div className="flex flex-col divide-y divide-border/60">
                     {featured.map((p) => (
                         <TrackedAffiliateLink
                             key={p.id}
                             productId={p.id}
                             href={p.affiliateUrl}
                             placement="related_store"
-                            className="group relative aspect-square overflow-hidden bg-surface"
+                            className="group flex items-center gap-2.5 px-3 py-2.5 hover:bg-surface-hover transition-colors"
                         >
-                            <img
-                                src={p.imageUrl}
-                                alt={p.name}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-end">
-                                <p className="w-full px-1.5 pb-1.5 text-micro font-semibold text-white leading-tight line-clamp-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200">
+                            <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-surface border border-border/60">
+                                <img
+                                    src={p.imageUrl}
+                                    alt={p.name}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-accent transition-colors">
                                     {p.name}
                                 </p>
-                            </div>
-                            <div className="absolute top-1 left-1 bg-black/60 backdrop-blur-sm text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                                {STORE_LABELS[p.store] ?? p.store}
-                            </div>
-                            {p.badge && (
-                                <div className="absolute top-1 right-1 bg-accent text-white text-[7px] font-black px-1.5 py-0.5 rounded-full leading-none">
-                                    {p.badge}
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="text-[9px] text-muted font-medium">{STORE_LABELS[p.store] ?? p.store}</span>
+                                    {p.badge && (
+                                        <span className="text-[8px] font-black text-accent bg-accent/10 px-1 py-0.5 rounded leading-none">{p.badge}</span>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                            <ArrowRight className="h-3 w-3 text-muted shrink-0 group-hover:text-accent group-hover:translate-x-0.5 transition-all" />
                         </TrackedAffiliateLink>
                     ))}
                 </div>
