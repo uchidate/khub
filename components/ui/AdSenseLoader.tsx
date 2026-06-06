@@ -24,6 +24,8 @@ function isAdsPaused() {
         || window.__adSettings?.adsAutoAdsEnabled === false
 }
 
+let pageLevelAdsPushed = false
+
 function ensureAdSenseScript() {
     const existing = document.querySelector<HTMLScriptElement>('script[data-hallyuhub-adsense="true"]')
         ?? document.querySelector<HTMLScriptElement>(`script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]`)
@@ -35,6 +37,21 @@ function ensureAdSenseScript() {
     script.crossOrigin = 'anonymous'
     script.dataset.hallyuhubAdsense = 'true'
     document.head.appendChild(script)
+
+    // Ativa explicitamente vignette e anchor ads (page-level ads)
+    // Sem este push o AdSense pode não ativar esses formatos em todos os browsers
+    if (!pageLevelAdsPushed) {
+        pageLevelAdsPushed = true
+        script.addEventListener('load', () => {
+            try {
+                ;(window.adsbygoogle = window.adsbygoogle || []).push({
+                    google_ad_client: CLIENT,
+                    enable_page_level_ads: true,
+                    overlays: { bottom: true },
+                })
+            } catch { /* ignore */ }
+        }, { once: true })
+    }
 }
 
 function pushAutoAdsRefresh() {

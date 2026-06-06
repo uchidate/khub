@@ -274,7 +274,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           "name": "HallyuHub",
           "logo": { "@type": "ImageObject", "url": `${BASE_URL}/og-image.jpg` },
         },
-        ...(post.readingTimeMin ? { "timeRequired": `PT${post.readingTimeMin}M` } : {}),
+        "isAccessibleForFree": true,
+        ...(post.readingTimeMin ? { "timeRequired": `PT${post.readingTimeMin}M`, "wordCount": post.readingTimeMin * 200 } : {}),
         ...(post.category ? { "articleSection": post.category.name } : {}),
         ...(post.tags.length > 0 ? { "keywords": post.tags.join(', ') } : {}),
         ...(post.relatedArtists.length > 0 || post.relatedGroups.length > 0 ? {
