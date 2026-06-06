@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
+import { BLOG_CATEGORIES } from '@/lib/config/categories'
+import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 
 export const dynamic = 'force-dynamic'
 // Cache sitemap 1h — evita 6 queries massivas a cada crawl do Google/Bing
@@ -186,6 +188,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 lastModified: STATIC_DATE,
                 changeFrequency: 'weekly' as const,
                 priority: 0.82,
+            })),
+            ...BLOG_CATEGORIES.map(category => ({
+                url: `${BASE_URL}/blog/category/${category.slug}`,
+                lastModified: STATIC_DATE,
+                changeFrequency: 'weekly' as const,
+                priority: 0.72,
+            })),
+            ...ALL_BLOG_TAGS.slice(0, 50).map(tag => ({
+                url: `${BASE_URL}/blog/tag/${encodeURIComponent(tag)}`,
+                lastModified: STATIC_DATE,
+                changeFrequency: 'weekly' as const,
+                priority: 0.65,
             })),
         ]
     } catch (error) {

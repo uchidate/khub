@@ -46,6 +46,7 @@ export default function robots(): MetadataRoute.Robots {
             'https://www.hallyuhub.com.br/sitemaps/blog.xml',
             'https://www.hallyuhub.com.br/sitemaps/archives.xml',
             'https://www.hallyuhub.com.br/sitemaps/images.xml',
+            'https://www.hallyuhub.com.br/sitemaps/videos.xml',
         ],
     }
 }

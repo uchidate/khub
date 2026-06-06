@@ -7,6 +7,26 @@ const nextConfig = {
         },
         staticGenerationMaxConcurrency: 2,
     },
+    async redirects() {
+        return [
+            { source: '/integrantes-do-ive', destination: '/hubs/integrantes-do-ive', permanent: true },
+            { source: '/integrantes-do-aespa', destination: '/hubs/integrantes-do-aespa', permanent: true },
+            { source: '/integrantes-do-fromis-9', destination: '/hubs/integrantes-do-fromis-9', permanent: true },
+            { source: '/integrantes-do-izone', destination: '/hubs/integrantes-do-izone', permanent: true },
+            { source: '/integrantes-do-twice', destination: '/hubs/integrantes-do-twice', permanent: true },
+            { source: '/integrantes-do-blackpink', destination: '/hubs/integrantes-do-blackpink', permanent: true },
+            { source: '/integrantes-do-newjeans', destination: '/hubs/integrantes-do-newjeans', permanent: true },
+            { source: '/integrantes-do-le-sserafim', destination: '/hubs/integrantes-do-le-sserafim', permanent: true },
+            { source: '/integrantes-do-babymonster', destination: '/hubs/integrantes-do-babymonster', permanent: true },
+            { source: '/integrantes-do-nmixx', destination: '/hubs/integrantes-do-nmixx', permanent: true },
+            { source: '/cantoras-kpop', destination: '/hubs/cantoras-kpop', permanent: true },
+            { source: '/solistas-kpop', destination: '/hubs/artistas-solo-kpop', permanent: true },
+            { source: '/grupos-femininos-kpop', destination: '/hubs/grupos-femininos-kpop', permanent: true },
+            { source: '/girl-groups-kpop', destination: '/hubs/grupos-femininos-kpop', permanent: true },
+            { source: '/doramas-netflix', destination: '/hubs/doramas-coreanos-netflix', permanent: true },
+            { source: '/idols-atores', destination: '/hubs/idols-que-atuam-em-doramas', permanent: true },
+        ]
+    },
     async rewrites() {
         // /um/api/send é servido pela route handler em app/um/api/send/route.ts
         // que passa o IP real do cliente diretamente ao Umami via rede Docker interna

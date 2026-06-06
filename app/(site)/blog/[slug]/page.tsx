@@ -22,6 +22,7 @@ import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
 import { CommentsSection } from '@/components/features/CommentsSection'
 import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
+import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
 
 const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
@@ -78,6 +79,9 @@ async function getPost(slug: string) {
     include: {
       author: { select: { id: true, name: true, image: true, bio: true } },
       category: true,
+      relatedArtists: { include: { artist: { select: { id: true, slug: true, nameRomanized: true, primaryImageUrl: true } } } },
+      relatedGroups: { include: { group: { select: { id: true, slug: true, name: true, profileImageUrl: true } } } },
+      relatedProductions: { include: { production: { select: { id: true, slug: true, titlePt: true, imageUrl: true } } } },
     },
   })
 }
@@ -223,6 +227,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     productions: Object.fromEntries(productions.map(p => [p.id, p])),
     groups: Object.fromEntries(groups.map(g => [g.id, g])),
   }
+  const relatedHubs = ARCHIVE_HUBS.filter(hub => {
+    const text = [post.title, post.excerpt ?? '', ...post.tags].join(' ').toLowerCase()
+    if (hub.groupSlug && post.relatedGroups.some(({ group }) => group.slug === hub.groupSlug)) return true
+    return hub.keywords.some(keyword => text.includes(keyword.toLowerCase()))
+  }).slice(0, 4)
+  const hasEntityLinks = post.relatedArtists.length > 0 || post.relatedGroups.length > 0 || post.relatedProductions.length > 0 || relatedHubs.length > 0
 
   return (
     <PageTransition className="pb-10">
@@ -272,7 +282,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {BLOG_CATEGORIES.map(c => (
           <Link
             key={c.slug}
-            href={`/blog?category=${c.slug}`}
+            href={`/blog/category/${c.slug}`}
             className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-md px-3 text-[12px] font-black transition-colors lg:h-full lg:rounded-none lg:border-b-2 lg:px-0.5 ${post.category?.slug === c.slug ? 'bg-accent text-white lg:border-accent lg:bg-transparent lg:text-accent' : 'bg-surface text-muted hover:text-foreground lg:border-transparent lg:bg-transparent'}`}
           >
             {c.name}
@@ -400,7 +410,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               return (
                 <Link
                   key={tag}
-                  href={`/blog?tag=${encodeURIComponent(tag)}`}
+                  href={`/blog/tag/${encodeURIComponent(tag)}`}
                   className="rounded-md px-2.5 py-1 text-xs font-semibold transition-all hover:brightness-95"
                   style={{ color: ts.color, backgroundColor: ts.bg }}
                 >
@@ -430,6 +440,53 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     )}
                   </div>
                   <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">{artist.nameRomanized}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasEntityLinks && (
+          <div className="mt-8 pt-8 border-t border-border">
+            <p className="text-xs font-black uppercase tracking-widest text-muted mb-4">Explore também</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {post.relatedArtists.slice(0, 4).map(({ artist }) => (
+                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group flex items-center gap-3 rounded-md border border-border bg-surface p-3 transition-colors hover:border-accent/40">
+                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-hover">
+                    {artist.primaryImageUrl && <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill sizes="40px" className="object-cover object-top" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black text-foreground group-hover:text-accent">{artist.nameRomanized}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Artista</span>
+                  </span>
+                </Link>
+              ))}
+              {post.relatedGroups.slice(0, 4).map(({ group }) => (
+                <Link key={group.id} href={`/groups/${group.slug ?? group.id}`} className="group flex items-center gap-3 rounded-md border border-border bg-surface p-3 transition-colors hover:border-accent/40">
+                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-hover">
+                    {group.profileImageUrl && <Image src={group.profileImageUrl} alt={group.name} fill sizes="40px" className="object-cover object-top" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black text-foreground group-hover:text-accent">{group.name}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Grupo</span>
+                  </span>
+                </Link>
+              ))}
+              {post.relatedProductions.slice(0, 4).map(({ production }) => (
+                <Link key={production.id} href={`/productions/${production.slug ?? production.id}`} className="group flex items-center gap-3 rounded-md border border-border bg-surface p-3 transition-colors hover:border-accent/40">
+                  <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-surface-hover">
+                    {production.imageUrl && <Image src={production.imageUrl} alt={production.titlePt} fill sizes="40px" className="object-cover object-top" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black text-foreground group-hover:text-accent">{production.titlePt}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Produção</span>
+                  </span>
+                </Link>
+              ))}
+              {relatedHubs.map(hub => (
+                <Link key={hub.slug} href={`/hubs/${hub.slug}`} className="group rounded-md border border-border bg-surface p-3 transition-colors hover:border-accent/40">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Guia</span>
+                  <span className="mt-1 block text-sm font-black text-foreground group-hover:text-accent">{hub.title}</span>
                 </Link>
               ))}
             </div>
