@@ -13,6 +13,8 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { compactSchema, youtubeVideoSchema } from '@/lib/seo/structured-data'
+import { getRelatedProductionHubs } from '@/lib/seo/archive-hubs'
 import { ShareButtons } from "@/components/ui/ShareButtons"
 import { BookmarkCheck, CalendarDays, Clock, Film, Heart, Newspaper, PlayCircle, Sparkles, Star, Tv, Users } from "lucide-react"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
@@ -280,6 +282,16 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         : production.voteAverage && production.voteAverage > 0
             ? `${production.voteAverage.toFixed(1)}/10`
             : null
+    const trailerSchema = production.trailerUrl
+        ? youtubeVideoSchema({
+            title: `Trailer - ${production.titlePt}`,
+            url: production.trailerUrl,
+            pageUrl: `${BASE_URL}/productions/${production.slug ?? production.id}`,
+            description: synopsis ?? `Trailer oficial de ${production.titlePt}`,
+            uploadDate: production.releaseDate ?? (production.year ? `${production.year}-01-01` : production.updatedAt),
+            thumbnailUrl: production.imageUrl ?? production.backdropUrl,
+        })
+        : null
     const leadingCast = production.artists.slice(0, 4)
     const quickAnchors = [
         synopsis ? { label: 'Sinopse', href: '#sinopse' } : null,
@@ -289,6 +301,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         relatedProductions.length > 0 ? { label: 'Relacionados', href: '#relacionados' } : null,
         { label: 'Loja', href: '#loja' },
     ].filter(Boolean) as Array<{ label: string; href: string }>
+    const relatedHubs = getRelatedProductionHubs({
+        streamingPlatforms: production.streamingPlatforms,
+        network: production.network,
+        tags,
+    })
     const overviewStats = [
         { label: 'Favoritos', value: production._count.userFavorites.toString(), detail: 'salvaram', icon: Heart },
         { label: 'Lista', value: production._count.watchEntries.toString(), detail: 'na biblioteca', icon: BookmarkCheck },
@@ -299,7 +316,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     return (
         <div className="min-h-screen bg-background overflow-x-hidden">
             <ViewTracker productionId={production.id} />
-            <JsonLd data={{
+            <JsonLd data={compactSchema({
                 "@context": "https://schema.org",
                 "@type": schemaType,
                 "name": production.titlePt,
@@ -317,22 +334,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 ...(castActors.length ? { "actor": castActors } : {}),
                 ...(production.tags?.length ? { "genre": production.tags } : {}),
                 ...(production.ageRating ? { "contentRating": production.ageRating === 'L' ? 'Livre' : `${production.ageRating}+` } : {}),
-                ...(production.trailerUrl ? {
-                    "trailer": {
-                        "@type": "VideoObject",
-                        "name": `Trailer — ${production.titlePt}`,
-                        "embedUrl": production.trailerUrl,
-                        "thumbnailUrl": production.imageUrl ?? production.backdropUrl ?? `${BASE_URL}/opengraph-image`,
-                        "uploadDate": (() => {
-                            try {
-                                if (production.releaseDate) return new Date(production.releaseDate).toISOString()
-                                if (production.year) return `${production.year}-01-01T00:00:00Z`
-                                return new Date().toISOString()
-                            } catch { return new Date().toISOString() }
-                        })(),
-                        "description": `Trailer oficial de ${production.titlePt}`,
-                    }
-                } : {}),
+                "trailer": trailerSchema ?? undefined,
                 ...(production.voteAverage && production.voteAverage > 0 && production.voteCount && production.voteCount > 0 ? {
                     "aggregateRating": {
                         "@type": "AggregateRating",
@@ -343,7 +345,13 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                         "reviewCount": production.voteCount,
                     }
                 } : {}),
-            }} />
+            })} />
+            {trailerSchema && (
+                <JsonLd data={{
+                    "@context": "https://schema.org",
+                    ...trailerSchema,
+                }} />
+            )}
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
@@ -664,6 +672,22 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                 <div className="flex flex-wrap gap-2">
                                     {tags.map(tag => (
                                         <span key={tag} className="text-xs font-bold text-muted bg-surface px-3 py-1.5 rounded-sm border border-border">{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {relatedHubs.length > 0 && (
+                            <div className="scroll-mt-28">
+                                <h3 className="font-mono text-[10px] font-black text-muted uppercase tracking-[0.14em] mb-3">Guias relacionados</h3>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {relatedHubs.map(hub => (
+                                        <Link key={hub.slug} href={`/hubs/${hub.slug}`}
+                                            className="group border border-border bg-surface p-4 transition-colors hover:border-accent/40">
+                                            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">Guia</p>
+                                            <h4 className="mt-1 text-sm font-black text-foreground group-hover:text-accent">{hub.title}</h4>
+                                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted">{hub.description}</p>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>

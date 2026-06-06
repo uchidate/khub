@@ -144,6 +144,8 @@ export default async function RootLayout({
                 {/* Meta viewport manual — evita <__next_viewport_boundary__> do Next.js 16 que gera array sem key */}
                 <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
                 <meta key="theme-color" name="theme-color" content="#bc13fe" />
+                <link key="alternate-rss" rel="alternate" type="application/rss+xml" title="HallyuHub - Blog" href={`${BASE_URL}/feed.xml`} />
+                <link key="sitemap-main" rel="sitemap" type="application/xml" title="Sitemap" href={`${BASE_URL}/sitemap_index.xml`} />
                 {/* Preconnect para CDNs usadas no LCP — reduz resource load delay */}
                 <link key="preconnect-unsplash" rel="preconnect" href="https://images.unsplash.com" />
                 <link key="dns-unsplash" rel="dns-prefetch" href="https://images.unsplash.com" />

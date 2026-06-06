@@ -14,6 +14,7 @@ import type { ShowsByPlatform } from "@/components/features/StreamingTopShows"
 import { buildHomeRuntimeData } from "@/lib/home/home-runtime"
 import { HomeDiscoverySection } from "@/components/home/HomeDiscoverySection"
 import { HomeSectionFilterBar } from "@/components/home/HomeSectionFilterBar"
+import { HomeGuidesSection } from "@/components/home/HomeGuidesSection"
 
 // ISR: homepage recacheada a cada 10 minutos como fallback.
 // Revalidação antecipada via revalidateTag(HOME_CACHE_TAG) nos crons de publish e trending.
@@ -27,6 +28,7 @@ const IS_BUILD = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
 const HOME_SECTIONS = [
     { label: 'Destaques', href: '#destaques' },
     { label: 'Descobertas', href: '#descobertas' },
+    { label: 'Guias', href: '#guias' },
     { label: 'Agora', href: '#agora' },
     { label: 'Aniversários', href: '#aniversarios' },
     { label: 'Radar', href: '#radar' },
@@ -215,6 +217,7 @@ export default async function Home() {
                 mode={compositionMode}
             />
             </div>
+            <div id="guias" style={HOME_SECTION_SCROLL_MARGIN}><HomeGuidesSection /></div>
             <div id="agora" style={HOME_SECTION_SCROLL_MARGIN}>
             <HomeNowStrip
                 artist={trendingArtists[0] ?? null}

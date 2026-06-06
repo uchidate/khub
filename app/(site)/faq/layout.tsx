@@ -51,7 +51,7 @@ const FAQ_SCHEMA = {
       name: 'De onde vêm as notícias?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. Quando há versão em português, ela passa por revisão editorial antes de ser aplicada.',
+        text: 'O blog reúne guias, listas, perfis editoriais e conteúdos explicativos sobre K-Pop, K-Drama e cultura coreana em português.',
       },
     },
     {
@@ -59,7 +59,7 @@ const FAQ_SCHEMA = {
       name: 'Como funciona o sistema de favoritos?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Clique no ícone de coração (♥) em qualquer artista, grupo, produção ou notícia. Os itens favoritados aparecem no seu painel e alimentam o Feed Personalizado em /news/feed.',
+        text: 'Clique no ícone de coração (♥) em qualquer artista, grupo ou produção. Os itens favoritados aparecem no seu painel e ajudam você a reencontrar seus conteúdos preferidos.',
       },
     },
     {

@@ -24,6 +24,7 @@ interface TickerItem {
 const navLinks = [
     { label: "Início", href: "/" },
     { label: "Artigos", href: "/blog" },
+    { label: "Guias", href: "/hubs" },
     { label: "Artistas", href: "/artists" },
     { label: "Grupos", href: "/groups" },
     { label: "Produções", href: "/productions" },
