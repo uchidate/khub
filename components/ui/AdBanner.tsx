@@ -259,7 +259,8 @@ export function AdBanner({
         io.observe(el)
 
         const interval = setInterval(() => {
-            if (!inViewport) return
+            // Não conta impressão se slot fora do viewport ou aba em background
+            if (!inViewport || document.visibilityState === 'hidden') return
             pushed.current = false // permite novo push
             try {
                 ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({})

@@ -237,11 +237,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }).slice(0, 4)
   const hasEntityLinks = post.relatedArtists.length > 0 || post.relatedGroups.length > 0 || post.relatedProductions.length > 0 || relatedHubs.length > 0
 
-  // Ads desabilitados: override manual, conteúdo patrocinado, ou tag "patrocinado"/"parceria"
+  // Ads desabilitados: override manual, conteúdo patrocinado, tag "patrocinado"/"parceria", ou categoria com adsDisabled
   const sponsoredTags = ['patrocinado', 'parceria', 'sponsored', 'publi']
-  const adsOff = (post as unknown as { adsDisabled?: boolean; isSponsored?: boolean }).adsDisabled === true
+  const adsOff = (post as unknown as { adsDisabled?: boolean }).adsDisabled === true
     || (post as unknown as { isSponsored?: boolean }).isSponsored === true
     || post.tags.some(t => sponsoredTags.includes(t.toLowerCase()))
+    || (post.category as unknown as { adsDisabled?: boolean } | null)?.adsDisabled === true
 
   return (
     <PageTransition className="pb-10">
@@ -293,6 +294,36 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           ]
         } : {}),
       }} />
+      {/* Schema Review — gerado quando post tem bloco blog_rating */}
+      {(() => {
+        const ratingBlock = blocks.find(b => b.type === 'blog_rating') as { score?: number; label?: string } | undefined
+        if (!ratingBlock?.score) return null
+        const itemName = post.relatedProductions[0]?.production?.titlePt
+          ?? post.relatedGroups[0]?.group?.name
+          ?? post.relatedArtists[0]?.artist?.nameRomanized
+          ?? post.title
+        return (
+          <JsonLd data={{
+            "@context": "https://schema.org",
+            "@type": "Review",
+            "name": post.title,
+            "url": `${BASE_URL}/blog/${post.slug}`,
+            "author": { "@type": "Organization", "name": "HallyuHub" },
+            "datePublished": (post.publishedAt ?? post.createdAt).toISOString(),
+            "reviewRating": {
+              "@type": "Rating",
+              "ratingValue": ratingBlock.score,
+              "bestRating": 10,
+              "worstRating": 0,
+            },
+            "itemReviewed": {
+              "@type": "CreativeWork",
+              "name": itemName,
+            },
+            ...(post.excerpt ? { "reviewBody": post.excerpt } : {}),
+          }} />
+        )
+      })()}
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
