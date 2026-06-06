@@ -12,6 +12,7 @@ const SITEMAPS = [
     '/sitemaps/blog.xml',
     '/sitemaps/archives.xml',
     '/sitemaps/images.xml',
+    '/sitemaps/videos.xml',
 ]
 
 export async function GET() {

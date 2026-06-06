@@ -218,6 +218,108 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             },
         ],
     },
+    {
+        slug: 'integrantes-do-twice',
+        kind: 'artists',
+        groupSlug: 'twice',
+        title: 'Integrantes do TWICE',
+        shortTitle: 'TWICE',
+        description: 'Conheça as integrantes do TWICE com perfis em português, carreira, músicas, grupos relacionados e curiosidades.',
+        intro: [
+            'TWICE é um dos girl groups mais importantes da terceira geração, com forte presença no K-Pop, no J-Pop e em turnês globais.',
+            'Este hub reúne as integrantes públicas no HallyuHub para facilitar a navegação por perfis, carreira individual e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do twice', 'membros twice', 'twice kpop', 'nayeon jihyo momo sana'],
+        faq: [
+            { question: 'Quem são as integrantes do TWICE?', answer: 'Este hub reúne as integrantes do TWICE cadastradas e públicas no HallyuHub, com links para perfis individuais.' },
+            { question: 'O hub inclui carreiras solo?', answer: 'Sim. Quando disponível, os perfis individuais mostram trabalhos solo, discografia, vídeos e outras atividades.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-blackpink',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        title: 'Integrantes do BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'Explore as integrantes do BLACKPINK com perfis, carreira solo, músicas, vídeos e fatos em português.',
+        intro: [
+            'BLACKPINK é um dos grupos de K-Pop mais reconhecidos globalmente, com integrantes que também construíram carreiras solo fortes.',
+            'Este hub conecta as páginas individuais das integrantes para quem quer acompanhar música, moda, atuação e presença internacional.',
+        ],
+        keywords: ['integrantes do blackpink', 'membros blackpink', 'blackpink kpop', 'jennie lisa jisoo rosé'],
+        faq: [
+            { question: 'As integrantes do BLACKPINK têm carreira solo?', answer: 'Sim. As integrantes também têm trabalhos individuais em música, moda, atuação ou entretenimento, quando esses dados estão disponíveis nos perfis.' },
+            { question: 'O hub mostra links oficiais?', answer: 'Os perfis individuais podem incluir redes oficiais, vídeos, discografia e outros links curados.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-newjeans',
+        kind: 'artists',
+        groupSlug: 'newjeans',
+        title: 'Integrantes do NewJeans',
+        shortTitle: 'NewJeans',
+        description: 'Veja as integrantes do NewJeans com perfis em português, carreira, músicas, conceitos e curiosidades.',
+        intro: [
+            'NewJeans marcou a nova geração com estética própria, sonoridade pop e alto impacto cultural.',
+            'Este hub organiza as integrantes cadastradas no HallyuHub para facilitar descoberta e navegação.',
+        ],
+        keywords: ['integrantes do newjeans', 'membros newjeans', 'newjeans kpop'],
+        faq: [
+            { question: 'O hub lista todas as integrantes do NewJeans?', answer: 'Ele lista as integrantes cadastradas e públicas no HallyuHub.' },
+            { question: 'Posso acompanhar conteúdos relacionados?', answer: 'Sim. Os perfis podem linkar músicas, vídeos, artigos e outros conteúdos relacionados.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-le-sserafim',
+        kind: 'artists',
+        groupSlug: 'le-sserafim',
+        title: 'Integrantes do LE SSERAFIM',
+        shortTitle: 'LE SSERAFIM',
+        description: 'Conheça as integrantes do LE SSERAFIM com perfis, carreira, músicas, vídeos e conexões no K-Pop.',
+        intro: [
+            'LE SSERAFIM combina performance, narrativa visual e presença global entre os grupos femininos mais comentados da nova geração.',
+            'Este hub reúne as integrantes públicas no HallyuHub e facilita a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do le sserafim', 'membros le sserafim', 'lesserafim kpop'],
+        faq: [
+            { question: 'Como o nome LE SSERAFIM aparece nas buscas?', answer: 'Pode aparecer como LE SSERAFIM, Le Sserafim ou lesserafim; este hub usa a grafia editorial do HallyuHub.' },
+            { question: 'O hub inclui atividades individuais?', answer: 'Quando disponíveis, as atividades individuais aparecem nos perfis das integrantes.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-babymonster',
+        kind: 'artists',
+        groupSlug: 'babymonster',
+        title: 'Integrantes do BABYMONSTER',
+        shortTitle: 'BABYMONSTER',
+        description: 'Explore as integrantes do BABYMONSTER com perfis, carreira, músicas e curiosidades em português.',
+        intro: [
+            'BABYMONSTER é um grupo feminino ligado à nova geração do K-Pop, com forte atenção internacional desde o debut.',
+            'Este hub organiza as integrantes públicas no HallyuHub para facilitar descoberta por fãs e novos leitores.',
+        ],
+        keywords: ['integrantes do babymonster', 'membros babymonster', 'babymonster kpop'],
+        faq: [
+            { question: 'O hub mostra as integrantes do BABYMONSTER?', answer: 'Sim, quando elas estão cadastradas e públicas no catálogo HallyuHub.' },
+            { question: 'Os perfis têm vídeos e músicas?', answer: 'Perfis enriquecidos podem incluir vídeos do YouTube, links musicais e conteúdo editorial.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-nmixx',
+        kind: 'artists',
+        groupSlug: 'nmixx',
+        title: 'Integrantes do NMIXX',
+        shortTitle: 'NMIXX',
+        description: 'Conheça as integrantes do NMIXX com perfis, carreira, músicas, vídeos e curiosidades em português.',
+        intro: [
+            'NMIXX se destaca por vocais fortes, performance e propostas musicais que chamam atenção dentro da quarta geração.',
+            'Este hub reúne as integrantes públicas no HallyuHub para melhorar a navegação por perfis e temas relacionados.',
+        ],
+        keywords: ['integrantes do nmixx', 'membros nmixx', 'nmixx kpop'],
+        faq: [
+            { question: 'Quem aparece no hub do NMIXX?', answer: 'As integrantes do NMIXX cadastradas e públicas no HallyuHub aparecem com links para seus perfis.' },
+            { question: 'A página é atualizada?', answer: 'Os hubs usam os dados públicos do catálogo; conforme perfis são atualizados, os links e dados ficam mais completos.' },
+        ],
+    },
 ]
 
 export const ARCHIVE_HUB_BY_SLUG = Object.fromEntries(ARCHIVE_HUBS.map(hub => [hub.slug, hub]))
@@ -243,12 +345,14 @@ export function getRelatedArtistHubs(input: {
     return slugs.map(slug => ARCHIVE_HUB_BY_SLUG[slug]).filter(Boolean)
 }
 
-export function getRelatedGroupHubs(input: { femaleMembers?: number; maleMembers?: number }) {
+export function getRelatedGroupHubs(input: { slug?: string | null; femaleMembers?: number; maleMembers?: number }) {
     const femaleMembers = input.femaleMembers ?? 0
     const maleMembers = input.maleMembers ?? 0
-    return femaleMembers >= Math.max(1, maleMembers)
-        ? [ARCHIVE_HUB_BY_SLUG['grupos-femininos-kpop']]
-        : []
+    const slugs = [
+        input.slug ? `integrantes-do-${input.slug}` : null,
+        femaleMembers >= Math.max(1, maleMembers) ? 'grupos-femininos-kpop' : null,
+    ].filter(Boolean) as string[]
+    return slugs.map(slug => ARCHIVE_HUB_BY_SLUG[slug]).filter(Boolean)
 }
 
 export function getRelatedProductionHubs(input: { streamingPlatforms?: string[] | null; network?: string | null; tags?: string[] | null }) {

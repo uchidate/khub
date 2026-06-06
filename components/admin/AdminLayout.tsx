@@ -84,7 +84,12 @@ const navSections: NavSection[] = [
       },
       { href: '/admin/trending',      label: 'Trending',       icon: TrendingUp },
       { href: '/admin/home-clusters', label: 'Home Editorial', icon: Layers     },
-      { href: '/admin/seo',           label: 'SEO',            icon: Globe      },
+      {
+        href: '/admin/seo', label: 'SEO', icon: Globe, exact: true,
+        subItems: [
+          { href: '/admin/seo/content-quality', label: 'Auditoria de conteúdo', icon: AlertTriangle },
+        ],
+      },
       { href: '/admin/tags',          label: 'Tags',           icon: Tag        },
     ],
   },

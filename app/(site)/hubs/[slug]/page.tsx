@@ -19,6 +19,7 @@ type ArtistItem = {
     nameHangul: string | null
     primaryImageUrl: string | null
     roles: string[]
+    updatedAt: Date
     memberships: { group: { name: string; slug: string | null; id: string } }[]
 }
 
@@ -29,6 +30,7 @@ type GroupItem = {
     nameHangul: string | null
     profileImageUrl: string | null
     debutDate: Date | null
+    updatedAt: Date
     members: { artist: { gender: number | null } }[]
 }
 
@@ -41,6 +43,7 @@ type ProductionItem = {
     year: number | null
     type: string
     voteAverage: number | null
+    updatedAt: Date
 }
 
 const BASE_URL = SITE_URL
@@ -121,6 +124,7 @@ async function getHubItems(hub: ArchiveHub) {
                 nameHangul: true,
                 primaryImageUrl: true,
                 roles: true,
+                updatedAt: true,
                 memberships: {
                     where: { isActive: true },
                     select: { group: { select: { id: true, slug: true, name: true } } },
@@ -148,6 +152,7 @@ async function getHubItems(hub: ArchiveHub) {
                 nameHangul: true,
                 profileImageUrl: true,
                 debutDate: true,
+                updatedAt: true,
                 members: {
                     where: { isActive: true },
                     select: { artist: { select: { gender: true } } },
@@ -197,6 +202,7 @@ async function getHubItems(hub: ArchiveHub) {
             year: true,
             type: true,
             voteAverage: true,
+            updatedAt: true,
         },
         orderBy: [{ voteAverage: 'desc' }, { year: 'desc' }],
         take: 48,
@@ -241,6 +247,10 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
     const items = await getHubItems(hub)
     const canonical = `${BASE_URL}/hubs/${hub.slug}`
+    const lastUpdated = items.reduce<Date | null>((latest, item) => {
+        if (!('updatedAt' in item) || !item.updatedAt) return latest
+        return !latest || item.updatedAt > latest ? item.updatedAt : latest
+    }, null)
 
     return (
         <main className="min-h-screen bg-background">
@@ -299,6 +309,11 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                     <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-accent">Guia HallyuHub</p>
                     <h1 className="mt-2 text-[38px] font-black leading-[0.98] tracking-[-0.04em] text-foreground sm:text-[56px]">{hub.title}</h1>
                     <p className="mt-5 text-base leading-7 text-muted sm:text-lg">{hub.description}</p>
+                    {lastUpdated && (
+                        <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+                            Atualizado em {lastUpdated.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })}
+                        </p>
+                    )}
                 </div>
                 <div className="mt-7 grid gap-4 border-y border-border/50 py-6 text-sm leading-6 text-muted md:grid-cols-2">
                     {hub.intro.map(paragraph => <p key={paragraph}>{paragraph}</p>)}

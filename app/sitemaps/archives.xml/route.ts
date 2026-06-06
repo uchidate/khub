@@ -1,5 +1,7 @@
 import { SITE_URL } from '@/lib/constants/site'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
+import { BLOG_CATEGORIES } from '@/lib/config/categories'
+import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { escapeXml, xmlResponse } from '@/lib/seo/xml'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +12,8 @@ export async function GET() {
     const urls = [
         '/hubs',
         ...ARCHIVE_HUBS.map(hub => `/hubs/${hub.slug}`),
+        ...BLOG_CATEGORIES.map(category => `/blog/category/${category.slug}`),
+        ...ALL_BLOG_TAGS.slice(0, 50).map(tag => `/blog/tag/${encodeURIComponent(tag)}`),
     ].map(path => `
   <url>
     <loc>${escapeXml(`${SITE_URL}${path}`)}</loc>

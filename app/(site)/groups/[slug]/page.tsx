@@ -152,9 +152,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const activeMembers = membershipHistory.currentMembers
     const formerMembers = membershipHistory.formerMembers
     const relatedHubs = getRelatedGroupHubs({
+        slug: group.slug,
         femaleMembers: group.members.filter(member => member.isActive && member.artist.gender === 1).length,
         maleMembers: group.members.filter(member => member.isActive && member.artist.gender === 2).length,
     })
+    const membersHub = relatedHubs.find(hub => hub.groupSlug === group.slug)
     const shouldShowMembershipHistory = formerMembers.length > 0 || membershipHistory.hasKnownDates
     const currentYear = new Date().getFullYear()
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
@@ -454,6 +456,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         <div className="flex items-center gap-2 flex-wrap">
                             {activeMembers.length > 0 && (
                                 <a href="#membros" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Membros</a>
+                            )}
+                            {membersHub && (
+                                <Link href={`/hubs/${membersHub.slug}`} className="border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent transition-colors hover:bg-accent/15">
+                                    Ver integrantes de {group.name}
+                                </Link>
                             )}
                             {activeMembers.length >= 2 && (
                                 <a href="#poll" className="border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-foreground hover:text-foreground">Votação</a>

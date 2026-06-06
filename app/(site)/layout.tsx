@@ -123,6 +123,17 @@ export const metadata: Metadata = {
             'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION ?? '',
         },
     },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-image-preview': 'large',
+            'max-video-preview': -1,
+            'max-snippet': -1,
+        },
+    },
 }
 
 // viewport export removido — Next.js 16 + React 19 renderiza os metas gerados

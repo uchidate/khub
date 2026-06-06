@@ -322,20 +322,26 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const activeSortBy = sortBy || 'recent'
   const tabHref = (tab: string) => {
     const params = new URLSearchParams()
-    if (activeCategory) params.set('category', activeCategory)
-    if (activeTag) params.set('tag', activeTag)
     if (tab !== 'recent') params.set('sortBy', tab)
     const q = params.toString()
-    return `/blog${q ? `?${q}` : ''}`
+    const base = activeCategory
+      ? `/blog/category/${activeCategory}`
+      : activeTag
+        ? `/blog/tag/${encodeURIComponent(activeTag)}`
+        : '/blog'
+    return `${base}${q ? `?${q}` : ''}`
   }
   const buildHref = (p: number) => {
     const params = new URLSearchParams()
-    if (activeCategory) params.set('category', activeCategory)
-    if (activeTag) params.set('tag', activeTag)
     if (sortBy) params.set('sortBy', sortBy)
     if (p > 1) params.set('page', String(p))
     const q = params.toString()
-    return `/blog${q ? `?${q}` : ''}`
+    const base = activeCategory
+      ? `/blog/category/${activeCategory}`
+      : activeTag
+        ? `/blog/tag/${encodeURIComponent(activeTag)}`
+        : '/blog'
+    return `${base}${q ? `?${q}` : ''}`
   }
 
   const nowLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
@@ -385,7 +391,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
             <Link href="/blog" className={categoryTabClass(!activeCategory)}>Todos</Link>
             {orderedCategories.map((c) => (
-              <Link key={c.id} href={`/blog?category=${c.slug}`} className={categoryTabClass(activeCategory === c.slug)}>{c.name}</Link>
+              <Link key={c.id} href={`/blog/category/${c.slug}`} className={categoryTabClass(activeCategory === c.slug)}>{c.name}</Link>
             ))}
           </div>
         </ResponsiveFilterBar>
