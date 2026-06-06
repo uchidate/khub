@@ -63,7 +63,8 @@ async function runSync(lockId: string, log: { info: (m: string, c?: any) => void
 
         log.info(`Starting group discography sync`, { total: groups.length })
 
-        let ok = 0, fail = 0, totalReleases = 0, totalTracks = 0
+        let ok = 0, skip = 0, fail = 0, totalReleases = 0, totalTracks = 0
+        const NO_SPOTIFY_MSG = 'No Spotify link found'
 
         for (const group of groups) {
             try {
@@ -73,25 +74,27 @@ async function runSync(lockId: string, log: { info: (m: string, c?: any) => void
                 totalTracks += result.tracksSynced
                 log.info(`Synced ${group.name}`, { releases: result.releasesSynced, tracks: result.tracksSynced })
             } catch (err: any) {
-                fail++
-                log.error(`Failed ${group.name}: ${err.message}`)
+                // Grupos sem Spotify vinculado: skip silencioso (não é erro operacional)
+                if (err.message?.includes('Spotify vinculado') || err.message?.includes('No Spotify') || err.message?.includes('No external link')) {
+                    skip++
+                } else {
+                    fail++
+                    log.error(`Failed ${group.name}: ${err.message}`)
+                }
             }
         }
 
         const duration = Math.round((Date.now() - start) / 1000)
-        log.info('Group discography sync completed', { ok, fail, totalReleases, totalTracks, duration_s: duration })
+        log.info('Group discography sync completed', { ok, skip, fail, totalReleases, totalTracks, duration_s: duration })
         await logCronRun(
             'sync-groups-discography',
             fail > 0 ? 'partial' : 'success',
-            `${ok} grupo(s) sincronizado(s), ${totalReleases} lançamento(s), ${fail} falha(s)`,
-            { ok, fail, totalReleases, totalTracks, durationSeconds: duration },
+            `${ok} grupo(s) sincronizado(s), ${totalReleases} lançamento(s), ${skip} sem Spotify, ${fail} falha(s)`,
+            { ok, skip, fail, totalReleases, totalTracks, durationSeconds: duration },
         )
         if (fail > 0) {
             await logSystemEvent('ERROR', 'cron-sync-groups-discography', `Discografia de grupos concluída com ${fail} falha(s)`, {
-                ok,
-                fail,
-                totalReleases,
-                totalTracks,
+                ok, skip, fail, totalReleases, totalTracks,
             })
         }
     } finally {
