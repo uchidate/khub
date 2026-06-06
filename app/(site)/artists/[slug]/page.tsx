@@ -20,6 +20,7 @@ import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
 import { getTranslation, getTranslations } from "@/lib/translations"
 import { buildArtistSeoDescription, buildArtistSeoTitle } from "@/lib/seo/metadata-builders"
+import { buildFaqSchema, generateArtistFaq } from "@/lib/seo/faq-generators"
 import { Music, Globe } from 'lucide-react'
 import { Instagram, Twitter, Youtube } from '@/components/ui/BrandIcons'
 import type { Metadata } from "next"
@@ -920,19 +921,21 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             }} />
 
             {(() => {
-                const faq = artist.faq as { pergunta: string; resposta: string }[] | null
-                if (!faq?.length) return null
-                return (
-                    <JsonLd data={{
-                        "@context": "https://schema.org",
-                        "@type": "FAQPage",
-                        "mainEntity": faq.map(f => ({
-                            "@type": "Question",
-                            "name": f.pergunta,
-                            "acceptedAnswer": { "@type": "Answer", "text": f.resposta },
-                        })),
-                    }} />
-                )
+                const manualFaq = artist.faq as { pergunta: string; resposta: string }[] | null
+                const faqList = manualFaq?.length
+                    ? manualFaq
+                    : generateArtistFaq({
+                        name: artist.nameRomanized,
+                        nameHangul: artist.nameHangul,
+                        roleLabel: getRoleLabels(artist.roles ?? [], artist.gender).slice(0, 2).join(' e '),
+                        groupName: activeGroup?.name,
+                        agencyName: artist.agency?.name,
+                        debutYear,
+                        birthDate,
+                        deathDate,
+                    })
+                const schema = buildFaqSchema(faqList)
+                return schema ? <JsonLd data={schema} /> : null
             })()}
 
             {/* ── BREADCRUMB ── */}

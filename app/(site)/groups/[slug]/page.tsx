@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { notFound } from 'next/navigation'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { buildFaqSchema, generateGroupFaq } from '@/lib/seo/faq-generators'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ReportButton } from '@/components/ui/ReportButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
@@ -337,6 +338,18 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                     { "@type": "ListItem", "position": 2, "name": group.name, "item": `${BASE_URL}/groups/${group.slug ?? group.id}` },
                 ],
             }} />
+            {(() => {
+                const faqList = generateGroupFaq({
+                    name: group.name,
+                    nameHangul: group.nameHangul,
+                    debutYear,
+                    agencyName: group.agency?.name,
+                    activeMembers: activeMembers.map(m => m.artist.nameRomanized),
+                    genre: 'K-Pop',
+                })
+                const schema = buildFaqSchema(faqList)
+                return schema ? <JsonLd data={schema} /> : null
+            })()}
             {/* ── BREADCRUMB ── */}
             <div className="border-b border-border/40">
                 <div className="page-wrap flex items-center gap-3 py-3">
