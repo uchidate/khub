@@ -11,6 +11,20 @@ import { SITE_URL } from '@/lib/constants/site'
 
 export const revalidate = 3600
 
+export async function generateStaticParams() {
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) return []
+    try {
+        const albums = await prisma.album.findMany({
+            where: { artist: { isHidden: false, flaggedAsNonKorean: false } },
+            select: { id: true },
+            take: 5000,
+        })
+        return albums.map(a => ({ id: a.id }))
+    } catch {
+        return []
+    }
+}
+
 const getAlbum = cache(async (id: string) =>
     prisma.album.findUnique({
         where: { id },
@@ -61,11 +75,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const album = await getAlbum(id)
     if (!album) return { title: 'Álbum não encontrado' }
     const title = `${album.title} — ${album.artist.nameRomanized}`
+    const description = `${TYPE_LABELS[album.type] ?? album.type} de ${album.artist.nameRomanized}${album.releaseDate ? ` (${new Date(album.releaseDate).getFullYear()})` : ''} — tracklist, duração e links de streaming.`
     return {
         title: `${title} | HallyuHub`,
-        description: `${TYPE_LABELS[album.type] ?? album.type} de ${album.artist.nameRomanized}${album.releaseDate ? ` (${new Date(album.releaseDate).getFullYear()})` : ''}`,
+        description,
+        alternates: { canonical: `${SITE_URL}/albums/${id}` },
         openGraph: {
             title: `${title} | HallyuHub`,
+            description,
             url: `${SITE_URL}/albums/${id}`,
             images: album.coverUrl ? [{ url: album.coverUrl, width: 500, height: 500, alt: album.title }] : [],
         },
@@ -99,14 +116,29 @@ export default async function AlbumPage({ params }: { params: Promise<{ id: stri
 
     const totalMs = tracks.reduce((sum, t) => sum + (t.durationMs ?? 0), 0)
 
+    const BASE_URL = SITE_URL
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'MusicAlbum',
         name: album.title,
-        byArtist: { '@type': 'MusicGroup', name: album.artist.nameRomanized },
+        url: `${BASE_URL}/albums/${id}`,
+        byArtist: {
+            '@type': 'MusicGroup',
+            name: album.artist.nameRomanized,
+            url: `${BASE_URL}/artists/${album.artist.slug ?? album.artist.id}`,
+        },
         image: album.coverUrl,
         datePublished: album.releaseDate?.toISOString().slice(0, 10),
-        numTracks: tracks.length,
+        numTracks: tracks.length || undefined,
+        inLanguage: 'ko',
+        ...(tracks.length > 0 ? {
+            track: tracks.slice(0, 50).map(t => ({
+                '@type': 'MusicRecording',
+                name: t.title,
+                position: t.trackNumber,
+                ...(t.durationMs ? { duration: `PT${Math.floor(t.durationMs / 60000)}M${Math.floor((t.durationMs % 60000) / 1000)}S` } : {}),
+            })),
+        } : {}),
     }
 
     return (
