@@ -18,6 +18,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { JsonLd } from "@/components/seo/JsonLd"
 import { AnniversaryCountdown } from "@/components/ui/AnniversaryCountdown"
 import { ScrollToTop } from "@/components/ui/ScrollToTop"
+import { AdBanner } from "@/components/ui/AdBanner"
 import { getTranslation, getTranslations } from "@/lib/translations"
 import { buildArtistSeoDescription, buildArtistSeoTitle } from "@/lib/seo/metadata-builders"
 import { buildFaqSchema, generateArtistFaq } from "@/lib/seo/faq-generators"
@@ -1279,6 +1280,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                         limit={6}
                     />
                 </div>
+            </div>
+
+            {/* Multiplex — discovery após leitura completa do perfil */}
+            <div className="page-wrap py-6">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" />
             </div>
 
             <ScrollToTop />

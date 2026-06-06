@@ -19,6 +19,7 @@ import { BLOG_AUTHOR_DISPLAY_NAME, BLOG_AUTHOR_AVATAR_INITIAL } from '@/lib/conf
 import { getTagStyle } from '@/lib/utils/tag-colors'
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { LojaRelacionados } from '@/components/ui/LojaRelacionados'
+import { AdBanner } from '@/components/ui/AdBanner'
 import { CommentsSection } from '@/components/features/CommentsSection'
 import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
@@ -102,6 +103,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : [],
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
+      modifiedTime: post.updatedAt?.toISOString(),
+      section: post.category?.name,
       authors: [BLOG_AUTHOR_DISPLAY_NAME],
     },
     twitter: {
@@ -522,6 +525,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
         )}
 
+        {/* Multiplex — discovery widget após leitura */}
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
+
         {/* Quiz */}
         <Link
           href="/quiz"
@@ -549,6 +555,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             maxHeight: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
           }}
         >
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full" />
           <BlogTableOfContents />
           <LojaRelacionados tags={post.tags} title="Produtos relacionados" compact />
         </div>

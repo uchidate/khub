@@ -180,6 +180,7 @@ export default async function RootLayout({
                 <link key="dns-kpopping" rel="dns-prefetch" href="https://cdn.kpopping.com" />
                 {ADSENSE_ENABLED && (
                     <>
+                        <meta key="adsense-account" name="google-adsense-account" content={ADSENSE_CLIENT} />
                         <link key="preconnect-adsense" rel="preconnect" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
