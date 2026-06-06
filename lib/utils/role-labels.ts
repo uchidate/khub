@@ -6,10 +6,20 @@
  */
 
 const FEMALE_ROLE_MAP: Record<string, string> = {
-  ATOR:    'ATRIZ',
-  CANTOR:  'CANTORA',
-  MODELO:  'MODELO',
-  ARTISTA: 'ARTISTA',
+  ATOR:          'ATRIZ',
+  CANTOR:        'CANTORA',
+  MODELO:        'MODELO',
+  DANÇARINO:     'DANÇARINA',
+  COMPOSITOR:    'COMPOSITORA',
+  PRODUTOR:      'PRODUTORA',
+  APRESENTADOR:  'APRESENTADORA',
+  ESCRITOR:      'ESCRITORA',
+  DIRETOR:       'DIRETORA',
+  ROTEIRISTA:    'ROTEIRISTA',
+  ARTISTA:       'ARTISTA',
+  IDOL:          'IDOL',
+  RAPPER:        'RAPPER',
+  VOCALIST:      'VOCALIST',
 }
 
 /**
