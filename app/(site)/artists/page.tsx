@@ -17,26 +17,29 @@ const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 export const revalidate = 600
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string>> }): Promise<Metadata> {
+    const sp = await searchParams
+    const page = Math.max(1, parseInt(sp.page || '1'))
+    const canonical = page > 1 ? `${BASE_URL}/artists?page=${page}` : `${BASE_URL}/artists`
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
         return {
             title: 'Artistas K-Pop & K-Drama',
             description: 'Perfis completos de cantores, atores e artistas coreanos — discografia, filmes, grupos e redes sociais, tudo em português.',
             keywords: 'artistas K-Pop, idol coreano, K-Drama, ator coreano, cantora coreana, K-Pop Brasil, bias, maknae, HallyuHub',
-            alternates: { canonical: `${BASE_URL}/artists`, languages: { 'pt-BR': `${BASE_URL}/artists`, 'x-default': `${BASE_URL}/artists` } },
+            alternates: { canonical, languages: { 'pt-BR': canonical, 'x-default': canonical } },
         }
     }
     const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
     const desc = `${total > 0 ? `${total} ` : ''}perfis de artistas K-Pop e K-Drama com discografia, filmografia, grupos e redes sociais — tudo em português.`
     return {
-        title: 'Artistas K-Pop & K-Drama',
+        title: page > 1 ? `Artistas K-Pop & K-Drama — página ${page}` : 'Artistas K-Pop & K-Drama',
         description: desc,
         keywords: 'artistas K-Pop, idol coreano, K-Drama, ator coreano, cantora coreana, K-Pop Brasil, bias, maknae, HallyuHub',
-        alternates: { canonical: `${BASE_URL}/artists`, languages: { 'pt-BR': `${BASE_URL}/artists`, 'x-default': `${BASE_URL}/artists` } },
+        alternates: { canonical, languages: { 'pt-BR': canonical, 'x-default': canonical } },
         openGraph: {
             title: 'Artistas K-Pop & K-Drama | HallyuHub',
             description: desc,
-            url: `${BASE_URL}/artists`,
+            url: canonical,
         },
     }
 }
