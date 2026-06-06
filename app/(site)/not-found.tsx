@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Home, Search, Newspaper, Users, Film } from 'lucide-react'
+import { AdBanner } from '@/components/ui/AdBanner'
 
 export default function NotFound() {
     const quickLinks = [
@@ -65,6 +66,11 @@ export default function NotFound() {
                         ))}
                     </div>
                 </div>
+            </div>
+
+            {/* Multiplex — monetiza tráfego perdido */}
+            <div className="w-full max-w-3xl mx-auto mt-12 px-4">
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="404" />
             </div>
         </div>
     )

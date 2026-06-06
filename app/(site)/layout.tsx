@@ -13,6 +13,7 @@ import { PWAInstaller } from "@/components/features/PWAInstaller"
 import { ToastContainer } from "@/components/features/ToastContainer"
 import { AdSenseLoader } from "@/components/ui/AdSenseLoader"
 import { AdSettingsScript } from "@/components/ui/AdSettingsScript"
+import { AdFrequencyProvider } from "@/components/features/AdFrequencyProvider"
 import { AuthGateModal } from "@/components/features/AuthGateModal"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { JsonLd } from "@/components/seo/JsonLd"
@@ -248,6 +249,7 @@ export default async function RootLayout({
                     },
                 }} />
                 <SessionProvider>
+                    <AdFrequencyProvider>
                     <AnalyticsProvider>
                     <WebVitalsReporter />
                     <div className="site-shell min-h-screen flex flex-col max-w-[1440px] mx-auto border-x-2 border-x-accent/30 overflow-x-clip">
@@ -265,6 +267,7 @@ export default async function RootLayout({
                         <ConditionalFooter />
                     </div>
                     </AnalyticsProvider>
+                    </AdFrequencyProvider>
                 </SessionProvider>
             </body>
         </html>

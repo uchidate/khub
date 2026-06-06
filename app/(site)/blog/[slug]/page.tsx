@@ -526,7 +526,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Multiplex — discovery widget após leitura */}
-        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" />
+        <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" channel="blog" />
 
         {/* Quiz */}
         <Link
@@ -555,7 +555,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             maxHeight: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
           }}
         >
-          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full" />
+          <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full" channel="blog" />
           <BlogTableOfContents />
           <LojaRelacionados tags={post.tags} title="Produtos relacionados" compact />
         </div>

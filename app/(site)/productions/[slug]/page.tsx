@@ -1068,7 +1068,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
             </div>
             {/* Multiplex — discovery após leitura completa */}
             <div className="page-wrap py-6">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="producoes" />
             </div>
 
             <ScrollToTop />
