@@ -125,6 +125,7 @@ Você é um especialista em cultura K-Pop e K-Drama com acesso às informações
 - `faq`: 3-5 perguntas **evergreen** (que não ficam desatualizadas) — ex: "Qual o nome real de X?", "Quando X fez debut?", "X é casado?", "Qual o grupo de X?". **PROIBIDO** perguntas sobre streaming, datas de lançamento futuras ou ranking atual
 - **CRÍTICO — faq keys:** TODOS os itens do faq DEVEM usar exatamente `"pergunta"` e `"resposta"`. **JAMAIS** use `"sn"`, `"r"`, `"answer"`, `"resp"` ou qualquer variação — isso causa erro de validação. Copie o padrão do schema acima para todos os itens
 - `videos`: 2-4 entradas com os MVs/performances mais relevantes do artista no YouTube. Usar apenas URLs do formato `https://www.youtube.com/watch?v=ID` que sejam uploads oficiais (canal do artista, gravadora ou rede de TV). Não inventar URLs — se não tiver certeza do ID, omitir o item. Títulos curtos e descritivos (ex: "IU — Celebrity MV", "BTS — Dynamite (Official MV)")
+- **CRÍTICO — videos.url:** o valor de `videos[].url` deve ser **somente a URL plain text direta**. Correto: `"url": "https://www.youtube.com/watch?v=F_f5yq4J53g"`. Errado: `"url": "[https://www.youtube.com/watch?v=F_f5yq4J53g](https://www.google.com/search?q=...)"`. Nunca use markdown `[texto](url)`, nunca use `google.com/search`, nunca coloque colchetes/parênteses no campo `url`.
 - `height`: apenas número, sem "cm"
 - `bloodType`: apenas A, B, AB, O ou null
 - `gender`: apenas `"male"`, `"female"`, `"non-binary"` ou null — NUNCA traduzir

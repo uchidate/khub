@@ -10,6 +10,44 @@ export const dynamic = 'force-dynamic'
 const BLOOD_TYPES = ['A', 'B', 'AB', 'O'] as const
 const VALID_ROLES = ['ATOR', 'CANTOR', 'MODELO', 'IDOL', 'APRESENTADOR', 'DANÇARINO', 'COMPOSITOR', 'PRODUTOR']
 
+function normalizeGeneratedUrl(value: string): string {
+    const trimmed = value.trim()
+    const markdownMatch = trimmed.match(/\[[^\]]*]\(([^)]+)\)/)
+    const candidate = (markdownMatch?.[1] ?? trimmed).trim()
+
+    try {
+        const parsed = new URL(candidate)
+        const host = parsed.hostname.replace(/^www\./, '')
+        const queryUrl = parsed.searchParams.get('q') ?? parsed.searchParams.get('url')
+        if (host === 'google.com' && parsed.pathname.startsWith('/search') && queryUrl) {
+            return queryUrl.trim()
+        }
+    } catch {
+        return candidate
+    }
+
+    return candidate
+}
+
+function normalizeYoutubeUrl(value: string): string | null {
+    const url = normalizeGeneratedUrl(value)
+    try {
+        const parsed = new URL(url)
+        const host = parsed.hostname.replace(/^www\./, '')
+        if (host === 'youtu.be') {
+            const id = parsed.pathname.split('/').filter(Boolean)[0]
+            return id ? `https://www.youtube.com/watch?v=${id}` : null
+        }
+        if (host === 'youtube.com' || host === 'm.youtube.com') {
+            const id = parsed.searchParams.get('v')
+            return id ? `https://www.youtube.com/watch?v=${id}` : null
+        }
+    } catch {
+        return null
+    }
+    return null
+}
+
 const EnrichSchema = z.object({
     nameRomanized: z.string().min(1).optional(),
     nameHangul: z.string().optional().nullable(),
@@ -153,11 +191,22 @@ export async function POST(
         const cleaned: Record<string, string | null> = {}
         for (const [k, v] of Object.entries(body.socialLinks as Record<string, unknown>)) {
             if (!v || typeof v !== 'string') { cleaned[k] = null; continue }
-            const mdMatch = v.match(/\[.*?\]\((.*?)\)/)
-            const url = mdMatch ? mdMatch[1] : v
+            const url = normalizeGeneratedUrl(v)
             cleaned[k] = url.includes('google.com/search') ? null : url.trim() || null
         }
         ;(body as Record<string, unknown>).socialLinks = cleaned
+    }
+
+    // Limpa vídeos gerados como markdown ou wrappers do Google antes da validação Zod.
+    if (body && typeof body === 'object' && 'videos' in body && Array.isArray((body as Record<string, unknown>).videos)) {
+        ;(body as Record<string, unknown>).videos = ((body as Record<string, unknown>).videos as unknown[])
+            .map(item => {
+                if (!item || typeof item !== 'object') return item
+                const video = item as Record<string, unknown>
+                if (typeof video.url !== 'string') return item
+                const normalizedUrl = normalizeYoutubeUrl(video.url)
+                return normalizedUrl ? { ...video, url: normalizedUrl } : item
+            })
     }
 
     const parsed = EnrichSchema.safeParse(body)
