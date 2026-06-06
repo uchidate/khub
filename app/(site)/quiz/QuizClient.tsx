@@ -915,7 +915,26 @@ export function QuizClient() {
                 })
                 // Refresh global stats após salvar
                 fetch('/api/quiz/stats').then(r => r.json()).then(setGlobalStats).catch(() => {})
-                setScreen('result')
+
+                // AdSense interstitial entre quiz e resultado (adBreak API)
+                try {
+                    const adConfig = (window as unknown as { adsbygoogle?: { push: (c: unknown) => void } }).adsbygoogle
+                    if (adConfig) {
+                        adConfig.push({
+                            type: 'reward',
+                            name: 'quiz_completed',
+                            beforeReward: (showAdFn: () => void) => { showAdFn() },
+                            adDismissed: () => { setScreen('result') },
+                            adViewed: () => { setScreen('result') },
+                            beforeAd: () => {},
+                            afterAd: () => { setScreen('result') },
+                        })
+                    } else {
+                        setScreen('result')
+                    }
+                } catch {
+                    setScreen('result')
+                }
             }
             setAnimating(false)
         }, 180)
