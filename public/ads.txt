@@ -1,1 +1,3 @@
 google.com, pub-6015098995926392, DIRECT, f08c47fec0942fa0
+# Fallback network — descomentar se ativar Ezoic
+# ezoic.com, 561554, DIRECT

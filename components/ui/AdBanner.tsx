@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
+import { AdFrequencyContext } from '@/components/features/AdFrequencyProvider'
 
 /**
  * Variantes:
@@ -21,12 +22,18 @@ interface AdBannerProps {
     eager?: boolean
     className?: string
     devLabel?: string
+    /** Agrupa o slot no AdSense por seção para análise de RPM separado */
+    channel?: string
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const IS_DEV = process.env.NODE_ENV === 'development'
 const SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR
 const MULTIPLEX_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX
+
+// Multiplex e fluid são "fora do fold" por design — não contam para o limite
+const ABOVE_FOLD_VARIANTS: AdVariant[] = ['auto']
+const MAX_ABOVE_FOLD = 3
 
 type RuntimeAdSettings = {
     adsGloballyPaused: boolean
@@ -69,6 +76,7 @@ export function AdBanner({
     eager = false,
     className = '',
     devLabel,
+    channel,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const insRef = useRef<HTMLModElement>(null)
@@ -77,6 +85,18 @@ export function AdBanner({
     const [settingsDisabled, setSettingsDisabled] = useState(false)
 
     const variant = normalizeVariant(rawVariant)
+    const isAboveFold = ABOVE_FOLD_VARIANTS.includes(variant)
+
+    // Frequency limit — conta apenas anúncios 'auto' (above-fold)
+    const freq = useContext(AdFrequencyContext)
+    const [freqAllowed, setFreqAllowed] = useState(true)
+    useEffect(() => {
+        if (!isAboveFold) return
+        const allowed = freq.register()
+        setFreqAllowed(allowed)
+        return () => { if (allowed) freq.unregister() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [slot])
 
     // Push do ad via IntersectionObserver (ou eager)
     useEffect(() => {
@@ -84,6 +104,7 @@ export function AdBanner({
         const disabled = isDisabledBySettings(adSettings, variant, slot)
         setSettingsDisabled(disabled)
         if (disabled) return
+        if (!freqAllowed) return
         if (IS_DEV || !CLIENT || !slot) return
 
         const pushOnce = () => {
@@ -112,12 +133,12 @@ export function AdBanner({
         )
         io.observe(el)
         return () => io.disconnect()
-    }, [slot, eager, variant])
+    }, [slot, eager, variant, freqAllowed])
 
     // Detectar se o AdSense preencheu ou não o slot
     // O AdSense seta data-ad-status="unfilled" quando não há anúncio disponível
     useEffect(() => {
-        if (settingsDisabled) return
+        if (settingsDisabled || !freqAllowed) return
         if (IS_DEV || !CLIENT || !slot) return
         const ins = insRef.current
         if (!ins) return
@@ -138,15 +159,12 @@ export function AdBanner({
         }, 6000)
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
-    }, [slot, settingsDisabled])
+    }, [slot, settingsDisabled, freqAllowed])
 
-    if (settingsDisabled) return null
+    if (settingsDisabled || !freqAllowed) return null
 
     if (IS_DEV) {
         const info = DEV_INFO[variant]
-        // Heights match real ad sizes per breakpoint:
-        // auto: 50px mobile / 90px desktop (leaderboard)
-        // fluid/multiplex: 250px (variable content)
         const heightClass =
             variant === 'auto'
                 ? 'h-[50px] sm:h-[90px]'
@@ -161,26 +179,34 @@ export function AdBanner({
                     <span className="text-caption font-mono text-amber-500/60 select-none">·</span>
                     <span className="text-caption font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
                 </div>
-                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{eager ? ' · eager' : ''}</span>
+                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{channel ? ` · ch:${channel}` : ''}{eager ? ' · eager' : ''}</span>
             </div>
         )
     }
 
     if (!CLIENT || !slot) return null
 
-    // filled === false → não renderizar nada
+    // filled === false → não renderizar nada (sem CLS)
     if (filled === false) return null
 
     const isFluid = variant === 'fluid'
     const isMultiplex = variant === 'multiplex'
-    const loadingHeightClass =
+
+    // Altura fixa reservada antes do ad preencher — evita layout shift (CLS)
+    const skeletonClass =
         variant === 'auto'
-            ? 'min-h-[50px] sm:min-h-[90px]'
+            ? 'h-[50px] sm:h-[90px]'
             : 'min-h-[250px]'
 
     return (
         <div ref={containerRef}>
-            <div className={filled === true ? className : `overflow-hidden w-full ${loadingHeightClass} ${className}`}>
+            <div className={filled === true ? className : `overflow-hidden w-full relative bg-surface/40 animate-pulse ${skeletonClass} ${className}`}>
+                {filled === null && (
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-widest text-muted/20 select-none pointer-events-none">
+                        Publicidade
+                    </span>
+                )}
+
                 {!hideLabel && filled === true && (
                     <p className={`text-micro font-semibold uppercase tracking-widest text-muted/40 text-center select-none ${minimal ? 'mb-1' : 'mb-2'}`}>
                         Publicidade
@@ -196,6 +222,7 @@ export function AdBanner({
                     data-ad-format={isMultiplex ? 'autorelaxed' : isFluid ? 'fluid' : 'auto'}
                     data-full-width-responsive={isFluid || isMultiplex ? undefined : 'true'}
                     {...(isFluid ? { 'data-ad-layout': 'in-article' } : {})}
+                    {...(channel ? { 'data-ad-channel': channel } : {})}
                 />
 
                 {!minimal && !hideLabel && filled === true && (

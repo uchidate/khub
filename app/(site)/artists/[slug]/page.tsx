@@ -1284,7 +1284,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
 
             {/* Multiplex — discovery após leitura completa do perfil */}
             <div className="page-wrap py-6">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" />
+                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="artistas" />
             </div>
 
             <ScrollToTop />
