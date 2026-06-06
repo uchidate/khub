@@ -2,6 +2,7 @@
 
 import { useContext, useEffect, useRef, useState } from 'react'
 import { AdFrequencyContext } from '@/components/features/AdFrequencyProvider'
+import { AdFallback } from '@/components/ui/AdFallback'
 
 /**
  * Variantes:
@@ -24,6 +25,10 @@ interface AdBannerProps {
     devLabel?: string
     /** Agrupa o slot no AdSense por seção para análise de RPM separado */
     channel?: string
+    /** Exibe house ad quando slot fica unfilled (default: true) */
+    showFallback?: boolean
+    /** Faz refresh do slot a cada N segundos se em viewport (default: 0 = desativado) */
+    refreshInterval?: number
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
@@ -31,9 +36,7 @@ const IS_DEV = process.env.NODE_ENV === 'development'
 const SIDEBAR_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR
 const MULTIPLEX_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX
 
-// Multiplex e fluid são "fora do fold" por design — não contam para o limite
 const ABOVE_FOLD_VARIANTS: AdVariant[] = ['auto']
-const MAX_ABOVE_FOLD = 3
 
 type RuntimeAdSettings = {
     adsGloballyPaused: boolean
@@ -68,6 +71,12 @@ function isDisabledBySettings(settings: RuntimeAdSettings | undefined, variant: 
     return false
 }
 
+function fireGa4(eventName: string, params: Record<string, string>) {
+    try {
+        ;(window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.('event', eventName, params)
+    } catch { /* gtag não disponível */ }
+}
+
 export function AdBanner({
     slot,
     variant: rawVariant = 'auto',
@@ -77,6 +86,8 @@ export function AdBanner({
     className = '',
     devLabel,
     channel,
+    showFallback = true,
+    refreshInterval = 0,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const insRef = useRef<HTMLModElement>(null)
@@ -86,6 +97,7 @@ export function AdBanner({
 
     const variant = normalizeVariant(rawVariant)
     const isAboveFold = ABOVE_FOLD_VARIANTS.includes(variant)
+    const slotName = SLOT_NAMES[slot] ?? slot
 
     // Frequency limit — conta apenas anúncios 'auto' (above-fold)
     const freq = useContext(AdFrequencyContext)
@@ -103,8 +115,7 @@ export function AdBanner({
         const adSettings = window.__adSettings as RuntimeAdSettings | undefined
         const disabled = isDisabledBySettings(adSettings, variant, slot)
         setSettingsDisabled(disabled)
-        if (disabled) return
-        if (!freqAllowed) return
+        if (disabled || !freqAllowed) return
         if (IS_DEV || !CLIENT || !slot) return
 
         const pushOnce = () => {
@@ -115,28 +126,19 @@ export function AdBanner({
             } catch { /* AdSense ainda não carregou */ }
         }
 
-        if (eager) {
-            pushOnce()
-            return
-        }
+        if (eager) { pushOnce(); return }
 
         const el = containerRef.current
         if (!el) return
         const io = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting) {
-                    pushOnce()
-                    io.disconnect()
-                }
-            },
+            entries => { if (entries[0].isIntersecting) { pushOnce(); io.disconnect() } },
             { rootMargin: '200px' }
         )
         io.observe(el)
         return () => io.disconnect()
     }, [slot, eager, variant, freqAllowed])
 
-    // Detectar se o AdSense preencheu ou não o slot
-    // O AdSense seta data-ad-status="unfilled" quando não há anúncio disponível
+    // Detecta fill status + dispara GA4 ad_impression
     useEffect(() => {
         if (settingsDisabled || !freqAllowed) return
         if (IS_DEV || !CLIENT || !slot) return
@@ -145,30 +147,107 @@ export function AdBanner({
 
         const check = () => {
             const status = ins.getAttribute('data-ad-status')
-            if (status === 'unfilled') setFilled(false)
-            else if (status === 'filled') setFilled(true)
+            if (status === 'unfilled') {
+                setFilled(false)
+            } else if (status === 'filled') {
+                setFilled(true)
+                fireGa4('ad_impression', { slot_id: slot, slot_name: slotName, channel: channel ?? 'default' })
+            }
         }
 
         const mo = new MutationObserver(check)
         mo.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] })
 
-        // Timeout folgado: em produção o leilão pode demorar, principalmente após navegação.
         const timeout = setTimeout(() => {
-            const status = ins.getAttribute('data-ad-status')
-            if (!status) setFilled(false)
+            if (!ins.getAttribute('data-ad-status')) setFilled(false)
         }, 6000)
 
         return () => { mo.disconnect(); clearTimeout(timeout) }
-    }, [slot, settingsDisabled, freqAllowed])
+    }, [slot, settingsDisabled, freqAllowed, slotName, channel])
+
+    // Viewability tracking — dispara ad_viewed quando slot visível ≥50% por ≥1s
+    useEffect(() => {
+        if (filled !== true || IS_DEV || !CLIENT) return
+        const el = containerRef.current
+        if (!el) return
+        let timer: ReturnType<typeof setTimeout> | null = null
+        const io = new IntersectionObserver(
+            entries => {
+                if (entries[0].intersectionRatio >= 0.5) {
+                    timer = setTimeout(() => {
+                        fireGa4('ad_viewed', { slot_id: slot, slot_name: slotName, channel: channel ?? 'default' })
+                        io.disconnect()
+                    }, 1000)
+                } else if (timer) {
+                    clearTimeout(timer)
+                    timer = null
+                }
+            },
+            { threshold: 0.5 }
+        )
+        io.observe(el)
+        return () => { io.disconnect(); if (timer) clearTimeout(timer) }
+    }, [filled, slot, slotName, channel])
+
+    // Click tracking — observa iframe injetado pelo AdSense
+    useEffect(() => {
+        if (filled !== true || IS_DEV || !CLIENT) return
+        const ins = insRef.current
+        if (!ins) return
+
+        const detectClick = () => {
+            // AdSense captura foco da janela quando usuário clica no iframe
+            const onBlur = () => {
+                if (document.activeElement?.tagName === 'IFRAME') {
+                    fireGa4('ad_click', { slot_id: slot, slot_name: slotName, channel: channel ?? 'default' })
+                }
+            }
+            window.addEventListener('blur', onBlur, { once: true })
+        }
+
+        const mo = new MutationObserver(() => {
+            const iframe = ins.querySelector('iframe')
+            if (iframe) { detectClick(); mo.disconnect() }
+        })
+        mo.observe(ins, { childList: true, subtree: true })
+
+        // Se iframe já existe
+        if (ins.querySelector('iframe')) detectClick()
+
+        return () => mo.disconnect()
+    }, [filled, slot, slotName, channel])
+
+    // Ad refresh — repusha o slot a cada N segundos se em viewport
+    useEffect(() => {
+        if (!refreshInterval || refreshInterval < 30) return
+        if (filled !== true || IS_DEV || !CLIENT) return
+        const el = containerRef.current
+        if (!el) return
+
+        let inViewport = false
+        const io = new IntersectionObserver(
+            entries => { inViewport = entries[0].isIntersecting },
+            { threshold: 0.5 }
+        )
+        io.observe(el)
+
+        const interval = setInterval(() => {
+            if (!inViewport) return
+            pushed.current = false // permite novo push
+            try {
+                ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({})
+                setFilled(null) // volta ao estado loading brevemente
+            } catch { /* ignora */ }
+        }, refreshInterval * 1000)
+
+        return () => { io.disconnect(); clearInterval(interval) }
+    }, [filled, refreshInterval])
 
     if (settingsDisabled || !freqAllowed) return null
 
     if (IS_DEV) {
         const info = DEV_INFO[variant]
-        const heightClass =
-            variant === 'auto'
-                ? 'h-[50px] sm:h-[90px]'
-                : 'h-[250px]'
+        const heightClass = variant === 'auto' ? 'h-[50px] sm:h-[90px]' : 'h-[250px]'
         return (
             <div className={`relative flex flex-col items-center justify-center gap-1 bg-amber-500/10 border-2 border-dashed border-amber-500/50 rounded overflow-hidden ${heightClass} ${className}`}>
                 <span className="text-label font-semibold text-amber-600 dark:text-amber-400 select-none">📢 {devLabel ?? SLOT_NAMES[slot] ?? 'Anúncio'}</span>
@@ -179,24 +258,21 @@ export function AdBanner({
                     <span className="text-caption font-mono text-amber-500/60 select-none">·</span>
                     <span className="text-caption font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
                 </div>
-                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{channel ? ` · ch:${channel}` : ''}{eager ? ' · eager' : ''}</span>
+                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{channel ? ` · ch:${channel}` : ''}{refreshInterval ? ` · refresh:${refreshInterval}s` : ''}{eager ? ' · eager' : ''}</span>
             </div>
         )
     }
 
     if (!CLIENT || !slot) return null
 
-    // filled === false → não renderizar nada (sem CLS)
-    if (filled === false) return null
+    // Slot unfilled → house ad ou null
+    if (filled === false) {
+        return showFallback ? <AdFallback variant={variant} className={className} /> : null
+    }
 
     const isFluid = variant === 'fluid'
     const isMultiplex = variant === 'multiplex'
-
-    // Altura fixa reservada antes do ad preencher — evita layout shift (CLS)
-    const skeletonClass =
-        variant === 'auto'
-            ? 'h-[50px] sm:h-[90px]'
-            : 'min-h-[250px]'
+    const skeletonClass = variant === 'auto' ? 'h-[50px] sm:h-[90px]' : 'min-h-[250px]'
 
     return (
         <div ref={containerRef}>
