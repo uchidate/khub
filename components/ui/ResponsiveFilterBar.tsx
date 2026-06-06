@@ -62,15 +62,20 @@ export function ResponsiveFilterBar({ label, value, children, className = '' }: 
                 )}
             </div>
         </div>
+        {/* Spacer mobile */}
         <div aria-hidden="true" className="h-[calc(var(--section-bar-h)+1px)] lg:hidden" />
 
+        {/* Desktop: fixed igual ao mobile — overflow-x-clip no pai quebra sticky */}
         <div
-            className={`relative z-[20] hidden border-b border-border/70 bg-background lg:block ${className}`}
+            className={`fixed inset-x-0 z-[310] mx-auto hidden w-full max-w-[1440px] border-b border-border/70 bg-background lg:block ${className}`}
+            style={{ top: 'var(--site-sticky-top, 92px)' }}
         >
-            <div className="page-wrap flex h-12 items-center overflow-x-auto py-0 scrollbar-none">
+            <div className="page-wrap flex h-[var(--section-bar-h)] items-center overflow-x-auto py-0 scrollbar-none">
                 {children}
             </div>
         </div>
+        {/* Spacer desktop */}
+        <div aria-hidden="true" className="hidden h-[calc(var(--section-bar-h)+1px)] lg:block" />
         </>
     )
 }
