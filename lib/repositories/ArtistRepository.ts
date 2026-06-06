@@ -40,6 +40,7 @@ export const ArtistSchema = z.object({
     socialLinks: z.record(z.string(), z.string()).optional(),
     analiseEditorial: z.string().optional(),
     curiosidades: z.array(z.string()).optional(),
+    videos: z.array(z.object({ title: z.string(), url: z.string().url() })).optional().nullable(),
     musicalStyle: z.string().optional(),
     fanInfo: z.record(z.string(), z.unknown()).optional(),
     awards: z.array(z.record(z.string(), z.unknown())).optional(),
@@ -225,7 +226,7 @@ export const ArtistRepository = {
                 gender: true, roles: true, bio: true, birthName: true, height: true,
                 bloodType: true, zodiacSign: true, socialLinks: true, analiseEditorial: true,
                 curiosidades: true, musicalStyle: true, fanInfo: true, awards: true,
-                destaques: true, enrichedAt: true, flaggedAsNonKorean: true,
+                destaques: true, videos: true, enrichedAt: true, flaggedAsNonKorean: true,
                 discographySyncAt: true, tmdbId: true, mbid: true, isHidden: true, fieldSources: true,
             },
         })

@@ -31,6 +31,7 @@ interface Artist {
     analiseEditorial: string | null
     curiosidades: string[]
     socialLinks: Record<string, string> | null
+    videos: { title: string; url: string }[] | null
     tmdbId: string | null
     mbid: string | null
     isHidden: boolean
@@ -98,6 +99,8 @@ export default function EditArtistPage() {
     const [form, setForm] = useState<Partial<Artist>>({})
     // Social links edit state: array of [key, value] pairs
     const [socialPairs, setSocialPairs] = useState<[string, string][]>([])
+    // Videos edit state
+    const [videos, setVideos] = useState<{ title: string; url: string }[]>([])
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -132,6 +135,7 @@ export default function EditArtistPage() {
                 })
                 const links = (data.socialLinks as Record<string, string> | null) ?? {}
                 setSocialPairs(Object.entries(links))
+                setVideos(Array.isArray(data.videos) ? data.videos : [])
             })
             .catch(() => toast.error('Erro ao carregar artista'))
             .finally(() => setLoading(false))
@@ -217,6 +221,7 @@ export default function EditArtistPage() {
                 analiseEditorial: form.analiseEditorial || '',
                 curiosidades: form.curiosidades ?? [],
                 socialLinks: socialLinks ?? {},
+                videos: videos.filter(v => v.url.trim() && v.title.trim()),
                 tmdbId: form.tmdbId || '',
                 mbid: form.mbid || '',
                 isHidden: form.isHidden ?? false,
@@ -750,6 +755,58 @@ export default function EditArtistPage() {
                                             type="button"
                                             onClick={() => setSocialPairs(prev => prev.filter((_, j) => j !== i))}
                                             className="text-muted hover:text-red-400 transition-colors flex-shrink-0"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Vídeos do YouTube */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-bold text-muted uppercase tracking-widest">
+                                    Vídeos do YouTube ({videos.length})
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setVideos(prev => [...prev, { title: '', url: '' }])}
+                                    className="flex items-center gap-1 text-[10px] text-accent hover:text-accent/70 transition-colors"
+                                >
+                                    <Plus className="w-3 h-3" /> Adicionar
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {videos.length === 0 && (
+                                    <p className="text-xs text-muted py-2">Nenhum vídeo. URLs devem ser do formato <code className="text-muted">youtube.com/watch?v=ID</code></p>
+                                )}
+                                {videos.map((v, i) => (
+                                    <div key={i} className="flex gap-2 items-start">
+                                        <span className="text-[10px] text-muted font-mono mt-2.5 w-5 text-right flex-shrink-0">{i + 1}</span>
+                                        <div className="flex-1 flex flex-col gap-1">
+                                            <input
+                                                type="text"
+                                                placeholder="Título (ex: IU — Celebrity MV)"
+                                                value={v.title}
+                                                onChange={e => setVideos(prev => prev.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                                                className={inputCls + ' text-xs'}
+                                            />
+                                            <input
+                                                type="url"
+                                                placeholder="https://www.youtube.com/watch?v=ID"
+                                                value={v.url}
+                                                onChange={e => setVideos(prev => prev.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
+                                                className={`${inputCls} text-xs font-mono ${v.url && !v.url.includes('youtube.com/watch') && !v.url.includes('youtu.be') ? 'border-red-500/60 focus:border-red-400' : ''}`}
+                                            />
+                                            {v.url && !v.url.includes('youtube.com/watch') && !v.url.includes('youtu.be') && (
+                                                <p className="text-[10px] text-red-400">URL deve ser do YouTube (youtube.com/watch?v=...)</p>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVideos(prev => prev.filter((_, j) => j !== i))}
+                                            className="mt-2 text-muted hover:text-red-400 transition-colors flex-shrink-0"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
