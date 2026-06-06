@@ -15,13 +15,12 @@ const MAX_TOP_ANCHOR_OFFSET = 205
 declare global {
     interface Window {
         adsbygoogle?: unknown[]
-        __adSettings?: { adsGloballyPaused: boolean; adsAutoAdsEnabled: boolean; adsMultiplexEnabled: boolean; adsSidebarEnabled: boolean; isAdmin?: boolean }
+        __adSettings?: { adsGloballyPaused: boolean; adsAutoAdsEnabled: boolean; adsMultiplexEnabled: boolean; adsSidebarEnabled: boolean }
     }
 }
 
 function isAdsPaused() {
-    return window.__adSettings?.isAdmin === true
-        || window.__adSettings?.adsGloballyPaused === true
+    return window.__adSettings?.adsGloballyPaused === true
         || window.__adSettings?.adsAutoAdsEnabled === false
 }
 

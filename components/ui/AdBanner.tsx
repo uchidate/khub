@@ -1,6 +1,7 @@
 'use client'
 
 import { useContext, useEffect, useRef, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { AdFrequencyContext } from '@/components/features/AdFrequencyProvider'
 import { AdFallback } from '@/components/ui/AdFallback'
 
@@ -42,7 +43,6 @@ type RuntimeAdSettings = {
     adsGloballyPaused: boolean
     adsMultiplexEnabled: boolean
     adsSidebarEnabled: boolean
-    isAdmin?: boolean
 }
 
 const SLOT_NAMES: Record<string, string> = {
@@ -66,7 +66,6 @@ function normalizeVariant(v: AdVariantLegacy = 'auto'): AdVariant {
 
 function isDisabledBySettings(settings: RuntimeAdSettings | undefined, variant: AdVariant, slot: string) {
     if (!settings) return false
-    if (settings.isAdmin) return true
     if (settings.adsGloballyPaused) return true
     if (settings.adsMultiplexEnabled === false && (variant === 'multiplex' || slot === MULTIPLEX_SLOT)) return true
     if (settings.adsSidebarEnabled === false && slot === SIDEBAR_SLOT) return true
@@ -96,6 +95,8 @@ export function AdBanner({
     const pushed = useRef(false)
     const [filled, setFilled] = useState<boolean | null>(null) // null = loading
     const [settingsDisabled, setSettingsDisabled] = useState(false)
+    const { data: session } = useSession()
+    const isAdmin = session?.user?.role?.toLowerCase() === 'admin'
 
     const variant = normalizeVariant(rawVariant)
     const isAboveFold = ABOVE_FOLD_VARIANTS.includes(variant)
@@ -269,7 +270,7 @@ export function AdBanner({
         return () => { io.disconnect(); clearInterval(interval) }
     }, [filled, refreshInterval])
 
-    if (settingsDisabled || !freqAllowed) return null
+    if (settingsDisabled || !freqAllowed || isAdmin) return null
 
     if (IS_DEV) {
         const info = DEV_INFO[variant]
