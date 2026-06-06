@@ -117,6 +117,7 @@ RUN groupadd --system --gid 1001 nodejs && \
 # OTIMIZAÇÃO: Copiar APENAS node_modules de produção (deps-production stage)
 # Economiza ~200-300MB e acelera push/pull do registry
 COPY --from=deps-production --chown=nextjs:nodejs /app/node_modules ./node_modules
+RUN ln -sf /app/node_modules/.bin/tsx /usr/local/bin/tsx
 
 
 # Next.js standalone
