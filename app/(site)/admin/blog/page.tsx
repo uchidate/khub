@@ -303,6 +303,65 @@ function BlogStatsBar({ stats }: { stats: BlogStats | null }) {
     )
 }
 
+// ─── Excerpt Enricher Widget ──────────────────────────────────────────────────
+
+function ExcerptEnricherWidget() {
+    const [pending, setPending]   = useState<number | null>(null)
+    const [loading, setLoading]   = useState(false)
+    const [result, setResult]     = useState<{ processed: number; failed: number } | null>(null)
+
+    useEffect(() => {
+        fetch('/api/admin/blog/enrich-excerpts')
+            .then(r => r.json())
+            .then(d => setPending(d.pending ?? null))
+            .catch(() => setPending(null))
+    }, [result])
+
+    async function runEnrichment() {
+        setLoading(true)
+        setResult(null)
+        try {
+            const r = await fetch('/api/admin/blog/enrich-excerpts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ batch: 10 }),
+            })
+            const d = await r.json()
+            setResult({ processed: d.processed ?? 0, failed: d.failed ?? 0 })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (pending === 0) return null
+
+    return (
+        <div className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/25 rounded-xl px-4 py-3">
+            <AlertTriangle size={14} className="text-amber-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">
+                    {pending != null ? `${pending} posts sem excerpt` : 'Verificando excerpts...'}
+                </p>
+                {result && (
+                    <p className="text-[11px] text-muted mt-0.5">
+                        {result.processed} gerados, {result.failed} falhas
+                    </p>
+                )}
+            </div>
+            {pending != null && pending > 0 && (
+                <button
+                    onClick={runEnrichment}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-lg text-[11px] font-bold transition-all disabled:opacity-50 shrink-0"
+                >
+                    {loading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                    Gerar excerpts (10)
+                </button>
+            )}
+        </div>
+    )
+}
+
 // ─── SEO Health Badge ─────────────────────────────────────────────────────────
 
 function SeoHealthBadge({ post }: { post: BlogPost }) {
@@ -1110,6 +1169,8 @@ function AdminBlogPageContent() {
             <div className="space-y-5">
 
                 <BlogStatsBar stats={blogStats} />
+
+                <ExcerptEnricherWidget />
 
                 <PageGuide
                     storageKey="blog"

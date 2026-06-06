@@ -263,7 +263,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         keywords,
         alternates: {
             canonical: canonicalUrl,
-            languages: { 'pt-BR': canonicalUrl, 'x-default': canonicalUrl },
+            languages: { 'pt-BR': canonicalUrl, 'pt-PT': canonicalUrl, 'x-default': canonicalUrl },
         },
         ...(isThinContent ? { robots: { index: false, follow: true } } : {}),
         openGraph: {

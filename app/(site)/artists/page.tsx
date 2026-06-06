@@ -26,7 +26,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
             title: 'Artistas K-Pop & K-Drama',
             description: 'Perfis completos de cantores, atores e artistas coreanos — discografia, filmes, grupos e redes sociais, tudo em português.',
             keywords: 'artistas K-Pop, idol coreano, K-Drama, ator coreano, cantora coreana, K-Pop Brasil, bias, maknae, HallyuHub',
-            alternates: { canonical, languages: { 'pt-BR': canonical, 'x-default': canonical } },
+            alternates: { canonical, languages: { 'pt-BR': canonical, 'pt-PT': canonical, 'x-default': canonical } },
         }
     }
     const total = await prisma.artist.count({ where: { flaggedAsNonKorean: false, isHidden: false } }).catch(() => 0)
@@ -35,7 +35,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
         title: page > 1 ? `Artistas K-Pop & K-Drama — página ${page}` : 'Artistas K-Pop & K-Drama',
         description: desc,
         keywords: 'artistas K-Pop, idol coreano, K-Drama, ator coreano, cantora coreana, K-Pop Brasil, bias, maknae, HallyuHub',
-        alternates: { canonical, languages: { 'pt-BR': canonical, 'x-default': canonical } },
+        alternates: { canonical, languages: { 'pt-BR': canonical, 'pt-PT': canonical, 'x-default': canonical } },
         openGraph: {
             title: 'Artistas K-Pop & K-Drama | HallyuHub',
             description: desc,

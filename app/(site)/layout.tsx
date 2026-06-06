@@ -100,6 +100,7 @@ export const metadata: Metadata = {
         canonical: BASE_URL,
         languages: {
             'pt-BR': BASE_URL,
+            'pt-PT': BASE_URL,
             'x-default': BASE_URL,
         },
     },
