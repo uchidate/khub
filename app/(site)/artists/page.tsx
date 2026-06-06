@@ -135,6 +135,28 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
             "inLanguage": "pt-BR",
             "publisher": { "@type": "Organization", "name": "HallyuHub", "url": BASE_URL },
         }} />
+        {artists.length > 0 && (
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": letter ? `Artistas com a letra ${letter}` : "Artistas K-Pop e K-Drama",
+                "url": `${BASE_URL}/artists${page > 1 ? `?page=${page}` : ''}`,
+                "numberOfItems": artists.length,
+                "itemListOrder": "https://schema.org/ItemListOrderDescending",
+                "itemListElement": artists.map((artist, index) => ({
+                    "@type": "ListItem",
+                    "position": skip + index + 1,
+                    "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
+                    "name": artist.nameRomanized,
+                    "item": {
+                        "@type": "Person",
+                        "name": artist.nameRomanized,
+                        "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
+                        ...(artist.primaryImageUrl ? { "image": artist.primaryImageUrl } : {}),
+                    },
+                })),
+            }} />
+        )}
         <PageTransition className="pb-16">
 
             <Suspense>

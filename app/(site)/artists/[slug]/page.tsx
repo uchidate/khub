@@ -30,6 +30,8 @@ import { StoreProductsRail } from '@/components/store/StoreProductsRail'
 import { inferContentType } from '@/lib/store/product-matcher'
 import { BrandDot } from '@/components/ui/BrandDot'
 import { getPrimaryMusicLink, getPublicMusicCatalog, toSpotifyEmbedUrl } from '@/lib/music/public-music-catalog'
+import { cleanSameAs, compactSchema, isoDateOnly, youtubeVideoSchema } from '@/lib/seo/structured-data'
+import { getRelatedArtistHubs } from '@/lib/seo/archive-hubs'
 const BASE_URL = SITE_URL
 
 type ArtistWithExtras = Awaited<ReturnType<typeof getArtist>> & {
@@ -796,9 +798,30 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     const heroCopy = bioText
         ? bioText.split(/\n+/)[0]?.split(/(?<=[.!?])\s+/)[0] ?? fallbackHeroCopy
         : fallbackHeroCopy
+    const relatedHubs = getRelatedArtistHubs({
+        roles,
+        gender: artist.gender,
+        activeGroupCount: artist.memberships.filter(m => m.isActive).length,
+        productionCount: totalProductions,
+    })
     const impactCards = getEditorialImpactCards(artist.analiseEditorial)
     const timelineBlock = getFirstTimelineBlock(artist.analiseEditorial)
     const videoBlock = getFirstVideoBlock(artist.analiseEditorial)
+    const schemaVideos = [
+        ...(videoBlock ? [{ title: 'Vídeo em destaque', url: videoBlock.url }] : []),
+        ...videos,
+    ]
+        .filter((video, index, list) => video.url && list.findIndex(item => item.url === video.url) === index)
+        .slice(0, 6)
+        .map(video => youtubeVideoSchema({
+            title: video.title || `${artist.nameRomanized} no YouTube`,
+            url: video.url,
+            pageUrl: `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
+            description: bioText ?? `${artist.nameRomanized} no HallyuHub`,
+            uploadDate: artist.debutDate ?? artist.updatedAt,
+            thumbnailUrl: artist.primaryImageUrl,
+        }))
+        .filter(Boolean)
     const tagsBlock = getFirstTagsBlock(artist.analiseEditorial)
     const factsBlock = getFirstFactsBlock(artist.analiseEditorial)
     const starterBlocks = getStarterBlocks(artist.analiseEditorial)
@@ -859,7 +882,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
     return (
         <div className="min-h-screen bg-background">
             <ViewTracker artistId={artist.id} />
-            <JsonLd data={{
+            <JsonLd data={compactSchema({
                 "@context": "https://schema.org",
                 "@type": artist.roles?.some(r => ['singer', 'rapper', 'dancer', 'vocalist', 'idol'].includes(r.toLowerCase()))
                     ? ["Person", "MusicArtist"] : "Person",
@@ -871,19 +894,22 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                 "description": (artist.bio ?? artist.analiseEditorial)?.slice(0, 300) ?? undefined,
                 "image": artist.primaryImageUrl ?? undefined,
                 "url": `${BASE_URL}/artists/${artist.slug ?? artist.id}`,
-                "birthDate": artist.birthDate ? new Date(artist.birthDate).toISOString().split('T')[0] : undefined,
-                "deathDate": deathDate ? deathDate.toISOString().split('T')[0] : undefined,
+                "birthDate": isoDateOnly(artist.birthDate),
+                "deathDate": isoDateOnly(deathDate),
                 "birthPlace": artist.placeOfBirth ? { "@type": "Place", "name": artist.placeOfBirth } : undefined,
-                "jobTitle": artist.roles?.[0] ?? undefined,
-                ...(artist.debutDate ? { "foundingDate": new Date(artist.debutDate).toISOString().split('T')[0] } : {}),
+                "jobTitle": getRoleLabels(artist.roles ?? [], artist.gender).slice(0, 3).join(', ') || undefined,
                 "nationality": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(activeGroup ? { "memberOf": { "@type": "MusicGroup", "name": activeGroup.name, "url": `${BASE_URL}/groups/${activeGroup.slug ?? activeGroup.id}` } } : {}),
                 ...(artist.agency ? { "worksFor": { "@type": "Organization", "name": artist.agency.name } } : {}),
-                ...(() => {
-                    const sameAs = officialProfileLinks.map(link => link.url).filter(Boolean)
-                    return sameAs.length > 0 ? { "sameAs": sameAs } : {}
-                })(),
-            }} />
+                "sameAs": cleanSameAs(officialProfileLinks.map(link => link.url)),
+                "subjectOf": schemaVideos,
+            })} />
+            {schemaVideos.length > 0 && (
+                <JsonLd data={{
+                    "@context": "https://schema.org",
+                    "@graph": schemaVideos,
+                }} />
+            )}
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
@@ -1117,6 +1143,24 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                                     <div className="text-[13px] text-muted mt-0.5">{a.premio}</div>
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {relatedHubs.length > 0 && (
+                <section className="page-wrap border-t border-border/40 py-10">
+                    <div className="mb-4">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted">Guias relacionados</p>
+                        <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-foreground">Continue explorando</h2>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        {relatedHubs.map(hub => (
+                            <Link key={hub.slug} href={`/hubs/${hub.slug}`} className="group border border-border bg-surface p-4 transition-colors hover:border-accent/50">
+                                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">Guia</p>
+                                <h3 className="mt-1 text-sm font-black text-foreground group-hover:text-accent">{hub.title}</h3>
+                                <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted">{hub.description}</p>
+                            </Link>
                         ))}
                     </div>
                 </section>

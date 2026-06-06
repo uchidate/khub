@@ -56,17 +56,17 @@ const SECTIONS = [
   },
   {
     icon: Star,
-    label: 'Favoritos e Feed',
+    label: 'Favoritos',
     color: 'text-neon-pink',
     bg: 'bg-pink-500/10',
     items: [
       {
         q: 'Como funciona o sistema de favoritos?',
-        a: 'Clique no ícone de coração (♥) em qualquer artista, grupo, produção ou notícia. Os itens favoritados aparecem no seu painel e alimentam o Feed Personalizado em /news/feed.',
+        a: 'Clique no ícone de coração (♥) em qualquer artista, grupo ou produção. Os itens favoritados aparecem no seu painel e ajudam você a reencontrar seus conteúdos preferidos.',
       },
       {
-        q: 'O que é o Feed Personalizado?',
-        a: 'É uma página em /news/feed que exibe apenas as notícias relacionadas aos artistas e grupos que você favoritou. Quanto mais você favorita, mais preciso o feed fica.',
+        q: 'Para que servem os favoritos?',
+        a: 'Eles ajudam a organizar artistas, grupos e produções que você acompanha, criando uma navegação mais pessoal dentro do HallyuHub.',
       },
       {
         q: 'Posso receber notificações de novos conteúdos?',
@@ -76,25 +76,25 @@ const SECTIONS = [
   },
   {
     icon: Newspaper,
-    label: 'Notícias',
+    label: 'Blog',
     color: 'text-orange-400',
     bg: 'bg-orange-500/10',
     items: [
       {
-        q: 'De onde vêm as notícias?',
-        a: 'Coletamos notícias de fontes especializadas em K-Pop e K-Drama como Soompi, Koreaboo, Dramabeans, Asian Junkie e outras. Quando há versão em português, ela passa por revisão editorial antes de ser aplicada.',
+        q: 'O que aparece no blog?',
+        a: 'O blog reúne guias, listas, perfis editoriais e conteúdos explicativos sobre K-Pop, K-Drama e cultura coreana em português.',
       },
       {
-        q: 'Como as traduções são preparadas?',
-        a: 'As versões em português podem ser preparadas com auxílio de inteligência artificial e passam por revisão editorial antes da aplicação. Temos atenção especial a nomes de artistas, títulos e expressões do K-Pop.',
+        q: 'Como os textos são preparados?',
+        a: 'Os conteúdos podem usar apoio de inteligência artificial, mas passam por revisão editorial antes da publicação. Temos atenção especial a nomes de artistas, títulos e expressões do K-Pop.',
       },
       {
-        q: 'Encontrei um erro numa notícia. Como reporto?',
-        a: 'Na página da notícia, use o botão de flag (⚑) para reportar um problema. Descreva brevemente o que está errado e nossa equipe revisará em breve.',
+        q: 'Encontrei um erro em um conteúdo. Como reporto?',
+        a: 'Use os canais de contato do site e descreva brevemente o que está errado. Nossa equipe revisará o conteúdo.',
       },
       {
-        q: 'Posso assinar um RSS feed das notícias?',
-        a: 'Sim! Acesse /news/rss para obter o feed RSS com as notícias mais recentes. Você pode adicionar esse endereço em qualquer leitor de RSS.',
+        q: 'Posso assinar o RSS do blog?',
+        a: 'Sim! Acesse /feed.xml para obter o feed RSS com os artigos mais recentes do blog. Você pode adicionar esse endereço em qualquer leitor de RSS.',
       },
     ],
   },

@@ -99,6 +99,28 @@ export default async function GroupsPage() {
                 })),
             }} />
         )}
+        {listGroups.length > 0 && (
+            <JsonLd data={{
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "Catálogo de grupos K-Pop",
+                "url": `${BASE_URL}/groups`,
+                "numberOfItems": listGroups.length,
+                "itemListOrder": "https://schema.org/ItemListOrderAscending",
+                "itemListElement": listGroups.slice(0, 100).map((group, index) => ({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "url": `${BASE_URL}/groups/${group.slug ?? group.id}`,
+                    "name": group.name,
+                    "item": {
+                        "@type": "MusicGroup",
+                        "name": group.name,
+                        "url": `${BASE_URL}/groups/${group.slug ?? group.id}`,
+                        ...(group.profileImageUrl ? { "image": group.profileImageUrl } : {}),
+                    },
+                })),
+            }} />
+        )}
         <PageTransition className="pb-16">
             <Suspense>
                 <GroupsList initialGroups={initialGroups} />

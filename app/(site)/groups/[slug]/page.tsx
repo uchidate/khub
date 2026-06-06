@@ -36,6 +36,8 @@ import { GroupMembershipHistory } from '@/components/groups/GroupMembershipHisto
 import { EditorialRenderer } from '@/components/editorial/EditorialRenderer'
 import { getPrimaryMusicLink, getPublicMusicCatalog } from '@/lib/music/public-music-catalog'
 import { buildGroupMembershipHistory } from '@/lib/groups/membership-history'
+import { cleanSameAs, compactSchema, youtubeVideoSchema } from '@/lib/seo/structured-data'
+import { getRelatedGroupHubs } from '@/lib/seo/archive-hubs'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -149,6 +151,10 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
     const membershipHistory = buildGroupMembershipHistory(group.members, debutYear)
     const activeMembers = membershipHistory.currentMembers
     const formerMembers = membershipHistory.formerMembers
+    const relatedHubs = getRelatedGroupHubs({
+        femaleMembers: group.members.filter(member => member.isActive && member.artist.gender === 1).length,
+        maleMembers: group.members.filter(member => member.isActive && member.artist.gender === 2).length,
+    })
     const shouldShowMembershipHistory = formerMembers.length > 0 || membershipHistory.hasKnownDates
     const currentYear = new Date().getFullYear()
     const yearsActive = debutYear ? (disbandYear ?? currentYear) - debutYear : null
@@ -259,7 +265,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             .filter(([key]) => !key.toLowerCase().includes('spotify'))
             .map(([, url]) => url),
         ...(spotifyUrl ? [spotifyUrl] : []),
-    ].filter(Boolean)
+    ]
 
     const themeColor = officialColorRaw ?? themeColorFetched
     const accent = themeColor ?? '#9333ea'
@@ -270,6 +276,19 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
         "name": m.artist.nameRomanized,
         "url": `${BASE_URL}/artists/${m.artist.slug ?? m.artist.id}`,
     }))
+    const pageUrl = `${BASE_URL}/groups/${group.slug ?? group.id}`
+    const schemaVideos = videos
+        .filter((video, index, list) => video.url && list.findIndex(item => item.url === video.url) === index)
+        .slice(0, 6)
+        .map(video => youtubeVideoSchema({
+            title: video.title || `${group.name} no YouTube`,
+            url: video.url,
+            pageUrl,
+            description: group.bio ?? `${group.name} no HallyuHub`,
+            uploadDate: group.debutDate ?? group.updatedAt,
+            thumbnailUrl: group.profileImageUrl,
+        }))
+        .filter(Boolean)
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-background" style={themeVars}>
@@ -285,22 +304,29 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 .related-group-link:hover .related-group-name { color: ${accent}; }
                 .mv-card:hover { border-color: ${toRgba(accent, 0.4)} !important; }
             ` }} />
-            <JsonLd data={{
+            <JsonLd data={compactSchema({
                 "@context": "https://schema.org",
                 "@type": "MusicGroup",
                 "name": group.name,
                 "alternateName": group.nameHangul ?? undefined,
                 "description": group.bio?.slice(0, 300) ?? undefined,
                 "image": group.profileImageUrl ?? undefined,
-                "url": `${BASE_URL}/groups/${group.slug ?? group.id}`,
+                "url": pageUrl,
                 "genre": "K-Pop",
                 "foundingLocation": { "@type": "Country", "name": "Korea, Republic of" },
                 ...(debutYear ? { "foundingDate": String(debutYear) } : {}),
                 ...(disbandYear ? { "dissolutionDate": String(disbandYear) } : {}),
                 ...(group.agency ? { "memberOf": { "@type": "Organization", "name": group.agency.name } } : {}),
                 ...(memberPersons.length ? { "member": memberPersons } : {}),
-                ...(sameAsLinks.length > 0 ? { "sameAs": sameAsLinks } : {}),
-            }} />
+                "sameAs": cleanSameAs(sameAsLinks as Array<string | null | undefined>),
+                "subjectOf": schemaVideos,
+            })} />
+            {schemaVideos.length > 0 && (
+                <JsonLd data={{
+                    "@context": "https://schema.org",
+                    "@graph": schemaVideos,
+                }} />
+            )}
             <JsonLd data={{
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
@@ -598,6 +624,21 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                                         </div>
                                         <ExternalLink className="w-3.5 h-3.5 text-muted" />
                                     </a>
+                                ))}
+                            </div>
+                        )}
+
+                        {relatedHubs.length > 0 && (
+                            <div className="border border-border bg-background divide-y divide-border">
+                                <div className="px-4 py-2">
+                                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.14em] text-muted">Guias</p>
+                                </div>
+                                {relatedHubs.map(hub => (
+                                    <Link key={hub.slug} href={`/hubs/${hub.slug}`}
+                                        className="block px-4 py-3 transition-colors hover:bg-surface">
+                                        <span className="text-sm font-black text-foreground">{hub.shortTitle}</span>
+                                        <span className="mt-1 block text-xs leading-5 text-muted">{hub.description}</span>
+                                    </Link>
                                 ))}
                             </div>
                         )}

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
+import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
 
 export const dynamic = 'force-dynamic'
 // Cache sitemap 1h — evita 6 queries massivas a cada crawl do Google/Bing
@@ -11,6 +12,15 @@ const BASE_URL = SITE_URL
 // Data de referência para páginas estáticas (evita "modificado hoje" em todo crawl)
 const STATIC_DATE = new Date('2025-01-01')
 
+function hasItems(value: unknown): boolean {
+    return Array.isArray(value) && value.length > 0
+}
+
+function seoPriority(base: number, signals: boolean[], max = 0.9): number {
+    const score = signals.reduce((total, signal) => total + (signal ? 0.025 : 0), base)
+    return Number(Math.min(score, max).toFixed(2))
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
         const primaryRoutes: MetadataRoute.Sitemap = [
@@ -18,9 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             { url: `${BASE_URL}/artists`,       lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
             { url: `${BASE_URL}/groups`,        lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
             { url: `${BASE_URL}/productions`,   lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.9 },
-{ url: `${BASE_URL}/agencies`,      lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
+            { url: `${BASE_URL}/agencies`,      lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
             { url: `${BASE_URL}/loja`,              lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.7 },
             { url: `${BASE_URL}/blog`,              lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.7 },
+            { url: `${BASE_URL}/hubs`,              lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.75 },
             { url: `${BASE_URL}/calendario`,        lastModified: STATIC_DATE, changeFrequency: 'daily',   priority: 0.8 },
             { url: `${BASE_URL}/quiz`,              lastModified: STATIC_DATE, changeFrequency: 'monthly', priority: 0.7 },
             { url: `${BASE_URL}/melhores-dramas`,   lastModified: STATIC_DATE, changeFrequency: 'weekly',  priority: 0.8 },
@@ -54,7 +65,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                         { primaryImageUrl: { not: null } },
                     ],
                 },
-                select: { id: true, slug: true, updatedAt: true },
+                select: {
+                    id: true,
+                    slug: true,
+                    updatedAt: true,
+                    bio: true,
+                    analiseEditorial: true,
+                    primaryImageUrl: true,
+                    videos: true,
+                    socialLinks: true,
+                    curiosidades: true,
+                    awards: true,
+                },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.production.findMany({
@@ -69,12 +91,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                         { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
                     ],
                 },
-                select: { id: true, slug: true, updatedAt: true },
+                select: {
+                    id: true,
+                    slug: true,
+                    updatedAt: true,
+                    synopsis: true,
+                    imageUrl: true,
+                    backdropUrl: true,
+                    trailerUrl: true,
+                    voteAverage: true,
+                    voteCount: true,
+                },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.musicalGroup.findMany({
                 where: { isHidden: false, slug: { not: null } },
-                select: { id: true, slug: true, updatedAt: true },
+                select: {
+                    id: true,
+                    slug: true,
+                    updatedAt: true,
+                    bio: true,
+                    profileImageUrl: true,
+                    videos: true,
+                    socialLinks: true,
+                    officialColor: true,
+                },
                 orderBy: { updatedAt: 'desc' },
             }),
             prisma.agency.findMany({
@@ -94,21 +135,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 url: `${BASE_URL}/artists/${a.slug}`,
                 lastModified: a.updatedAt,
                 changeFrequency: 'weekly' as const,
-                priority: 0.8,
+                priority: seoPriority(0.72, [
+                    Boolean(a.bio),
+                    Boolean(a.analiseEditorial),
+                    Boolean(a.primaryImageUrl),
+                    hasItems(a.videos),
+                    hasItems(a.curiosidades),
+                    hasItems(a.awards),
+                    Boolean(a.socialLinks && Object.keys(a.socialLinks as Record<string, unknown>).length > 0),
+                ], 0.88),
             })),
             ...groups.filter(g => g.slug).map(g => ({
                 url: `${BASE_URL}/groups/${g.slug}`,
                 lastModified: g.updatedAt,
                 changeFrequency: 'weekly' as const,
-                priority: 0.75,
+                priority: seoPriority(0.72, [
+                    Boolean(g.bio),
+                    Boolean(g.profileImageUrl),
+                    hasItems(g.videos),
+                    Boolean(g.officialColor),
+                    Boolean(g.socialLinks && Object.keys(g.socialLinks as Record<string, unknown>).length > 0),
+                ], 0.86),
             })),
             ...productions.filter(p => p.slug).map(p => ({
                 url: `${BASE_URL}/productions/${p.slug}`,
                 lastModified: p.updatedAt,
                 changeFrequency: 'weekly' as const,
-                priority: 0.8,
+                priority: seoPriority(0.74, [
+                    Boolean(p.synopsis),
+                    Boolean(p.imageUrl),
+                    Boolean(p.backdropUrl),
+                    Boolean(p.trailerUrl),
+                    Boolean(p.voteAverage && p.voteAverage > 0 && p.voteCount && p.voteCount > 0),
+                ], 0.88),
             })),
-...agencies.map(a => ({
+            ...agencies.map(a => ({
                 url: `${BASE_URL}/agencies/${a.id}`,
                 lastModified: a.updatedAt,
                 changeFrequency: 'monthly' as const,
@@ -119,6 +180,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 lastModified: p.updatedAt ?? p.publishedAt ?? STATIC_DATE,
                 changeFrequency: 'monthly' as const,
                 priority: 0.7,
+            })),
+            ...ARCHIVE_HUBS.map(hub => ({
+                url: `${BASE_URL}/hubs/${hub.slug}`,
+                lastModified: STATIC_DATE,
+                changeFrequency: 'weekly' as const,
+                priority: 0.82,
             })),
         ]
     } catch (error) {

@@ -37,6 +37,15 @@ export default function robots(): MetadataRoute.Robots {
                 ],
             },
         ],
-        sitemap: 'https://www.hallyuhub.com.br/sitemap.xml',
+        sitemap: [
+            'https://www.hallyuhub.com.br/sitemap_index.xml',
+            'https://www.hallyuhub.com.br/sitemap.xml',
+            'https://www.hallyuhub.com.br/sitemaps/artists.xml',
+            'https://www.hallyuhub.com.br/sitemaps/groups.xml',
+            'https://www.hallyuhub.com.br/sitemaps/productions.xml',
+            'https://www.hallyuhub.com.br/sitemaps/blog.xml',
+            'https://www.hallyuhub.com.br/sitemaps/archives.xml',
+            'https://www.hallyuhub.com.br/sitemaps/images.xml',
+        ],
     }
 }

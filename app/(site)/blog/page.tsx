@@ -21,15 +21,38 @@ import { rankPosts, selectDiversePosts } from '@/lib/blog/scoring'
 
 const BASE_URL = SITE_URL
 
-export const metadata: Metadata = {
-  title: 'Blog K-Pop & K-Drama',
-  description: 'Artigos, análises e curiosidades sobre K-Pop, K-Drama e a cultura coreana — escritos em português para fãs do universo Hallyu.',
-  alternates: { canonical: `${BASE_URL}/blog` },
-  openGraph: {
-    title: 'Blog K-Pop & K-Drama | HallyuHub',
-    description: 'Artigos, análises e curiosidades sobre K-Pop, K-Drama e a cultura coreana — escritos em português para fãs do universo Hallyu.',
-    url: `${BASE_URL}/blog`,
-  },
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ category?: string; tag?: string; page?: string; sortBy?: string }> }): Promise<Metadata> {
+  const sp = await searchParams
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1)
+  const params = new URLSearchParams()
+  if (sp.category) params.set('category', sp.category)
+  if (sp.tag) params.set('tag', sp.tag)
+  if (page > 1) params.set('page', String(page))
+  const canonical = `${BASE_URL}/blog${params.toString() ? `?${params}` : ''}`
+  const categoryName = sp.category ? BLOG_CATEGORY_BY_SLUG[sp.category]?.name ?? sp.category : null
+  const title = categoryName
+    ? `${categoryName} no HallyuHub`
+    : sp.tag
+      ? `Artigos sobre ${sp.tag}`
+      : page > 1
+        ? `Blog K-Pop & K-Drama - Página ${page}`
+        : 'Blog K-Pop & K-Drama'
+  const description = categoryName
+    ? `Artigos, guias e listas sobre ${categoryName}, K-Pop, K-Drama e cultura coreana em português.`
+    : sp.tag
+      ? `Conteúdos do HallyuHub marcados com ${sp.tag}, com contexto em português para fãs de cultura coreana.`
+      : 'Artigos, análises e curiosidades sobre K-Pop, K-Drama e a cultura coreana — escritos em português para fãs do universo Hallyu.'
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} | HallyuHub`,
+      description,
+      url: canonical,
+    },
+  }
 }
 
 const PUBLIC_WHERE = { status: 'PUBLISHED' as const, isPrivate: false }
@@ -329,6 +352,34 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Blog', name: 'Blog | HallyuHub', url: `${BASE_URL}/blog`, inLanguage: 'pt-BR' }} />
+      {posts.length > 0 && (
+        <JsonLd data={{
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: activeCategory
+            ? `Artigos sobre ${activeCategoryLabel}`
+            : activeTag
+              ? `Artigos com a tag ${activeTag}`
+              : 'Artigos recentes do HallyuHub',
+          url: `${BASE_URL}${buildHref(page)}`,
+          numberOfItems: posts.length,
+          itemListOrder: sortBy === 'popular' ? 'https://schema.org/ItemListOrderDescending' : 'https://schema.org/ItemListOrderDescending',
+          itemListElement: posts.map((post, index) => ({
+            '@type': 'ListItem',
+            position: (page - 1) * PAGE_SIZE + index + 1,
+            url: `${BASE_URL}/blog/${post.slug}`,
+            name: post.title,
+            item: {
+              '@type': 'BlogPosting',
+              headline: post.title,
+              url: `${BASE_URL}/blog/${post.slug}`,
+              ...(post.excerpt ? { description: post.excerpt } : {}),
+              ...(post.coverImageUrl ? { image: post.coverImageUrl } : {}),
+              ...(post.publishedAt ? { datePublished: post.publishedAt.toISOString() } : {}),
+            },
+          })),
+        }} />
+      )}
       {orderedCategories.length > 0 && (
         <ResponsiveFilterBar label="Categoria" value={activeCategoryLabel}>
           <div className="grid grid-cols-2 gap-1.5 lg:flex lg:items-stretch lg:gap-5">
