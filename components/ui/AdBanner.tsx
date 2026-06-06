@@ -192,14 +192,16 @@ export function AdBanner({
         return () => { io.disconnect(); if (timer) clearTimeout(timer) }
     }, [filled, slot, slotName, channel])
 
-    // Click tracking — observa iframe injetado pelo AdSense
+    // Click tracking + broken iframe detection
+    // Iframes de ads reais são cross-origin → CORS bloqueia contentDocument.
+    // Páginas de erro do browser ("Servidor não encontrado") são same-origin →
+    // contentDocument acessível. Usamos isso para detectar criativos quebrados.
     useEffect(() => {
         if (filled !== true || IS_DEV || !CLIENT) return
         const ins = insRef.current
         if (!ins) return
 
         const detectClick = () => {
-            // AdSense captura foco da janela quando usuário clica no iframe
             const onBlur = () => {
                 if (document.activeElement?.tagName === 'IFRAME') {
                     fireGa4('ad_click', { slot_id: slot, slot_name: slotName, channel: channel ?? 'default' })
@@ -208,14 +210,28 @@ export function AdBanner({
             window.addEventListener('blur', onBlur, { once: true })
         }
 
+        const checkIframe = (iframe: HTMLIFrameElement) => {
+            detectClick()
+            const onLoad = () => {
+                try {
+                    // Se contentDocument acessível → same-origin = página de erro do browser
+                    const doc = iframe.contentDocument
+                    if (doc != null) setFilled(false)
+                } catch {
+                    // CORS = cross-origin = ad legítimo de rede externa, tudo ok
+                }
+            }
+            iframe.addEventListener('load', onLoad, { once: true })
+        }
+
         const mo = new MutationObserver(() => {
             const iframe = ins.querySelector('iframe')
-            if (iframe) { detectClick(); mo.disconnect() }
+            if (iframe) { checkIframe(iframe as HTMLIFrameElement); mo.disconnect() }
         })
         mo.observe(ins, { childList: true, subtree: true })
 
-        // Se iframe já existe
-        if (ins.querySelector('iframe')) detectClick()
+        const existing = ins.querySelector('iframe')
+        if (existing) { checkIframe(existing as HTMLIFrameElement); mo.disconnect() }
 
         return () => mo.disconnect()
     }, [filled, slot, slotName, channel])
