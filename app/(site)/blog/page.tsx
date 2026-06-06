@@ -46,7 +46,10 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      types: { 'application/rss+xml': [{ url: `${BASE_URL}/blog/feed.xml`, title: 'HallyuHub Blog RSS' }] },
+    },
     openGraph: {
       title: `${title} | HallyuHub`,
       description,

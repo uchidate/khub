@@ -1594,6 +1594,135 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             { question: 'O BTS é da 3ª geração?', answer: 'Sim. BTS debutou em 2013 e é considerado o grupo mais representativo da 3ª geração, sendo o que mais contribuiu para o reconhecimento global do K-Pop.' },
         ],
     },
+    // ── Solo Artist Hubs ──────────────────────────────────────────────────────
+    {
+        slug: 'iu',
+        kind: 'artists',
+        title: 'IU — Lee Ji-eun',
+        shortTitle: 'IU',
+        description: 'Perfil completo de IU (Lee Ji-eun): discografia, carreiras solo, dramas, conquistas e curiosidades sobre a mais amada solista do K-Pop.',
+        intro: [
+            'IU (이유), nome real Lee Ji-eun, é considerada a princesa do K-Pop coreano. Debutou em 2008 pela LOEN Entertainment e construiu uma das carreiras mais longas e consistentes do pop coreano.',
+            'Além de cantora, IU é atriz aclamada — seu papel em "My Mister" (2018) e "Hotel Del Luna" (2019) a consagrou como uma das artistas mais versáteis da Coreia.',
+        ],
+        keywords: ['IU', 'Lee Ji-eun', 'IU discografia', 'IU dramas', 'IU kpop solista', 'princesa kpop'],
+        faq: [
+            { question: 'Qual é o nome real de IU?', answer: 'O nome real de IU é Lee Ji-eun (이지은). O pseudônimo "IU" representa a ideia de "I" e "You" conectados pela música.' },
+            { question: 'IU faz parte de algum grupo?', answer: 'Não. IU sempre teve carreira exclusivamente solo desde seu debut em 2008. É considerada uma das solistas mais bem-sucedidas da história do K-Pop.' },
+            { question: 'Quais são os maiores hits de IU?', answer: 'Alguns dos maiores hits de IU incluem "Good Day" (2010), "You and I" (2011), "Palette" (2017), "BBIBBI" (2018), "Blueming" (2019) e "Celebrity" (2021).' },
+        ],
+    },
+    {
+        slug: 'taeyeon',
+        kind: 'artists',
+        title: 'Taeyeon — SNSD',
+        shortTitle: 'Taeyeon',
+        description: 'Perfil completo de Taeyeon: carreira solo, álbuns, lideres do SNSD/Girls Generation, conquistas e discografia.',
+        intro: [
+            'Kim Taeyeon é a líder e vocalista principal do SNSD (Girls\' Generation) e uma das solistas de K-Pop mais aclamadas. Debutou em 2007 com o SNSD e iniciou carreira solo em 2015.',
+            'Com uma voz reconhecida como uma das melhores do K-Pop, Taeyeon lançou álbuns aclamados e trilhou uma carreira solo robusta paralelamente ao SNSD.',
+        ],
+        keywords: ['Taeyeon', 'Kim Taeyeon', 'SNSD Taeyeon', 'Taeyeon solo', 'Girls Generation líder', 'Taeyeon discografia'],
+        faq: [
+            { question: 'Taeyeon faz parte do SNSD?', answer: 'Sim. Taeyeon é a líder e vocalista principal do SNSD (Girls\' Generation), um dos grupos femininos mais icônicos do K-Pop. Ela também tem uma extensa carreira solo iniciada em 2015.' },
+            { question: 'Quais são os maiores hits solo de Taeyeon?', answer: 'Os maiores hits de Taeyeon incluem "I" (2015), "Fine" (2017), "Four Seasons" (2019), "INVU" (2022) e "To the Moon" (2018).' },
+        ],
+    },
+    {
+        slug: 'g-dragon',
+        kind: 'artists',
+        title: 'G-Dragon — BIGBANG',
+        shortTitle: 'G-Dragon',
+        description: 'Perfil completo de G-Dragon: carreira solo, álbuns, liderança do BIGBANG, influência na moda e conquistas no K-Pop.',
+        intro: [
+            'Kwon Ji-yong, conhecido como G-Dragon, é o líder e principal criador do BIGBANG. É amplamente considerado um dos maiores artistas do K-Pop de todos os tempos, tanto pela música quanto pela influência na moda.',
+            'Com uma carreira solo que inclui os icônicos álbuns "Heartbreaker" (2009) e "One of a Kind" (2012), G-Dragon redefiniu os limites do pop coreano e abriu caminho para a presença do K-Pop no Ocidente.',
+        ],
+        keywords: ['G-Dragon', 'GD', 'BIGBANG G-Dragon', 'G-Dragon solo', 'Kwon Jiyong', 'G-Dragon discografia'],
+        faq: [
+            { question: 'G-Dragon faz parte do BIGBANG?', answer: 'Sim. G-Dragon é o líder e principal compositor do BIGBANG. O grupo ficou em hiato parcial enquanto seus membros cumpriram serviço militar, retornando gradualmente a partir de 2022.' },
+            { question: 'Qual é o nome real de G-Dragon?', answer: 'O nome real de G-Dragon é Kwon Ji-yong (권지용). Ele usa o pseudônimo artístico GD ou G-Dragon tanto em suas atividades solo quanto no BIGBANG.' },
+        ],
+    },
+    {
+        slug: 'taeyang',
+        kind: 'artists',
+        title: 'Taeyang — BIGBANG',
+        shortTitle: 'Taeyang',
+        description: 'Perfil completo de Taeyang: carreira solo, R&B coreano, membro do BIGBANG, discografia e conquistas internacionais.',
+        intro: [
+            'Dong Young-bae, conhecido como Taeyang, é o vocalista principal e dançarino do BIGBANG. Sua voz única e influência no R&B coreano o tornaram um dos artistas mais respeitados do gênero.',
+            'Seu álbum solo "Solar" (2014) e o single "Eyes, Nose, Lips" se tornaram clássicos do K-Pop. Taeyang também casou com a atriz Min Hyo-rin, sendo um dos casamentos mais seguidos do entretenimento coreano.',
+        ],
+        keywords: ['Taeyang', 'BIGBANG Taeyang', 'Taeyang solo', 'Dong Young-bae', 'Solar Taeyang', 'Eyes Nose Lips'],
+        faq: [
+            { question: 'Quais são os maiores hits de Taeyang?', answer: 'Os maiores hits solo de Taeyang incluem "Wedding Dress" (2010), "I Need a Girl" (2010), "Eyes, Nose, Lips" (2014) e "Ringa Linga" (2013). Com o BIGBANG, participou de "Fantastic Baby", "Bang Bang Bang" e "Lies".' },
+        ],
+    },
+    {
+        slug: 'zico',
+        kind: 'artists',
+        title: 'Zico — Block B',
+        shortTitle: 'Zico',
+        description: 'Perfil completo de Zico: carreira solo, fundador do Block B, hits de hip-hop coreano, produção musical e conquistas.',
+        intro: [
+            'Woo Ji-ho, conhecido como Zico, é líder e rapper do Block B e um dos produtores e compositores mais prolíficos do hip-hop coreano. Seu talento como beatmaker e letrista o diferencia como artista completo.',
+            '"Any Song" (2020) se tornou um dos maiores hits virais do K-Pop, dominando as paradas coreanas e acumulando bilhões de streams. Zico também é fundador da gravadora KOZ Entertainment.',
+        ],
+        keywords: ['Zico', 'Block B Zico', 'Zico solo', 'Woo Ji-ho', 'Any Song', 'hip-hop coreano Zico'],
+        faq: [
+            { question: 'Zico ainda faz parte do Block B?', answer: 'Zico é membro fundador do Block B, mas também tem uma extensa carreira solo e é CEO da KOZ Entertainment, gravadora filiada à HYBE. Suas atividades solo são mais frequentes atualmente.' },
+            { question: 'Qual é o maior hit de Zico?', answer: '"Any Song" (2020) é o hit mais popular de Zico, dominando as paradas coreanas e viralizando globalmente com o desafio de dança. O single é um marco do K-Pop moderno.' },
+        ],
+    },
+    {
+        slug: 'hyuna',
+        kind: 'artists',
+        title: 'HyunA',
+        shortTitle: 'HyunA',
+        description: 'Perfil completo de HyunA: carreira solo, ex-4Minute e ex-Wonder Girls, hits icônicos, estilo e discografia.',
+        intro: [
+            'Kim Hyun-ah, conhecida como HyunA, é uma das artistas femininas mais ousadas e influentes do K-Pop. Ex-membro do 4Minute e das Wonder Girls, HyunA construiu uma das carreiras solo mais consistentes entre as idols de sua geração.',
+            '"Bubble Pop!" (2011) e "Red" (2013) se tornaram clássicos do pop coreano. HyunA é conhecida por seu estilo provocativo e por quebrar convenções de imagem no K-Pop.',
+        ],
+        keywords: ['HyunA', 'Kim Hyuna', 'HyunA solo', '4Minute HyunA', 'Bubble Pop', 'HyunA discografia'],
+        faq: [
+            { question: 'HyunA foi membro de algum grupo?', answer: 'Sim. HyunA foi membro fundador do 4Minute (2009-2016) e teve uma participação breve nas Wonder Girls. Desde o fim do 4Minute, tem se dedicado exclusivamente à carreira solo.' },
+            { question: 'Quais são os maiores hits de HyunA?', answer: 'Os maiores hits de HyunA incluem "Bubble Pop!" (2011), "Gangnam Style" (participação com PSY, 2012), "Red" (2013), "Roll Deep" (2015) e "Lip & Hip" (2017).' },
+        ],
+    },
+    {
+        slug: 'sunmi',
+        kind: 'artists',
+        title: 'Sunmi',
+        shortTitle: 'Sunmi',
+        description: 'Perfil completo de Sunmi: carreira solo, ex-Wonder Girls, hits icônicos, estilo artístico único e discografia.',
+        intro: [
+            'Lee Sun-mi, conhecida como Sunmi, é ex-membro das Wonder Girls e uma das artistas solo mais aclamadas da nova geração do K-Pop. Seu estilo artístico único mistura pop experimental, letras de auto-expressão e performances cinematográficas.',
+            '"Gashina" (2017) e "Siren" (2018) marcaram o retorno de Sunmi como solista e consolidaram sua reputação de artista que define tendências no pop coreano.',
+        ],
+        keywords: ['Sunmi', 'Lee Sunmi', 'Sunmi solo', 'Wonder Girls Sunmi', 'Gashina', 'Sunmi discografia'],
+        faq: [
+            { question: 'Sunmi foi membro das Wonder Girls?', answer: 'Sim. Sunmi foi membro das Wonder Girls de 2007 a 2010, quando saiu para focar em seus estudos, e retornou de 2012 a 2015. Desde 2017 tem carreira exclusivamente solo.' },
+            { question: 'Quais são os maiores hits de Sunmi?', answer: 'Os maiores hits de Sunmi incluem "Gashina" (2017), "Heroine" (2018), "Siren" (2018), "Lalalay" (2019) e "pporappippam" (2020).' },
+        ],
+    },
+    {
+        slug: 'baekhyun',
+        kind: 'artists',
+        title: 'Baekhyun — EXO',
+        shortTitle: 'Baekhyun',
+        description: 'Perfil completo de Baekhyun: vocalista principal do EXO, carreira solo, supergrupo EXO-CBX e discografia completa.',
+        intro: [
+            'Byun Baek-hyun, conhecido como Baekhyun, é o vocalista principal do EXO e um dos solistas masculinos de K-Pop com mais streams. Seu timbre inconfundível e presença vocal o colocam entre os melhores cantores do gênero.',
+            'Com álbuns solo como "City Lights" (2019) e "Delight" (2020), Baekhyun bateu recordes de vendas para artistas solo masculinos e ampliou sua base de fãs internacional.',
+        ],
+        keywords: ['Baekhyun', 'EXO Baekhyun', 'Baekhyun solo', 'Byun Baekhyun', 'EXO CBX', 'Baekhyun City Lights'],
+        faq: [
+            { question: 'Baekhyun ainda é membro do EXO?', answer: 'Sim. Baekhyun é membro do EXO desde o debut do grupo em 2012. Ele também é parte do subgrupo EXO-CBX (com Chen e Xiumin) e tem carreira solo ativa.' },
+            { question: 'Quais são os maiores hits solo de Baekhyun?', answer: 'Os maiores hits solo de Baekhyun incluem "UN Village" (2019), "Candy" (2019), "Psycho" (2020) e "Bambi" (2021). Seu mini-álbum "Delight" foi o mais vendido por um artista solo coreano masculino em 2020.' },
+        ],
+    },
 ]
 
 export const ARCHIVE_HUB_BY_SLUG = Object.fromEntries(ARCHIVE_HUBS.map(hub => [hub.slug, hub]))
