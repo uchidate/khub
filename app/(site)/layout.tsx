@@ -190,7 +190,8 @@ export default async function RootLayout({
                         <link key="dns-adsense" rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
                         <link key="dns-googleads" rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
                         {/* Consent default inline — deve rodar ANTES do AdSense carregar */}
-                        <script key="gtag-consent-default" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{analytics_storage:'denied',ad_storage:'granted',ad_personalization:'granted'});` }} />
+                        {/* Consent Mode v2 — deve rodar ANTES do AdSense e do gtag */}
+                        <script key="gtag-consent-default" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{analytics_storage:'denied',ad_storage:'granted',ad_personalization:'granted',ad_user_data:'granted',wait_for_update:500});` }} />
                         {/* Script AdSense NÃO carregado aqui — AdSenseLoader injeta após primeira interação do usuário (lazy) */}
                     </>
                 )}
@@ -205,7 +206,7 @@ export default async function RootLayout({
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted', ad_personalization: 'granted', ad_user_data: 'granted' });
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'granted', ad_personalization: 'granted', ad_user_data: 'granted', wait_for_update: 500 });
                     gtag('config', 'G-KHWW1EGSK3');
                 `}</Script>
                 {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (

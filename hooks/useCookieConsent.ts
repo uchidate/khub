@@ -37,6 +37,12 @@ export function useCookieConsent() {
     const acceptNecessary = () => {
         localStorage.setItem(STORAGE_KEY, 'necessary')
         setConsent('necessary')
+        // Revoga explicitamente analytics — ads permanecem granted (contexto LGPD Brasil)
+        if (typeof window !== 'undefined' && (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag) {
+            ;(window as unknown as { gtag: (...a: unknown[]) => void }).gtag('consent', 'update', {
+                analytics_storage: 'denied',
+            })
+        }
     }
 
     return { consent, loaded, acceptAll, acceptNecessary }
