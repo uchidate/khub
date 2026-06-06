@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { getCalendarioData } from '@/lib/repositories/CalendarioRepository'
 import { CalendarioClient, type BirthdayEvent, type ProductionEvent } from './CalendarioClient'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { SITE_URL } from '@/lib/constants/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,8 +86,25 @@ export default async function CalendarioPage() {
     const _todayBirthdays = birthdays.filter(b => b.daysUntil === 0)
     const _todayReleases = releases.filter(r => r.daysUntil === 0)
 
+    // Build Event JSON-LD for upcoming production releases (next 90 days)
+    const eventSchema = releases.length > 0 ? {
+        '@context': 'https://schema.org',
+        '@graph': releases.slice(0, 30).map(r => ({
+            '@type': 'Event',
+            name: r.titlePt,
+            startDate: r.date.split('T')[0],
+            eventStatus: 'https://schema.org/EventScheduled',
+            eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+            location: { '@type': 'VirtualLocation', url: r.slug ? `${SITE_URL}/productions/${r.slug}` : `${SITE_URL}/calendario` },
+            url: r.slug ? `${SITE_URL}/productions/${r.slug}` : `${SITE_URL}/calendario`,
+            organizer: { '@type': 'Organization', name: r.network ?? 'K-Drama', url: SITE_URL },
+            description: `Lançamento de ${r.titlePt}${r.network ? ` na ${r.network}` : ''}.`,
+        })),
+    } : null
+
     return (
         <main className="min-h-screen bg-background pb-16">
+            {eventSchema && <JsonLd data={eventSchema} />}
             <CalendarioClient
                 birthdays={birthdays}
                 releases={releases}

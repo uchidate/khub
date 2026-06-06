@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
-import { Tv, Film, Heart, Zap, Clock, Sparkles } from 'lucide-react'
+import { Tv, Film, Heart, Zap, Clock, Sparkles, Calendar } from 'lucide-react'
+import { SITE_URL } from '@/lib/constants/site'
+
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
     title: 'Melhores K-Dramas e Filmes Coreanos | HallyuHub',
     description: 'Listas curadas dos melhores K-Dramas e filmes coreanos por plataforma, gênero e época. Encontre sua próxima série coreana para maratonar.',
+    alternates: { canonical: `${BASE_URL}/melhores-dramas` },
 }
 
 const LISTS = [
@@ -88,6 +92,26 @@ export default function MelhoresDramasPage() {
                             </Link>
                         )
                     })}
+                </div>
+
+                {/* Por Ano */}
+                <div className="mt-8">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="w-4 h-4 text-muted" />
+                        <p className="text-xs font-black uppercase tracking-widest text-muted">Por Ano</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[2025, 2024, 2023, 2022].map(year => (
+                            <Link
+                                key={year}
+                                href={`/melhores-dramas/${year}`}
+                                className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-surface hover:border-accent/30 hover:bg-accent/5 transition-all group"
+                            >
+                                <span className="text-2xl font-black text-foreground group-hover:text-accent transition-colors">{year}</span>
+                                <span className="text-[10px] text-muted mt-0.5">K-Dramas</span>
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
