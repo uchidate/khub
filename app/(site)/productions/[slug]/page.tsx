@@ -13,6 +13,7 @@ import { AdminQuickEdit } from "@/components/ui/AdminQuickEdit"
 import { TrailerModal } from "@/components/features/TrailerModal"
 import { ViewTracker } from "@/components/features/ViewTracker"
 import { JsonLd } from "@/components/seo/JsonLd"
+import { buildFaqSchema, generateProductionFaq } from '@/lib/seo/faq-generators'
 import { compactSchema, youtubeVideoSchema } from '@/lib/seo/structured-data'
 import { getRelatedProductionHubs } from '@/lib/seo/archive-hubs'
 import { ShareButtons } from "@/components/ui/ShareButtons"
@@ -360,6 +361,19 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                     { "@type": "ListItem", "position": 2, "name": production.titlePt, "item": `${BASE_URL}/productions/${production.slug ?? production.id}` },
                 ],
             }} />
+            {(() => {
+                const faqList = generateProductionFaq({
+                    title: production.titlePt,
+                    type: production.type,
+                    year: production.year,
+                    synopsis: synopsis ?? undefined,
+                    castNames: production.artists.slice(0, 5).map(a => a.artist.nameRomanized),
+                    episodeCount: production.episodeCount ?? undefined,
+                    streamingPlatforms: production.streamingPlatforms as string[] | undefined,
+                })
+                const schema = buildFaqSchema(faqList)
+                return schema ? <JsonLd data={schema} /> : null
+            })()}
             {/* ── BREADCRUMB BAR ── */}
             <div className="border-b border-border/40">
                 <div className="page-wrap flex items-center gap-3 py-3">
