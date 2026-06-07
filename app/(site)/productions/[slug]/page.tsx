@@ -406,8 +406,6 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
             </div>
             {/* Cinematic Hero */}
             <div className="relative min-h-[620px] md:min-h-[680px] bg-background flex flex-col overflow-hidden">
-                {/* Accent stripe */}
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 z-20 bg-[#ff2d78]" />
                 {/* Background image — full bleed */}
                 {heroImageMobile && (
                     <Image src={heroImageMobile} alt={production.titlePt} fill priority sizes="100vw" className="object-cover md:hidden" />

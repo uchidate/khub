@@ -27,6 +27,9 @@ type ProductionSeoInput = {
 }
 
 const TITLE_LIMIT = 70
+// O layout root aplica template '%s | HallyuHub' — descontar o sufixo do limite evita estourar o título final
+const SUFFIX_LEN = ' | HallyuHub'.length
+const BASE_TITLE_LIMIT = TITLE_LIMIT - SUFFIX_LEN
 const DESCRIPTION_LIMIT = 160
 
 function cleanText(value: string): string {
@@ -62,10 +65,30 @@ export function productionTypeLabel(type?: string | null): string {
 }
 
 export function buildArtistSeoTitle(input: ArtistSeoInput): string {
-    const titleWithRole = `${input.name}: doramas, filmes e perfil | HallyuHub`
-    if (titleWithRole.length <= TITLE_LIMIT) return titleWithRole
+    const role = input.roleLabels?.[0]?.toLowerCase()
+    const group = listNames(input.groupNames ?? [], 1)
+    const affiliation = group || input.agencyName
 
-    return trimMeta(`${input.name}: perfil e doramas | HallyuHub`, TITLE_LIMIT)
+    if (role && affiliation) {
+        const withAffiliation = `${input.name}: ${role} do ${affiliation} — perfil e doramas`
+        if (withAffiliation.length <= BASE_TITLE_LIMIT) return withAffiliation
+    }
+
+    const featuredProduction = input.productions?.[0]?.titlePt
+    if (role && featuredProduction) {
+        const withProduction = `${input.name}: ${role} de ${featuredProduction} — perfil`
+        if (withProduction.length <= BASE_TITLE_LIMIT) return withProduction
+    }
+
+    if (role) {
+        const withRole = `${input.name}: ${role} — doramas, filmes e perfil`
+        if (withRole.length <= BASE_TITLE_LIMIT) return withRole
+    }
+
+    const titleWithRole = `${input.name}: doramas, filmes e perfil`
+    if (titleWithRole.length <= BASE_TITLE_LIMIT) return titleWithRole
+
+    return trimMeta(`${input.name}: perfil e doramas`, BASE_TITLE_LIMIT)
 }
 
 export function buildArtistSeoDescription(input: ArtistSeoInput): string {
@@ -85,13 +108,21 @@ export function buildProductionSeoTitle(input: ProductionSeoInput): string {
     const kind = productionTypeLabel(input.type)
     const hasStreaming = Boolean(input.streamingPlatforms?.length)
     const titleIntent = hasStreaming ? 'elenco, episódios e onde assistir' : 'elenco, episódios e sinopse'
-    const title = `${input.title}: ${titleIntent} | HallyuHub`
-    if (!isMovieType(input.type) && title.length <= TITLE_LIMIT) return title
+    const year = input.year ? ` (${input.year})` : ''
 
-    const fallback = `${input.title}: elenco do ${kind} | HallyuHub`
-    if (fallback.length <= TITLE_LIMIT) return fallback
+    const titleWithYear = `${input.title}${year}: ${titleIntent}`
+    if (!isMovieType(input.type) && titleWithYear.length <= BASE_TITLE_LIMIT) return titleWithYear
 
-    return trimMeta(`${input.title}: elenco e sinopse | HallyuHub`, TITLE_LIMIT)
+    const title = `${input.title}: ${titleIntent}`
+    if (!isMovieType(input.type) && title.length <= BASE_TITLE_LIMIT) return title
+
+    const fallbackWithYear = `${input.title}${year}: elenco do ${kind}`
+    if (fallbackWithYear.length <= BASE_TITLE_LIMIT) return fallbackWithYear
+
+    const fallback = `${input.title}: elenco do ${kind}`
+    if (fallback.length <= BASE_TITLE_LIMIT) return fallback
+
+    return trimMeta(`${input.title}: elenco e sinopse`, BASE_TITLE_LIMIT)
 }
 
 export function buildProductionSeoDescription(input: ProductionSeoInput): string {
