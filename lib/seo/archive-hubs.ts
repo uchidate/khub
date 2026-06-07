@@ -13,7 +13,7 @@ export type ArchiveHub = {
     keywords: string[]
     faq: Array<{ question: string; answer: string }>
     /** Idioma do hub. Hubs sem este campo são tratados como 'pt' (comportamento original, intocado). */
-    locale?: 'pt' | 'en' | 'es'
+    locale?: 'pt' | 'en' | 'es' | 'th' | 'id'
     /**
      * Chave compartilhada entre versões traduzidas do mesmo hub (ex: 'bts-members').
      * Usada apenas para montar hreflang cruzado entre pt/en/es — não afeta slugs nem URLs existentes.
@@ -2537,6 +2537,198 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             { question: '¿Este hub incluye trabajos en solitario?', answer: 'Sí. Los perfiles destacan lanzamientos en solitario, actuación y otros proyectos individuales conectados con sus páginas en HallyuHub.' },
         ],
     },
+
+    // ── PILOTO TAILANDÊS / INDONÉSIO ──
+    {
+        slug: 'bts-members-th',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'th',
+        i18nKey: 'bts-members',
+        title: 'สมาชิก BTS',
+        shortTitle: 'BTS',
+        description: 'รู้จักสมาชิกวง BTS — โปรไฟล์ ผลงานเดี่ยว เพลง วิดีโอ และเรื่องน่ารู้ คัดสรรโดย HallyuHub',
+        intro: [
+            'BTS เป็นหนึ่งในวง K-pop ที่มีอิทธิพลที่สุดในโลก โดยสมาชิกแต่ละคนมีเอกลักษณ์ทางศิลปะที่ชัดเจน ตั้งแต่แร็ป การโปรดักชัน ไปจนถึงร้องนำและการเต้น',
+            'ฮับนี้รวบรวมโปรไฟล์สมาชิกเพื่อให้คุณสำรวจเส้นทางของแต่ละคน ประวัติวง และผลงานที่เกี่ยวข้องในที่เดียว',
+        ],
+        keywords: ['สมาชิก bts', 'bts สมาชิก', 'โปรไฟล์ bts', 'bangtan boys', 'kpop bts'],
+        faq: [
+            { question: 'สมาชิก BTS มีใครบ้าง?', answer: 'BTS ประกอบด้วย RM, Jin, Suga, J-Hope, Jimin, V และ Jungkook โดยแต่ละคนมีผลงานเดี่ยวควบคู่ไปกับกิจกรรมวง' },
+            { question: 'ฮับนี้รวมผลงานเดี่ยวด้วยหรือไม่?', answer: 'ใช่ โปรไฟล์สมาชิกแสดงผลงานเดี่ยว งานแสดง และโปรเจกต์ส่วนตัวอื่น ๆ ที่เชื่อมโยงกับหน้าโปรไฟล์ใน HallyuHub' },
+        ],
+    },
+    {
+        slug: 'bts-members-id',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'id',
+        i18nKey: 'bts-members',
+        title: 'Member BTS',
+        shortTitle: 'BTS',
+        description: 'Kenali member BTS — profil, karier solo, musik, video, dan fakta menarik, dikurasi oleh HallyuHub.',
+        intro: [
+            'BTS adalah salah satu grup K-pop paling berpengaruh di dunia, dengan setiap member membawa identitas artistik yang khas — mulai dari rap dan produksi hingga vokal dan koreografi.',
+            'Hub ini mengumpulkan profil member agar kamu bisa menjelajahi perjalanan masing-masing, sejarah grup, dan rilisan terkait dalam satu tempat.',
+        ],
+        keywords: ['member bts', 'daftar member bts', 'profil bts', 'bangtan boys member', 'kpop bts'],
+        faq: [
+            { question: 'Siapa saja member BTS?', answer: 'BTS terdiri dari RM, Jin, Suga, J-Hope, Jimin, V, dan Jungkook — masing-masing memiliki karier solo aktif selain kegiatan grup.' },
+            { question: 'Apakah hub ini mencakup karya solo?', answer: 'Ya. Profil member menyoroti rilisan solo, akting, dan proyek individu lain yang terhubung dengan halaman mereka di HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'blackpink-members-th',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        locale: 'th',
+        i18nKey: 'blackpink-members',
+        title: 'สมาชิก BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'รู้จักสมาชิก BLACKPINK — Jisoo, Jennie, Rosé และ Lisa — โปรไฟล์ ผลงานเดี่ยว เพลง และเรื่องน่ารู้ คัดสรรโดย HallyuHub',
+        intro: [
+            'BLACKPINK เป็นหนึ่งในวง K-pop ที่เป็นที่รู้จักมากที่สุดในโลก โดยสมาชิกแต่ละคนสร้างผลงานเดี่ยวที่แข็งแกร่งควบคู่ไปกับกิจกรรมวง',
+            'ฮับนี้รวบรวมโปรไฟล์สมาชิกเพื่อให้คุณสำรวจเส้นทางของแต่ละคน ประวัติวง และผลงานที่เกี่ยวข้องในที่เดียว',
+        ],
+        keywords: ['สมาชิก blackpink', 'jisoo jennie rose lisa', 'โปรไฟล์ blackpink', 'kpop blackpink'],
+        faq: [
+            { question: 'สมาชิก BLACKPINK มีใครบ้าง?', answer: 'BLACKPINK ประกอบด้วย Jisoo, Jennie, Rosé และ Lisa โดยแต่ละคนมีผลงานเดี่ยวควบคู่ไปกับกิจกรรมวง' },
+            { question: 'ฮับนี้รวมผลงานเดี่ยวด้วยหรือไม่?', answer: 'ใช่ โปรไฟล์สมาชิกแสดงผลงานเดี่ยว งานแสดง และโปรเจกต์ส่วนตัวอื่น ๆ ที่เชื่อมโยงกับหน้าโปรไฟล์ใน HallyuHub' },
+        ],
+    },
+    {
+        slug: 'blackpink-members-id',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        locale: 'id',
+        i18nKey: 'blackpink-members',
+        title: 'Member BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'Kenali member BLACKPINK — Jisoo, Jennie, Rosé, dan Lisa — profil, karier solo, musik, dan fakta menarik, dikurasi oleh HallyuHub.',
+        intro: [
+            'BLACKPINK adalah salah satu grup K-pop paling dikenal di dunia, dengan setiap member membangun karier solo yang kuat selain kegiatan grup.',
+            'Hub ini mengumpulkan profil member agar kamu bisa menjelajahi perjalanan masing-masing, sejarah grup, dan rilisan terkait dalam satu tempat.',
+        ],
+        keywords: ['member blackpink', 'jisoo jennie rose lisa', 'profil blackpink', 'kpop blackpink'],
+        faq: [
+            { question: 'Siapa saja member BLACKPINK?', answer: 'BLACKPINK terdiri dari Jisoo, Jennie, Rosé, dan Lisa — masing-masing memiliki karier solo aktif selain kegiatan grup.' },
+            { question: 'Apakah hub ini mencakup karya solo?', answer: 'Ya. Profil member menyoroti rilisan solo, akting, dan proyek individu lain yang terhubung dengan halaman mereka di HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'twice-members-th',
+        kind: 'artists',
+        groupSlug: 'twice',
+        locale: 'th',
+        i18nKey: 'twice-members',
+        title: 'สมาชิก TWICE',
+        shortTitle: 'TWICE',
+        description: 'รู้จักสมาชิกวง TWICE — โปรไฟล์ ผลงานเดี่ยว เพลง วิดีโอ และเรื่องน่ารู้ คัดสรรโดย HallyuHub',
+        intro: [
+            'TWICE เป็นหนึ่งในเกิร์ลกรุ๊ป K-pop ที่ได้รับความนิยมมากที่สุดในระดับนานาชาติ โดยเฉพาะในญี่ปุ่น เอเชียตะวันออกเฉียงใต้ และทวีปอเมริกา',
+            'ฮับนี้รวบรวมโปรไฟล์สมาชิกเพื่อให้คุณสำรวจเส้นทางของแต่ละคน ประวัติวง และผลงานที่เกี่ยวข้องในที่เดียว',
+        ],
+        keywords: ['สมาชิก twice', 'โปรไฟล์ twice', 'once kpop', 'kpop twice'],
+        faq: [
+            { question: 'สมาชิก TWICE มีใครบ้าง?', answer: 'TWICE ประกอบด้วยสมาชิก 9 คน แต่ละคนมีผลงานเดี่ยวหรือซับยูนิตควบคู่ไปกับกิจกรรมวง' },
+            { question: 'ฮับนี้รวมผลงานเดี่ยวด้วยหรือไม่?', answer: 'ใช่ โปรไฟล์สมาชิกแสดงผลงานเดี่ยว งานแสดง และโปรเจกต์ส่วนตัวอื่น ๆ ที่เชื่อมโยงกับหน้าโปรไฟล์ใน HallyuHub' },
+        ],
+    },
+    {
+        slug: 'twice-members-id',
+        kind: 'artists',
+        groupSlug: 'twice',
+        locale: 'id',
+        i18nKey: 'twice-members',
+        title: 'Member TWICE',
+        shortTitle: 'TWICE',
+        description: 'Kenali member TWICE — profil, karier solo, musik, video, dan fakta menarik, dikurasi oleh HallyuHub.',
+        intro: [
+            'TWICE adalah salah satu girl group K-pop paling populer secara internasional, terutama di Jepang, Asia Tenggara, dan Amerika.',
+            'Hub ini mengumpulkan profil member agar kamu bisa menjelajahi perjalanan masing-masing, sejarah grup, dan rilisan terkait dalam satu tempat.',
+        ],
+        keywords: ['member twice', 'profil twice', 'once kpop', 'kpop twice'],
+        faq: [
+            { question: 'Siapa saja member TWICE?', answer: 'TWICE terdiri dari sembilan member — masing-masing memiliki karier solo atau sub-unit aktif selain kegiatan grup.' },
+            { question: 'Apakah hub ini mencakup karya solo?', answer: 'Ya. Profil member menyoroti rilisan solo, akting, dan proyek individu lain yang terhubung dengan halaman mereka di HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'stray-kids-members-th',
+        kind: 'artists',
+        groupSlug: 'stray-kids',
+        locale: 'th',
+        i18nKey: 'stray-kids-members',
+        title: 'สมาชิก Stray Kids',
+        shortTitle: 'Stray Kids',
+        description: 'รู้จักสมาชิก Stray Kids — โปรไฟล์ ผลงานเดี่ยว เพลง เครดิตการโปรดักชัน และเรื่องน่ารู้ คัดสรรโดย HallyuHub',
+        intro: [
+            'Stray Kids โดดเด่นด้วยการแต่งและโปรดิวซ์เพลงของตัวเองผ่านยูนิต 3RACHA สร้างฐานแฟนคลับทั่วโลกที่เติบโตอย่างรวดเร็ว',
+            'ฮับนี้รวบรวมโปรไฟล์สมาชิกเพื่อให้คุณสำรวจเส้นทางของแต่ละคน ประวัติวง และผลงานที่เกี่ยวข้องในที่เดียว',
+        ],
+        keywords: ['สมาชิก stray kids', 'โปรไฟล์ stray kids', 'skz สมาชิก', 'kpop stray kids'],
+        faq: [
+            { question: 'สมาชิก Stray Kids มีใครบ้าง?', answer: 'Stray Kids ประกอบด้วยสมาชิก 8 คน — Bang Chan, Lee Know, Changbin, Hyunjin, Han, Felix, Seungmin และ I.N โดยแต่ละคนมีผลงานเดี่ยวและงานโปรดักชันควบคู่ไปกับกิจกรรมวง' },
+            { question: 'ฮับนี้รวมผลงานเดี่ยวด้วยหรือไม่?', answer: 'ใช่ โปรไฟล์สมาชิกแสดงผลงานเดี่ยว เครดิตการโปรดักชัน และโปรเจกต์ส่วนตัวอื่น ๆ ที่เชื่อมโยงกับหน้าโปรไฟล์ใน HallyuHub' },
+        ],
+    },
+    {
+        slug: 'stray-kids-members-id',
+        kind: 'artists',
+        groupSlug: 'stray-kids',
+        locale: 'id',
+        i18nKey: 'stray-kids-members',
+        title: 'Member Stray Kids',
+        shortTitle: 'Stray Kids',
+        description: 'Kenali member Stray Kids — profil, karier solo, musik, kredit produksi, dan fakta menarik, dikurasi oleh HallyuHub.',
+        intro: [
+            'Stray Kids dikenal karena menulis dan memproduksi sebagian besar musik mereka sendiri lewat unit 3RACHA, membangun basis penggemar global yang berkembang pesat.',
+            'Hub ini mengumpulkan profil member agar kamu bisa menjelajahi perjalanan masing-masing, sejarah grup, dan rilisan terkait dalam satu tempat.',
+        ],
+        keywords: ['member stray kids', 'profil stray kids', 'skz member', 'kpop stray kids'],
+        faq: [
+            { question: 'Siapa saja member Stray Kids?', answer: 'Stray Kids terdiri dari delapan member — Bang Chan, Lee Know, Changbin, Hyunjin, Han, Felix, Seungmin, dan I.N — masing-masing aktif dengan karya solo dan produksi selain kegiatan grup.' },
+            { question: 'Apakah hub ini mencakup karya solo?', answer: 'Ya. Profil member menyoroti rilisan solo, kredit produksi, dan proyek individu lain yang terhubung dengan halaman mereka di HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'aespa-members-th',
+        kind: 'artists',
+        groupSlug: 'aespa',
+        locale: 'th',
+        i18nKey: 'aespa-members',
+        title: 'สมาชิก aespa',
+        shortTitle: 'aespa',
+        description: 'รู้จักสมาชิก aespa — Karina, Giselle, Winter และ Ningning — โปรไฟล์ ผลงานเดี่ยว เพลง และเรื่องน่ารู้ คัดสรรโดย HallyuHub',
+        intro: [
+            'aespa เป็นหนึ่งในวง K-pop ที่เติบโตเร็วที่สุดในยุคนี้ โดดเด่นด้วยคอนเซปต์แนวไซไฟและฐานแฟนคลับทั่วโลกที่ขยายตัวอย่างรวดเร็ว',
+            'ฮับนี้รวบรวมโปรไฟล์สมาชิกเพื่อให้คุณสำรวจเส้นทางของแต่ละคน ประวัติวง และผลงานที่เกี่ยวข้องในที่เดียว',
+        ],
+        keywords: ['สมาชิก aespa', 'karina giselle winter ningning', 'โปรไฟล์ aespa', 'kpop aespa'],
+        faq: [
+            { question: 'สมาชิก aespa มีใครบ้าง?', answer: 'aespa ประกอบด้วย Karina, Giselle, Winter และ Ningning โดยแต่ละคนมีผลงานเดี่ยวควบคู่ไปกับกิจกรรมวง' },
+            { question: 'ฮับนี้รวมผลงานเดี่ยวด้วยหรือไม่?', answer: 'ใช่ โปรไฟล์สมาชิกแสดงผลงานเดี่ยว งานแสดง และโปรเจกต์ส่วนตัวอื่น ๆ ที่เชื่อมโยงกับหน้าโปรไฟล์ใน HallyuHub' },
+        ],
+    },
+    {
+        slug: 'aespa-members-id',
+        kind: 'artists',
+        groupSlug: 'aespa',
+        locale: 'id',
+        i18nKey: 'aespa-members',
+        title: 'Member aespa',
+        shortTitle: 'aespa',
+        description: 'Kenali member aespa — Karina, Giselle, Winter, dan Ningning — profil, karier solo, musik, dan fakta menarik, dikurasi oleh HallyuHub.',
+        intro: [
+            'aespa adalah salah satu grup K-pop dengan pertumbuhan tercepat di generasinya, dikenal dengan konsep fiksi ilmiah dan basis penggemar global yang terus berkembang.',
+            'Hub ini mengumpulkan profil member agar kamu bisa menjelajahi perjalanan masing-masing, sejarah grup, dan rilisan terkait dalam satu tempat.',
+        ],
+        keywords: ['member aespa', 'karina giselle winter ningning', 'profil aespa', 'kpop aespa'],
+        faq: [
+            { question: 'Siapa saja member aespa?', answer: 'aespa terdiri dari Karina, Giselle, Winter, dan Ningning — masing-masing memiliki karier solo aktif selain kegiatan grup.' },
+            { question: 'Apakah hub ini mencakup karya solo?', answer: 'Ya. Profil member menyoroti rilisan solo, akting, dan proyek individu lain yang terhubung dengan halaman mereka di HallyuHub.' },
+        ],
+    },
 ]
 
 export const ARCHIVE_HUB_BY_SLUG = Object.fromEntries(ARCHIVE_HUBS.map(hub => [hub.slug, hub]))
@@ -2546,12 +2738,12 @@ export function getArchiveHub(slug: string) {
 }
 
 /** Hubs por idioma — pt = hubs sem `locale` (comportamento original) + os marcados explicitamente como 'pt'. */
-export function getArchiveHubsByLocale(locale: 'pt' | 'en' | 'es') {
+export function getArchiveHubsByLocale(locale: 'pt' | 'en' | 'es' | 'th' | 'id') {
     if (locale === 'pt') return ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt')
     return ARCHIVE_HUBS.filter(hub => hub.locale === locale)
 }
 
-export function getArchiveHubByLocaleAndSlug(locale: 'pt' | 'en' | 'es', slug: string) {
+export function getArchiveHubByLocaleAndSlug(locale: 'pt' | 'en' | 'es' | 'th' | 'id', slug: string) {
     const hub = ARCHIVE_HUB_BY_SLUG[slug]
     if (!hub) return undefined
     const hubLocale = hub.locale ?? 'pt'
@@ -2559,7 +2751,7 @@ export function getArchiveHubByLocaleAndSlug(locale: 'pt' | 'en' | 'es', slug: s
 }
 
 /** Encontra a versão de um hub em outro idioma, via i18nKey compartilhado — usado só para montar hreflang cruzado. */
-export function getTranslatedHub(hub: ArchiveHub, targetLocale: 'pt' | 'en' | 'es'): ArchiveHub | undefined {
+export function getTranslatedHub(hub: ArchiveHub, targetLocale: 'pt' | 'en' | 'es' | 'th' | 'id'): ArchiveHub | undefined {
     if (!hub.i18nKey) return undefined
     return ARCHIVE_HUBS.find(h => h.i18nKey === hub.i18nKey && (h.locale ?? 'pt') === targetLocale)
 }
