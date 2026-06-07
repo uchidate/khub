@@ -12,6 +12,13 @@ export type ArchiveHub = {
     intro: string[]
     keywords: string[]
     faq: Array<{ question: string; answer: string }>
+    /** Idioma do hub. Hubs sem este campo são tratados como 'pt' (comportamento original, intocado). */
+    locale?: 'pt' | 'en' | 'es'
+    /**
+     * Chave compartilhada entre versões traduzidas do mesmo hub (ex: 'bts-members').
+     * Usada apenas para montar hreflang cruzado entre pt/en/es — não afeta slugs nem URLs existentes.
+     */
+    i18nKey?: string
 }
 
 const SINGER_ROLE_TERMS = ['cantor', 'cantora', 'singer', 'vocalist', 'rapper', 'idol']
@@ -326,6 +333,7 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
         slug: 'integrantes-do-bts',
         kind: 'artists',
         groupSlug: 'bts',
+        i18nKey: 'bts-members',
         title: 'Integrantes do BTS',
         shortTitle: 'BTS',
         description: 'Conheça os integrantes do BTS com perfis, carreira solo, músicas, vídeos e curiosidades em português.',
@@ -2333,12 +2341,71 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             { question: 'Quais foram os melhores doramas de 2022?', answer: 'O HallyuHub lista os principais doramas de 2022 com avaliação, sinopse e elenco completo em português para ajudar você a escolher o próximo.' },
         ],
     },
+
+    // ── PILOTO INTERNACIONAL: hubs traduzidos (locale + i18nKey ligam à versão pt) ──
+    {
+        slug: 'bts-members',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'en',
+        i18nKey: 'bts-members',
+        title: 'BTS Members',
+        shortTitle: 'BTS',
+        description: 'Meet the members of BTS — profiles, solo careers, music, videos and trivia, curated by HallyuHub.',
+        intro: [
+            'BTS is one of the most influential K-pop acts worldwide, and each member brings a distinct artistic identity — from rap and production to vocals and choreography.',
+            'This hub gathers member profiles so you can explore their individual journeys, group history and connected releases in one place.',
+        ],
+        keywords: ['bts members', 'bts lineup', 'bts profiles', 'bangtan boys members', 'kpop bts'],
+        faq: [
+            { question: 'Who are the members of BTS?', answer: 'BTS is composed of RM, Jin, Suga, J-Hope, Jimin, V and Jungkook — each with an active solo career alongside group activities.' },
+            { question: 'Does this hub include solo work?', answer: 'Yes. Member profiles highlight solo releases, acting work and other individual projects connected to their HallyuHub pages.' },
+        ],
+    },
+    {
+        slug: 'bts-integrantes',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'es',
+        i18nKey: 'bts-members',
+        title: 'Integrantes de BTS',
+        shortTitle: 'BTS',
+        description: 'Conoce a los integrantes de BTS — perfiles, carreras en solitario, música, videos y curiosidades, en HallyuHub.',
+        intro: [
+            'BTS es uno de los grupos de K-pop más influyentes del mundo, y cada integrante aporta una identidad artística propia: rap, producción, voz y coreografía.',
+            'Este hub reúne los perfiles de los integrantes para explorar sus trayectorias individuales, la historia del grupo y sus lanzamientos relacionados en un solo lugar.',
+        ],
+        keywords: ['integrantes de bts', 'miembros de bts', 'perfiles bts', 'bangtan boys integrantes', 'kpop bts'],
+        faq: [
+            { question: '¿Quiénes son los integrantes de BTS?', answer: 'BTS está formado por RM, Jin, Suga, J-Hope, Jimin, V y Jungkook, cada uno con una carrera en solitario activa además de las actividades grupales.' },
+            { question: '¿Este hub incluye trabajos en solitario?', answer: 'Sí. Los perfiles destacan lanzamientos en solitario, actuación y otros proyectos individuales conectados con sus páginas en HallyuHub.' },
+        ],
+    },
 ]
 
 export const ARCHIVE_HUB_BY_SLUG = Object.fromEntries(ARCHIVE_HUBS.map(hub => [hub.slug, hub]))
 
 export function getArchiveHub(slug: string) {
     return ARCHIVE_HUB_BY_SLUG[slug]
+}
+
+/** Hubs por idioma — pt = hubs sem `locale` (comportamento original) + os marcados explicitamente como 'pt'. */
+export function getArchiveHubsByLocale(locale: 'pt' | 'en' | 'es') {
+    if (locale === 'pt') return ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt')
+    return ARCHIVE_HUBS.filter(hub => hub.locale === locale)
+}
+
+export function getArchiveHubByLocaleAndSlug(locale: 'pt' | 'en' | 'es', slug: string) {
+    const hub = ARCHIVE_HUB_BY_SLUG[slug]
+    if (!hub) return undefined
+    const hubLocale = hub.locale ?? 'pt'
+    return hubLocale === locale ? hub : undefined
+}
+
+/** Encontra a versão de um hub em outro idioma, via i18nKey compartilhado — usado só para montar hreflang cruzado. */
+export function getTranslatedHub(hub: ArchiveHub, targetLocale: 'pt' | 'en' | 'es'): ArchiveHub | undefined {
+    if (!hub.i18nKey) return undefined
+    return ARCHIVE_HUBS.find(h => h.i18nKey === hub.i18nKey && (h.locale ?? 'pt') === targetLocale)
 }
 
 export function getRelatedArtistHubs(input: {
