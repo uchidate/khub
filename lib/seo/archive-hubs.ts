@@ -1707,6 +1707,345 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
             { question: 'Quais são os maiores hits de Sunmi?', answer: 'Os maiores hits de Sunmi incluem "Gashina" (2017), "Heroine" (2018), "Siren" (2018), "Lalalay" (2019) e "pporappippam" (2020).' },
         ],
     },
+    // ── Grupos masculinos ──────────────────────────────────────────────────────
+    {
+        slug: 'integrantes-do-loona',
+        kind: 'artists',
+        groupSlug: 'loona',
+        title: 'Integrantes do LOONA',
+        shortTitle: 'LOONA',
+        description: 'Conheça as integrantes do LOONA com perfis em português, carreira, músicas, curiosidades e histórico do grupo.',
+        intro: [
+            'LOONA é um dos projetos de K-Pop mais ambiciosos já criados: cada integrante foi revelada individualmente, cada uma com seu próprio MV solo, antes do debut oficial do grupo.',
+            'Este hub organiza as integrantes do LOONA para facilitar a navegação por perfis, carreira individual e conexões dentro do HallyuHub.',
+        ],
+        keywords: ['integrantes do loona', 'membros loona', 'loona kpop', 'loona orbits'],
+        faq: [
+            { question: 'Quantas integrantes tem o LOONA?', answer: 'O LOONA foi formado por 12 integrantes, cada uma revelada individualmente antes do debut do grupo em 2018.' },
+            { question: 'O LOONA ainda está ativo?', answer: 'As antigas integrantes do LOONA continuam ativas em projetos individuais e em novos grupos como o ARTMS, após disputas contratuais com a Blockberry Creative.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-the-boyz',
+        kind: 'artists',
+        groupSlug: 'the-boyz',
+        title: 'Integrantes do THE BOYZ',
+        shortTitle: 'THE BOYZ',
+        description: 'Conheça os integrantes do THE BOYZ com perfis, carreira, músicas e curiosidades sobre o grupo masculino de K-Pop.',
+        intro: [
+            'THE BOYZ é um grupo masculino de K-Pop conhecido pela intensidade de suas performances ao vivo e pela vitória no reality de grupos "Road to Kingdom".',
+            'Este hub reúne os integrantes cadastrados no HallyuHub para navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do the boyz', 'membros the boyz', 'the boyz kpop', 'the boyz road to kingdom'],
+        faq: [
+            { question: 'Quantos integrantes tem o THE BOYZ?', answer: 'O THE BOYZ estreou com 12 integrantes em 2017, mas teve mudanças na formação ao longo dos anos.' },
+            { question: 'O que é Road to Kingdom?', answer: 'Road to Kingdom foi um reality de competição entre grupos masculinos de K-Pop em 2020, vencido pelo THE BOYZ com performances marcantes.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-zerobaseone',
+        kind: 'artists',
+        groupSlug: 'zerobaseone',
+        title: 'Integrantes do ZEROBASEONE',
+        shortTitle: 'ZEROBASEONE',
+        description: 'Conheça os integrantes do ZEROBASEONE com perfis em português, carreira, músicas e curiosidades do grupo.',
+        intro: [
+            'ZEROBASEONE (ZB1) foi formado pelo reality "Boys Planet" da Mnet em 2023 e rapidamente se tornou um dos grupos masculinos mais relevantes da quarta geração.',
+            'Este hub reúne os integrantes do ZB1 cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do zerobaseone', 'membros zb1', 'zerobaseone kpop', 'boys planet grupo'],
+        faq: [
+            { question: 'Como o ZEROBASEONE foi formado?', answer: 'O ZEROBASEONE foi formado pelo reality show "Boys Planet" da Mnet, onde os 9 integrantes foram selecionados por votação do público.' },
+            { question: 'Quantos integrantes tem o ZB1?', answer: 'O ZEROBASEONE é composto por 9 integrantes de diferentes países, incluindo Coreia do Sul e China.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-super-junior',
+        kind: 'artists',
+        groupSlug: 'super-junior',
+        title: 'Integrantes do Super Junior',
+        shortTitle: 'Super Junior',
+        description: 'Conheça os integrantes do Super Junior com perfis, carreira, músicas e curiosidades sobre o lendário grupo de K-Pop.',
+        intro: [
+            'Super Junior é um dos grupos mais importantes da segunda geração do K-Pop, com hits como "Sorry Sorry" que marcaram toda uma geração de fãs.',
+            'Este hub organiza os integrantes cadastrados no HallyuHub para facilitar a descoberta de perfis, carreira individual e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do super junior', 'membros super junior', 'super junior kpop', 'suju'],
+        faq: [
+            { question: 'Super Junior ainda está ativo?', answer: 'Sim. O Super Junior continua ativo, com lançamentos regulares e atividades em grupo, mesmo com membros que seguem projetos individuais em paralelo.' },
+            { question: 'Qual é o maior hit do Super Junior?', answer: '"Sorry Sorry" (2009) é o maior hit do Super Junior, considerado um marco do K-Pop que ajudou a popularizar o gênero internacionalmente.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-enhypen',
+        kind: 'artists',
+        groupSlug: 'enhypen',
+        title: 'Integrantes do ENHYPEN',
+        shortTitle: 'ENHYPEN',
+        description: 'Conheça os integrantes do ENHYPEN com perfis em português, carreira, músicas e curiosidades sobre o grupo.',
+        intro: [
+            'ENHYPEN foi formado pelo reality "I-Land" em 2020 e rapidamente conquistou uma posição central entre os grupos masculinos da quarta geração.',
+            'Este hub reúne os integrantes cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do enhypen', 'membros enhypen', 'enhypen kpop', 'i-land grupo'],
+        faq: [
+            { question: 'Como o ENHYPEN foi formado?', answer: 'O ENHYPEN foi formado pelo reality show "I-Land" da Mnet em colaboração com a HYBE e Big Hit Music, com os integrantes selecionados por votação do público.' },
+            { question: 'Quantos integrantes tem o ENHYPEN?', answer: 'O ENHYPEN é composto por 7 integrantes: Jungwon, Heeseung, Jay, Jake, Sunghoon, Sunoo e Ni-ki.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-i-dle',
+        kind: 'artists',
+        groupSlug: 'i-dle',
+        title: 'Integrantes do (G)I-DLE',
+        shortTitle: '(G)I-DLE',
+        description: 'Conheça as integrantes do (G)I-DLE com perfis em português, carreira, músicas, produções e curiosidades.',
+        intro: [
+            '(G)I-DLE é um dos grupos femininos mais autônomos do K-Pop, com integrantes que participam ativamente da composição, produção e direção criativa das músicas.',
+            'Este hub reúne as integrantes cadastradas no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do gidle', 'membros gidle', 'gidle kpop', 'g idle soyeon minnie'],
+        faq: [
+            { question: 'O que diferencia o (G)I-DLE de outros grupos?', answer: 'O (G)I-DLE é conhecido pela autonomia criativa das integrantes, especialmente Soyeon, que compõe, produz e escreve a maioria das músicas do grupo.' },
+            { question: 'Quantas integrantes tem o (G)I-DLE?', answer: 'Atualmente o (G)I-DLE conta com 5 integrantes: Miyeon, Minnie, Soyeon, Yuqi e Shuhua.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-kep1er',
+        kind: 'artists',
+        groupSlug: 'kep1er',
+        title: 'Integrantes do Kep1er',
+        shortTitle: 'Kep1er',
+        description: 'Conheça as integrantes do Kep1er com perfis em português, carreira, músicas e curiosidades sobre o grupo.',
+        intro: [
+            'Kep1er foi formado pelo reality "Girls Planet 999" em 2021, reunindo integrantes da Coreia do Sul, China e Japão.',
+            'Este hub reúne as integrantes cadastradas no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do kep1er', 'membros kep1er', 'kep1er kpop', 'girls planet 999'],
+        faq: [
+            { question: 'Como o Kep1er foi formado?', answer: 'Kep1er foi formado pelo reality show "Girls Planet 999" da Mnet em 2021, com integrantes selecionadas por votação do público.' },
+            { question: 'O Kep1er ainda está ativo?', answer: 'O Kep1er teve seu contrato renovado após o período inicial e continua com atividades regulares como grupo.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-2pm',
+        kind: 'artists',
+        groupSlug: '2pm',
+        title: 'Integrantes do 2PM',
+        shortTitle: '2PM',
+        description: 'Conheça os integrantes do 2PM com perfis, carreira, músicas e curiosidades sobre o grupo masculino da JYP Entertainment.',
+        intro: [
+            '2PM é um dos grupos masculinos mais populares da segunda geração do K-Pop, conhecido pelo conceito de "beastly idols" e por performances físicas marcantes.',
+            'Este hub organiza os integrantes cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do 2pm', 'membros 2pm', '2pm kpop', '2pm jyp'],
+        faq: [
+            { question: '2PM ainda está ativo?', answer: 'Sim. O 2PM retomou atividades em grupo após todos os membros concluírem o serviço militar obrigatório.' },
+            { question: 'Quem eram os membros originais do 2PM?', answer: 'O 2PM original incluía Jay Park, que saiu do grupo em 2009. A formação atual tem Junho, Taecyeon, Wooyoung, Chansung, Nichkhun e Jun.K.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-shinhwa',
+        kind: 'artists',
+        groupSlug: 'shinhwa',
+        title: 'Integrantes do SHINHWA',
+        shortTitle: 'SHINHWA',
+        description: 'Conheça os integrantes do SHINHWA, o grupo de K-Pop mais longevo da história, com perfis, carreira e curiosidades.',
+        intro: [
+            'SHINHWA é o grupo de K-Pop com maior longevidade da história, mantendo a mesma formação desde o debut em 1998.',
+            'Este hub organiza os integrantes cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do shinhwa', 'membros shinhwa', 'shinhwa kpop', 'shinhwa grupo mais antigo kpop'],
+        faq: [
+            { question: 'Por que o SHINHWA é histórico?', answer: 'SHINHWA é o grupo de K-Pop mais longevo com a mesma formação original, ativo desde 1998, o que é um recorde no gênero.' },
+            { question: 'Quantos integrantes tem o SHINHWA?', answer: 'O SHINHWA tem 6 integrantes: Eric, Minwoo, Dongwan, Hyesung, Andy e JunJin, todos desde o debut.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-winner',
+        kind: 'artists',
+        groupSlug: 'winner',
+        title: 'Integrantes do WINNER',
+        shortTitle: 'WINNER',
+        description: 'Conheça os integrantes do WINNER com perfis em português, carreira, músicas e curiosidades sobre o grupo da YG Entertainment.',
+        intro: [
+            'WINNER é um grupo masculino da YG Entertainment que se destacou por seu som mais maduro e introspectivo em relação ao K-Pop mainstream.',
+            'Este hub reúne os integrantes cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do winner', 'membros winner', 'winner kpop', 'winner yg'],
+        faq: [
+            { question: 'Como o WINNER foi formado?', answer: 'WINNER foi formado através do reality show "Who Is Next: WIN" da YG Entertainment em 2013, competindo com outro grupo que viria a se tornar iKON.' },
+            { question: 'Quantos integrantes tem o WINNER?', answer: 'O WINNER tem 4 integrantes: Seungyoon, Mino, Seunghoon e Jinwoo, após a saída de Nam Taehyun em 2016.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-kara',
+        kind: 'artists',
+        groupSlug: 'kara',
+        title: 'Integrantes do KARA',
+        shortTitle: 'KARA',
+        description: 'Conheça as integrantes do KARA com perfis em português, carreira, músicas e a história do grupo pioneiro no Japão.',
+        intro: [
+            'KARA foi um dos primeiros grupos de K-Pop a conquistar o Japão em grande escala, abrindo caminho para o Hallyu no mercado japonês.',
+            'Este hub organiza as integrantes do KARA cadastradas no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do kara', 'membros kara', 'kara kpop', 'kara japão'],
+        faq: [
+            { question: 'KARA ainda está ativo?', answer: 'KARA voltou a atividades em 2022 com um comeback especial que reuniu integrantes antigas e novas, celebrando 15 anos de carreira.' },
+            { question: 'Por que KARA é importante para o K-Pop?', answer: 'KARA foi um dos grupos pioneiros a alcançar sucesso massivo no Japão, contribuindo para a expansão do K-Pop asiático a partir de 2010.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-sistar',
+        kind: 'artists',
+        groupSlug: 'sistar',
+        title: 'Integrantes do SISTAR',
+        shortTitle: 'SISTAR',
+        description: 'Conheça as integrantes do SISTAR com perfis em português, carreira, músicas e curiosidades sobre o grupo.',
+        intro: [
+            'SISTAR foi um dos girl groups mais populares da segunda geração do K-Pop, conhecido pelos hits de verão e pela imagem confiante e sensual.',
+            'Este hub organiza as integrantes do SISTAR cadastradas no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do sistar', 'membros sistar', 'sistar kpop', 'sistar so cool'],
+        faq: [
+            { question: 'SISTAR ainda está ativo?', answer: 'SISTAR anunciou a dissolução em 2017, mas as integrantes seguiram carreiras individuais como cantoras, atrizes e apresentadoras.' },
+            { question: 'Quais são os maiores hits do SISTAR?', answer: 'Os maiores hits do SISTAR incluem "So Cool" (2011), "Loving U" (2012), "Give It to Me" (2013) e "Shake It" (2015).' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-astro',
+        kind: 'artists',
+        groupSlug: 'astro',
+        title: 'Integrantes do ASTRO',
+        shortTitle: 'ASTRO',
+        description: 'Conheça os integrantes do ASTRO com perfis em português, carreira, músicas e a história do grupo da Fantagio.',
+        intro: [
+            'ASTRO é um grupo masculino da Fantagio Entertainment que construiu uma trajetória de fidelidade com seus fãs Aroha ao longo de sete anos de atividade.',
+            'Este hub organiza os integrantes cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do astro', 'membros astro', 'astro kpop', 'astro aroha'],
+        faq: [
+            { question: 'ASTRO ainda está ativo?', answer: 'O ASTRO entrou em pausa indefinida após o falecimento de Moon Bin (Moonbin) em abril de 2023. Os demais integrantes seguem com carreiras individuais.' },
+            { question: 'Quem são os integrantes do ASTRO?', answer: 'O ASTRO era composto por MJ, JinJin, Cha Eun-woo, Moon Bin, Rocky e Sanha.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-victon',
+        kind: 'artists',
+        groupSlug: 'victon',
+        title: 'Integrantes do VICTON',
+        shortTitle: 'VICTON',
+        description: 'Conheça os integrantes do VICTON com perfis em português, carreira, músicas e curiosidades sobre o grupo.',
+        intro: [
+            'VICTON é um grupo masculino da Play M Entertainment que ganhou notoriedade pelo vocal poderoso e por participações em reality shows de competição.',
+            'Este hub organiza os integrantes do VICTON cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do victon', 'membros victon', 'victon kpop', 'victon produce x 101'],
+        faq: [
+            { question: 'Por que VICTON ficou mais popular?', answer: 'Han Seung-woo e Byungchan participaram do reality Produce X 101 em 2019, aumentando significativamente a visibilidade do grupo.' },
+            { question: 'Quantos integrantes tem o VICTON?', answer: 'O VICTON conta com 7 integrantes: Seungwoo, Subin, Hanse, Sejun, Byungchan, Changsik e Dohkwang.' },
+        ],
+    },
+    {
+        slug: 'integrantes-do-ss501',
+        kind: 'artists',
+        groupSlug: 'ss501',
+        title: 'Integrantes do SS501',
+        shortTitle: 'SS501',
+        description: 'Conheça os integrantes do SS501 com perfis em português, carreira, músicas e curiosidades sobre o grupo pioneiro.',
+        intro: [
+            'SS501 foi um dos grupos masculinos mais populares da segunda geração do K-Pop, com forte presença no Japão e fanbase leal ao redor do mundo.',
+            'Este hub organiza os integrantes do SS501 cadastrados no HallyuHub para facilitar a navegação por perfis e conteúdos relacionados.',
+        ],
+        keywords: ['integrantes do ss501', 'membros ss501', 'ss501 kpop', 'kim hyun joong ss501'],
+        faq: [
+            { question: 'SS501 ainda está ativo?', answer: 'SS501 não tem atividades conjuntas regulares atualmente, mas os integrantes reconhecem o vínculo com o grupo e os fãs Triple S continuam ativos.' },
+            { question: 'Quem é o mais famoso do SS501?', answer: 'Kim Hyun-joong é o membro mais conhecido internacionalmente, após ter protagonizado o drama "Boys Over Flowers" em 2009.' },
+        ],
+    },
+
+    // ── Categorias temáticas novas ─────────────────────────────────────────────
+    {
+        slug: 'grupos-masculinos-kpop',
+        kind: 'groups',
+        title: 'Grupos masculinos de K-Pop',
+        shortTitle: 'Boy groups',
+        description: 'Explore boy groups de K-Pop com integrantes, discografia, carreira, vídeos e perfis completos em português.',
+        intro: [
+            'Boy groups são uma das grandes forças do K-Pop global, com choreografias complexas, conceitos visuais marcantes e fandoms extremamente ativos.',
+            'Aqui você encontra grupos masculinos com links para integrantes, músicas, vídeos e páginas relacionadas dentro do HallyuHub.',
+        ],
+        keywords: ['boy groups kpop', 'grupos masculinos kpop', 'kpop masculino', 'integrantes boy group'],
+        faq: [
+            { question: 'O que é um boy group de K-Pop?', answer: 'É um grupo masculino da indústria coreana, normalmente formado por idols com foco em música, performance, conceitos visuais e fandom.' },
+            { question: 'O hub inclui grupos ativos e inativos?', answer: 'Sim. A lista pode incluir grupos ativos, inativos ou dissolvidos quando têm relevância cultural e perfil público no HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'cantores-kpop',
+        kind: 'artists',
+        title: 'Cantores de K-Pop',
+        shortTitle: 'Cantores K-Pop',
+        description: 'Conheça cantores de K-Pop, idols e solistas coreanos com perfis em português, carreira, grupos, músicas e curiosidades.',
+        intro: [
+            'Os cantores de K-Pop — de vocalistas a rappers, de idols a solistas — representam uma diversidade enorme de estilos, trajetórias e histórias.',
+            'Este hub reúne perfis em português para descobrir artistas masculinos do K-Pop, navegar por grupos relacionados e encontrar trajetórias que merecem atenção.',
+        ],
+        keywords: ['cantores kpop', 'idols masculinos', 'solistas kpop masculino', 'cantor coreano'],
+        faq: [
+            { question: 'O hub inclui integrantes de grupos?', answer: 'Sim. O hub pode incluir vocalistas, rappers e idols de grupos masculinos, além de artistas com carreira solo ou atividades musicais individuais.' },
+            { question: 'Esta lista inclui ex-idols?', answer: 'Quando há perfil público ativo no HallyuHub, ex-idols e artistas que passaram por grupos podem aparecer na listagem.' },
+        ],
+    },
+    {
+        slug: 'atrizes-coreanas',
+        kind: 'artists',
+        title: 'Atrizes coreanas',
+        shortTitle: 'Atrizes coreanas',
+        description: 'Conheça atrizes coreanas com perfis em português, filmografia, doramas, músicas e carreira no entretenimento coreano.',
+        intro: [
+            'As atrizes coreanas estão no centro do fenômeno dos K-Dramas: de protagonistas de romances a vilãs complexas, elas definem boa parte da cultura Hallyu.',
+            'Este hub reúne perfis em português de atrizes que aparecem em produções coreanas — incluindo idols que também atuam — para facilitar a descoberta e navegação.',
+        ],
+        keywords: ['atrizes coreanas', 'atriz kdrama', 'atrizes kdrama', 'atrizes k-drama'],
+        faq: [
+            { question: 'O hub inclui idols que atuam?', answer: 'Sim. Muitas idols do K-Pop também têm carreiras como atrizes em doramas, filmes ou produções especiais, e podem aparecer neste hub.' },
+            { question: 'As páginas mostram a filmografia completa?', answer: 'Quando disponível, cada perfil pode mostrar produções, curiosidades, redes oficiais e histórico de carreira no HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'doramas-amazon-prime',
+        kind: 'productions',
+        title: 'Doramas coreanos no Amazon Prime',
+        shortTitle: 'Doramas no Prime',
+        description: 'Descubra doramas coreanos no Amazon Prime Video com sinopse, elenco, avaliação e links para artistas.',
+        intro: [
+            'O Amazon Prime Video tem ampliado seu catálogo de K-Dramas, levando séries coreanas a públicos que ainda não acompanhavam o gênero.',
+            'Este hub reúne produções coreanas associadas ao Prime Video, com páginas em português para entender elenco, sinopse e contexto de cada título.',
+        ],
+        keywords: ['doramas amazon prime', 'kdramas prime video', 'doramas coreanos amazon', 'séries coreanas prime'],
+        faq: [
+            { question: 'Todos os doramas deste hub estão disponíveis no Prime Video?', answer: 'A disponibilidade pode variar por país e data. O hub reúne produções coreanas associadas ao Amazon Prime ou marcadas no catálogo com presença na plataforma.' },
+            { question: 'O HallyuHub informa onde assistir?', answer: 'Quando há dados disponíveis, as páginas de produção mostram plataformas, elenco, sinopse e contexto editorial para ajudar na descoberta.' },
+        ],
+    },
+    {
+        slug: 'doramas-historicos-coreanos',
+        kind: 'productions',
+        title: 'Doramas históricos coreanos',
+        shortTitle: 'Doramas históricos',
+        description: 'Descubra sageuk e doramas históricos coreanos com sinopse, elenco, períodos históricos e avaliações em português.',
+        intro: [
+            'Os doramas históricos — conhecidos como sageuk — são uma das formas mais ricas de conhecer a história e a cultura da Coreia, misturando política, romance e batalhas épicas.',
+            'Este hub reúne produções históricas coreanas catalogadas no HallyuHub, com páginas em português para explorar enredo, elenco e contexto histórico.',
+        ],
+        keywords: ['doramas históricos coreanos', 'sageuk', 'kdrama histórico', 'doramas época coreana'],
+        faq: [
+            { question: 'O que é um sageuk?', answer: 'Sageuk é o nome coreano para dramas de época, normalmente ambientados nas dinastias Joseon, Goryeo ou Silla, mesclando história real com ficção.' },
+            { question: 'Quais períodos históricos aparecem nos doramas?', answer: 'Os doramas históricos geralmente se passam na Dinastia Joseon (1392-1897), mas há produções em outros períodos como Goryeo e nos anos coloniais.' },
+        ],
+    },
+
     {
         slug: 'baekhyun',
         kind: 'artists',
@@ -1721,6 +2060,72 @@ export const ARCHIVE_HUBS: ArchiveHub[] = [
         faq: [
             { question: 'Baekhyun ainda é membro do EXO?', answer: 'Sim. Baekhyun é membro do EXO desde o debut do grupo em 2012. Ele também é parte do subgrupo EXO-CBX (com Chen e Xiumin) e tem carreira solo ativa.' },
             { question: 'Quais são os maiores hits solo de Baekhyun?', answer: 'Os maiores hits solo de Baekhyun incluem "UN Village" (2019), "Candy" (2019), "Psycho" (2020) e "Bambi" (2021). Seu mini-álbum "Delight" foi o mais vendido por um artista solo coreano masculino em 2020.' },
+        ],
+    },
+
+    // ── Hubs temáticos de alta demanda de busca ────────────────────────────────
+    {
+        slug: 'atores-coreanos',
+        kind: 'artists',
+        title: 'Atores coreanos',
+        shortTitle: 'Atores coreanos',
+        description: 'Conheça atores coreanos com perfis em português, filmografia, doramas, carreira e curiosidades sobre o entretenimento coreano.',
+        intro: [
+            'Os atores coreanos conquistaram o mundo não apenas pelos K-Dramas, mas por um nível de craft que vai do romance à ação e ao drama psicológico.',
+            'Este hub reúne perfis em português de atores do entretenimento coreano para facilitar a descoberta, navegação por produções e histórico de carreira.',
+        ],
+        keywords: ['atores coreanos', 'ator kdrama', 'atores kdrama', 'atores coreanos famosos'],
+        faq: [
+            { question: 'O hub inclui idols que atuam?', answer: 'Sim. Vários idols do K-Pop também atuam em doramas e filmes. Quando há perfil com produções vinculadas, eles podem aparecer neste hub.' },
+            { question: 'As páginas mostram a filmografia completa?', answer: 'Quando disponível, cada perfil pode mostrar produções, curiosidades, redes oficiais e histórico de carreira no HallyuHub.' },
+        ],
+    },
+    {
+        slug: 'doramas-romanticos',
+        kind: 'productions',
+        title: 'Doramas coreanos românticos',
+        shortTitle: 'Doramas românticos',
+        description: 'Descubra os melhores doramas românticos coreanos com sinopse, elenco, avaliação e onde assistir.',
+        intro: [
+            'Os romances coreanos definiram um gênero único no mundo: com OSTs inesquecíveis, química de elenco, e histórias que equilibram drama e leveza de forma incomum.',
+            'Este hub reúne produções coreanas de romance catalogadas no HallyuHub, com páginas em português para entender elenco, sinopse e onde assistir.',
+        ],
+        keywords: ['doramas românticos', 'kdramas românticos', 'doramas de romance coreano', 'romance coreano netflix'],
+        faq: [
+            { question: 'O que faz um bom dorama romântico coreano?', answer: 'Um bom dorama romântico coreano combina química entre os protagonistas, um OST marcante, conflitos emocionais bem desenvolvidos e a famosa lentidão intencional que cria tensão antes do casal se unir.' },
+            { question: 'Qual plataforma tem mais doramas românticos?', answer: 'Netflix, Disney+ e Amazon Prime têm crescido muito no catálogo de K-Dramas românticos, mas plataformas asiáticas como Viki e Kocowa ainda têm os maiores acervos históricos.' },
+        ],
+    },
+    {
+        slug: 'grupos-kpop-4a-geracao',
+        kind: 'groups',
+        title: 'Grupos de K-Pop da 4ª geração',
+        shortTitle: 'K-Pop 4ª geração',
+        description: 'Conheça os grupos de K-Pop da quarta geração com perfis em português, integrantes, carreira e músicas.',
+        intro: [
+            'A quarta geração do K-Pop trouxe grupos que debutaram a partir de 2018 e redefiniu a relação entre artistas e fãs com mais interatividade digital e conceitos mais variados.',
+            'Este hub reúne grupos da 4ª geração cadastrados no HallyuHub para facilitar a descoberta de integrantes, carreira e conteúdos relacionados.',
+        ],
+        keywords: ['kpop 4a geração', '4th gen kpop', 'grupos kpop novos', 'kpop 2020 2021 2022'],
+        faq: [
+            { question: 'Quando começou a 4ª geração do K-Pop?', answer: 'A 4ª geração do K-Pop é geralmente considerada como iniciada entre 2018 e 2020, com grupos como ATEEZ, Stray Kids, ITZY, aespa e TXT entre os mais representativos.' },
+            { question: 'O que diferencia a 4ª geração?', answer: 'A 4ª geração se destaca pela forte presença nas redes sociais, conceitos mais sombrios ou experimentais, diversidade de países de origem dos integrantes e conexão direta com fãs via plataformas digitais.' },
+        ],
+    },
+    {
+        slug: 'kpop-idols-famosos',
+        kind: 'artists',
+        title: 'Idols de K-Pop mais famosos',
+        shortTitle: 'Idols famosos',
+        description: 'Conheça os idols de K-Pop mais famosos do mundo com perfis em português, carreira, grupos, músicas e curiosidades.',
+        intro: [
+            'O fenômeno idol coreano vai além da música: envolve treinamento rigoroso, conceitos visuais únicos, fandoms globais e uma indústria que gera bilhões por ano.',
+            'Este hub reúne os idols com maior destaque no HallyuHub para facilitar a descoberta de perfis, grupos relacionados e conteúdos editoriais.',
+        ],
+        keywords: ['idols kpop famosos', 'idols coreanos', 'kpop idols mais famosos', 'kpop artistas'],
+        faq: [
+            { question: 'O que é um idol coreano?', answer: 'Um idol coreano é um artista formado por uma agência de entretenimento que passou por anos de treinamento em canto, dança e performance antes de debutar em um grupo ou solo.' },
+            { question: 'Quais são os idols mais famosos do mundo?', answer: 'Internacionalmente, os membros do BTS têm o maior alcance global, mas outros como Jennie (BLACKPINK), Karina (aespa), IU e Lisa também estão entre os mais reconhecidos fora da Coreia.' },
         ],
     },
 ]
@@ -1742,6 +2147,10 @@ export function getRelatedArtistHubs(input: {
     const isActor = roles.some(role => ACTOR_ROLE_TERMS.some(term => role.includes(term)))
     const slugs = [
         input.gender === 1 && isSinger ? 'cantoras-kpop' : null,
+        input.gender === 2 && isSinger ? 'cantores-kpop' : null,
+        input.gender === 1 && isActor ? 'atrizes-coreanas' : null,
+        input.gender === 2 && isActor ? 'atores-coreanos' : null,
+        isSinger ? 'kpop-idols-famosos' : null,
         isSinger && (input.activeGroupCount ?? 0) === 0 ? 'artistas-solo-kpop' : null,
         isSinger && (isActor || (input.productionCount ?? 0) > 0) ? 'idols-que-atuam-em-doramas' : null,
     ].filter(Boolean) as string[]
@@ -1769,6 +2178,7 @@ export function getRelatedProductionHubs(input: { streamingPlatforms?: string[] 
         values.some(v => v.includes('netflix')) ? 'doramas-coreanos-netflix' : null,
         values.some(v => v.includes('prime') || v.includes('amazon')) ? 'doramas-amazon-prime' : null,
         values.some(v => v.includes('histor') || v.includes('sageuk') || v.includes('joseon') || v.includes('goryeo')) ? 'doramas-historicos-coreanos' : null,
+        values.some(v => v.includes('roman') || v.includes('rom-com') || v.includes('romance')) ? 'doramas-romanticos' : null,
     ].filter(Boolean) as string[]
     return slugs.map(slug => ARCHIVE_HUB_BY_SLUG[slug]).filter(Boolean)
 }

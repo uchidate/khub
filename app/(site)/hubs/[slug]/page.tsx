@@ -109,6 +109,29 @@ async function getHubItems(hub: ArchiveHub) {
                     roles: { hasSome: SINGER_ROLES },
                     memberships: { none: { isActive: true } },
                 }
+                : hub.slug === 'cantores-kpop'
+                ? {
+                    ...commonWhere,
+                    gender: 2,
+                    roles: { hasSome: SINGER_ROLES },
+                }
+                : hub.slug === 'atrizes-coreanas'
+                ? {
+                    ...commonWhere,
+                    gender: 1,
+                    roles: { hasSome: ACTOR_ROLES },
+                }
+                : hub.slug === 'atores-coreanos'
+                ? {
+                    ...commonWhere,
+                    gender: 2,
+                    roles: { hasSome: ACTOR_ROLES },
+                }
+                : hub.slug === 'kpop-idols-famosos'
+                ? {
+                    ...commonWhere,
+                    roles: { hasSome: SINGER_ROLES },
+                }
                 : {
                     ...commonWhere,
                     gender: 1,
@@ -139,12 +162,12 @@ async function getHubItems(hub: ArchiveHub) {
     }
 
     if (hub.kind === 'groups') {
+        const isMaleHub = hub.slug === 'grupos-masculinos-kpop'
+        const is4thGen = hub.slug === 'grupos-kpop-4a-geracao'
         const groups = await prisma.musicalGroup.findMany({
-            where: {
-                isHidden: false,
-                slug: { not: null },
-                members: { some: { isActive: true, artist: { gender: 1 } } },
-            },
+            where: is4thGen
+                ? { isHidden: false, slug: { not: null }, debutDate: { gte: new Date('2018-01-01') } }
+                : { isHidden: false, slug: { not: null }, members: { some: { isActive: true, artist: { gender: isMaleHub ? 2 : 1 } } } },
             select: {
                 id: true,
                 slug: true,
@@ -164,14 +187,47 @@ async function getHubItems(hub: ArchiveHub) {
 
         return groups
             .filter(group => {
+                if (is4thGen) return true
                 const female = group.members.filter(member => member.artist.gender === 1).length
                 const male = group.members.filter(member => member.artist.gender === 2).length
-                return female >= Math.max(1, male)
+                return isMaleHub ? male >= Math.max(1, female) : female >= Math.max(1, male)
             })
             .slice(0, 48) as GroupItem[]
     }
 
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
+
+    const platformFilter =
+        hub.slug === 'doramas-amazon-prime'
+            ? {
+                OR: [
+                    { streamingPlatforms: { has: 'Amazon Prime Video' } },
+                    { streamingPlatforms: { has: 'Prime Video' } },
+                    { network: { contains: 'Amazon', mode: 'insensitive' as const } },
+                ],
+            }
+            : hub.slug === 'doramas-historicos-coreanos'
+            ? {
+                OR: [
+                    { tags: { hasSome: ['sageuk', 'Sageuk', 'histórico', 'Histórico', 'historico', 'period', 'joseon', 'Joseon'] } },
+                    { type: { in: ['Sageuk', 'sageuk', 'K-Drama Histórico', 'Historical'] } },
+                ],
+            }
+            : hub.slug === 'doramas-romanticos'
+            ? {
+                OR: [
+                    { tags: { hasSome: ['romance', 'romântico', 'romantico', 'Romance', 'Romantic', 'romantic comedy', 'rom-com'] } },
+                    { type: { contains: 'romance', mode: 'insensitive' as const } },
+                ],
+            }
+            : {
+                OR: [
+                    { streamingPlatforms: { has: 'Netflix' } },
+                    { network: { contains: 'Netflix', mode: 'insensitive' as const } },
+                    { sourceUrls: { has: 'Netflix' } },
+                ],
+            }
+
     return prisma.production.findMany({
         where: {
             ...ageFilter,
@@ -184,13 +240,7 @@ async function getHubItems(hub: ArchiveHub) {
             ],
             AND: [
                 { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
-                {
-                    OR: [
-                        { streamingPlatforms: { has: 'Netflix' } },
-                        { network: { contains: 'Netflix', mode: 'insensitive' } },
-                        { sourceUrls: { has: 'Netflix' } },
-                    ],
-                },
+                platformFilter,
             ],
         },
         select: {
