@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getStreamingConfig } from '@/lib/config/streaming-platforms'
+import { formatProductionType } from '@/lib/utils/production-type'
 
 type ArtistFilmographyProduction = {
   id: string
@@ -61,7 +62,7 @@ export function ArtistFilmographyList({ productions, streamingSignals, initialCo
                   <span className="text-[10px] font-black text-accent font-mono">TOP {streamSignal.rank} · {getStreamingConfig(streamSignal.source).label}</span>
                 )}
               </span>
-              <span className="text-muted text-[12px] pr-4">{production.type}</span>
+              <span className="text-muted text-[12px] pr-4">{formatProductionType(production.type)}</span>
               <span className="flex items-center gap-2 pr-4">
                 <span className="flex-1 h-1 bg-border overflow-hidden">
                   <span className="block h-full" style={{ width: `${Math.min((rating / 10) * 100, 100)}%`, background: rating >= 8 ? 'var(--accent, #ee2244)' : '#0a0a0a' }} />
@@ -88,7 +89,7 @@ export function ArtistFilmographyList({ productions, streamingSignals, initialCo
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-[14px] text-foreground group-hover:text-accent transition-colors truncate">{production.titlePt}</p>
                 <p className="font-mono text-[11px] text-muted">
-                  {production.year} · {production.type}
+                  {production.year} · {formatProductionType(production.type)}
                   {production.voteAverage && production.voteAverage > 0 ? ` · ★ ${production.voteAverage.toFixed(1)}` : ''}
                   {streamSignal ? ` · TOP ${streamSignal.rank}` : ''}
                 </p>

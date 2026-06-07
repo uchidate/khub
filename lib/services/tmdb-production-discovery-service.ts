@@ -304,7 +304,7 @@ export class TMDBProductionDiscoveryService {
     return {
       tmdbId: details.id,
       tmdbType: 'tv',
-      type: 'K-Drama',
+      type: 'SERIE',
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || '',
@@ -385,7 +385,7 @@ export class TMDBProductionDiscoveryService {
     return {
       tmdbId: details.id,
       tmdbType: 'movie',
-      type: 'Filme',
+      type: 'FILME',
       titlePt: title,
       titleKr: koreanTitle,
       synopsis: details.overview || '',

@@ -60,7 +60,7 @@ async function main() {
     let noImages = 0
 
     for (const prod of productions) {
-        const isMovie = prod.type === 'Filme'
+        const isMovie = prod.type === 'FILME'
         const mediaType = isMovie ? 'movie' : 'tv'
         const label = `${prod.titlePt} (${prod.tmdbId})`
 

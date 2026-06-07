@@ -6,10 +6,8 @@ import { withLogging } from '@/lib/server/withLogging'
 export const dynamic = 'force-dynamic'
 
 const TYPE_MAP: Record<string, string[]> = {
-    MOVIE:       ['FILME', 'Filme', 'MOVIE'],
-    SERIES:      ['SERIE', 'serie', 'SERIES', 'K-Drama', 'SHOW'],
-    SPECIAL:     ['SPECIAL', 'ESPECIAL'],
-    DOCUMENTARY: ['DOCUMENTARY', 'DOCUMENTARIO', 'DOCUMENTÁRIO'],
+    MOVIE:  ['FILME'],
+    SERIES: ['SERIE'],
 }
 
 async function handler(request: NextRequest) {
