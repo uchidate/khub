@@ -103,27 +103,11 @@ export default async function LojaPage({ searchParams }: { searchParams: Promise
             .map((p, i) => ({
                 '@type': 'ListItem', position: i + 1,
                 item: {
-                    '@type': 'Product',
+                    '@type': 'WebPage',
                     name: p.name.slice(0, 100),
                     image: p.imageUrl,
+                    url: p.affiliateUrl,
                     ...(p.description ? { description: p.description.slice(0, 300) } : {}),
-                    offers: {
-                        '@type': 'Offer',
-                        price: p.price!.replace(/[^0-9,.]/g, '').replace(',', '.'),
-                        priceCurrency: 'BRL',
-                        availability: 'https://schema.org/InStock',
-                        url: p.affiliateUrl,
-                    },
-                    ...(p.rating && p.rating > 0 ? {
-                        aggregateRating: {
-                            '@type': 'AggregateRating',
-                            ratingValue: p.rating.toFixed(1),
-                            bestRating: '5',
-                            worstRating: '1',
-                            ratingCount: p.reviewCount ?? 1,
-                            reviewCount: p.reviewCount ?? 1,
-                        },
-                    } : {}),
                 },
             })),
     } : null
