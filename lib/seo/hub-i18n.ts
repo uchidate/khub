@@ -1,15 +1,19 @@
-export type HubLocale = 'pt' | 'en' | 'es'
+export type HubLocale = 'pt' | 'en' | 'es' | 'th' | 'id'
 
 export const HUB_LOCALE_BASE_PATH: Record<HubLocale, string> = {
   pt: '/hubs',
   en: '/en/hubs',
   es: '/es/hubs',
+  th: '/th/hubs',
+  id: '/id/hubs',
 }
 
 export const HUB_LOCALE_HTML_LANG: Record<HubLocale, string> = {
   pt: 'pt-BR',
   en: 'en-US',
   es: 'es-ES',
+  th: 'th-TH',
+  id: 'id-ID',
 }
 
 type HubIndexUiStrings = {
@@ -49,6 +53,24 @@ export const HUB_INDEX_UI_STRINGS: Record<HubLocale, HubIndexUiStrings> = {
     eyebrow: 'Navegación editorial',
     heading: 'Guías para descubrir el universo Hallyu',
     intro: 'Explora colecciones de artistas, grupos y producciones organizadas por intención de búsqueda.',
+  },
+  th: {
+    metaTitle: 'คู่มือและฮับ K-Pop และ K-Drama',
+    metaDescription: 'ฮับบรรณาธิการจาก HallyuHub เพื่อค้นพบศิลปิน วงดนตรี ไอดอล ซีรีส์เกาหลี และวัฒนธรรมเกาหลีตามหัวข้อ',
+    collectionName: 'คู่มือ HallyuHub',
+    collectionDescription: 'คอลเลกชันบรรณาธิการสำหรับสำรวจ K-Pop, K-Drama และวัฒนธรรมเกาหลี',
+    eyebrow: 'การนำทางบรรณาธิการ',
+    heading: 'คู่มือสำรวจโลกแห่ง Hallyu',
+    intro: 'สำรวจคอลเลกชันศิลปิน วงดนตรี และผลงานที่จัดเรียงตามความตั้งใจในการค้นหา',
+  },
+  id: {
+    metaTitle: 'Panduan dan hub K-Pop dan K-Drama',
+    metaDescription: 'Hub editorial dari HallyuHub untuk menemukan artis, grup, idola, drama Korea, dan budaya Korea berdasarkan topik.',
+    collectionName: 'Panduan HallyuHub',
+    collectionDescription: 'Koleksi editorial untuk menjelajahi K-Pop, K-Drama, dan budaya Korea.',
+    eyebrow: 'Navigasi editorial',
+    heading: 'Panduan untuk menjelajahi dunia Hallyu',
+    intro: 'Jelajahi koleksi artis, grup, dan produksi yang disusun berdasarkan maksud pencarian.',
   },
 }
 
@@ -106,12 +128,40 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     defaultProductionSubtitle: 'Drama coreano',
     debutYear: (year) => `Debut en ${year}`,
   },
+  th: {
+    eyebrow: 'คู่มือ HallyuHub',
+    updatedOn: (date) => `อัปเดตเมื่อ ${date}`,
+    resultsSelected: (count) => `คัดสรรแล้ว ${count} รายการ`,
+    exploreProfiles: 'สำรวจโปรไฟล์',
+    emptyState: 'ยังไม่พบรายการสำหรับฮับนี้ในตอนนี้',
+    faqTitle: 'คำถามที่พบบ่อย',
+    breadcrumbHubs: 'ฮับ',
+    defaultArtistSubtitle: 'ศิลปิน',
+    defaultGroupSubtitle: 'วง K-Pop',
+    defaultProductionSubtitle: 'ซีรีส์เกาหลี',
+    debutYear: (year) => `เดบิวต์ในปี ${year}`,
+  },
+  id: {
+    eyebrow: 'Panduan HallyuHub',
+    updatedOn: (date) => `Diperbarui pada ${date}`,
+    resultsSelected: (count) => `${count} hasil pilihan`,
+    exploreProfiles: 'Jelajahi profil',
+    emptyState: 'Belum ada item yang ditemukan untuk hub ini saat ini.',
+    faqTitle: 'Pertanyaan yang sering diajukan',
+    breadcrumbHubs: 'Hub',
+    defaultArtistSubtitle: 'Artis',
+    defaultGroupSubtitle: 'Grup K-Pop',
+    defaultProductionSubtitle: 'Drama Korea',
+    debutYear: (year) => `Debut pada ${year}`,
+  },
 }
 
 const HUB_LOCALE_DATE_LOCALE: Record<HubLocale, string> = {
   pt: 'pt-BR',
   en: 'en-US',
   es: 'es-ES',
+  th: 'th-TH',
+  id: 'id-ID',
 }
 
 export function formatHubDate(locale: HubLocale, date: Date): string {
