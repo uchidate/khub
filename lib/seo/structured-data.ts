@@ -19,6 +19,13 @@ export function isoDateOnly(value: Date | string | null | undefined): string | u
     return date.toISOString().split('T')[0]
 }
 
+export function isoDateTime(value: Date | string | null | undefined): string | undefined {
+    if (!value) return undefined
+    const date = value instanceof Date ? value : new Date(value)
+    if (Number.isNaN(date.getTime())) return undefined
+    return date.toISOString()
+}
+
 export function cleanSameAs(urls: Array<string | null | undefined>): string[] {
     const seen = new Set<string>()
     return urls
@@ -55,7 +62,7 @@ export function youtubeVideoSchema(input: {
         embedUrl: `https://www.youtube.com/embed/${id}`,
         url: input.url,
         thumbnailUrl: input.thumbnailUrl ?? `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-        uploadDate: isoDateOnly(input.uploadDate) ?? '2025-01-01',
+        uploadDate: isoDateTime(input.uploadDate) ?? '2025-01-01T00:00:00Z',
         inLanguage: 'ko',
         isFamilyFriendly: true,
         mainEntityOfPage: input.pageUrl,
