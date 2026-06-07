@@ -166,9 +166,9 @@ export function inferContentType(
     productions: { type?: string }[] = [],
 ): MatchInput['contentType'] {
     const roleStr = roles.join(' ').toLowerCase()
-    const prodTypes = productions.map(p => p.type?.toLowerCase() ?? '').join(' ')
+    const hasProductions = productions.length > 0
 
-    if (roleStr.includes('actor') || roleStr.includes('actress') || prodTypes.includes('drama') || prodTypes.includes('movie')) {
+    if (roleStr.includes('actor') || roleStr.includes('actress') || hasProductions) {
         return 'kdrama'
     }
     if (roleStr.includes('singer') || roleStr.includes('idol') || roleStr.includes('rapper') || roleStr.includes('dancer')) {

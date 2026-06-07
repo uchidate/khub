@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { nameToGradient } from '@/lib/utils'
 import Image from 'next/image'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { formatProductionType } from '@/lib/utils/production-type'
 
 interface Production {
     id: string
@@ -41,16 +42,7 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
     { value: '', label: 'Todas' },
     { value: 'MOVIE', label: 'Filmes' },
     { value: 'SERIES', label: 'Séries' },
-    { value: 'SPECIAL', label: 'Especiais' },
-    { value: 'DOCUMENTARY', label: 'Documentários' },
 ]
-
-const TYPE_LABEL: Record<string, string> = {
-    FILME: 'Filme', Filme: 'Filme', MOVIE: 'Filme',
-    SERIE: 'Série', serie: 'Série', SERIES: 'Série', 'K-Drama': 'K-Drama', SHOW: 'Show',
-    SPECIAL: 'Especial', ESPECIAL: 'Especial',
-    DOCUMENTARY: 'Documentário', DOCUMENTARIO: 'Documentário',
-}
 
 const AGE_RATING_OPTIONS: { value: string; label: string }[] = [
     { value: '', label: 'Classificadas' },
@@ -82,7 +74,7 @@ const AGE_BADGE_STYLE: Record<string, string> = {
 
 
 function ProductionCard({ prod, priority }: { prod: Production; priority?: boolean }) {
-    const typeLabel = prod.type ? (TYPE_LABEL[prod.type] ?? prod.type) : null
+    const typeLabel = formatProductionType(prod.type)
     const imageUrl = prod.imageUrl || prod.backdropUrl
     const score = prod.voteAverage ? Math.round(prod.voteAverage * 10) / 10 : null
 
@@ -354,7 +346,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                     )}
                                 </div>
                                 <div className="absolute bottom-0 left-0 right-0 p-5">
-                                    <span className="font-mono text-caption font-bold uppercase tracking-[0.08em] text-accent/90">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}{p.year ? ` · ${p.year}` : ''}</span>
+                                    <span className="font-mono text-caption font-bold uppercase tracking-[0.08em] text-accent/90">{formatProductionType(p.type)}{p.year ? ` · ${p.year}` : ''}</span>
                                     <h3 className="text-[32px] font-black tracking-[-0.04em] leading-[1.0] mt-1 text-white group-hover:text-accent transition-colors">{p.titlePt}</h3>
                                     {p.titleKr && <p className="text-small text-white/55 mt-1">{p.titleKr}</p>}
                                 </div>
@@ -383,7 +375,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                                 </div>
                                             )}
                                             <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                                                <span className="font-mono text-micro font-bold uppercase tracking-wide text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
+                                                <span className="font-mono text-micro font-bold uppercase tracking-wide text-accent">{formatProductionType(p.type)}</span>
                                                 <h3 className="text-sm font-black tracking-tight leading-tight mt-0.5 text-white group-hover:text-accent transition-colors line-clamp-2">{p.titlePt}</h3>
                                                 {p.titleKr && <p className="text-caption text-white/50 mt-0.5 truncate">{p.titleKr}</p>}
                                             </div>
@@ -417,7 +409,7 @@ export function ProductionsList({ hideFilter = false, featuredProductions = [] }
                                     )}
                                 </div>
                                 <div className="pt-3 pb-4 border-b border-border/50">
-                                    <span className="font-mono text-micro font-bold uppercase tracking-[0.06em] text-accent">{p.type ? (TYPE_LABEL[p.type] ?? p.type) : ''}</span>
+                                    <span className="font-mono text-micro font-bold uppercase tracking-[0.06em] text-accent">{formatProductionType(p.type)}</span>
                                     <h3 className={`font-display font-black tracking-[-0.03em] leading-[1.05] mt-1 group-hover:text-accent transition-colors ${i === 0 ? 'text-[28px]' : 'text-[20px]'}`}>{p.titlePt}</h3>
                                     {p.titleKr && <p className="text-small text-muted mt-0.5">{p.titleKr}</p>}
                                 </div>

@@ -39,7 +39,7 @@ interface QueueResponse {
 }
 
 type FilterMode = 'incomplete' | 'enriched' | 'all'
-type TypeFilter = 'all' | 'K-Drama' | 'SERIE' | 'Filme' | 'FILME'
+type TypeFilter = 'all' | 'SERIE' | 'FILME'
 
 const FILTER_LABELS: Record<FilterMode, string> = {
     incomplete: 'Incompletos',
@@ -48,10 +48,9 @@ const FILTER_LABELS: Record<FilterMode, string> = {
 }
 
 const TYPE_LABELS: { value: TypeFilter; label: string }[] = [
-    { value: 'all',     label: 'Todos' },
-    { value: 'K-Drama', label: 'K-Drama' },
-    { value: 'SERIE',   label: 'Série' },
-    { value: 'Filme',   label: 'Filme' },
+    { value: 'all',   label: 'Todos' },
+    { value: 'SERIE', label: 'Série' },
+    { value: 'FILME', label: 'Filme' },
 ]
 
 const FIELD_DOTS = [

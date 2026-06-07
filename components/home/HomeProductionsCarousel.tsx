@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { SectionTitleBar } from '@/components/ui/SectionTitleBar'
+import { formatProductionType, isMovieProductionType } from '@/lib/utils/production-type'
 
 interface ProductionItem {
     id: string
@@ -30,25 +31,11 @@ const CARD_FALLBACK_COLORS = [
 ]
 
 function getTypeLabel(type: string) {
-    const map: Record<string, string> = {
-        DRAMA: "Drama",
-        FILM: "Filme",
-        VARIETY: "Variety",
-        DOCUMENTARY: "Doc",
-        WEBSERIES: "Web",
-    }
-    return map[type] ?? type
+    return formatProductionType(type)
 }
 
 function getTypeColor(type: string) {
-    const map: Record<string, string> = {
-        DRAMA: "bg-[#6d28d9] text-white",
-        FILM: "bg-[#0ea5e9] text-white",
-        VARIETY: "bg-[#10b981] text-white",
-        DOCUMENTARY: "bg-[#f59e0b] text-white",
-        WEBSERIES: "bg-[#ff2d78] text-white",
-    }
-    return map[type] ?? "bg-muted text-white"
+    return isMovieProductionType(type) ? "bg-[#0ea5e9] text-white" : "bg-[#6d28d9] text-white"
 }
 
 function getStreamingClass(platform: string) {
@@ -60,9 +47,7 @@ function getStreamingClass(platform: string) {
 }
 
 function getTypeTagClass(type: string) {
-    if (type === 'DRAMA') return 'bg-[#7c3aed]/10 text-[#7c3aed]'
-    if (type === 'FILM') return 'bg-[#0ea5e9]/10 text-[#0ea5e9]'
-    return 'bg-accent-soft text-accent'
+    return isMovieProductionType(type) ? 'bg-[#0ea5e9]/10 text-[#0ea5e9]' : 'bg-[#7c3aed]/10 text-[#7c3aed]'
 }
 
 function getInitialsFromTitle(title: string) {

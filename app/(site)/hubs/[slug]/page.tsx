@@ -246,7 +246,7 @@ async function getHubItems(hub: ArchiveHub) {
             isHidden: false,
             slug: { not: null },
             OR: [
-                { type: { in: ['SERIE', 'SERIES', 'K-Drama', 'SHOW'] } },
+                { type: 'SERIE' },
                 { tmdbType: 'tv' },
             ],
             AND: hub.year

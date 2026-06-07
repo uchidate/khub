@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma"
+import { formatProductionType, isMovieProductionType } from "@/lib/utils/production-type"
 import { applySeoOverride } from '@/lib/seo/apply-override'
 import { getTranslation } from "@/lib/translations"
 import Link from "next/link"
@@ -279,9 +280,9 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
         return m === 0 ? `${h}h` : `${h}h ${m}min`
     }
 
-    const isMovie = production.type === 'MOVIE' || production.type === 'FILM'
+    const isMovie = isMovieProductionType(production.type)
     const schemaType = isMovie ? 'Movie' : 'TVSeries'
-    const typeLabel = isMovie ? 'Filme' : production.type === 'SERIE' || production.type === 'K-Drama' ? 'Série' : production.type
+    const typeLabel = formatProductionType(production.type)
     const castActors = production.artists.slice(0, 10).map(a => ({
         "@type": "Person",
         "name": a.artist.nameRomanized,
@@ -429,7 +430,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-4">
                                 {production.year && <span className="text-[#ff2d78] font-bold text-sm">{production.year}</span>}
                                 <span className="w-1 h-1 bg-white/40 rounded-full" />
-                                <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-white/20 rounded-sm text-white/70">{production.type}</span>
+                                <span className="uppercase tracking-widest text-xs font-black px-2 py-0.5 border border-white/20 rounded-sm text-white/70">{formatProductionType(production.type)}</span>
                                 {production.episodeCount && (
                                     <span className="text-xs font-bold text-white/70">{production.episodeCount} ep.</span>
                                 )}
@@ -917,7 +918,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                                                 )}
                                                 <div className="absolute bottom-2 left-2">
                                                     <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-black/60 backdrop-blur-sm rounded text-white/70">
-                                                        {rel.type}
+                                                        {formatProductionType(rel.type)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -977,7 +978,7 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                             )}
                             <div className="flex justify-between px-4 py-3">
                                 <span className="text-xs font-black text-muted uppercase tracking-widest">Tipo</span>
-                                <span className="text-sm font-bold text-foreground uppercase">{production.type}</span>
+                                <span className="text-sm font-bold text-foreground uppercase">{formatProductionType(production.type)}</span>
                             </div>
                             {production.runtime && production.runtime > 0 && !production.episodeCount && (
                                 <div className="flex justify-between px-4 py-3">

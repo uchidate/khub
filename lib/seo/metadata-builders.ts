@@ -1,3 +1,5 @@
+import { isMovieProductionType } from '@/lib/utils/production-type'
+
 type ArtistProductionSeoInput = {
     titlePt: string
     year?: number | null
@@ -63,13 +65,8 @@ function listNames(names: string[], max = 2): string {
     return `${visible.slice(0, -1).join(', ')} e ${visible[visible.length - 1]}`
 }
 
-function isMovieType(type?: string | null): boolean {
-    const normalized = (type ?? '').toUpperCase()
-    return normalized === 'MOVIE' || normalized === 'FILM' || normalized === 'FILME'
-}
-
 export function productionTypeLabel(type?: string | null): string {
-    return isMovieType(type) ? 'filme coreano' : 'dorama coreano'
+    return isMovieProductionType(type) ? 'filme coreano' : 'dorama coreano'
 }
 
 export function buildArtistSeoTitle(input: ArtistSeoInput): string {
@@ -119,10 +116,10 @@ export function buildProductionSeoTitle(input: ProductionSeoInput): string {
     const year = input.year ? ` (${input.year})` : ''
 
     const titleWithYear = `${input.title}${year}: ${titleIntent}`
-    if (!isMovieType(input.type) && titleWithYear.length <= BASE_TITLE_LIMIT) return titleWithYear
+    if (!isMovieProductionType(input.type) && titleWithYear.length <= BASE_TITLE_LIMIT) return titleWithYear
 
     const title = `${input.title}: ${titleIntent}`
-    if (!isMovieType(input.type) && title.length <= BASE_TITLE_LIMIT) return title
+    if (!isMovieProductionType(input.type) && title.length <= BASE_TITLE_LIMIT) return title
 
     const fallbackWithYear = `${input.title}${year}: elenco do ${kind}`
     if (fallbackWithYear.length <= BASE_TITLE_LIMIT) return fallbackWithYear

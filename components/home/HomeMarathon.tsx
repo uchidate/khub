@@ -17,9 +17,8 @@ export interface MarathonProduction {
 
 const TABS = [
     { label: 'Todos', value: 'all' },
-    { label: 'K-Drama', value: 'K-Drama' },
     { label: 'Séries', value: 'SERIE' },
-    { label: 'Filmes', value: 'Filme' },
+    { label: 'Filmes', value: 'FILME' },
 ]
 
 export function HomeMarathon({ productions }: { productions: MarathonProduction[] }) {
@@ -29,7 +28,7 @@ export function HomeMarathon({ productions }: { productions: MarathonProduction[
 
     const filtered = activeTab === 'all'
         ? productions
-        : productions.filter(p => p.type === activeTab || p.type.toLowerCase() === activeTab.toLowerCase())
+        : productions.filter(p => p.type === activeTab)
 
     return (
         <section className="border-b border-border bg-background">
