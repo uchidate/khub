@@ -21,6 +21,16 @@ export async function GET() {
         take: 50000,
     })
 
+    const BIRTHDAY_MONTHS = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']
+    const now = new Date().toISOString()
+    const birthdayUrls = BIRTHDAY_MONTHS.map(mes => `
+  <url>
+    <loc>${escapeXml(`${SITE_URL}/artists/birthdays/${mes}`)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>`).join('')
+
     const urls = artists.map(artist => `
   <url>
     <loc>${escapeXml(`${SITE_URL}/artists/${artist.slug}`)}</loc>
@@ -30,6 +40,6 @@ export async function GET() {
   </url>`).join('')
 
     return xmlResponse(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${birthdayUrls}${urls}
 </urlset>`)
 }
