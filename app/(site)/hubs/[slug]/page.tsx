@@ -94,6 +94,11 @@ async function getHubItems(hub: ArchiveHub) {
                 ...commonWhere,
                 memberships: { some: { group: { slug: hub.groupSlug } } },
             }
+            : hub.agencyName
+            ? {
+                ...commonWhere,
+                agency: { name: hub.agencyName },
+            }
             : hub.slug === 'idols-que-atuam-em-doramas'
             ? {
                 ...commonWhere,
@@ -164,10 +169,13 @@ async function getHubItems(hub: ArchiveHub) {
     if (hub.kind === 'groups') {
         const isMaleHub = hub.slug === 'grupos-masculinos-kpop'
         const is4thGen = hub.slug === 'grupos-kpop-4a-geracao'
+        const groupWhere = hub.agencyName
+            ? { isHidden: false, slug: { not: null }, agency: { name: hub.agencyName } }
+            : is4thGen
+            ? { isHidden: false, slug: { not: null }, debutDate: { gte: new Date('2018-01-01') } }
+            : { isHidden: false, slug: { not: null }, members: { some: { isActive: true, artist: { gender: isMaleHub ? 2 : 1 } } } }
         const groups = await prisma.musicalGroup.findMany({
-            where: is4thGen
-                ? { isHidden: false, slug: { not: null }, debutDate: { gte: new Date('2018-01-01') } }
-                : { isHidden: false, slug: { not: null }, members: { some: { isActive: true, artist: { gender: isMaleHub ? 2 : 1 } } } },
+            where: groupWhere,
             select: {
                 id: true,
                 slug: true,
@@ -187,7 +195,7 @@ async function getHubItems(hub: ArchiveHub) {
 
         return groups
             .filter(group => {
-                if (is4thGen) return true
+                if (hub.agencyName || is4thGen) return true
                 const female = group.members.filter(member => member.artist.gender === 1).length
                 const male = group.members.filter(member => member.artist.gender === 2).length
                 return isMaleHub ? male >= Math.max(1, female) : female >= Math.max(1, male)
@@ -228,9 +236,12 @@ async function getHubItems(hub: ArchiveHub) {
                 ],
             }
 
+    const yearFilter = hub.year ? { year: hub.year } : {}
+
     return prisma.production.findMany({
         where: {
             ...ageFilter,
+            ...yearFilter,
             flaggedAsNonKorean: false,
             isHidden: false,
             slug: { not: null },
@@ -238,10 +249,12 @@ async function getHubItems(hub: ArchiveHub) {
                 { type: { in: ['SERIE', 'SERIES', 'K-Drama', 'SHOW'] } },
                 { tmdbType: 'tv' },
             ],
-            AND: [
-                { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
-                platformFilter,
-            ],
+            AND: hub.year
+                ? [{ OR: [{ isAdultContent: null }, { isAdultContent: false }] }]
+                : [
+                    { OR: [{ isAdultContent: null }, { isAdultContent: false }] },
+                    platformFilter,
+                ],
         },
         select: {
             id: true,
