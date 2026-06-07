@@ -10,6 +10,52 @@ Registro vivo de erros, causas e decisões aprendidas durante manutenção do Ha
 
 ## Conteúdo e produção
 
+### Execução remota via SSH precisa de helper padronizado
+
+**Erro observado:** correções diretas em produção falharam repetidamente por três motivos diferentes: sandbox local bloqueando SSH, `tsx -` recebendo TypeScript via stdin e shell remoto interpolando `$disconnect`.
+
+**Causa:** comandos longos com `ssh + docker exec + tsx + heredoc` são frágeis. Eles misturam regras do shell local, shell remoto, sandbox da ferramenta e runtime ESM do container.
+
+**Como evitar:**
+
+- Usar `scripts/prod-tsx-eval.sh` para toda execução pontual de Prisma no app de produção.
+- Enviar código por arquivo ou stdin, sem encaixar scripts grandes em `tsx -e`.
+- Para alteração curta e direta, usar `tsx -e` com IIFE assíncrona; `tsx -e` no container compila como CJS e não aceita top-level await.
+- Escrever o snippet como JavaScript compatível, sem `type`, `interface` ou anotações TS quando usar stdin.
+- Importar Prisma com wrapper resiliente dentro do container:
+  `import prismaImport from './lib/prisma'; const prisma = prismaImport?.default ?? prismaImport?.prisma ?? prismaImport`.
+- Encerrar snippets Prisma com `await prisma["$disconnect"]?.()` para não deixar o processo preso pelo pool.
+- Evitar chamar métodos com `$` em comandos inline; usar `prisma["$disconnect"]?.()` apenas dentro de arquivo/stdin, nunca em string interpolada por shell.
+- Não assumir container fixo: o helper detecta o container `ghcr.io/uchidate/khub:latest` ativo.
+
+**Comandos recomendados:**
+
+```bash
+# arquivo temporário/local
+bash scripts/prod-tsx-eval.sh /tmp/fix-artists.js
+
+# stdin
+bash scripts/prod-tsx-eval.sh <<'JS'
+import prisma from './lib/prisma'
+const total = await prisma.artist.count()
+console.log({ total })
+JS
+```
+
+Se o snippet vier por stdin em `tsx -`, prefira:
+
+```js
+import prismaImport from './lib/prisma'
+const prisma = prismaImport?.default ?? prismaImport?.prisma ?? prismaImport
+```
+
+Para mudança curta, o formato mais estável é:
+
+```bash
+ssh -p 22 -i ~/.ssh/id_ed25519 -o BatchMode=yes root@31.97.255.107 \
+  'docker exec CONTAINER sh -lc "tsx -e '\''import p from \"./lib/prisma\"; const prisma=p?.default??p?.prisma??p; (async()=>{ /* Prisma aqui */ process.exit(0)})().catch(e=>{console.error(e);process.exit(1)})'\''"'
+```
+
 ### Páginas podem servir HTML antigo mesmo com banco correto
 
 **Erro observado:** perfis atualizados no banco continuavam antigos no domínio público por causa de ISR/cache.

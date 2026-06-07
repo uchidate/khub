@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { nameToGradient } from '@/lib/utils'
+import { getRoleLabel } from '@/lib/utils/role-labels'
 
 function toRgba(hex: string, alpha: number) {
     const h = hex.replace('#', '')
@@ -55,6 +56,7 @@ interface MemberCardProps {
             nameHangul: string | null
             primaryImageUrl: string | null
             roles: string[]
+            gender?: number | null
             birthDate?: Date | null
             height?: string | null
             birthName?: string | null
@@ -71,7 +73,11 @@ export function GroupMemberCard({ member, faded = false, accent = '#9333ea', isL
     const { artist } = member
     const zodiac = artist.birthDate ? getZodiac(new Date(artist.birthDate)) : null
     const flag = getNationalityFlag(artist.nationality ?? null, artist.birthName ?? null)
-    const soloRoles = artist.roles?.slice(0, 2) ?? []
+    const MUSIC_ROLES = ['CANTOR', 'CANTORA', 'IDOL', 'RAPPER', 'VOCALIST', 'DANCER', 'DANÇARINO', 'DANÇARINA', 'COMPOSITOR', 'COMPOSITORA']
+    const allRoles = artist.roles ?? []
+    const musicRoles = allRoles.filter(r => MUSIC_ROLES.includes(r.toUpperCase()))
+    const displayRoles = (musicRoles.length > 0 ? musicRoles : allRoles).slice(0, 2)
+    const soloRoles = displayRoles.map(r => getRoleLabel(r, artist.gender))
     const age = artist.birthDate
         ? Math.floor((Date.now() - new Date(artist.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
         : null
@@ -166,7 +172,7 @@ export function GroupMemberCard({ member, faded = false, accent = '#9333ea', isL
                 {soloRoles.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                         {soloRoles.map(r => (
-                            <span key={r} className="px-1.5 py-0.5 border border-border text-[9px] font-bold uppercase tracking-wider text-muted">
+                            <span key={r} className="px-1.5 py-0.5 border border-border text-[9px] font-bold uppercase tracking-wider text-muted bg-surface">
                                 {r}
                             </span>
                         ))}
