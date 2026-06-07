@@ -9,8 +9,11 @@ export const revalidate = 3600
 
 export async function GET() {
     const now = new Date().toISOString()
+    const QUIZ_CATEGORIES = ['k-pop', 'k-drama', 'cultura', 'historia']
     const urls = [
         '/hubs',
+        '/quiz',
+        ...QUIZ_CATEGORIES.map(c => `/quiz/${c}`),
         ...ARCHIVE_HUBS.map(hub => `/hubs/${hub.slug}`),
         ...BLOG_CATEGORIES.map(category => `/blog/category/${category.slug}`),
         ...ALL_BLOG_TAGS.slice(0, 50).map(tag => `/blog/tag/${encodeURIComponent(tag)}`),

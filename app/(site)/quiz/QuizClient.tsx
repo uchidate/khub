@@ -348,12 +348,13 @@ function ScoreRanking({ scores }: { scores: QuizStats['scores'] }) {
 
 // ─── Start Screen ─────────────────────────────────────────────────────────────
 
-function StartScreen({ onStart, stats, globalStats }: {
+function StartScreen({ onStart, stats, globalStats, initialCategory }: {
     onStart: (cat: CategoryFilter, diff: Difficulty) => void
     stats: QuizStats
     globalStats: GlobalStats | null
+    initialCategory?: CategoryFilter
 }) {
-    const [category, setCategory] = useState<CategoryFilter>('all')
+    const [category, setCategory] = useState<CategoryFilter>(initialCategory ?? 'all')
     const [difficulty, setDifficulty] = useState<Difficulty>('medium')
 
     const categories: { value: CategoryFilter; label: string; Icon: React.FC<{className?: string}>; sub: string }[] = [
@@ -767,7 +768,7 @@ function ResultScreen({ questions, answers, points, timeHistory, maxTime, onRese
 
 // ─── Main Quiz ────────────────────────────────────────────────────────────────
 
-export function QuizClient() {
+export function QuizClient({ initialCategory }: { initialCategory?: CategoryFilter } = {}) {
     const [screen,          setScreen]          = useState<Screen>('start')
     const [questions,       setQuestions]        = useState<Question[]>([])
     const [difficulty,      setDifficulty]       = useState<Difficulty>('medium')
@@ -956,7 +957,7 @@ export function QuizClient() {
         return () => window.removeEventListener('keydown', handler)
     }, [screen, selected, handleSelect, handleNext])
 
-    if (screen === 'start')  return <StartScreen onStart={handleStart} stats={quizStats} globalStats={globalStats} />
+    if (screen === 'start')  return <StartScreen onStart={handleStart} stats={quizStats} globalStats={globalStats} initialCategory={initialCategory} />
     if (screen === 'result') return (
         <ResultScreen questions={questions} answers={answers} points={points}
             timeHistory={timeHistory} maxTime={timePerQuestion}
