@@ -51,13 +51,13 @@ const SINGER_ROLES = ['CANTOR', 'CANTORA', 'Cantor', 'Cantora', 'Cantor/Cantora'
 const ACTOR_ROLES = ['ATOR', 'ATRIZ', 'Ator', 'Atriz', 'Ator/Atriz', 'ACTOR', 'ACTRESS', 'Actor', 'Actress']
 
 export async function generateStaticParams() {
-    return ARCHIVE_HUBS.map(hub => ({ slug: hub.slug }))
+    return ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt').map(hub => ({ slug: hub.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
     const hub = ARCHIVE_HUB_BY_SLUG[slug]
-    if (!hub) return {}
+    if (!hub || (hub.locale && hub.locale !== 'pt')) return {}
     const canonical = `${BASE_URL}/hubs/${hub.slug}`
     return {
         title: hub.title,
@@ -306,7 +306,7 @@ function subtitle(kind: ArchiveHub['kind'], item: ArtistItem | GroupItem | Produ
 export default async function HubPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
     const hub = ARCHIVE_HUB_BY_SLUG[slug]
-    if (!hub) notFound()
+    if (!hub || (hub.locale && hub.locale !== 'pt')) notFound()
 
     const items = await getHubItems(hub)
     const canonical = `${BASE_URL}/hubs/${hub.slug}`
