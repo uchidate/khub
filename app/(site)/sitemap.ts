@@ -187,7 +187,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 changeFrequency: 'monthly' as const,
                 priority: 0.7,
             })),
-            ...ARCHIVE_HUBS.map(hub => ({
+            ...ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt').map(hub => ({
                 url: `${BASE_URL}/hubs/${hub.slug}`,
                 lastModified: STATIC_DATE,
                 changeFrequency: 'weekly' as const,
