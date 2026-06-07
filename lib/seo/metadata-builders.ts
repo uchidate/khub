@@ -12,6 +12,14 @@ type ArtistSeoInput = {
     productions?: ArtistProductionSeoInput[]
 }
 
+type GroupSeoInput = {
+    name: string
+    hangul?: string | null
+    agencyName?: string | null
+    fanClubName?: string | null
+    debutYear?: number | null
+}
+
 type ProductionArtistSeoInput = {
     name: string
 }
@@ -123,6 +131,30 @@ export function buildProductionSeoTitle(input: ProductionSeoInput): string {
     if (fallback.length <= BASE_TITLE_LIMIT) return fallback
 
     return trimMeta(`${input.title}: elenco e sinopse`, BASE_TITLE_LIMIT)
+}
+
+export function buildGroupSeoTitle(input: GroupSeoInput): string {
+    const hangul = input.hangul ? ` (${input.hangul})` : ''
+
+    if (input.agencyName) {
+        const withAgency = `${input.name}: grupo da ${input.agencyName} — integrantes, álbuns e perfil`
+        if (withAgency.length <= BASE_TITLE_LIMIT) return withAgency
+    }
+
+    if (input.debutYear) {
+        const withDebut = `${input.name}${hangul}: grupo de K-pop desde ${input.debutYear} — integrantes e álbuns`
+        if (withDebut.length <= BASE_TITLE_LIMIT) return withDebut
+    }
+
+    if (input.fanClubName) {
+        const withFanclub = `${input.name}: integrantes, álbuns e fã-clube ${input.fanClubName}`
+        if (withFanclub.length <= BASE_TITLE_LIMIT) return withFanclub
+    }
+
+    const generic = `${input.name}${hangul}: integrantes, álbuns e perfil`
+    if (generic.length <= BASE_TITLE_LIMIT) return generic
+
+    return trimMeta(`${input.name}: integrantes e perfil`, BASE_TITLE_LIMIT)
 }
 
 export function buildProductionSeoDescription(input: ProductionSeoInput): string {

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { nameToGradient } from '@/lib/utils'
-import { getRoleLabel } from '@/lib/utils/role-labels'
+import { getRoleLabels } from '@/lib/utils/role-labels'
 
 function toRgba(hex: string, alpha: number) {
     const h = hex.replace('#', '')
@@ -77,7 +77,7 @@ export function GroupMemberCard({ member, faded = false, accent = '#9333ea', isL
     const allRoles = artist.roles ?? []
     const musicRoles = allRoles.filter(r => MUSIC_ROLES.includes(r.toUpperCase()))
     const displayRoles = (musicRoles.length > 0 ? musicRoles : allRoles).slice(0, 2)
-    const soloRoles = displayRoles.map(r => getRoleLabel(r, artist.gender))
+    const soloRoles = getRoleLabels(displayRoles, artist.gender)
     const age = artist.birthDate
         ? Math.floor((Date.now() - new Date(artist.birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
         : null
