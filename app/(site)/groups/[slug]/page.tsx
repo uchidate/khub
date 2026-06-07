@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { notFound } from 'next/navigation'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { buildFaqSchema, generateGroupFaq } from '@/lib/seo/faq-generators'
+import { buildGroupSeoTitle } from '@/lib/seo/metadata-builders'
 import { FavoriteButton } from '@/components/ui/FavoriteButton'
 import { ReportButton } from '@/components/ui/ReportButton'
 import { AdminQuickEdit } from '@/components/ui/AdminQuickEdit'
@@ -110,8 +111,15 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
         ...memberNames,
         'grupo K-Pop', 'K-Pop Brasil', 'HallyuHub',
     ].filter(Boolean).join(', ')
+    const debutYear = group.debutDate ? new Date(group.debutDate).getUTCFullYear() : null
     return applySeoOverride({
-        title: `${group.name}${group.nameHangul ? ` (${group.nameHangul})` : ''}`,
+        title: buildGroupSeoTitle({
+            name: group.name,
+            hangul: group.nameHangul,
+            agencyName: group.agency?.name,
+            fanClubName: group.fanClubName,
+            debutYear,
+        }),
         description: description.slice(0, 160),
         keywords,
         alternates: {
@@ -366,7 +374,7 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                         fill
                         priority
                         sizes="100vw"
-                        className="object-cover object-top"
+                        className="object-cover object-top lg:object-center"
                     />
                 ) : (
                     <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${toRgba(accent, 0.3)}, ${toRgba(accent, 0.05)})` }} />
