@@ -56,6 +56,10 @@ export default async function BirthdayMonthPage({ params }: { params: Promise<{ 
     const month = MONTHS.find(m => m.slug === mes)
     if (!month) notFound()
 
+    if (process.env.SKIP_BUILD_STATIC_GENERATION) {
+        return <main className="min-h-screen" />
+    }
+
     const artists = await prisma.artist.findMany({
         where: {
             isHidden: false,
