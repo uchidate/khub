@@ -19,6 +19,20 @@ export async function register() {
         logSystemEvent('ERROR', 'unhandled-rejection', message, { stack }).catch(() => {})
       }).catch(() => {})
     })
+
+    // Aquece o pool de conexões do Prisma antes do servidor aceitar tráfego.
+    // Sem isso, as primeiras requisições logo após o boot competem pela
+    // primeira conexão real ao Postgres; em rotas ISR isso pode resultar
+    // num resultado vazio que fica cacheado pelo `revalidate` da rota e
+    // persiste por até 1h após cada deploy (visto nos hubs i18n).
+    import('@/lib/prisma').then(async ({ default: prisma }) => {
+      try {
+        await prisma.$queryRaw`SELECT 1`
+        console.log('[instrumentation] DB pool warmed up')
+      } catch (err) {
+        console.error('[instrumentation] DB pool warm-up failed', err)
+      }
+    }).catch(() => {})
   }
 }
 
