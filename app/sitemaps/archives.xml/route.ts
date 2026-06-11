@@ -9,6 +9,10 @@ import { escapeXml, xmlResponse } from '@/lib/seo/xml'
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 const HUB_SITEMAP_CONCURRENCY = 8
+type HubPathAuditResult = {
+    path: string | null
+    checked: boolean
+}
 
 function hubPath(hub: (typeof ARCHIVE_HUBS)[number]) {
     const locale = (hub.locale ?? 'pt') as HubLocale
@@ -16,22 +20,33 @@ function hubPath(hub: (typeof ARCHIVE_HUBS)[number]) {
 }
 
 async function getIndexableHubPaths() {
-    const results: Array<string | null> = []
+    const results: HubPathAuditResult[] = []
 
     for (let index = 0; index < ARCHIVE_HUBS.length; index += HUB_SITEMAP_CONCURRENCY) {
         const batch = ARCHIVE_HUBS.slice(index, index + HUB_SITEMAP_CONCURRENCY)
         const batchResults = await Promise.all(batch.map(async hub => {
             try {
                 const items = await getHubItems(hub)
-                return hasIndexableHubInventory(items) ? hubPath(hub) : null
+                return {
+                    path: hasIndexableHubInventory(items) ? hubPath(hub) : null,
+                    checked: true,
+                }
             } catch {
-                return null
+                return {
+                    path: null,
+                    checked: false,
+                }
             }
         }))
         results.push(...batchResults)
     }
 
-    return results.filter(Boolean) as string[]
+    const checkedCount = results.filter(result => result.checked).length
+    if (checkedCount === 0) {
+        return ARCHIVE_HUBS.map(hubPath)
+    }
+
+    return results.map(result => result.path).filter(Boolean) as string[]
 }
 
 export async function GET() {

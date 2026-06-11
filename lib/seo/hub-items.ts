@@ -212,6 +212,84 @@ const PRODUCTION_GENRE_FILTERS = {
             { type: { contains: 'movie', mode: 'insensitive' as const } },
         ],
     },
+    'doramas-ceo-coreanos': {
+        OR: [
+            { tags: { hasSome: ['CEO', 'ceo', 'chaebol', 'executivo', 'empresa', 'office romance', 'workplace romance', 'business'] } },
+            { type: { contains: 'office', mode: 'insensitive' as const } },
+            { type: { contains: 'business', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-casamento-por-contrato': {
+        OR: [
+            { tags: { hasSome: ['casamento por contrato', 'contract marriage', 'fake marriage', 'fake dating', 'namoro falso', 'marriage contract', 'cohabitation'] } },
+            { type: { contains: 'contract', mode: 'insensitive' as const } },
+            { type: { contains: 'marriage', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-enemies-to-lovers': {
+        OR: [
+            { tags: { hasSome: ['enemies to lovers', 'haters to lovers', 'rivais', 'rivals', 'rivalry', 'love-hate', 'slow burn'] } },
+            { type: { contains: 'rival', mode: 'insensitive' as const } },
+            { type: { contains: 'love-hate', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-amigos-de-infancia': {
+        OR: [
+            { tags: { hasSome: ['amigos de infância', 'amigos de infancia', 'childhood friends', 'first love', 'primeiro amor', 'reunion', 'reencontro'] } },
+            { type: { contains: 'first love', mode: 'insensitive' as const } },
+            { type: { contains: 'childhood', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-noona-romance': {
+        OR: [
+            { tags: { hasSome: ['noona romance', 'older woman younger man', 'mulher mais velha', 'diferença de idade', 'age gap romance'] } },
+            { type: { contains: 'noona', mode: 'insensitive' as const } },
+            { type: { contains: 'age gap', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-slice-of-life-coreanos': {
+        OR: [
+            { tags: { hasSome: ['slice of life', 'healing', 'cura', 'cotidiano', 'vida real', 'amizade', 'friendship', 'coming of age'] } },
+            { type: { contains: 'slice of life', mode: 'insensitive' as const } },
+            { type: { contains: 'healing', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-de-advogados-coreanos': {
+        OR: [
+            { tags: { hasSome: ['advogado', 'advogada', 'lawyer', 'legal', 'tribunal', 'courtroom', 'promotor', 'prosecutor', 'juiz', 'judge'] } },
+            { type: { contains: 'legal', mode: 'insensitive' as const } },
+            { type: { contains: 'law', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-de-familia-coreanos': {
+        OR: [
+            { tags: { hasSome: ['família', 'familia', 'family', 'drama familiar', 'family drama', 'melodrama', 'reconciliação'] } },
+            { type: { contains: 'family', mode: 'insensitive' as const } },
+            { episodeCount: { gte: 24 } },
+        ],
+    },
+    'doramas-sobre-musica-kpop': {
+        OR: [
+            { tags: { hasSome: ['music', 'música', 'musica', 'k-pop', 'kpop', 'idol', 'trainee', 'band', 'banda', 'singer', 'dance'] } },
+            { type: { contains: 'music', mode: 'insensitive' as const } },
+            { type: { contains: 'idol', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-de-esportes-coreanos': {
+        OR: [
+            { tags: { hasSome: ['sports', 'esporte', 'esportes', 'athlete', 'atleta', 'competition', 'competição', 'baseball', 'badminton', 'basketball'] } },
+            { type: { contains: 'sport', mode: 'insensitive' as const } },
+            { type: { contains: 'athlete', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-para-maratonar': {
+        OR: [
+            { episodeCount: { lte: 16 } },
+            { voteAverage: { gte: 8 } },
+            { voteCount: { gte: 500 } },
+            { tags: { hasSome: ['binge watch', 'maratonar', 'viciante', 'addictive', 'fast paced', 'popular'] } },
+        ],
+    },
 } satisfies Record<string, Record<string, unknown>>
 
 export async function getHubItems(hub: ArchiveHub): Promise<HubItem[]> {

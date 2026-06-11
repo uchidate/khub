@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
 import { ALL_BLOG_TAGS } from '@/lib/config/tags'
+import { getHubItems, hasIndexableHubInventory } from '@/lib/seo/hub-items'
 
 export const dynamic = 'force-dynamic'
 // Cache sitemap 1h — evita 6 queries massivas a cada crawl do Google/Bing
@@ -13,6 +14,8 @@ const BASE_URL = SITE_URL
 
 // Data de referência para páginas estáticas (evita "modificado hoje" em todo crawl)
 const STATIC_DATE = new Date('2025-01-01')
+const HUB_SITEMAP_CONCURRENCY = 8
+const PT_ARCHIVE_HUBS = ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt')
 
 function hasItems(value: unknown): boolean {
     return Array.isArray(value) && value.length > 0
@@ -21,6 +24,33 @@ function hasItems(value: unknown): boolean {
 function seoPriority(base: number, signals: boolean[], max = 0.9): number {
     const score = signals.reduce((total, signal) => total + (signal ? 0.025 : 0), base)
     return Number(Math.min(score, max).toFixed(2))
+}
+
+async function getHubSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+    const results: Array<{ hub: (typeof PT_ARCHIVE_HUBS)[number]; indexable: boolean; checked: boolean }> = []
+
+    for (let index = 0; index < PT_ARCHIVE_HUBS.length; index += HUB_SITEMAP_CONCURRENCY) {
+        const batch = PT_ARCHIVE_HUBS.slice(index, index + HUB_SITEMAP_CONCURRENCY)
+        const batchResults = await Promise.all(batch.map(async hub => {
+            try {
+                const items = await getHubItems(hub)
+                return { hub, indexable: hasIndexableHubInventory(items), checked: true }
+            } catch {
+                return { hub, indexable: false, checked: false }
+            }
+        }))
+        results.push(...batchResults)
+    }
+
+    const checkedCount = results.filter(result => result.checked).length
+    const hubs = checkedCount === 0 ? PT_ARCHIVE_HUBS : results.filter(result => result.indexable).map(result => result.hub)
+
+    return hubs.map(hub => ({
+        url: `${BASE_URL}/hubs/${hub.slug}`,
+        lastModified: STATIC_DATE,
+        changeFrequency: 'weekly' as const,
+        priority: 0.82,
+    }))
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -135,6 +165,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             }),
         ])
 
+        const hubSitemapEntries = await getHubSitemapEntries()
+
         return [
             ...primaryRoutes,
             ...artists.filter(a => a.slug).map(a => ({
@@ -187,12 +219,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 changeFrequency: 'monthly' as const,
                 priority: 0.7,
             })),
-            ...ARCHIVE_HUBS.filter(hub => !hub.locale || hub.locale === 'pt').map(hub => ({
-                url: `${BASE_URL}/hubs/${hub.slug}`,
-                lastModified: STATIC_DATE,
-                changeFrequency: 'weekly' as const,
-                priority: 0.82,
-            })),
+            ...hubSitemapEntries,
             ...BLOG_CATEGORIES.map(category => ({
                 url: `${BASE_URL}/blog/category/${category.slug}`,
                 lastModified: STATIC_DATE,

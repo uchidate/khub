@@ -114,6 +114,17 @@ export function getRelatedProductionHubs(input: { streamingPlatforms?: string[] 
         values.some(v => v.includes('recent') || v.includes('lançamento') || v.includes('lancamento') || v.includes('novo')) ? 'doramas-coreanos-recentes' : null,
         values.some(v => v.includes('long') || v.includes('longo') || v.includes('daily drama') || v.includes('family drama')) ? 'doramas-coreanos-longos' : null,
         values.some(v => v.includes('movie') || v.includes('filme') || v.includes('cinema')) ? 'filmes-coreanos' : null,
+        values.some(v => v.includes('ceo') || v.includes('chaebol') || v.includes('office') || v.includes('business') || v.includes('empresa')) ? 'doramas-ceo-coreanos' : null,
+        values.some(v => v.includes('contract marriage') || v.includes('casamento por contrato') || v.includes('fake dating') || v.includes('namoro falso') || v.includes('cohabitation')) ? 'doramas-casamento-por-contrato' : null,
+        values.some(v => v.includes('enemies to lovers') || v.includes('haters to lovers') || v.includes('rival') || v.includes('love-hate')) ? 'doramas-enemies-to-lovers' : null,
+        values.some(v => v.includes('childhood friends') || v.includes('amigos de infância') || v.includes('amigos de infancia') || v.includes('first love') || v.includes('primeiro amor')) ? 'doramas-amigos-de-infancia' : null,
+        values.some(v => v.includes('noona') || v.includes('older woman') || v.includes('age gap') || v.includes('diferença de idade')) ? 'doramas-noona-romance' : null,
+        values.some(v => v.includes('slice of life') || v.includes('healing') || v.includes('cotidiano') || v.includes('vida real')) ? 'doramas-slice-of-life-coreanos' : null,
+        values.some(v => v.includes('lawyer') || v.includes('advogado') || v.includes('legal') || v.includes('tribunal') || v.includes('courtroom') || v.includes('prosecutor')) ? 'doramas-de-advogados-coreanos' : null,
+        values.some(v => v.includes('family') || v.includes('família') || v.includes('familia') || v.includes('drama familiar')) ? 'doramas-de-familia-coreanos' : null,
+        values.some(v => v.includes('music') || v.includes('música') || v.includes('musica') || v.includes('k-pop') || v.includes('kpop') || v.includes('trainee') || v.includes('band')) ? 'doramas-sobre-musica-kpop' : null,
+        values.some(v => v.includes('sport') || v.includes('esporte') || v.includes('athlete') || v.includes('atleta') || v.includes('competition')) ? 'doramas-de-esportes-coreanos' : null,
+        values.some(v => v.includes('binge') || v.includes('maratonar') || v.includes('viciante') || v.includes('addictive') || v.includes('fast paced')) ? 'doramas-para-maratonar' : null,
     ].filter(Boolean) as string[]
     return slugs.map(slug => ARCHIVE_HUB_BY_SLUG[slug]).filter(Boolean)
 }

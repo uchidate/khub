@@ -8,9 +8,29 @@ type AuditRow = {
     itemCount: number
     status: 'indexable' | 'thin' | 'empty' | 'error'
     error?: string
+    errorCode?: string
+    errorMeta?: unknown
 }
 
 const CONCURRENCY = Number(process.env.HUB_AUDIT_CONCURRENCY ?? 6)
+
+function describeError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+        return { error: String(error) }
+    }
+
+    const record = error as {
+        message?: unknown
+        code?: unknown
+        meta?: unknown
+    }
+
+    return {
+        error: typeof record.message === 'string' ? record.message.trim() : String(error),
+        errorCode: typeof record.code === 'string' ? record.code : undefined,
+        errorMeta: record.meta,
+    }
+}
 
 async function auditHub(hub: (typeof ARCHIVE_HUBS)[number]): Promise<AuditRow> {
     try {
@@ -24,13 +44,14 @@ async function auditHub(hub: (typeof ARCHIVE_HUBS)[number]): Promise<AuditRow> {
             status: itemCount === 0 ? 'empty' : itemCount < MIN_INDEXABLE_HUB_ITEMS ? 'thin' : 'indexable',
         }
     } catch (error) {
+        const details = describeError(error)
         return {
             slug: hub.slug,
             locale: hub.locale ?? 'pt',
             kind: hub.kind,
             itemCount: 0,
             status: 'error',
-            error: error instanceof Error ? error.message : String(error),
+            ...details,
         }
     }
 }
