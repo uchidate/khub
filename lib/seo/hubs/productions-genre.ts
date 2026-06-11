@@ -1,0 +1,388 @@
+import type { ArchiveHub } from './types'
+
+export const productionsGenreHubs: ArchiveHub[] = [
+    {
+        slug: 'doramas-historicos-coreanos',
+        kind: 'productions',
+        title: 'Doramas Históricos Coreanos (Sageuk)',
+        shortTitle: 'Sageuk',
+        description: 'Os melhores doramas históricos coreanos (sageuk) com perfis em português, elenco, plataformas e onde assistir.',
+        intro: [
+            'Os sageuks — dramas históricos coreanos — transportam o espectador para dinastias como Joseon e Goryeo com figurinos elaborados, tramas políticas e romances épicos que prendem do primeiro ao último episódio.',
+            'O HallyuHub organiza os melhores sageuk cadastrados para que você encontre onde assistir, conheça o elenco e explore as histórias que moldaram a Coreia.',
+        ],
+        keywords: ['doramas historicos coreanos', 'sageuk', 'drama joseon', 'dorama historico', 'historico coreano netflix', 'dynasty drama'],
+        faq: [
+            { question: 'O que é sageuk?', answer: 'Sageuk é o termo coreano para drama histórico. Esses dramas se passam em períodos como a Dinastia Joseon (1392–1897) ou Goryeo e combinam história, política, romance e, às vezes, fantasia.' },
+            { question: 'Qual é o sageuk mais famoso?', answer: '"Mr. Sunshine", "Jewel in the Palace", "Six Flying Dragons" e "Kingdom" estão entre os mais aclamados. "Kingdom" popularizou o gênero globalmente na Netflix.' },
+        ],
+    },
+    {
+        slug: 'doramas-romanticos',
+        kind: 'productions',
+        title: 'Doramas coreanos românticos',
+        shortTitle: 'Doramas românticos',
+        description: 'Descubra os melhores doramas românticos coreanos com sinopse, elenco, avaliação e onde assistir.',
+        intro: [
+            'Os romances coreanos definiram um gênero único no mundo: com OSTs inesquecíveis, química de elenco e histórias que equilibram drama e leveza de forma incomum.',
+            'Este hub reúne produções coreanas de romance catalogadas no HallyuHub, com páginas em português para entender elenco, sinopse e onde assistir.',
+        ],
+        keywords: ['doramas românticos', 'kdramas românticos', 'doramas de romance coreano', 'romance coreano netflix'],
+        faq: [
+            { question: 'O que faz um bom dorama romântico coreano?', answer: 'Um bom dorama romântico coreano combina química entre os protagonistas, um OST marcante, conflitos emocionais bem desenvolvidos e a famosa tensão lenta antes do casal se unir.' },
+            { question: 'Qual plataforma tem mais doramas românticos?', answer: 'Netflix, Disney+ e Amazon Prime têm crescido muito no catálogo de K-Dramas românticos, mas plataformas asiáticas como Viki e Kocowa ainda têm os maiores acervos históricos.' },
+        ],
+    },
+    {
+        slug: 'doramas-terror-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de terror',
+        shortTitle: 'Doramas de terror',
+        description: 'Os melhores doramas coreanos de terror e horror com sinopse, elenco, plataformas e avaliações em português.',
+        intro: [
+            'O terror coreano criou uma linguagem própria no entretenimento global — de "Kingdom" (zumbis em Joseon) a "Sweet Home" (criaturas urbanas), os K-Dramas de horror combinam medo genuíno com drama humano profundo.',
+            'Este hub reúne produções coreanas de terror cadastradas no HallyuHub para ajudar você a encontrar o próximo dorama de arrepiar.',
+        ],
+        keywords: ['doramas terror coreanos', 'kdramas horror', 'dorama coreano terror', 'horror coreano netflix', 'k-drama terror'],
+        faq: [
+            { question: 'O terror coreano é diferente do americano?', answer: 'Sim. O horror coreano costuma combinar susto com metáforas sociais, drama emocional e produção cinematográfica. "Train to Busan" e "Kingdom" são exemplos de como o gênero aborda temas humanos através do sobrenatural.' },
+            { question: 'Quais são os melhores doramas de terror?', answer: '"Kingdom", "Sweet Home", "All of Us Are Dead" e "The Haunting of Villa Margarita" estão entre os mais elogiados da categoria nos últimos anos.' },
+        ],
+    },
+    {
+        slug: 'doramas-thriller-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de thriller',
+        shortTitle: 'Doramas thriller',
+        description: 'Os melhores doramas coreanos de thriller e suspense com sinopse, elenco, plataformas e avaliações em português.',
+        intro: [
+            'O thriller coreano é um dos gêneros mais elogiados pelos críticos internacionais — com reviravoltas calculadas, personagens complexos e atmosferas que mantêm a tensão do início ao fim.',
+            'Este hub reúne produções coreanas de thriller e suspense cadastradas no HallyuHub para ajudar você a encontrar o próximo dorama que vai te deixar sem dormir.',
+        ],
+        keywords: ['doramas thriller coreanos', 'kdramas suspense', 'dorama coreano thriller', 'suspense coreano netflix', 'k-drama mystery'],
+        faq: [
+            { question: 'O que torna os thrillers coreanos únicos?', answer: 'Os thrillers coreanos se destacam pela precisão narrativa, reviravoltas bem construídas e uma atenção ao detalhe psicológico que poucos países conseguem replicar. "Stranger", "Signal" e "My Name" são exemplos emblemáticos.' },
+            { question: 'Onde assistir thrillers coreanos?', answer: 'Netflix tem a maior concentração de K-Dramas thriller com legendas em português. Disney+ e Viki também têm títulos de destaque no gênero.' },
+        ],
+    },
+    {
+        slug: 'doramas-acao-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de ação',
+        shortTitle: 'Doramas de ação',
+        description: 'Os melhores doramas coreanos de ação com cenas de luta, espionagem, perseguição e avaliações em português.',
+        intro: [
+            'Os doramas de ação coreanos impressionam pela qualidade das cenas de luta, produção cinematográfica e histórias que misturam espionagem, crime e conflitos pessoais intensos.',
+            'Este hub reúne produções coreanas de ação cadastradas no HallyuHub para ajudar você a encontrar o próximo dorama cheio de adrenalina.',
+        ],
+        keywords: ['doramas ação coreanos', 'kdramas ação', 'dorama coreano espionagem', 'ação coreana netflix', 'k-drama action'],
+        faq: [
+            { question: 'Os doramas de ação coreanos têm cenas de qualidade cinematográfica?', answer: 'Sim. A indústria coreana investiu muito em coreografia de luta e produção de ação. Séries como "Bloodhounds", "Vincenzo" e "My Name" são exemplos de produção de nível cinema.' },
+            { question: 'Qual é o melhor dorama de ação coreano?', answer: '"Vincenzo", "Bloodhounds", "My Name", "Doctor Slump" e "Gyeongseong Creature" estão entre os mais elogiados do gênero nos últimos anos.' },
+        ],
+    },
+    {
+        slug: 'doramas-comedia-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de comédia',
+        shortTitle: 'Doramas de comédia',
+        description: 'Os melhores doramas coreanos de comédia e comédia romântica com sinopse, elenco e avaliações em português.',
+        intro: [
+            'A comédia coreana tem um timing único: a mistura de constrangimento, humor físico e situações absurdas criou um estilo que fãs no mundo inteiro adoram e reconhecem imediatamente.',
+            'Este hub reúne produções coreanas de comédia cadastradas no HallyuHub para ajudar você a encontrar o próximo dorama que vai fazer você rir e se sentir bem.',
+        ],
+        keywords: ['doramas comedia coreanos', 'kdramas comédia', 'dorama coreano engraçado', 'comédia romântica coreana', 'k-drama comedy'],
+        faq: [
+            { question: 'O que caracteriza uma boa comédia coreana?', answer: 'As comédias coreanas são famosas pelo timing preciso, protagonistas excêntricos e situações de constrangimento que geram empatia. O gênero "romantic comedy" é especialmente popular com OSTs memoráveis.' },
+            { question: 'Quais são os melhores doramas de comédia?', answer: '"My Love from the Star", "She Was Pretty", "Strong Woman Do Bong-soon" e "What\'s Wrong with Secretary Kim" estão entre os favoritos dos fãs de K-Drama comédia.' },
+        ],
+    },
+    {
+        slug: 'doramas-fantasia-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de fantasia',
+        shortTitle: 'Doramas de fantasia',
+        description: 'Os melhores doramas coreanos de fantasia com magia, seres sobrenaturais e mundos paralelos em português.',
+        intro: [
+            'Os doramas de fantasia coreanos criam universos únicos — deuses, demônios, viagens no tempo e reinos mágicos — com produção visual impressionante e histórias que ficam na memória.',
+            'Este hub reúne produções coreanas de fantasia cadastradas no HallyuHub para ajudar você a mergulhar em mundos além do real.',
+        ],
+        keywords: ['doramas fantasia coreanos', 'kdramas fantasia', 'dorama coreano sobrenatural', 'fantasia coreana netflix', 'k-drama fantasy'],
+        faq: [
+            { question: 'O que torna os doramas de fantasia coreanos únicos?', answer: 'A fantasia coreana costuma misturar mitologia e folclore coreano com romance e drama humano. Criaturas como gumiho (raposa de nove caudas), dokkaeby e deuses do folclore coreano aparecem com frequência.' },
+            { question: 'Quais são os melhores doramas de fantasia?', answer: '"Goblin", "Legend of the Blue Sea", "My Love from the Star", "Tale of the Nine-Tailed" e "Alchemy of Souls" estão entre os mais amados do gênero.' },
+        ],
+    },
+    {
+        slug: 'melhores-doramas-de-todos-os-tempos',
+        kind: 'productions',
+        title: 'Melhores doramas coreanos de todos os tempos',
+        shortTitle: 'Melhores doramas',
+        description: 'Os doramas coreanos mais bem avaliados de todos os tempos com sinopse, elenco, plataformas e avaliações em português.',
+        intro: [
+            'Alguns K-Dramas transcenderam o momento do lançamento e se tornaram marcos culturais — assistidos e reassistidos por fãs ao redor do mundo há anos ou décadas.',
+            'Este hub reúne as produções coreanas com melhor avaliação e maior impacto cultural cadastradas no HallyuHub, uma referência para quem quer começar ou aprofundar sua jornada no universo dos K-Dramas.',
+        ],
+        keywords: ['melhores doramas coreanos', 'top kdramas', 'doramas imperdíveis', 'melhores k-dramas de todos os tempos', 'doramas classicos'],
+        faq: [
+            { question: 'Qual é o melhor dorama coreano de todos os tempos?', answer: '"Goblin", "My Love from the Star", "Reply 1988", "Mr. Sunshine" e "Crash Landing on You" aparecem consistentemente nos rankings globais de melhores K-Dramas. A resposta varia por gênero e geração.' },
+            { question: 'Por onde começar a assistir doramas coreanos?', answer: 'Para iniciantes, "Crash Landing on You" e "Goblin" são ótimas portas de entrada. Para quem prefere ação, "Vincenzo". Para romance puro, "My Love from the Star". O HallyuHub tem perfis completos de cada um.' },
+        ],
+    },
+    {
+        slug: 'doramas-medicos-coreanos',
+        kind: 'productions',
+        title: 'Doramas médicos coreanos',
+        shortTitle: 'Doramas médicos',
+        description: 'Os melhores doramas médicos coreanos com hospitais, cirurgias, romance, elenco e avaliações em português.',
+        intro: [
+            'Doramas médicos coreanos combinam casos hospitalares intensos, relações humanas e personagens que crescem sob pressão. É um dos subgêneros mais fortes para quem gosta de drama emocional com ritmo de série procedural.',
+            'Este hub reúne produções coreanas médicas cadastradas no HallyuHub para facilitar a busca por sinopse, elenco, avaliação e títulos parecidos.',
+        ],
+        keywords: ['doramas medicos coreanos', 'kdramas médicos', 'dorama hospital coreano', 'drama medico coreano'],
+        faq: [
+            { question: 'Quais temas aparecem em doramas médicos coreanos?', answer: 'Eles costumam misturar rotina hospitalar, dilemas éticos, amizade, romance e histórias de superação entre médicos, pacientes e famílias.' },
+            { question: 'Doramas médicos são bons para começar em K-Drama?', answer: 'Sim. Muitos têm estrutura episódica fácil de acompanhar, mas também desenvolvem arcos emocionais longos e personagens memoráveis.' },
+        ],
+    },
+    {
+        slug: 'doramas-escolares-coreanos',
+        kind: 'productions',
+        title: 'Doramas escolares coreanos',
+        shortTitle: 'Doramas escolares',
+        description: 'Doramas escolares coreanos sobre juventude, amizade, romance, bullying, vestibular e vida estudantil.',
+        intro: [
+            'Doramas escolares coreanos exploram amizade, primeiro amor, pressão por notas, bullying e amadurecimento com uma linguagem muito próxima do público jovem e de quem gosta de histórias coming-of-age.',
+            'Este hub reúne produções coreanas ambientadas em escolas e universidades para navegar por sinopse, elenco e temas relacionados.',
+        ],
+        keywords: ['doramas escolares coreanos', 'kdramas escola', 'dorama colegial coreano', 'school kdrama'],
+        faq: [
+            { question: 'Doramas escolares coreanos são sempre romances?', answer: 'Não. Muitos incluem romance, mas o gênero também aborda amizade, pressão familiar, violência escolar, esportes, música e escolhas de carreira.' },
+            { question: 'O hub inclui doramas universitários?', answer: 'Sim. Quando os dados indicam ambiente escolar, universitário ou coming-of-age, a produção pode aparecer neste hub.' },
+        ],
+    },
+    {
+        slug: 'doramas-policiais-coreanos',
+        kind: 'productions',
+        title: 'Doramas policiais coreanos',
+        shortTitle: 'Doramas policiais',
+        description: 'Doramas policiais coreanos com investigação, crime, detetives, promotores e suspense em português.',
+        intro: [
+            'Doramas policiais coreanos se destacam por investigações complexas, crimes em camadas e personagens que enfrentam corrupção, traumas e dilemas morais.',
+            'Este hub reúne produções coreanas de investigação, crime e polícia cadastradas no HallyuHub para quem quer histórias tensas e bem amarradas.',
+        ],
+        keywords: ['doramas policiais coreanos', 'kdramas policiais', 'dorama coreano investigação', 'crime coreano série'],
+        faq: [
+            { question: 'Doramas policiais coreanos são parecidos com thrillers?', answer: 'Muitas vezes sim, mas o hub policial prioriza investigação, delegacias, promotores, crimes e detetives como eixo principal da história.' },
+            { question: 'O hub inclui séries de serial killer?', answer: 'Pode incluir quando a produção está marcada com crime, investigação, thriller policial ou temas semelhantes no catálogo.' },
+        ],
+    },
+    {
+        slug: 'doramas-de-vinganca-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de vingança',
+        shortTitle: 'Doramas de vingança',
+        description: 'Doramas coreanos de vingança com reviravoltas, bullying, justiça, suspense e protagonistas intensos.',
+        intro: [
+            'Histórias de vingança são uma marca forte dos K-Dramas recentes: protagonistas feridos por bullying, corrupção ou traições constroem planos longos em busca de justiça.',
+            'Este hub reúne produções coreanas com temas de vingança, revanche e justiça pessoal dentro do HallyuHub.',
+        ],
+        keywords: ['doramas de vingança coreanos', 'kdramas vingança', 'dorama coreano revenge', 'dorama sobre bullying vingança'],
+        faq: [
+            { question: 'Doramas de vingança coreanos costumam ser pesados?', answer: 'Muitos têm temas intensos como bullying, corrupção, violência e trauma, mas variam de melodrama a thriller psicológico.' },
+            { question: 'O que diferencia esse hub de thriller?', answer: 'O foco aqui é a motivação de vingança ou justiça pessoal; o thriller pode incluir suspense sem esse eixo narrativo central.' },
+        ],
+    },
+    {
+        slug: 'doramas-zumbis-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de zumbi',
+        shortTitle: 'Doramas zumbi',
+        description: 'Doramas coreanos de zumbi e sobrevivência com horror, ação, epidemias e tensão social.',
+        intro: [
+            'A Coreia se tornou referência em histórias de zumbi ao misturar ação, crítica social e drama humano. Em formato de série, o gênero ganha espaço para desenvolver sobrevivência, medo e alianças improváveis.',
+            'Este hub reúne produções coreanas com zumbis, epidemias e horror de sobrevivência cadastradas no HallyuHub.',
+        ],
+        keywords: ['doramas zumbis coreanos', 'kdramas zumbi', 'serie coreana zumbi', 'horror coreano zumbi'],
+        faq: [
+            { question: 'Doramas de zumbi coreanos são só terror?', answer: 'Não. Eles costumam misturar ação, drama social, sobrevivência e relações humanas em situações extremas.' },
+            { question: 'O hub inclui séries de epidemia?', answer: 'Sim, quando os dados indicam zumbi, infecção, epidemia, monstro ou horror de sobrevivência.' },
+        ],
+    },
+    {
+        slug: 'doramas-viagem-no-tempo-coreanos',
+        kind: 'productions',
+        title: 'Doramas coreanos de viagem no tempo',
+        shortTitle: 'Viagem no tempo',
+        description: 'Doramas coreanos com viagem no tempo, linhas temporais, destino, romance e fantasia.',
+        intro: [
+            'Viagem no tempo é um dos recursos mais queridos dos K-Dramas, conectando romance, fantasia, suspense e escolhas que mudam o destino dos personagens.',
+            'Este hub reúne produções coreanas com linhas temporais, retorno ao passado, futuro alternativo e temas de destino cadastradas no HallyuHub.',
+        ],
+        keywords: ['doramas viagem no tempo', 'kdrama time travel', 'dorama coreano passado futuro', 'romance viagem no tempo coreano'],
+        faq: [
+            { question: 'Doramas de viagem no tempo são fantasia ou romance?', answer: 'Podem ser os dois. Muitos usam a viagem temporal para criar romance, mistério, drama familiar ou suspense.' },
+            { question: 'O hub inclui histórias de reencarnação?', answer: 'Pode incluir quando o catálogo marca a produção com tempo, destino, passado, futuro, reencarnação ou fantasia próxima.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-para-iniciantes',
+        kind: 'productions',
+        title: 'Doramas coreanos para iniciantes',
+        shortTitle: 'Doramas para iniciantes',
+        description: 'Doramas coreanos ideais para começar: títulos populares, bem avaliados e fáceis de maratonar.',
+        intro: [
+            'Começar nos K-Dramas fica mais fácil quando a seleção combina histórias acessíveis, boa avaliação, elenco marcante e temas que ajudam a entender por que os doramas conquistaram o mundo.',
+            'Este hub reúne produções coreanas populares e bem avaliadas no HallyuHub, pensado para quem quer escolher o primeiro dorama sem se perder no catálogo.',
+        ],
+        keywords: ['doramas para iniciantes', 'primeiro dorama coreano', 'kdramas para começar', 'melhores doramas iniciantes'],
+        faq: [
+            { question: 'Qual dorama é bom para começar?', answer: 'Romances, comédias românticas, fantasia leve e thrillers populares costumam funcionar bem para iniciantes, porque apresentam o ritmo e os temas mais conhecidos dos K-Dramas.' },
+            { question: 'O hub prioriza doramas famosos?', answer: 'Sim. A seleção usa sinais como avaliação e popularidade disponível no catálogo para destacar títulos com maior chance de agradar novos espectadores.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-curtos',
+        kind: 'productions',
+        title: 'Doramas coreanos curtos',
+        shortTitle: 'Doramas curtos',
+        description: 'Doramas coreanos curtos para maratonar, com poucos episódios, sinopse, elenco e avaliações em português.',
+        intro: [
+            'Nem todo K-Drama exige uma maratona longa. Doramas curtos são ótimos para quem quer uma história fechada, ritmo mais direto e menos compromisso de tempo.',
+            'Este hub reúne produções coreanas com menor número de episódios cadastradas no HallyuHub, facilitando a escolha de algo rápido para assistir.',
+        ],
+        keywords: ['doramas coreanos curtos', 'kdramas curtos', 'dorama poucos episódios', 'doramas para maratonar rápido'],
+        faq: [
+            { question: 'Quantos episódios tem um dorama curto?', answer: 'Neste hub, a prioridade são produções com até 12 episódios cadastrados, quando esse dado está disponível no catálogo.' },
+            { question: 'Doramas curtos têm história completa?', answer: 'Muitos têm narrativa fechada e ritmo mais direto, mas a experiência varia conforme produção, gênero e formato original.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-com-final-feliz',
+        kind: 'productions',
+        title: 'Doramas coreanos com final feliz',
+        shortTitle: 'Final feliz',
+        description: 'Doramas coreanos com final feliz, romance, conforto emocional e histórias para assistir sem medo.',
+        intro: [
+            'Às vezes o que a gente quer é simples: sofrer um pouco, torcer muito e terminar com o coração em paz. Doramas com final feliz são uma busca forte entre fãs de romance e conforto emocional.',
+            'Este hub reúne produções coreanas marcadas com final feliz, romance leve ou encerramentos positivos dentro do catálogo HallyuHub.',
+        ],
+        keywords: ['doramas com final feliz', 'kdramas happy ending', 'dorama coreano final feliz', 'romance coreano final feliz'],
+        faq: [
+            { question: 'Todos os doramas deste hub têm final feliz garantido?', answer: 'O hub depende das marcações editoriais e tags cadastradas. Pode conter spoilers leves pela própria intenção de busca.' },
+            { question: 'Esse hub é focado em romance?', answer: 'A maior parte tende a ser romance ou comédia romântica, mas finais positivos também aparecem em fantasia, família e slice of life.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-tristes',
+        kind: 'productions',
+        title: 'Doramas coreanos tristes',
+        shortTitle: 'Doramas tristes',
+        description: 'Doramas coreanos tristes e emocionantes para chorar, com melodrama, romance, família e histórias intensas.',
+        intro: [
+            'Doramas tristes são uma especialidade coreana: histórias de amor, família, perda e amadurecimento que constroem emoção com cuidado e deixam marca depois do último episódio.',
+            'Este hub reúne produções coreanas com tons emocionais, melodrama e temas de choro cadastrados no HallyuHub.',
+        ],
+        keywords: ['doramas tristes coreanos', 'kdramas para chorar', 'dorama coreano triste', 'melodrama coreano'],
+        faq: [
+            { question: 'Doramas tristes sempre têm final ruim?', answer: 'Não. Muitos são emocionantes e melancólicos, mas ainda podem ter encerramentos esperançosos ou reparadores.' },
+            { question: 'Que temas aparecem em doramas tristes?', answer: 'Perda, doença, família, primeiro amor, despedidas, trauma e amadurecimento são temas frequentes nesse tipo de dorama.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-baseados-em-webtoon',
+        kind: 'productions',
+        title: 'Doramas coreanos baseados em webtoon',
+        shortTitle: 'Baseados em webtoon',
+        description: 'Doramas coreanos adaptados de webtoons com sinopse, elenco, avaliação e links relacionados.',
+        intro: [
+            'Webtoons viraram uma das principais fontes de histórias para K-Dramas, trazendo universos visuais fortes, romances populares, fantasia, ação e personagens já amados pelo público leitor.',
+            'Este hub reúne produções coreanas cadastradas como adaptações de webtoon ou quadrinhos digitais dentro do HallyuHub.',
+        ],
+        keywords: ['doramas baseados em webtoon', 'kdramas webtoon', 'dorama coreano adaptação webtoon', 'webtoon coreano dorama'],
+        faq: [
+            { question: 'O que é um webtoon?', answer: 'Webtoon é um quadrinho digital, geralmente publicado em formato vertical para leitura no celular. Muitas histórias coreanas populares foram adaptadas para doramas.' },
+            { question: 'O hub mostra a obra original?', answer: 'Quando os dados estão disponíveis, as páginas das produções podem trazer contexto sobre adaptação, elenco e links relacionados.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-melhor-avaliados',
+        kind: 'productions',
+        title: 'Doramas coreanos melhor avaliados',
+        shortTitle: 'Melhor avaliados',
+        description: 'Doramas coreanos com melhores avaliações, sinopse, elenco, ano e páginas relacionadas em português.',
+        intro: [
+            'Avaliações ajudam a encontrar títulos que agradaram muitos espectadores, especialmente quando combinadas com popularidade, elenco forte e boa recepção ao longo do tempo.',
+            'Este hub reúne produções coreanas bem avaliadas cadastradas no HallyuHub para facilitar a escolha do próximo K-Drama.',
+        ],
+        keywords: ['doramas melhor avaliados', 'kdramas nota alta', 'melhores kdramas avaliados', 'doramas coreanos top rating'],
+        faq: [
+            { question: 'Como o hub seleciona doramas melhor avaliados?', answer: 'A seleção usa dados de avaliação disponíveis no catálogo, priorizando produções públicas e não adultas.' },
+            { question: 'Nota alta significa que vou gostar?', answer: 'Não necessariamente, mas é um bom ponto de partida. Gênero, ritmo e tema continuam sendo importantes para escolher.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-populares',
+        kind: 'productions',
+        title: 'Doramas coreanos populares',
+        shortTitle: 'Doramas populares',
+        description: 'Doramas coreanos populares e comentados, com sinopse, elenco, ano, avaliação e onde assistir.',
+        intro: [
+            'Doramas populares costumam combinar elenco conhecido, boa distribuição internacional e histórias que geram conversa entre fãs nas redes sociais.',
+            'Este hub reúne produções coreanas com sinais de popularidade no catálogo HallyuHub, ajudando a encontrar títulos que muita gente já assistiu ou recomenda.',
+        ],
+        keywords: ['doramas coreanos populares', 'kdramas populares', 'doramas famosos', 'kdramas mais assistidos'],
+        faq: [
+            { question: 'O que torna um dorama popular?', answer: 'Popularidade pode vir de audiência, quantidade de avaliações, presença em streaming, elenco conhecido e repercussão entre fãs.' },
+            { question: 'Esse hub é igual aos melhores doramas?', answer: 'Não. Um dorama pode ser muito popular sem ser o mais bem avaliado, e vice-versa.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-recentes',
+        kind: 'productions',
+        title: 'Doramas coreanos recentes',
+        shortTitle: 'Doramas recentes',
+        description: 'Doramas coreanos recentes para acompanhar lançamentos, tendências, elenco e novidades do K-Drama.',
+        intro: [
+            'A produção coreana de séries cresce a cada ano, com lançamentos em plataformas globais, emissoras tradicionais e catálogos especializados.',
+            'Este hub reúne doramas coreanos recentes cadastrados no HallyuHub para quem quer acompanhar novidades e descobrir títulos atuais.',
+        ],
+        keywords: ['doramas coreanos recentes', 'kdramas recentes', 'novos doramas coreanos', 'lançamentos kdrama'],
+        faq: [
+            { question: 'O que entra como dorama recente?', answer: 'O hub prioriza produções dos anos mais novos cadastradas no catálogo, especialmente lançamentos próximos ao período atual.' },
+            { question: 'A lista muda com o tempo?', answer: 'Sim. Conforme novos doramas entram no catálogo, a seleção pode mudar automaticamente.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-longos',
+        kind: 'productions',
+        title: 'Doramas coreanos longos',
+        shortTitle: 'Doramas longos',
+        description: 'Doramas coreanos longos com muitos episódios, histórias familiares, romance, melodrama e desenvolvimento extenso.',
+        intro: [
+            'Doramas longos são perfeitos para quem gosta de acompanhar personagens por mais tempo, com arcos familiares, romances demorados e tramas que se desenvolvem com calma.',
+            'Este hub reúne produções coreanas com maior número de episódios cadastradas no HallyuHub.',
+        ],
+        keywords: ['doramas coreanos longos', 'kdramas muitos episódios', 'dorama longo coreano', 'drama familiar coreano longo'],
+        faq: [
+            { question: 'Quantos episódios tem um dorama longo?', answer: 'Neste hub, a prioridade são produções com 24 episódios ou mais, quando o dado de episódios está disponível.' },
+            { question: 'Doramas longos são sempre familiares?', answer: 'Não, mas dramas familiares e melodramas costumam usar formatos mais extensos para desenvolver muitos personagens.' },
+        ],
+    },
+    {
+        slug: 'filmes-coreanos',
+        kind: 'productions',
+        title: 'Filmes coreanos',
+        shortTitle: 'Filmes coreanos',
+        description: 'Filmes coreanos com sinopse, elenco, avaliação e páginas relacionadas em português.',
+        intro: [
+            'O cinema coreano vai muito além dos doramas: thrillers, romances, ação, horror e dramas autorais ajudaram a consolidar a Coreia como potência audiovisual.',
+            'Este hub reúne filmes coreanos cadastrados no HallyuHub para navegar por sinopse, elenco, avaliação e artistas relacionados.',
+        ],
+        keywords: ['filmes coreanos', 'cinema coreano', 'k-movies', 'filme coreano onde assistir'],
+        faq: [
+            { question: 'Este hub inclui apenas doramas?', answer: 'Não. Diferente dos hubs de K-Drama, este hub é dedicado a filmes coreanos cadastrados como produções de cinema.' },
+            { question: 'As páginas mostram elenco?', answer: 'Quando sincronizado, cada filme pode mostrar elenco, artistas relacionados, avaliação e outros dados editoriais.' },
+        ],
+    },
+]

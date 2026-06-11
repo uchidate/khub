@@ -13,7 +13,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params
-    return buildHubMetadata('es', slug)
+    const hub = getArchiveHubByLocaleAndSlug('es', slug)
+    if (!hub) return {}
+    const items = await getHubItems(hub)
+    const itemCount = process.env.SKIP_BUILD_STATIC_GENERATION ? undefined : items.length
+    return buildHubMetadata('es', slug, { itemCount })
 }
 
 export default async function HubPageEs({ params }: { params: Promise<{ slug: string }> }) {

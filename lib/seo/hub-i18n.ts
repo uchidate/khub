@@ -81,6 +81,7 @@ type HubUiStrings = {
   exploreProfiles: string
   emptyState: string
   faqTitle: string
+  relatedTitle: string
   breadcrumbHubs: string
   defaultArtistSubtitle: string
   defaultGroupSubtitle: string
@@ -96,6 +97,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     exploreProfiles: 'Explore os perfis',
     emptyState: 'Nenhum item encontrado para este hub no momento.',
     faqTitle: 'Perguntas frequentes',
+    relatedTitle: 'Guias relacionados',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Grupo K-Pop',
@@ -109,6 +111,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     exploreProfiles: 'Explore the profiles',
     emptyState: 'No items found for this hub right now.',
     faqTitle: 'Frequently asked questions',
+    relatedTitle: 'Related guides',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artist',
     defaultGroupSubtitle: 'K-Pop group',
@@ -122,6 +125,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     exploreProfiles: 'Explora los perfiles',
     emptyState: 'No se encontraron elementos para este hub por ahora.',
     faqTitle: 'Preguntas frecuentes',
+    relatedTitle: 'Guías relacionadas',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Grupo de K-Pop',
@@ -135,6 +139,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     exploreProfiles: 'สำรวจโปรไฟล์',
     emptyState: 'ยังไม่พบรายการสำหรับฮับนี้ในตอนนี้',
     faqTitle: 'คำถามที่พบบ่อย',
+    relatedTitle: 'คู่มือที่เกี่ยวข้อง',
     breadcrumbHubs: 'ฮับ',
     defaultArtistSubtitle: 'ศิลปิน',
     defaultGroupSubtitle: 'วง K-Pop',
@@ -148,6 +153,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     exploreProfiles: 'Jelajahi profil',
     emptyState: 'Belum ada item yang ditemukan untuk hub ini saat ini.',
     faqTitle: 'Pertanyaan yang sering diajukan',
+    relatedTitle: 'Panduan terkait',
     breadcrumbHubs: 'Hub',
     defaultArtistSubtitle: 'Artis',
     defaultGroupSubtitle: 'Grup K-Pop',

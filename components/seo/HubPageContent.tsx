@@ -4,7 +4,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { SITE_URL } from '@/lib/constants/site'
-import type { ArchiveHub } from '@/lib/seo/archive-hubs'
+import { getArchiveHubsByLocale, type ArchiveHub } from '@/lib/seo/archive-hubs'
 import { HUB_LOCALE_BASE_PATH, HUB_LOCALE_HTML_LANG, HUB_UI_STRINGS, formatHubDate, type HubLocale } from '@/lib/seo/hub-i18n'
 
 const BASE_URL = SITE_URL
@@ -77,10 +77,36 @@ function subtitle(kind: ArchiveHub['kind'], item: HubItem, locale: HubLocale) {
     return [production.year, production.voteAverage ? `${production.voteAverage.toFixed(1)}/10` : null].filter(Boolean).join(' · ') || strings.defaultProductionSubtitle
 }
 
+function relatedHubScore(source: ArchiveHub, candidate: ArchiveHub) {
+    let score = 0
+    if (source.kind === candidate.kind) score += 4
+    if (source.groupSlug && source.groupSlug === candidate.groupSlug) score += 5
+    if (source.agencyName && source.agencyName === candidate.agencyName) score += 5
+    if (source.year && source.year === candidate.year) score += 3
+
+    const sourceKeywords = new Set(source.keywords.map(keyword => keyword.toLowerCase()))
+    for (const keyword of candidate.keywords) {
+        if (sourceKeywords.has(keyword.toLowerCase())) score += 1
+    }
+
+    return score
+}
+
+function getRelatedHubs(hub: ArchiveHub, locale: HubLocale) {
+    return getArchiveHubsByLocale(locale)
+        .filter(candidate => candidate.slug !== hub.slug)
+        .map(candidate => ({ hub: candidate, score: relatedHubScore(hub, candidate) }))
+        .filter(candidate => candidate.score > 0)
+        .sort((a, b) => b.score - a.score || a.hub.shortTitle.localeCompare(b.hub.shortTitle))
+        .slice(0, 6)
+        .map(candidate => candidate.hub)
+}
+
 export function HubPageContent({ hub, locale, items }: { hub: ArchiveHub; locale: HubLocale; items: HubItem[] }) {
     const strings = HUB_UI_STRINGS[locale]
     const basePath = HUB_LOCALE_BASE_PATH[locale]
     const canonical = `${BASE_URL}${basePath}/${hub.slug}`
+    const relatedHubs = getRelatedHubs(hub, locale)
     const lastUpdated = items.reduce<Date | null>((latest, item) => {
         if (!item.updatedAt) return latest
         return !latest || item.updatedAt > latest ? item.updatedAt : latest
@@ -201,6 +227,21 @@ export function HubPageContent({ hub, locale, items }: { hub: ArchiveHub; locale
                                         <p className="mt-2 text-sm leading-6 text-muted" itemProp="text">{item.answer}</p>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+            {relatedHubs.length > 0 && (
+                <section className="page-wrap pb-16">
+                    <div className="border-t border-border/50 pt-10">
+                        <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{strings.relatedTitle}</h2>
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {relatedHubs.map(related => (
+                                <Link key={related.slug} href={`${basePath}/${related.slug}`} className="border border-border bg-surface p-4 transition-colors hover:border-accent/60 hover:bg-accent/5">
+                                    <h3 className="text-sm font-black text-foreground">{related.shortTitle}</h3>
+                                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted">{related.description}</p>
+                                </Link>
                             ))}
                         </div>
                     </div>
