@@ -57,6 +57,17 @@ const PRODUCTION_PLATFORM_FILTERS = {
     },
 } satisfies Record<string, Record<string, unknown>>
 
+const PRODUCTION_NETWORK_FILTERS = {
+    'doramas-tvn': { network: 'tvN' },
+    'doramas-sbs': { network: 'SBS' },
+    'doramas-mbc': { OR: [{ network: 'MBC' }, { network: 'MBC every1' }] },
+    'doramas-kbs': { OR: [{ network: 'KBS2' }, { network: 'KBS1' }] },
+    'doramas-jtbc': { network: 'JTBC' },
+    'doramas-tving': { OR: [{ network: 'TVING' }, { streamingPlatforms: { has: 'TVING' } }] },
+    'doramas-ocn': { network: 'OCN' },
+    'doramas-ena': { network: 'ENA' },
+} satisfies Record<string, Record<string, unknown>>
+
 const PRODUCTION_GENRE_FILTERS = {
     'doramas-historicos-coreanos': {
         OR: [
@@ -332,6 +343,86 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['binge watch', 'maratonar', 'viciante', 'addictive', 'fast paced', 'popular'] } },
         ],
     },
+    'doramas-misterio-coreanos': {
+        OR: [
+            { tags: { hasSome: ['Mystery', 'Mistério', 'mystery', 'mistério', 'misterio', 'whodunit', 'enigma', 'segredo'] } },
+            { type: { contains: 'mystery', mode: 'insensitive' as const } },
+            { type: { contains: 'mistério', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-crime-coreanos': {
+        OR: [
+            { tags: { hasSome: ['Crime', 'crime', 'criminal', 'assassino', 'murderer', 'serial killer', 'corrupção', 'corruption', 'underworld', 'submundo'] } },
+            { type: { contains: 'crime', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'assassin', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'crime', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-sobrevivencia-coreanos': {
+        OR: [
+            { tags: { hasSome: ['survival', 'sobrevivência', 'sobrevivencia', 'apocalipse', 'apocalypse', 'zombie', 'zumbi', 'infecção', 'pandemia', 'pandemic', 'survival game', 'game of death'] } },
+            { type: { contains: 'survival', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'sobreviv', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'apocalip', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-reencarnacao-coreanos': {
+        OR: [
+            { tags: { hasSome: ['reencarnação', 'reincarnation', 'vidas passadas', 'past lives', 'destino', 'fate', 'soul', 'alma', 'previous life', 'vida anterior'] } },
+            { type: { contains: 'reencarnação', mode: 'insensitive' as const } },
+            { type: { contains: 'reincarnation', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'reencarnação', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'vida anterior', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'destino', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-sobre-comida-coreanos': {
+        OR: [
+            { tags: { hasSome: ['food', 'comida', 'culinária', 'culinaria', 'cooking', 'cozinha', 'chef', 'restaurante', 'restaurant', 'gastronomia', 'recipe'] } },
+            { type: { contains: 'food', mode: 'insensitive' as const } },
+            { type: { contains: 'cooking', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'restaurante', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'cozinheiro', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'chef', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-thriller-politico-coreanos': {
+        OR: [
+            { tags: { hasSome: ['political thriller', 'político', 'politico', 'governo', 'government', 'conspiração', 'conspiracy', 'corrupção', 'corruption', 'chaebol', 'presidential', 'presidente', 'espião político'] } },
+            { type: { contains: 'political', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'governo', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'presidente', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'conspiração', mode: 'insensitive' as const } },
+        ],
+    },
+    'doramas-sobrenatural-coreanos': {
+        OR: [
+            { tags: { hasSome: ['supernatural', 'sobrenatural', 'gumiho', 'dokkaebi', 'goblin', 'ghost', 'fantasm', 'espírito', 'espirito', 'power', 'poder especial', 'imortal', 'immortal', 'shaman', 'xamã'] } },
+            { type: { contains: 'supernatural', mode: 'insensitive' as const } },
+            { type: { contains: 'sobrenatural', mode: 'insensitive' as const } },
+        ],
+    },
+    'filmes-terror-coreanos': {
+        OR: [
+            { tags: { hasSome: ['Horror', 'terror', 'horror', 'scary', 'monstro', 'monster', 'assombrado', 'paranormal', 'gore'] } },
+            { type: { contains: 'horror', mode: 'insensitive' as const } },
+            { type: { contains: 'terror', mode: 'insensitive' as const } },
+        ],
+    },
+    'filmes-acao-coreanos': {
+        OR: [
+            { tags: { hasSome: ['Action', 'Ação', 'ação', 'action', 'spy', 'espionagem', 'luta', 'fight', 'assassin', 'gangster', 'mercenary'] } },
+            { type: { contains: 'action', mode: 'insensitive' as const } },
+            { type: { contains: 'ação', mode: 'insensitive' as const } },
+        ],
+    },
+    'filmes-romance-coreanos': {
+        OR: [
+            { tags: { hasSome: ['Romance', 'romance', 'romântico', 'romantico', 'melodrama', 'Melodrama', 'love story', 'romantic comedy', 'rom-com'] } },
+            { type: { contains: 'romance', mode: 'insensitive' as const } },
+            { type: { contains: 'romantic', mode: 'insensitive' as const } },
+        ],
+    },
 } satisfies Record<string, Record<string, unknown>>
 
 export async function getHubItems(hub: ArchiveHub): Promise<HubItem[]> {
@@ -491,11 +582,13 @@ export async function getHubItems(hub: ArchiveHub): Promise<HubItem[]> {
 
     const productionFilter =
         PRODUCTION_PLATFORM_FILTERS[hub.slug as keyof typeof PRODUCTION_PLATFORM_FILTERS] ??
+        PRODUCTION_NETWORK_FILTERS[hub.slug as keyof typeof PRODUCTION_NETWORK_FILTERS] ??
         PRODUCTION_GENRE_FILTERS[hub.slug as keyof typeof PRODUCTION_GENRE_FILTERS] ??
         {}
 
     const yearFilter = hub.year ? { year: hub.year } : {}
-    const isMovieHub = hub.slug === 'filmes-coreanos'
+    const MOVIE_HUB_SLUGS = new Set(['filmes-coreanos', 'filmes-terror-coreanos', 'filmes-acao-coreanos', 'filmes-romance-coreanos'])
+    const isMovieHub = MOVIE_HUB_SLUGS.has(hub.slug)
     const mediaTypeFilter = isMovieHub
         ? [{ type: { contains: 'filme', mode: 'insensitive' as const } }, { tmdbType: 'movie' }]
         : [{ type: 'SERIE' }, { tmdbType: 'tv' }]

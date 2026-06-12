@@ -1,5 +1,5 @@
 export type ArchiveHubKind = 'artists' | 'groups' | 'productions'
-export type ArchiveHubLocale = 'pt' | 'en' | 'es' | 'th' | 'id'
+export type ArchiveHubLocale = 'pt' | 'en' | 'es' | 'th' | 'id' | 'fr'
 
 export type ArchiveHub = {
     slug: string
