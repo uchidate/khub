@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getArchiveHubByLocaleAndSlug, getArchiveHubsByLocale } from '@/lib/seo/archive-hubs'
-import { getHubItems } from '@/lib/seo/hub-items'
+import { getHubBlogPosts, getHubItems } from '@/lib/seo/hub-items'
 import { buildHubMetadata } from '@/lib/seo/hub-metadata'
 import { HubPageContent } from '@/components/seo/HubPageContent'
 
@@ -25,6 +25,9 @@ export default async function HubPageEn({ params }: { params: Promise<{ slug: st
     const hub = getArchiveHubByLocaleAndSlug('en', slug)
     if (!hub) notFound()
 
-    const items = await getHubItems(hub)
-    return <HubPageContent hub={hub} locale="en" items={items} />
+    const [items, blogPosts] = await Promise.all([
+        getHubItems(hub),
+        getHubBlogPosts(hub).catch(() => []),
+    ])
+    return <HubPageContent hub={hub} locale="en" items={items} blogPosts={blogPosts} />
 }
