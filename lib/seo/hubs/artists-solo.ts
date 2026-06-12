@@ -328,23 +328,6 @@ export const artistsSoloHubs: ArchiveHub[] = [
         ],
     },
     {
-        slug: 'iu',
-        kind: 'artists',
-        title: 'IU — Lee Ji-eun',
-        shortTitle: 'IU',
-        description: 'Perfil completo de IU (Lee Ji-eun): cantora, compositora e atriz sul-coreana mais amada, com perfil e discografia no HallyuHub.',
-        intro: [
-            'IU, cujo nome real é Lee Ji-eun, é uma das artistas mais versáteis e amadas da Coreia do Sul. Com uma discografia vasta que vai de pop melódico a folk intimista, ela consolidou um estilo único que a diferencia completamente do mainstream idol.',
-            'Além da música, IU é uma atriz premiada — "My Mister" e "Hotel Del Luna" são considerados marcos da televisão coreana. Ela também escreve e compõe a maioria de suas músicas.',
-        ],
-        keywords: ['IU cantora coreana', 'IU kpop', 'Lee Ji-eun', 'IU solista', 'IU doramas', 'IU Hotel Del Luna', 'IU My Mister'],
-        faq: [
-            { question: 'IU é idol ou artista solo?', answer: 'IU debutou como idol mas rapidamente se estabeleceu como artista solo de carreira independente, com controle criativo sobre sua música e imagem.' },
-            { question: 'IU também atua em doramas?', answer: 'Sim. IU tem atuações premiadas, especialmente em "My Mister" (2018) e "Hotel Del Luna" (2019), onde demonstrou grande amplitude dramática.' },
-            { question: 'Quais são os maiores hits de IU?', answer: '"Good Day", "You and I", "Palette", "Celebrity", "LILAC" e "Through the Night" estão entre as músicas mais icônicas da carreira de IU.' },
-        ],
-    },
-    {
         slug: 'nayeon',
         kind: 'artists',
         groupSlug: 'twice',
