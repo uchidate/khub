@@ -1,4 +1,4 @@
-export type HubLocale = 'pt' | 'en' | 'es' | 'th' | 'id'
+export type HubLocale = 'pt' | 'en' | 'es' | 'th' | 'id' | 'fr'
 
 export const HUB_LOCALE_BASE_PATH: Record<HubLocale, string> = {
   pt: '/hubs',
@@ -6,6 +6,7 @@ export const HUB_LOCALE_BASE_PATH: Record<HubLocale, string> = {
   es: '/es/hubs',
   th: '/th/hubs',
   id: '/id/hubs',
+  fr: '/fr/hubs',
 }
 
 export const HUB_LOCALE_HTML_LANG: Record<HubLocale, string> = {
@@ -14,6 +15,7 @@ export const HUB_LOCALE_HTML_LANG: Record<HubLocale, string> = {
   es: 'es-ES',
   th: 'th-TH',
   id: 'id-ID',
+  fr: 'fr-FR',
 }
 
 type HubIndexUiStrings = {
@@ -71,6 +73,15 @@ export const HUB_INDEX_UI_STRINGS: Record<HubLocale, HubIndexUiStrings> = {
     eyebrow: 'Navigasi editorial',
     heading: 'Panduan untuk menjelajahi dunia Hallyu',
     intro: 'Jelajahi koleksi artis, grup, dan produksi yang disusun berdasarkan maksud pencarian.',
+  },
+  fr: {
+    metaTitle: 'Guides et hubs K-Pop et K-Drama',
+    metaDescription: 'Hubs éditoriaux de HallyuHub pour découvrir artistes, groupes, idols, dramas coréens et culture coréenne par thème.',
+    collectionName: 'Guides HallyuHub',
+    collectionDescription: 'Collections éditoriales pour naviguer dans le K-Pop, K-Drama et la culture coréenne.',
+    eyebrow: 'Navigation éditoriale',
+    heading: 'Guides pour découvrir l\'univers Hallyu',
+    intro: 'Explorez des collections d\'artistes, groupes et productions organisées par intention de recherche.',
   },
 }
 
@@ -160,6 +171,20 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     defaultProductionSubtitle: 'Drama Korea',
     debutYear: (year) => `Debut pada ${year}`,
   },
+  fr: {
+    eyebrow: 'Guide HallyuHub',
+    updatedOn: (date) => `Mis à jour le ${date}`,
+    resultsSelected: (count) => `${count} résultats sélectionnés`,
+    exploreProfiles: 'Explorer les profils',
+    emptyState: 'Aucun élément trouvé pour ce hub pour l\'instant.',
+    faqTitle: 'Questions fréquentes',
+    relatedTitle: 'Guides associés',
+    breadcrumbHubs: 'Hubs',
+    defaultArtistSubtitle: 'Artiste',
+    defaultGroupSubtitle: 'Groupe K-Pop',
+    defaultProductionSubtitle: 'Drama coréen',
+    debutYear: (year) => `Début en ${year}`,
+  },
 }
 
 const HUB_LOCALE_DATE_LOCALE: Record<HubLocale, string> = {
@@ -168,6 +193,7 @@ const HUB_LOCALE_DATE_LOCALE: Record<HubLocale, string> = {
   es: 'es-ES',
   th: 'th-TH',
   id: 'id-ID',
+  fr: 'fr-FR',
 }
 
 export function formatHubDate(locale: HubLocale, date: Date): string {

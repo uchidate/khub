@@ -17,7 +17,7 @@ export function buildHubMetadata(locale: HubLocale, slug: string, options: { ite
     const canonical = hubUrl(locale, hub)
 
     const languages: Record<string, string> = { 'x-default': canonical, [HUB_LOCALE_HTML_LANG[locale]]: canonical }
-    const allLocales: HubLocale[] = ['pt', 'en', 'es', 'th', 'id']
+    const allLocales: HubLocale[] = ['pt', 'en', 'es', 'fr', 'th', 'id']
     for (const otherLocale of allLocales) {
         if (otherLocale === locale) continue
         const translated = getTranslatedHub(hub, otherLocale)
