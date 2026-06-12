@@ -1,0 +1,115 @@
+import type { ArchiveHub } from '../types'
+
+export const itHubs: ArchiveHub[] = [
+    {
+        slug: 'bts-members-it',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'it',
+        i18nKey: 'bts-members',
+        title: 'Membri di BTS',
+        shortTitle: 'BTS',
+        description: 'Scopri i membri di BTS — profili, carriere soliste, musica, video e curiosità. HallyuHub.',
+        intro: [
+            'BTS è uno dei gruppi K-Pop più influenti al mondo, con ogni membro che porta una propria identità artistica — dal rap e dalla produzione musicale alla voce e alla coreografia.',
+            'Questo hub raccoglie i profili dei membri per esplorare i loro percorsi individuali, la storia del gruppo e le uscite discografiche collegate in un unico posto.',
+        ],
+        keywords: ['membri BTS', 'BTS membri', 'BTS profilo', 'Bangtan Boys', 'kpop BTS', 'chi sono i membri di BTS'],
+        faq: [
+            { question: 'Chi sono i membri di BTS?', answer: 'BTS è composto da RM, Jin, Suga, J-Hope, Jimin, V e Jungkook — ognuno con una carriera solista attiva accanto alle attività di gruppo.' },
+            { question: 'Questo hub include il lavoro solista?', answer: 'Sì. I profili dei membri evidenziano uscite soliste, ruoli da attore e altri progetti individuali collegati alle loro pagine HallyuHub.' },
+            { question: 'BTS è ancora attivo?', answer: 'Sì. BTS rimane attivo con carriere soliste mentre alcuni membri completano il servizio militare in Corea. Il gruppo prevede di riprendere le attività complete presto.' },
+        ],
+    },
+    {
+        slug: 'blackpink-members-it',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        locale: 'it',
+        i18nKey: 'blackpink-members',
+        title: 'Membri di BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'Scopri le membri di BLACKPINK — Jisoo, Jennie, Rosé e Lisa — profili, carriere soliste e musica. HallyuHub.',
+        intro: [
+            'BLACKPINK è uno dei gruppi K-Pop più conosciuti al mondo, con ogni membro che costruisce una potente carriera solista accanto al gruppo.',
+            'Questo hub raccoglie i profili delle membri per esplorare i loro percorsi individuali e la storia di BLACKPINK.',
+        ],
+        keywords: ['membri BLACKPINK', 'BLACKPINK profilo', 'Jisoo Jennie Rosé Lisa', 'kpop BLACKPINK', 'chi sono le BLACKPINK'],
+        faq: [
+            { question: 'Chi sono le membre di BLACKPINK?', answer: 'BLACKPINK è composto da Jisoo, Jennie, Rosé e Lisa — ognuna con una carriera solista attiva.' },
+            { question: 'BLACKPINK è ancora attivo?', answer: 'Sì. Le membre di BLACKPINK stanno perseguendo attivamente carriere soliste. Il gruppo rimane attivo.' },
+        ],
+    },
+    {
+        slug: 'migliori-drama-coreani',
+        kind: 'productions',
+        locale: 'it',
+        title: 'I migliori drama coreani da guardare',
+        shortTitle: 'Migliori K-Drama',
+        description: 'I migliori drama coreani da guardare — romance, thriller, fantasy e classici del K-Drama consigliati da HallyuHub.',
+        intro: [
+            'I drama coreani (K-Drama) sono diventati un fenomeno mondiale, con produzioni che rivalizzano con le migliori serie americane ed europee per qualità narrativa e produzione visiva.',
+            'Che tu sia nuovo al K-Drama o un fan appassionato alla ricerca del prossimo preferito, questo hub raccoglie le produzioni coreane con le valutazioni più alte su HallyuHub.',
+            'Da romanze che ti faranno battere il cuore a thriller che non ti lasceranno dormire, il K-Drama ha qualcosa per tutti i gusti.',
+        ],
+        keywords: ['migliori drama coreani', 'kdrama consigliato', 'miglior kdrama', 'drama coreano da vedere', 'serie coreana netflix', 'top kdrama italiano'],
+        faq: [
+            { question: 'Da dove cominciare con i drama coreani?', answer: 'Per i principianti, "Crash Landing on You", "Goblin", "My Love from the Star" e "Reply 1988" sono ottimi punti di partenza con un appeal universale.' },
+            { question: 'I drama coreani sono disponibili in italiano?', answer: 'Alcuni drama popolari sono disponibili con sottotitoli in italiano su Netflix. La disponibilità varia a seconda del titolo e della regione.' },
+            { question: 'Quanti episodi hanno i drama coreani?', answer: 'Le miniserie hanno tipicamente 6-12 episodi. I drama standard ne hanno 16-20. Alcuni family drama possono superare i 50 episodi.' },
+        ],
+    },
+    {
+        slug: 'drama-coreani-romance',
+        kind: 'productions',
+        locale: 'it',
+        title: 'I migliori drama coreani romantici',
+        shortTitle: 'Romance coreano',
+        description: 'I migliori drama coreani romantici — dallo slow-burn alle commedia romantiche con chimica irresistibile tra attori.',
+        intro: [
+            'Il drama romantico coreano ha un\'identità distintiva: amori impossibili, ricongiungimenti emozionanti e romanze che sfidano ogni ostacolo sono specialità del K-Drama che hanno conquistato milioni di fan.',
+            'Questo hub raccoglie produzioni coreane romantiche su HallyuHub — perfette per chi cerca una serie da guardare tutta di un fiato nel weekend.',
+        ],
+        keywords: ['drama coreano romantico', 'kdrama romance', 'migliore romance kdrama', 'commedia romantica coreana', 'amore drama coreano', 'serie coreana netflix romantica'],
+        faq: [
+            { question: 'I drama romantici coreani hanno sempre il lieto fine?', answer: 'Non sempre. Alcuni abbracciano finali tragici o agrodolci. Le commedie romantiche tendono ad avere finali felici, ma i melodrammi possono essere più sfumati.' },
+            { question: 'Quali sono i migliori drama romantici coreani?', answer: '"Crash Landing on You", "Goblin", "It\'s Okay to Not Be Okay", "Business Proposal" e "Something in the Rain" sono tra i più amati.' },
+        ],
+    },
+    {
+        slug: 'twice-members-it',
+        kind: 'artists',
+        groupSlug: 'twice',
+        locale: 'it',
+        i18nKey: 'twice-members',
+        title: 'Membri di TWICE',
+        shortTitle: 'TWICE',
+        description: 'Scopri le membre di TWICE — profili, carriere soliste, musica e video. HallyuHub.',
+        intro: [
+            'TWICE è uno dei gruppi girl group K-Pop più popolari a livello internazionale, specialmente in Giappone, Sud-Est asiatico e Americhe.',
+            'Questo hub raccoglie i profili delle membre per esplorare i loro percorsi individuali e la storia del gruppo.',
+        ],
+        keywords: ['membri TWICE', 'TWICE profilo', 'ONCE kpop', 'kpop TWICE', 'chi sono le TWICE'],
+        faq: [
+            { question: 'Chi sono le membre di TWICE?', answer: 'TWICE è composto da nove membre: Nayeon, Jeongyeon, Momo, Sana, Jihyo, Mina, Dahyun, Chaeyoung e Tzuyu.' },
+            { question: 'TWICE è popolare in Italia?', answer: 'Il K-Pop ha una fanbase crescente in Italia e TWICE ha molti fan italiani attivi nei social media e nelle community online.' },
+        ],
+    },
+    {
+        slug: 'gruppi-kpop-femminili',
+        kind: 'groups',
+        locale: 'it',
+        title: 'Gruppi femminili K-Pop',
+        shortTitle: 'Girl group K-Pop',
+        description: 'Scopri i migliori gruppi femminili K-Pop — BLACKPINK, TWICE, aespa, NewJeans e molto altro, con profili completi.',
+        intro: [
+            'I gruppi femminili K-Pop (girl group) sono una delle forze più globali dell\'industria musicale, con artiste come BLACKPINK, TWICE e NewJeans che conquistano pubblici in ogni continente.',
+            'Questo hub raccoglie i profili dei gruppi femminili K-Pop su HallyuHub con informazioni sui membri e highlights della discografia.',
+        ],
+        keywords: ['gruppi femminili kpop', 'girl group coreane', 'BLACKPINK TWICE aespa', 'kpop femminile', 'migliori girl group kpop'],
+        faq: [
+            { question: 'Quali sono i migliori girl group K-Pop?', answer: 'BLACKPINK, TWICE, aespa, NewJeans, (G)I-DLE e IVE sono tra i gruppi più popolari e riconosciuti a livello internazionale.' },
+            { question: 'Cosa rende unici i girl group K-Pop?', answer: 'Combinano performance live spettacolari, concept visivo coerente, produzione musicale di alta qualità e un marketing orientato ai fan che crea connessioni forti.' },
+        ],
+    },
+]

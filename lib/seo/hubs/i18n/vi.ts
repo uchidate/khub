@@ -1,0 +1,115 @@
+import type { ArchiveHub } from '../types'
+
+export const viHubs: ArchiveHub[] = [
+    {
+        slug: 'bts-members-vi',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'vi',
+        i18nKey: 'bts-members',
+        title: 'Các thành viên BTS',
+        shortTitle: 'BTS',
+        description: 'Tìm hiểu về các thành viên BTS — hồ sơ, sự nghiệp solo, âm nhạc, video và thú vị. HallyuHub.',
+        intro: [
+            'BTS là một trong những nhóm nhạc K-Pop có ảnh hưởng nhất thế giới, với mỗi thành viên mang một bản sắc nghệ thuật riêng biệt — từ rap và sản xuất âm nhạc đến giọng hát và vũ đạo.',
+            'Hub này tổng hợp hồ sơ các thành viên để bạn khám phá hành trình cá nhân, lịch sử nhóm và các album liên quan ở một nơi.',
+        ],
+        keywords: ['thành viên BTS', 'BTS thành viên', 'BTS profile', 'Bangtan Boys', 'kpop BTS', 'BTS 7 thành viên'],
+        faq: [
+            { question: 'Các thành viên BTS là ai?', answer: 'BTS gồm 7 thành viên: RM, Jin, Suga, J-Hope, Jimin, V và Jungkook — mỗi người đều có sự nghiệp solo bên cạnh hoạt động nhóm.' },
+            { question: 'Hub này có bao gồm hoạt động solo không?', answer: 'Có. Hồ sơ thành viên nêu bật các album solo, vai diễn và dự án cá nhân khác được kết nối với trang HallyuHub của họ.' },
+            { question: 'BTS có còn hoạt động không?', answer: 'Có. BTS vẫn hoạt động với các dự án solo trong khi một số thành viên đang thực hiện nghĩa vụ quân sự. Nhóm dự kiến sẽ hoạt động đầy đủ trở lại sớm.' },
+        ],
+    },
+    {
+        slug: 'blackpink-members-vi',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        locale: 'vi',
+        i18nKey: 'blackpink-members',
+        title: 'Các thành viên BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'Tìm hiểu về các thành viên BLACKPINK — Jisoo, Jennie, Rosé và Lisa — hồ sơ, sự nghiệp solo và âm nhạc. HallyuHub.',
+        intro: [
+            'BLACKPINK là một trong những nhóm nhạc K-Pop nổi tiếng nhất thế giới, với mỗi thành viên xây dựng sự nghiệp solo mạnh mẽ bên cạnh hoạt động nhóm.',
+            'Hub này tổng hợp hồ sơ các thành viên để khám phá hành trình cá nhân và lịch sử của BLACKPINK.',
+        ],
+        keywords: ['thành viên BLACKPINK', 'BLACKPINK thành viên', 'Jisoo Jennie Rosé Lisa', 'BLACKPINK profile', 'kpop BLACKPINK'],
+        faq: [
+            { question: 'Các thành viên BLACKPINK là ai?', answer: 'BLACKPINK gồm 4 thành viên: Jisoo, Jennie, Rosé và Lisa — mỗi người đều có sự nghiệp solo tích cực.' },
+            { question: 'BLACKPINK có còn hoạt động không?', answer: 'Các thành viên BLACKPINK đang theo đuổi sự nghiệp solo tích cực. Nhóm vẫn duy trì hoạt động với các sự kiện tập thể và cá nhân.' },
+        ],
+    },
+    {
+        slug: 'phim-han-quoc-hay-nhat',
+        kind: 'productions',
+        locale: 'vi',
+        title: 'Phim bộ Hàn Quốc hay nhất nên xem',
+        shortTitle: 'Phim Hàn hay nhất',
+        description: 'Những bộ phim bộ Hàn Quốc hay nhất nên xem — tình cảm, kinh dị, giả tưởng và các kinh điển K-Drama được HallyuHub đề xuất.',
+        intro: [
+            'Phim bộ Hàn Quốc (K-Drama) đã trở thành hiện tượng toàn cầu với chất lượng kịch bản và sản xuất hình ảnh sánh ngang các bộ phim Mỹ và châu Âu nổi tiếng.',
+            'Dù bạn là người mới bắt đầu xem phim Hàn hay fan kỳ cựu đang tìm bộ phim tiếp theo, hub này tổng hợp những tác phẩm được đánh giá cao nhất trên HallyuHub.',
+            'Từ những câu chuyện tình yêu khiến tim đập loạn đến những thriller không thể rời mắt, K-Drama có gì đó dành cho mọi khán giả.',
+        ],
+        keywords: ['phim Hàn hay nhất', 'phim bộ Hàn Quốc hay', 'kdrama hay nhất', 'phim Hàn nên xem', 'phim Hàn netflix', 'top phim Hàn'],
+        faq: [
+            { question: 'Bắt đầu xem phim Hàn từ đâu?', answer: 'Với người mới, "Hạ cánh nơi anh", "Goblin", "Vì sao đưa anh tới" và "Reply 1988" là những lựa chọn tuyệt vời với sức hút phổ quát.' },
+            { question: 'Phim Hàn có phụ đề tiếng Việt không?', answer: 'Có. Nhiều bộ phim Hàn phổ biến có phụ đề tiếng Việt trên Netflix, Viki và các nền tảng khác.' },
+            { question: 'Phim bộ Hàn Quốc thường có bao nhiêu tập?', answer: 'Mini-series thường có 6-12 tập. Phim tiêu chuẩn có 16-20 tập. Phim gia đình dài tập có thể vượt 50 tập.' },
+        ],
+    },
+    {
+        slug: 'phim-han-tinh-cam',
+        kind: 'productions',
+        locale: 'vi',
+        title: 'Phim tình cảm Hàn Quốc hay nhất',
+        shortTitle: 'Phim tình cảm Hàn',
+        description: 'Những bộ phim tình cảm Hàn Quốc hay nhất — từ slow burn đến rom-com vui nhộn với diễn xuất ăn ý và cảm xúc sâu lắng.',
+        intro: [
+            'Phim tình cảm Hàn Quốc có phong cách riêng độc đáo: những mối tình không thể, tái hợp cảm động và tình yêu vượt qua mọi trở ngại là đặc sản của K-Drama chinh phục hàng triệu khán giả.',
+            'Hub này tổng hợp các tác phẩm tình cảm Hàn Quốc trên HallyuHub — lý tưởng cho những ai muốn tìm phim xem marathon cuối tuần.',
+        ],
+        keywords: ['phim tình cảm Hàn Quốc', 'phim Hàn lãng mạn', 'kdrama tình cảm', 'phim Hàn ngọt ngào', 'rom-com Hàn', 'phim Hàn hay về tình yêu'],
+        faq: [
+            { question: 'Phim tình cảm Hàn Quốc có luôn kết thúc có hậu không?', answer: 'Không phải lúc nào cũng vậy. Phim lãng mạn hài thường kết thúc vui vẻ, nhưng melodrama có thể có kết thúc đắng cay hoặc buồn.' },
+            { question: 'Phim tình cảm Hàn Quốc nổi tiếng nhất là gì?', answer: '"Hạ cánh nơi anh", "Goblin", "Hospital Playlist", "Business Proposal" và "Something in the Rain" được yêu thích nhất.' },
+        ],
+    },
+    {
+        slug: 'twice-members-vi',
+        kind: 'artists',
+        groupSlug: 'twice',
+        locale: 'vi',
+        i18nKey: 'twice-members',
+        title: 'Các thành viên TWICE',
+        shortTitle: 'TWICE',
+        description: 'Tìm hiểu về các thành viên TWICE — hồ sơ, sự nghiệp solo, âm nhạc và video. HallyuHub.',
+        intro: [
+            'TWICE là một trong những nhóm nhạc nữ K-Pop phổ biến nhất trên toàn thế giới, đặc biệt tại Nhật Bản, Đông Nam Á và châu Mỹ.',
+            'Hub này tổng hợp hồ sơ các thành viên để khám phá hành trình cá nhân và lịch sử nhóm.',
+        ],
+        keywords: ['thành viên TWICE', 'TWICE profile', 'ONCE kpop', 'kpop TWICE', 'TWICE 9 thành viên'],
+        faq: [
+            { question: 'Các thành viên TWICE là ai?', answer: 'TWICE gồm 9 thành viên: Nayeon, Jeongyeon, Momo, Sana, Jihyo, Mina, Dahyun, Chaeyoung và Tzuyu.' },
+            { question: 'TWICE có phổ biến ở Việt Nam không?', answer: 'Có. TWICE có lượng fan đông đảo tại Việt Nam, với nhiều fan site và cộng đồng active theo dõi hoạt động của nhóm.' },
+        ],
+    },
+    {
+        slug: 'nhom-nhac-kpop-nu',
+        kind: 'groups',
+        locale: 'vi',
+        title: 'Nhóm nhạc nữ K-Pop nổi tiếng',
+        shortTitle: 'Girl group K-Pop',
+        description: 'Khám phá các nhóm nhạc nữ K-Pop nổi tiếng nhất — BLACKPINK, TWICE, aespa, NewJeans và nhiều hơn nữa.',
+        intro: [
+            'Các nhóm nhạc nữ K-Pop (girl group) là một trong những lực lượng toàn cầu mạnh mẽ nhất trong ngành âm nhạc, với BLACKPINK, TWICE và NewJeans chinh phục khán giả khắp các châu lục.',
+            'Hub này tổng hợp hồ sơ các nhóm nhạc nữ K-Pop trên HallyuHub với thông tin thành viên và đặc điểm nổi bật.',
+        ],
+        keywords: ['nhóm nhạc nữ kpop', 'girl group kpop', 'BLACKPINK TWICE aespa', 'kpop nữ', 'idol nữ kpop hay nhất'],
+        faq: [
+            { question: 'Nhóm nhạc nữ K-Pop nào nổi tiếng nhất?', answer: 'BLACKPINK, TWICE, aespa, NewJeans, (G)I-DLE và IVE nằm trong số các nhóm được yêu thích nhất toàn cầu.' },
+            { question: 'Điểm đặc biệt của girl group K-Pop là gì?', answer: 'Sự kết hợp giữa biểu diễn sân khấu ấn tượng, concept hình ảnh nhất quán, âm nhạc chất lượng cao và khả năng tạo kết nối với fan.' },
+        ],
+    },
+]

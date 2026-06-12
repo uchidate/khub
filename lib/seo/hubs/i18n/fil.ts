@@ -1,0 +1,115 @@
+import type { ArchiveHub } from '../types'
+
+export const filHubs: ArchiveHub[] = [
+    {
+        slug: 'bts-members-fil',
+        kind: 'artists',
+        groupSlug: 'bts',
+        locale: 'fil',
+        i18nKey: 'bts-members',
+        title: 'Mga Miyembro ng BTS',
+        shortTitle: 'BTS',
+        description: 'Alamin ang mga miyembro ng BTS — mga profile, solo career, musika, video at mga trivia. HallyuHub.',
+        intro: [
+            'Ang BTS ay isa sa pinaka-influential na K-Pop group sa buong mundo, kung saan ang bawat miyembro ay may natatanging artistic identity — mula sa rap at produksyon hanggang sa vocals at koreograpiya.',
+            'Pinagsama ng hub na ito ang mga profile ng miyembro para maexplore mo ang kanilang individual na paglalakbay, kasaysayan ng grupo at mga kaugnay na release sa isang lugar.',
+        ],
+        keywords: ['mga miyembro ng BTS', 'BTS members', 'BTS profile', 'Bangtan Boys', 'kpop BTS', 'sino ang BTS'],
+        faq: [
+            { question: 'Sino ang mga miyembro ng BTS?', answer: 'Ang BTS ay binubuo ng RM, Jin, Suga, J-Hope, Jimin, V at Jungkook — bawat isa ay may aktibong solo career kasabay ng group activities.' },
+            { question: 'Kasama ba ang solo work sa hub na ito?', answer: 'Oo. Ang mga profile ng miyembro ay nagtatampok ng mga solo release, papel sa pelikula at iba pang individual na proyekto.' },
+            { question: 'Aktibo pa ba ang BTS?', answer: 'Oo. Patuloy na aktibo ang BTS sa mga solo project habang ang ilang miyembro ay naglilingkod sa military. Inaasahang babalik ang grupo sa full group activities sa lalong madaling panahon.' },
+        ],
+    },
+    {
+        slug: 'blackpink-members-fil',
+        kind: 'artists',
+        groupSlug: 'blackpink',
+        locale: 'fil',
+        i18nKey: 'blackpink-members',
+        title: 'Mga Miyembro ng BLACKPINK',
+        shortTitle: 'BLACKPINK',
+        description: 'Alamin ang mga miyembro ng BLACKPINK — Jisoo, Jennie, Rosé at Lisa — mga profile, solo career at musika. HallyuHub.',
+        intro: [
+            'Ang BLACKPINK ay isa sa pinaka-kilalang K-Pop group sa buong mundo, kung saan ang bawat miyembro ay nagtatayo ng makapangyarihang solo career kasabay ng group.',
+            'Pinagsama ng hub na ito ang mga profile ng miyembro para maexplore ang kanilang individual na paglalakbay at kasaysayan ng BLACKPINK.',
+        ],
+        keywords: ['mga miyembro ng BLACKPINK', 'BLACKPINK members', 'Jisoo Jennie Rosé Lisa', 'BLACKPINK profile', 'kpop BLACKPINK'],
+        faq: [
+            { question: 'Sino ang mga miyembro ng BLACKPINK?', answer: 'Ang BLACKPINK ay binubuo ng Jisoo, Jennie, Rosé at Lisa — bawat isa ay may aktibong solo career.' },
+            { question: 'Aktibo pa ba ang BLACKPINK?', answer: 'Oo. Ang mga miyembro ng BLACKPINK ay aktibong nagtataguyod ng kanilang solo career. Patuloy na aktibo ang grupo.' },
+        ],
+    },
+    {
+        slug: 'pinakamagandang-korean-drama',
+        kind: 'productions',
+        locale: 'fil',
+        title: 'Pinakamahusay na Korean Drama panoorin',
+        shortTitle: 'Pinakamahusay na K-Drama',
+        description: 'Ang mga pinakamahusay na Korean drama na dapat panoorin ngayon — romance, thriller, fantasy at mga klasiko ng K-Drama. HallyuHub.',
+        intro: [
+            'Ang Korean dramas (K-Drama) ay naging pandaigdigang fenomeno, na may mga produksyon na nakikipagkumpitensya sa pinakamahusay na American at European series sa kalidad ng kwento at visual na produksyon.',
+            'Baguhan ka man sa K-Drama o isang dedicated na fan na naghahanap ng susunod na paboritong palabas, pinagsama ng hub na ito ang mga pinaka-mataas na rated na Korean productions sa HallyuHub.',
+            'Mula sa mga romance na magpapabilis sa tibok ng iyong puso hanggang sa mga thriller na hindi ka hayaang matulog, ang K-Drama ay may para sa lahat.',
+        ],
+        keywords: ['pinakamahusay na Korean drama', 'K-Drama rekomendasyon', 'pinakamahusay na kdrama', 'Korean drama panoorin', 'Korean series Netflix', 'top kdrama'],
+        faq: [
+            { question: 'Saan ako magsisimula sa Korean drama?', answer: 'Para sa mga baguhan, ang "Crash Landing on You", "Goblin", "My Love from the Star" at "Reply 1988" ay mahusay na simula na may malawak na apela.' },
+            { question: 'Available ba ang Korean drama na may Filipino subtitle?', answer: 'Oo. Maraming sikat na K-Drama ang available na may English subtitle sa Netflix, Viki at iba pang platform na maaaring ma-access sa Pilipinas.' },
+            { question: 'Ilan episode ang Korean drama?', answer: 'Ang mini-series ay karaniwang may 6-12 episode. Ang standard drama ay may 16-20 episode. Ang family drama ay maaaring lumampas sa 50 episode.' },
+        ],
+    },
+    {
+        slug: 'korean-drama-romance-fil',
+        kind: 'productions',
+        locale: 'fil',
+        title: 'Pinakamagandang Korean Romance Drama',
+        shortTitle: 'Korean Romance',
+        description: 'Ang pinakamahusay na Korean romance drama — mula sa slow-burn hanggang sa masayang romantic comedy na may hindi malilimutang chemistry ng artista.',
+        intro: [
+            'Ang Korean romance drama ay may natatanging kahulugan: mga imposibleng pag-ibig, nakakaiyak na pagtatagpo at mga romanseng nagtagumpay sa lahat ng hadlang — espesyalidad ng K-Drama na nananalo ng puso ng milyun-milyong fan.',
+            'Pinagsama ng hub na ito ang mga Korean romantic production na nakalista sa HallyuHub — perpekto para sa mga naghahanap ng serye para i-marathon sa weekend.',
+        ],
+        keywords: ['Korean romance drama', 'K-Drama romance', 'pinakamagandang romantic kdrama', 'Korean romantic comedy', 'pag-ibig Korean drama', 'K-Drama na nagpapabilis ng tibok ng puso'],
+        faq: [
+            { question: 'Laging may masayang ending ang Korean romance drama?', answer: 'Hindi lagi. Ang ilan ay may tragic o bittersweet na ending. Ang romantic comedy ay karaniwang may masayang ending, ngunit ang melodrama ay mas nuanced.' },
+            { question: 'Ano ang pinakamahusay na Korean romance drama?', answer: '"Crash Landing on You", "Goblin", "It\'s Okay to Not Be Okay", "Strong Woman Do Bong-soon" at "Business Proposal" ay kabilang sa pinakaminamahal.' },
+        ],
+    },
+    {
+        slug: 'twice-members-fil',
+        kind: 'artists',
+        groupSlug: 'twice',
+        locale: 'fil',
+        i18nKey: 'twice-members',
+        title: 'Mga Miyembro ng TWICE',
+        shortTitle: 'TWICE',
+        description: 'Alamin ang mga miyembro ng TWICE — mga profile, solo career, musika, video at mga trivia. HallyuHub.',
+        intro: [
+            'Ang TWICE ay isa sa pinaka-popular na K-Pop girl group sa buong mundo, lalo na sa Japan, Southeast Asia at Americas.',
+            'Pinagsama ng hub na ito ang mga profile ng miyembro para maexplore ang kanilang individual na paglalakbay at kasaysayan ng grupo.',
+        ],
+        keywords: ['mga miyembro ng TWICE', 'TWICE members', 'ONCE kpop', 'kpop TWICE', 'TWICE group'],
+        faq: [
+            { question: 'Sino ang mga miyembro ng TWICE?', answer: 'Ang TWICE ay binubuo ng siyam na miyembro: Nayeon, Jeongyeon, Momo, Sana, Jihyo, Mina, Dahyun, Chaeyoung at Tzuyu.' },
+            { question: 'Popular ba ang TWICE sa Pilipinas?', answer: 'Oo. Ang TWICE ay may malaking fanbase sa Pilipinas, na may maraming dedicated fan group at regular na fan activities.' },
+        ],
+    },
+    {
+        slug: 'mga-grupo-kpop-babae',
+        kind: 'groups',
+        locale: 'fil',
+        title: 'Mga Girl Group ng K-Pop',
+        shortTitle: 'K-Pop Girl Groups',
+        description: 'Tuklasin ang pinakamahusay na K-Pop girl group — BLACKPINK, TWICE, aespa, NewJeans at marami pang iba.',
+        intro: [
+            'Ang mga K-Pop girl group ay isa sa pinaka-global na puwersa sa industriya ng musika, kung saan ang BLACKPINK, TWICE at NewJeans ay nananalo ng mga audience sa bawat kontinente.',
+            'Pinagsama ng hub na ito ang mga profile ng K-Pop girl group na nakalista sa HallyuHub kasama ang impormasyon ng miyembro at mga highlight ng discography.',
+        ],
+        keywords: ['kpop girl group', 'mga grupong babae kpop', 'BLACKPINK TWICE aespa', 'girl group Pilipinas', 'kpop babae'],
+        faq: [
+            { question: 'Ano ang mga pinakamahusay na K-Pop girl group?', answer: 'Ang BLACKPINK, TWICE, aespa, NewJeans, (G)I-DLE at IVE ay kabilang sa pinakasikat at kinikilalang grupo sa internasyonal.' },
+            { question: 'Bakit espesyal ang K-Pop girl group?', answer: 'Pinagsama nila ang kahanga-hangang live performance, malinaw na visual concept, mataas na kalidad na musikal na produksyon at malakas na koneksyon sa mga fan.' },
+        ],
+    },
+]
