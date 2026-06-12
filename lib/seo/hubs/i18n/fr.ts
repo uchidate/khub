@@ -136,25 +136,6 @@ export const frHubs: ArchiveHub[] = [
         ],
     },
     {
-        slug: 'stray-kids-membres',
-        kind: 'artists',
-        groupSlug: 'stray-kids',
-        locale: 'fr',
-        i18nKey: 'stray-kids-members',
-        title: 'Membres de Stray Kids',
-        shortTitle: 'Stray Kids',
-        description: 'Découvrez les membres de Stray Kids — profils, carrières solo, crédits de production et anecdotes, par HallyuHub.',
-        intro: [
-            'Stray Kids est connu pour être un groupe auto-producteur : via leur unité 3RACHA, les membres écrivent, composent et réalisent une grande partie de leur musique.',
-            'Ce hub rassemble les profils des membres pour explorer leurs parcours individuels et l\'histoire du groupe en un seul endroit.',
-        ],
-        keywords: ['membres stray kids', 'stray kids lineup', 'stray kids profils', 'stays kpop', 'kpop stray kids'],
-        faq: [
-            { question: 'Qui sont les membres de Stray Kids ?', answer: 'Stray Kids est composé de Bang Chan, Lee Know, Changbin, Hyunjin, Han, Felix, Seungmin et I.N.' },
-            { question: 'Stray Kids crée-t-il sa propre musique ?', answer: 'Oui. Stray Kids est l\'un des rares groupes K-pop à produire et écrire la majorité de leur musique via leur unité de production 3RACHA.' },
-        ],
-    },
-    {
         slug: 'meilleurs-films-coreens',
         kind: 'productions',
         locale: 'fr',
