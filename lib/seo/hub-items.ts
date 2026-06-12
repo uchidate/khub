@@ -60,47 +60,50 @@ const PRODUCTION_PLATFORM_FILTERS = {
 const PRODUCTION_GENRE_FILTERS = {
     'doramas-historicos-coreanos': {
         OR: [
-            { tags: { hasSome: ['sageuk', 'Sageuk', 'histórico', 'Histórico', 'historico', 'period', 'joseon', 'Joseon'] } },
+            { tags: { hasSome: ['History', 'Histórico', 'sageuk', 'Sageuk', 'histórico', 'historico', 'period', 'joseon', 'Joseon'] } },
             { type: { in: ['Sageuk', 'sageuk', 'K-Drama Histórico', 'Historical'] } },
+            { synopsis: { contains: 'Joseon', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'dinastia', mode: 'insensitive' as const } },
         ],
     },
     'doramas-romanticos': {
         OR: [
-            { tags: { hasSome: ['romance', 'romântico', 'romantico', 'Romance', 'Romantic', 'romantic comedy', 'rom-com'] } },
+            { tags: { hasSome: ['Romance', 'Rom-com', 'romance', 'romântico', 'romantico', 'Romantic', 'romantic comedy', 'rom-com'] } },
             { type: { contains: 'romance', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'amor', mode: 'insensitive' as const } },
         ],
     },
     'doramas-terror-coreanos': {
         OR: [
-            { tags: { hasSome: ['terror', 'horror', 'Horror', 'scary', 'monster', 'monstro', 'sobrenatural'] } },
+            { tags: { hasSome: ['Horror', 'terror', 'horror', 'scary', 'monster', 'monstro', 'sobrenatural'] } },
             { type: { contains: 'horror', mode: 'insensitive' as const } },
             { type: { contains: 'terror', mode: 'insensitive' as const } },
         ],
     },
     'doramas-thriller-coreanos': {
         OR: [
-            { tags: { hasSome: ['thriller', 'suspense', 'mistério', 'misterio', 'mystery', 'psychological'] } },
+            { tags: { hasSome: ['Thriller', 'Mystery', 'Suspense', 'Mistério', 'thriller', 'suspense', 'mistério', 'misterio', 'mystery', 'psychological'] } },
             { type: { contains: 'thriller', mode: 'insensitive' as const } },
             { type: { contains: 'suspense', mode: 'insensitive' as const } },
         ],
     },
     'doramas-acao-coreanos': {
         OR: [
-            { tags: { hasSome: ['ação', 'acao', 'action', 'espionagem', 'spy', 'luta', 'fight'] } },
+            { tags: { hasSome: ['Action', 'Action & Adventure', 'Ação', 'Adventure', 'ação', 'acao', 'action', 'espionagem', 'spy', 'luta', 'fight'] } },
             { type: { contains: 'ação', mode: 'insensitive' as const } },
             { type: { contains: 'action', mode: 'insensitive' as const } },
         ],
     },
     'doramas-comedia-coreanos': {
         OR: [
-            { tags: { hasSome: ['comédia', 'comedia', 'comedy', 'rom-com', 'sitcom'] } },
+            { tags: { hasSome: ['Comedy', 'Comédia', 'Rom-com', 'comédia', 'comedia', 'comedy', 'rom-com', 'sitcom'] } },
             { type: { contains: 'comédia', mode: 'insensitive' as const } },
             { type: { contains: 'comedy', mode: 'insensitive' as const } },
         ],
     },
     'doramas-fantasia-coreanos': {
         OR: [
-            { tags: { hasSome: ['fantasia', 'fantasy', 'sobrenatural', 'supernatural', 'magic', 'gumiho', 'dokkaebi'] } },
+            { tags: { hasSome: ['Fantasy', 'Sci-Fi & Fantasy', 'Fantasia', 'fantasia', 'fantasy', 'sobrenatural', 'supernatural', 'magic', 'gumiho', 'dokkaebi'] } },
             { type: { contains: 'fantasia', mode: 'insensitive' as const } },
             { type: { contains: 'fantasy', mode: 'insensitive' as const } },
         ],
@@ -110,20 +113,29 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['médico', 'medico', 'medical', 'hospital', 'doctor', 'doctors', 'cirurgia'] } },
             { type: { contains: 'medical', mode: 'insensitive' as const } },
             { type: { contains: 'hospital', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'hospital', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'médic', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'medic', mode: 'insensitive' as const } },
         ],
     },
     'doramas-escolares-coreanos': {
         OR: [
-            { tags: { hasSome: ['school', 'escola', 'colegial', 'high school', 'universidade', 'college', 'youth', 'juventude'] } },
+            { tags: { hasSome: ['Kids', 'school', 'escola', 'colegial', 'high school', 'universidade', 'college', 'youth', 'juventude'] } },
             { type: { contains: 'school', mode: 'insensitive' as const } },
             { type: { contains: 'youth', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'escola', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'estudante', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'universidade', mode: 'insensitive' as const } },
         ],
     },
     'doramas-policiais-coreanos': {
         OR: [
-            { tags: { hasSome: ['crime', 'policial', 'police', 'detective', 'detetive', 'investigação', 'investigacao', 'law', 'prosecutor'] } },
+            { tags: { hasSome: ['Crime', 'Mystery', 'crime', 'policial', 'police', 'detective', 'detetive', 'investigação', 'investigacao', 'law', 'prosecutor'] } },
             { type: { contains: 'crime', mode: 'insensitive' as const } },
             { type: { contains: 'police', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'detetive', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'polícia', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'crime', mode: 'insensitive' as const } },
         ],
     },
     'doramas-de-vinganca-coreanos': {
@@ -131,6 +143,9 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['vingança', 'vinganca', 'revenge', 'revanche', 'bullying', 'justice', 'justiça'] } },
             { type: { contains: 'revenge', mode: 'insensitive' as const } },
             { type: { contains: 'vingança', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'vingança', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'vingar', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'justiça', mode: 'insensitive' as const } },
         ],
     },
     'doramas-zumbis-coreanos': {
@@ -138,6 +153,9 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['zumbi', 'zombie', 'zombies', 'infection', 'infecção', 'epidemia', 'survival'] } },
             { type: { contains: 'zombie', mode: 'insensitive' as const } },
             { type: { contains: 'zumbi', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'zumbi', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'infect', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'sobreviv', mode: 'insensitive' as const } },
         ],
     },
     'doramas-viagem-no-tempo-coreanos': {
@@ -145,6 +163,10 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['viagem no tempo', 'time travel', 'timeline', 'passado', 'future', 'futuro', 'destino', 'reencarnação'] } },
             { type: { contains: 'time travel', mode: 'insensitive' as const } },
             { type: { contains: 'tempo', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'viagem no tempo', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'volta no tempo', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'passado', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'futuro', mode: 'insensitive' as const } },
         ],
     },
     'doramas-coreanos-para-iniciantes': {
@@ -168,13 +190,13 @@ const PRODUCTION_GENRE_FILTERS = {
     },
     'doramas-coreanos-tristes': {
         OR: [
-            { tags: { hasSome: ['triste', 'sad', 'melodrama', 'emocionante', 'choro', 'tearjerker', 'drama familiar'] } },
+            { tags: { hasSome: ['Melodrama', 'triste', 'sad', 'melodrama', 'emocionante', 'choro', 'tearjerker', 'drama familiar'] } },
             { type: { contains: 'melodrama', mode: 'insensitive' as const } },
         ],
     },
     'doramas-coreanos-baseados-em-webtoon': {
         OR: [
-            { tags: { hasSome: ['webtoon', 'Webtoon', 'manhwa', 'quadrinho digital', 'adaptação', 'adaptacao'] } },
+            { tags: { hasSome: ['Webtoon', 'webtoon', 'manhwa', 'quadrinho digital', 'adaptação', 'adaptacao'] } },
             { sourceUrls: { has: 'webtoon' } },
             { type: { contains: 'webtoon', mode: 'insensitive' as const } },
         ],
@@ -217,6 +239,10 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['CEO', 'ceo', 'chaebol', 'executivo', 'empresa', 'office romance', 'workplace romance', 'business'] } },
             { type: { contains: 'office', mode: 'insensitive' as const } },
             { type: { contains: 'business', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'CEO', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'empresa', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'herdeir', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'executiv', mode: 'insensitive' as const } },
         ],
     },
     'doramas-casamento-por-contrato': {
@@ -224,6 +250,9 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['casamento por contrato', 'contract marriage', 'fake marriage', 'fake dating', 'namoro falso', 'marriage contract', 'cohabitation'] } },
             { type: { contains: 'contract', mode: 'insensitive' as const } },
             { type: { contains: 'marriage', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'contrato', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'casamento', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'encontro às cegas', mode: 'insensitive' as const } },
         ],
     },
     'doramas-enemies-to-lovers': {
@@ -231,6 +260,9 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['enemies to lovers', 'haters to lovers', 'rivais', 'rivals', 'rivalry', 'love-hate', 'slow burn'] } },
             { type: { contains: 'rival', mode: 'insensitive' as const } },
             { type: { contains: 'love-hate', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'rival', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'odeia', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'inimig', mode: 'insensitive' as const } },
         ],
     },
     'doramas-amigos-de-infancia': {
@@ -249,9 +281,11 @@ const PRODUCTION_GENRE_FILTERS = {
     },
     'doramas-slice-of-life-coreanos': {
         OR: [
-            { tags: { hasSome: ['slice of life', 'healing', 'cura', 'cotidiano', 'vida real', 'amizade', 'friendship', 'coming of age'] } },
+            { tags: { hasSome: ['Slice of Life', 'slice of life', 'healing', 'cura', 'cotidiano', 'vida real', 'amizade', 'friendship', 'coming of age'] } },
             { type: { contains: 'slice of life', mode: 'insensitive' as const } },
             { type: { contains: 'healing', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'amizade', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'cotidiano', mode: 'insensitive' as const } },
         ],
     },
     'doramas-de-advogados-coreanos': {
@@ -259,18 +293,22 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['advogado', 'advogada', 'lawyer', 'legal', 'tribunal', 'courtroom', 'promotor', 'prosecutor', 'juiz', 'judge'] } },
             { type: { contains: 'legal', mode: 'insensitive' as const } },
             { type: { contains: 'law', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'advog', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'promotor', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'tribunal', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'juiz', mode: 'insensitive' as const } },
         ],
     },
     'doramas-de-familia-coreanos': {
         OR: [
-            { tags: { hasSome: ['família', 'familia', 'family', 'drama familiar', 'family drama', 'melodrama', 'reconciliação'] } },
+            { tags: { hasSome: ['Family', 'Melodrama', 'família', 'familia', 'family', 'drama familiar', 'family drama', 'melodrama', 'reconciliação'] } },
             { type: { contains: 'family', mode: 'insensitive' as const } },
             { episodeCount: { gte: 24 } },
         ],
     },
     'doramas-sobre-musica-kpop': {
         OR: [
-            { tags: { hasSome: ['music', 'música', 'musica', 'k-pop', 'kpop', 'idol', 'trainee', 'band', 'banda', 'singer', 'dance'] } },
+            { tags: { hasSome: ['Music', 'Música', 'K-Pop', 'music', 'música', 'musica', 'k-pop', 'kpop', 'idol', 'trainee', 'band', 'banda', 'singer', 'dance'] } },
             { type: { contains: 'music', mode: 'insensitive' as const } },
             { type: { contains: 'idol', mode: 'insensitive' as const } },
         ],
@@ -280,6 +318,10 @@ const PRODUCTION_GENRE_FILTERS = {
             { tags: { hasSome: ['sports', 'esporte', 'esportes', 'athlete', 'atleta', 'competition', 'competição', 'baseball', 'badminton', 'basketball'] } },
             { type: { contains: 'sport', mode: 'insensitive' as const } },
             { type: { contains: 'athlete', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'esporte', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'atleta', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'basquete', mode: 'insensitive' as const } },
+            { synopsis: { contains: 'competição', mode: 'insensitive' as const } },
         ],
     },
     'doramas-para-maratonar': {
