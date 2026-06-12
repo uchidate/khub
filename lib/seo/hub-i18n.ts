@@ -137,6 +137,7 @@ type HubUiStrings = {
   emptyState: string
   faqTitle: string
   relatedTitle: string
+  blogArticlesTitle: string
   breadcrumbHubs: string
   defaultArtistSubtitle: string
   defaultGroupSubtitle: string
@@ -153,6 +154,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Nenhum item encontrado para este hub no momento.',
     faqTitle: 'Perguntas frequentes',
     relatedTitle: 'Guias relacionados',
+    blogArticlesTitle: 'Artigos relacionados',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Grupo K-Pop',
@@ -167,6 +169,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'No items found for this hub right now.',
     faqTitle: 'Frequently asked questions',
     relatedTitle: 'Related guides',
+    blogArticlesTitle: 'Related articles',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artist',
     defaultGroupSubtitle: 'K-Pop group',
@@ -181,6 +184,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'No se encontraron elementos para este hub por ahora.',
     faqTitle: 'Preguntas frecuentes',
     relatedTitle: 'Guías relacionadas',
+    blogArticlesTitle: 'Artículos relacionados',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Grupo de K-Pop',
@@ -195,6 +199,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'ยังไม่พบรายการสำหรับฮับนี้ในตอนนี้',
     faqTitle: 'คำถามที่พบบ่อย',
     relatedTitle: 'คู่มือที่เกี่ยวข้อง',
+    blogArticlesTitle: 'บทความที่เกี่ยวข้อง',
     breadcrumbHubs: 'ฮับ',
     defaultArtistSubtitle: 'ศิลปิน',
     defaultGroupSubtitle: 'วง K-Pop',
@@ -209,6 +214,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Belum ada item yang ditemukan untuk hub ini saat ini.',
     faqTitle: 'Pertanyaan yang sering diajukan',
     relatedTitle: 'Panduan terkait',
+    blogArticlesTitle: 'Artikel terkait',
     breadcrumbHubs: 'Hub',
     defaultArtistSubtitle: 'Artis',
     defaultGroupSubtitle: 'Grup K-Pop',
@@ -223,6 +229,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Aucun élément trouvé pour ce hub pour l\'instant.',
     faqTitle: 'Questions fréquentes',
     relatedTitle: 'Guides associés',
+    blogArticlesTitle: 'Articles associés',
     breadcrumbHubs: 'Hubs',
     defaultArtistSubtitle: 'Artiste',
     defaultGroupSubtitle: 'Groupe K-Pop',
@@ -237,6 +244,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: '現在このハブのアイテムが見つかりません。',
     faqTitle: 'よくある質問',
     relatedTitle: '関連ガイド',
+    blogArticlesTitle: '関連記事',
     breadcrumbHubs: 'ハブ',
     defaultArtistSubtitle: 'アーティスト',
     defaultGroupSubtitle: 'K-Popグループ',
@@ -251,6 +259,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Hiện không tìm thấy mục nào cho hub này.',
     faqTitle: 'Câu hỏi thường gặp',
     relatedTitle: 'Hướng dẫn liên quan',
+    blogArticlesTitle: 'Bài viết liên quan',
     breadcrumbHubs: 'Hub',
     defaultArtistSubtitle: 'Nghệ sĩ',
     defaultGroupSubtitle: 'Nhóm K-Pop',
@@ -265,6 +274,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Walang nahanap na item para sa hub na ito ngayon.',
     faqTitle: 'Mga madalas na tanong',
     relatedTitle: 'Mga kaugnay na gabay',
+    blogArticlesTitle: 'Mga kaugnay na artikulo',
     breadcrumbHubs: 'Mga Hub',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Grupo ng K-Pop',
@@ -279,6 +289,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     emptyState: 'Nessun elemento trovato per questo hub al momento.',
     faqTitle: 'Domande frequenti',
     relatedTitle: 'Guide correlate',
+    blogArticlesTitle: 'Articoli correlati',
     breadcrumbHubs: 'Hub',
     defaultArtistSubtitle: 'Artista',
     defaultGroupSubtitle: 'Gruppo K-Pop',

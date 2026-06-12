@@ -6,6 +6,7 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { SITE_URL } from '@/lib/constants/site'
 import { getArchiveHubsByLocale, type ArchiveHub } from '@/lib/seo/archive-hubs'
 import { HUB_LOCALE_BASE_PATH, HUB_LOCALE_HTML_LANG, HUB_UI_STRINGS, formatHubDate, type HubLocale } from '@/lib/seo/hub-i18n'
+import type { HubBlogPost } from '@/lib/seo/hub-items'
 
 const BASE_URL = SITE_URL
 
@@ -102,7 +103,7 @@ function getRelatedHubs(hub: ArchiveHub, locale: HubLocale) {
         .map(candidate => candidate.hub)
 }
 
-export function HubPageContent({ hub, locale, items }: { hub: ArchiveHub; locale: HubLocale; items: HubItem[] }) {
+export function HubPageContent({ hub, locale, items, blogPosts = [] }: { hub: ArchiveHub; locale: HubLocale; items: HubItem[]; blogPosts?: HubBlogPost[] }) {
     const strings = HUB_UI_STRINGS[locale]
     const basePath = HUB_LOCALE_BASE_PATH[locale]
     const canonical = `${BASE_URL}${basePath}/${hub.slug}`
@@ -227,6 +228,30 @@ export function HubPageContent({ hub, locale, items }: { hub: ArchiveHub; locale
                                         <p className="mt-2 text-sm leading-6 text-muted" itemProp="text">{item.answer}</p>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+            {blogPosts.length > 0 && (
+                <section className="page-wrap pb-16">
+                    <div className="border-t border-border/50 pt-10">
+                        <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{strings.blogArticlesTitle}</h2>
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {blogPosts.map(post => (
+                                <Link key={post.id} href={`/blog/${post.slug ?? post.id}`} className="group border border-border bg-surface transition-colors hover:border-accent/60 hover:bg-accent/5">
+                                    {post.coverImageUrl && (
+                                        <div className="relative aspect-[16/9] overflow-hidden">
+                                            <Image src={post.coverImageUrl} alt={post.title} fill sizes="(max-width: 640px) 100vw, 360px" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+                                        </div>
+                                    )}
+                                    <div className="p-4">
+                                        {post.category && <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent">{post.category.name}</p>}
+                                        <h3 className="mt-1 text-sm font-black leading-5 text-foreground line-clamp-2 group-hover:text-accent transition-colors">{post.title}</h3>
+                                        {post.excerpt && <p className="mt-2 text-xs leading-5 text-muted line-clamp-2">{post.excerpt}</p>}
+                                        {post.readingTimeMin && <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.06em] text-muted">{post.readingTimeMin} min</p>}
+                                    </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
