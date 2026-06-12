@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { HubPageContent } from '@/components/seo/HubPageContent'
 import { ARCHIVE_HUBS, ARCHIVE_HUB_BY_SLUG } from '@/lib/seo/archive-hubs'
-import { getHubItems } from '@/lib/seo/hub-items'
+import { getHubBlogPosts, getHubItems } from '@/lib/seo/hub-items'
 import { buildHubMetadata } from '@/lib/seo/hub-metadata'
 
 export const revalidate = 3600
@@ -25,7 +25,10 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
     const hub = ARCHIVE_HUB_BY_SLUG[slug]
     if (!hub || (hub.locale && hub.locale !== 'pt')) notFound()
 
-    const items = await getHubItems(hub)
+    const [items, blogPosts] = await Promise.all([
+        getHubItems(hub),
+        process.env.SKIP_BUILD_STATIC_GENERATION ? Promise.resolve([]) : getHubBlogPosts(hub).catch(() => []),
+    ])
 
-    return <HubPageContent hub={hub} locale="pt" items={items} />
+    return <HubPageContent hub={hub} locale="pt" items={items} blogPosts={blogPosts} />
 }

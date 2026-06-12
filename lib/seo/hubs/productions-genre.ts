@@ -733,6 +733,22 @@ export const productionsGenreHubs: ArchiveHub[] = [
         ],
     },
     {
+        slug: 'doramas-coreanos-para-maratonar',
+        kind: 'productions',
+        title: 'Doramas para maratonar no fim de semana',
+        shortTitle: 'Maratona de doramas',
+        description: 'Doramas coreanos ideais para maratonar: ritmo viciante, episódios que puxam o próximo, mínimo 8 horas de entretenimento garantido.',
+        intro: [
+            'Sexta à noite, finais de semana livres ou feriados longos — alguns doramas foram feitos para ser assistidos de uma vez. Ritmo acelerado, ganchos ao final de cada episódio e histórias que não deixam pausar.',
+            'De minisséries de 6 episódios a dramas de 16 com ritmo que não afrouxa, este hub prioriza K-Dramas que dorameiros e dorameiras relatam como "impossíveis de parar de assistir".',
+        ],
+        keywords: ['doramas para maratonar', 'kdramas viciantes', 'dorama maratona fim de semana', 'kdrama que não para', 'doramas curtos viciantes', 'binge-watch dorama coreano'],
+        faq: [
+            { question: 'Qual é o melhor dorama para maratonar?', answer: 'Depende do gosto, mas "Crash Landing on You", "Signal", "Itaewon Class", "Squid Game" e "The Glory" são citados frequentemente como K-Dramas impossíveis de parar.' },
+            { question: 'Doramas curtos são melhores para maratona?', answer: 'Geralmente sim — 6 a 12 episódios permitem concluir em um final de semana. Mas alguns dramas de 16 episódios têm ritmo tão forte que o espectador termina em dias.' },
+        ],
+    },
+    {
         slug: 'doramas-para-maratonar',
         kind: 'productions',
         title: 'Doramas coreanos para maratonar',
@@ -746,6 +762,58 @@ export const productionsGenreHubs: ArchiveHub[] = [
         faq: [
             { question: 'O que torna um dorama bom para maratonar?', answer: 'Ritmo consistente, episódios em quantidade controlada, boa avaliação e uma premissa fácil de acompanhar ajudam muito.' },
             { question: 'Esse hub é igual ao de doramas curtos?', answer: 'Não. Doramas curtos ajudam na maratona, mas este hub também considera popularidade, avaliação e apelo de assistir rápido.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreanos-indicados-para-faxina',
+        kind: 'productions',
+        title: 'Doramas coreanos para faxinar assistindo',
+        shortTitle: 'Faxina + dorama',
+        description: 'Doramas coreanos leves, engraçados ou com humor para assistir enquanto faz outra coisa — a seleção dos dorameiros multitarefa.',
+        intro: [
+            'Nem todo momento é para dorama intenso. Às vezes você quer algo para ouvir enquanto cozinha, faz faxina ou dobra roupa — leve, divertido e que não exija atenção total a cada cena.',
+            'Este hub organiza K-Dramas com comedias românticas, slice of life e episódios mais leves que funcionam bem como acompanhamento de atividades domésticas — o favorito secreto dos dorameiros multitarefa.',
+        ],
+        keywords: ['doramas leves coreanos', 'kdrama leve romantico', 'dorama engraçado coreano', 'comédia romântica kdrama', 'doramas para relaxar', 'dorameiros dorama faxina'],
+        faq: [
+            { question: 'Doramas leves são menos interessantes?', answer: 'De jeito nenhum. Comédias românticas e slice of life coreanos têm personagens muito bem construídos. A diferença é que você não precisa estar 100% focado para aproveitar.' },
+            { question: 'Quais são os melhores doramas leves?', answer: '"What\'s Wrong with Secretary Kim", "Strong Woman Do Bong-soon", "Business Proposal" e "My Girlfriend is a Gumiho" são clássicos da comédia romântica descontraída.' },
+        ],
+    },
+    {
+        slug: 'doramas-historicos-coreanos-joseon',
+        kind: 'productions',
+        title: 'Doramas históricos da era Joseon',
+        shortTitle: 'Doramas Joseon',
+        description: 'Doramas coreanos ambientados na era Joseon — reinos, palácios, intrigas políticas, romance de época e trajes tradicionais.',
+        intro: [
+            'A dinastia Joseon (1392–1897) é o cenário favorito dos K-Dramas históricos: intrigas palacianas, conflitos de castas, romances proibidos, guerras internas e figuras históricas reais que inspiram ficções apaixonantes.',
+            'De médicas reais a rainhas que defafiam o patriarcado, de espadachins nômades a príncipes com poderes sobrenaturais, os sageuks da era Joseon são um gênero próprio com estética e narrativa inconfundíveis.',
+            'Este hub reúne produções históricas ambientadas no período Joseon catalogadas no HallyuHub.',
+        ],
+        keywords: ['doramas historicos joseon', 'sageuk coreano', 'kdrama joseon', 'dorama período joseon', 'doramas palácio coreano', 'dorameiras sageuk'],
+        faq: [
+            { question: 'O que é sageuk?', answer: 'Sageuk é o termo coreano para drama histórico. Pode ser ambientado em qualquer período da história coreana, mas a era Joseon é a mais comum.' },
+            { question: 'Doramas Joseon são precisos historicamente?', answer: 'Variam muito. Alguns são bastante fiéis a eventos e figuras históricas reais; outros usam o período apenas como cenário para ficção pura, com elementos fantásticos.' },
+            { question: 'Quais são os melhores doramas ambientados em Joseon?', answer: '"Jewel in the Palace", "The Red Sleeve", "Mr. Sunshine", "Moon Lovers: Scarlet Heart Ryeo" e "Kingdom" são referências do gênero.' },
+            { question: 'Doramas históricos Joseon têm romance?', answer: 'A maioria sim. O romance proibido — entre classes, entre nobres e plebeus, ou entre figuras históricas — é um dos elementos centrais do sageuk romântico.' },
+        ],
+    },
+    {
+        slug: 'doramas-coreia-norte-sul',
+        kind: 'productions',
+        title: 'Doramas sobre Coreia do Norte e do Sul',
+        shortTitle: 'Norte × Sul',
+        description: 'Doramas coreanos sobre a divisão da Coreia, espiões, desertores, reencontros e o drama humano da fronteira entre Norte e Sul.',
+        intro: [
+            'A divisão entre Coreia do Norte e do Sul é um dos temas mais poderosos e únicos do K-Drama. "Crash Landing on You" popularizou globalmente a temática, mas o assunto tem raízes profundas na dramaturgia coreana.',
+            'De espiões infiltrados a famílias separadas, de desertores que recomeçam a vida no Sul a romances impossíveis através da fronteira, esses doramas tocam numa das maiores tragédias humanas do século XX com sensibilidade e drama.',
+            'Este hub reúne produções coreanas com a temática Norte-Sul catalogadas no HallyuHub.',
+        ],
+        keywords: ['doramas coreia norte sul', 'kdrama coreia do norte', 'crash landing on you tipo', 'doramas divisao coreana', 'kdrama espionagem norte sul', 'dorameiros coreia dividida'],
+        faq: [
+            { question: 'Doramas sobre Coreia do Norte são realistas?', answer: 'Variam muito. Alguns como "Crash Landing on You" são fantasiosos e românticos. Outros como "Iris" ou "Tunnel" tratam o tema com mais seriedade geopolítica.' },
+            { question: 'A Coreia do Sul não tem problemas em produzir doramas sobre a Coreia do Norte?', answer: 'A temática Norte-Sul é parte central da cultura e da história sul-coreana. Os dramas costumam humanizar personagens dos dois lados, algo incomum nos media ocidentais.' },
         ],
     },
 ]

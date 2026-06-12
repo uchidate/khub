@@ -623,3 +623,41 @@ export async function getHubItems(hub: ArchiveHub): Promise<HubItem[]> {
         take: 48,
     }) as Promise<HubProductionItem[]>
 }
+
+export type HubBlogPost = {
+    id: string
+    slug: string | null
+    title: string
+    excerpt: string | null
+    coverImageUrl: string | null
+    publishedAt: Date | null
+    readingTimeMin: number | null
+    category: { name: string } | null
+}
+
+export async function getHubBlogPosts(hub: ArchiveHub): Promise<HubBlogPost[]> {
+    if (!hub.keywords?.length) return []
+    const terms = hub.keywords.slice(0, 6)
+    return prisma.blogPost.findMany({
+        where: {
+            status: 'PUBLISHED',
+            isPrivate: false,
+            OR: terms.flatMap(term => [
+                { title: { contains: term, mode: 'insensitive' as const } },
+                { tags: { has: term } },
+            ]),
+        },
+        select: {
+            id: true,
+            slug: true,
+            title: true,
+            excerpt: true,
+            coverImageUrl: true,
+            publishedAt: true,
+            readingTimeMin: true,
+            category: { select: { name: true } },
+        },
+        orderBy: { publishedAt: 'desc' },
+        take: 6,
+    }) as Promise<HubBlogPost[]>
+}

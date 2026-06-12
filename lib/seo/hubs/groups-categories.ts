@@ -87,4 +87,73 @@ export const groupsCategoriesHubs: ArchiveHub[] = [
             { question: 'O BTS é da 3ª geração?', answer: 'Sim. BTS debutou em 2013 e é considerado o grupo mais representativo da 3ª geração, sendo o que mais contribuiu para o reconhecimento global do K-Pop.' },
         ],
     },
+    {
+        slug: 'grupos-kpop-decada-2000',
+        kind: 'groups',
+        title: 'Grupos de K-Pop dos anos 2000',
+        shortTitle: 'K-Pop anos 2000',
+        description: 'Grupos de K-Pop que definiram os anos 2000: TVXQ, Super Junior, Girls\' Generation, Wonder Girls, SHINee e outros pioneiros da onda Hallyu.',
+        intro: [
+            'Os anos 2000 foram a era de fundação do K-Pop moderno. TVXQ, Super Junior, Girls\' Generation, Wonder Girls, SHINee e 2NE1 construíram as bases do que o K-Pop se tornaria globalmente na década seguinte.',
+            'Esse período foi marcado pela explosão da onda Hallyu na Ásia, com fan clubs organizados, dominância das big three (SM, JYP, YG) e um estilo visual e musical que ainda influencia o K-Pop atual.',
+            'Este hub reúne grupos com debut e maior atividade nos anos 2000 catalogados no HallyuHub.',
+        ],
+        keywords: ['grupos kpop anos 2000', 'kpop 2000s', 'tvxq super junior snsd', 'kpop primeira geração segunda geração', 'grupos kpop clássicos', 'kpop historia anos 2000'],
+        faq: [
+            { question: 'Quais grupos definiram o K-Pop nos anos 2000?', answer: 'TVXQ, Super Junior, Girls\' Generation (SNSD), Wonder Girls, SHINee, 2NE1 e Big Bang são os grupos mais icônicos que emergiram nos anos 2000 e moldaram a identidade do K-Pop.' },
+            { question: 'O K-Pop dos anos 2000 ainda é popular?', answer: 'Sim. Grupos como TVXQ e Super Junior ainda têm fandoms ativos. O estilo dos anos 2000 influencia fortemente a nostalgia do K-Pop e o movimento "retro idol" atual.' },
+            { question: 'Qual a diferença do K-Pop atual para o dos anos 2000?', answer: 'Os anos 2000 tinham menos polimento visual mas mais ênfase em vocais ao vivo e performance. O K-Pop atual tem produção mais elaborada, conceitos mais complexos e presença digital maior.' },
+        ],
+    },
+    {
+        slug: 'grupos-kpop-decada-2010',
+        kind: 'groups',
+        title: 'Grupos de K-Pop dos anos 2010',
+        shortTitle: 'K-Pop anos 2010',
+        description: 'Grupos de K-Pop que explodiram nos anos 2010: EXO, BTS, BLACKPINK, TWICE, GOT7 e a expansão global do Hallyu.',
+        intro: [
+            'Os anos 2010 foram a década em que o K-Pop se tornou fenômeno verdadeiramente mundial. BTS estourou no Ocidente, BLACKPINK dominou o YouTube, TWICE conquistou a Ásia e EXO definiu o padrão de idol group da época.',
+            'Com a explosão das redes sociais e do YouTube, grupos como BTS, EXO, BLACKPINK e TWICE construíram fandoms globais que mudaram para sempre a dinâmica da indústria musical internacional.',
+            'Este hub reúne grupos com debut e maior atividade nos anos 2010 catalogados no HallyuHub.',
+        ],
+        keywords: ['grupos kpop anos 2010', 'kpop 2010s', 'bts exo blackpink twice', 'kpop segunda terceira geração', 'grupos kpop explosão global', 'kpop historia anos 2010'],
+        faq: [
+            { question: 'Quais grupos definiram o K-Pop nos anos 2010?', answer: 'BTS, BLACKPINK, EXO, TWICE, GOT7, MONSTA X, Red Velvet e NCT foram os grupos mais influentes da era, cada um com fandom global significativo.' },
+            { question: 'Por que os anos 2010 foram tão importantes para o K-Pop?', answer: 'Foi quando o K-Pop passou de fenômeno asiático para global, principalmente pela internet e pelo impacto do BTS no mundo ocidental, culminando nas premiações nos Billboard e Grammy.' },
+        ],
+    },
+    {
+        slug: 'grupos-kpop-atuais',
+        kind: 'groups',
+        title: 'Grupos de K-Pop atuais (4ª geração)',
+        shortTitle: '4ª geração K-Pop',
+        description: 'Grupos da 4ª geração do K-Pop: aespa, NewJeans, LE SSERAFIM, STAYC, ITZY, Stray Kids e os novos líderes do Hallyu.',
+        intro: [
+            'A quarta geração do K-Pop chegou com tudo: aespa criou o conceito de "metaverso idol", NewJeans reinventou o som do K-Pop com estética y2k, LE SSERAFIM trouxe atitude e Stray Kids consolidou a autenticidade como valor central.',
+            'Os grupos atuais têm características únicas: maior diversidade de backgrounds (membros de vários países), produção musical mais experimental, fandoms ainda mais globais e um ciclo de lançamentos mais intenso.',
+            'Este hub reúne grupos com debut a partir de 2018 catalogados no HallyuHub como representantes da 4ª geração.',
+        ],
+        keywords: ['grupos kpop 4a geração', 'kpop quarta geração', 'aespa newjeans le sserafim', 'grupos kpop novos', 'kpop 2020s grupos', 'kpop atual 4 geração'],
+        faq: [
+            { question: 'O que define a 4ª geração do K-Pop?', answer: 'Debut a partir de 2017-2018, forte presença digital desde o início, conceitos mais experimentais, diversidade de países de origem e fandoms que cresceram pela internet mais do que pela TV.' },
+            { question: 'Quais são os grupos mais populares da 4ª geração?', answer: 'aespa, NewJeans, LE SSERAFIM, ITZY, STAYC, (G)I-DLE, Stray Kids, ATEEZ e TXT estão entre os mais populares internacionalmente.' },
+            { question: '4ª geração é melhor que a 3ª?', answer: 'Gerações não são competição — cada uma tem características únicas. A 4ª geração tende a ter mais diversidade sonora e de conceito, mas a 3ª geração construiu o alcance global que a atual aproveita.' },
+        ],
+    },
+    {
+        slug: 'grupos-kpop-boy-groups-famosos',
+        kind: 'groups',
+        title: 'Boy groups de K-Pop mais famosos',
+        shortTitle: 'Boy groups famosos',
+        description: 'Os boy groups de K-Pop mais famosos do mundo: BTS, EXO, BIGBANG, Stray Kids, ATEEZ, TXT e os maiores nomes do K-Pop masculino.',
+        intro: [
+            'Os boy groups são o coração do K-Pop internacional: BTS abriu caminho, EXO dominou a Ásia, Big Bang foi pioneiro — e hoje Stray Kids, ATEEZ, TXT e NCT continuam expandindo o alcance global do K-Pop.',
+            'Este hub reúne os grupos masculinos mais reconhecidos do HallyuHub, facilitando descoberta de perfis, integrantes, músicas e produções relacionadas.',
+        ],
+        keywords: ['boy groups kpop famosos', 'grupos masculinos kpop', 'bts exo bigbang', 'boy group kpop 2024', 'melhores boy groups kpop', 'kpop masculino'],
+        faq: [
+            { question: 'Quais são os boy groups de K-Pop mais famosos?', answer: 'BTS lidera globalmente, mas EXO, BIGBANG, Stray Kids, ATEEZ, MONSTA X, Super Junior e NCT têm fandoms imensos internacionalmente.' },
+            { question: 'Boy groups e girl groups têm fandoms diferentes?', answer: 'Os fandoms se sobrepõem bastante, mas estudos de mercado mostram diferenças: girl groups têm mais fãs femininas jovens; boy groups têm distribuição mais variada globalmente.' },
+        ],
+    },
 ]
