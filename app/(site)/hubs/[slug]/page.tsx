@@ -25,7 +25,10 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
     const hub = ARCHIVE_HUB_BY_SLUG[slug]
     if (!hub || (hub.locale && hub.locale !== 'pt')) notFound()
 
-    const [items, blogPosts] = await Promise.all([getHubItems(hub), getHubBlogPosts(hub)])
+    const [items, blogPosts] = await Promise.all([
+        getHubItems(hub),
+        process.env.SKIP_BUILD_STATIC_GENERATION ? Promise.resolve([]) : getHubBlogPosts(hub).catch(() => []),
+    ])
 
     return <HubPageContent hub={hub} locale="pt" items={items} blogPosts={blogPosts} />
 }
