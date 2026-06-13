@@ -134,6 +134,7 @@ type HubUiStrings = {
   updatedOn: (date: string) => string
   resultsSelected: (count: number) => string
   exploreProfiles: string
+  whatYouWillFindTitle: string
   emptyState: string
   faqTitle: string
   relatedTitle: string
@@ -151,6 +152,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Atualizado em ${date}`,
     resultsSelected: (count) => `${count} resultados selecionados`,
     exploreProfiles: 'Explore os perfis',
+    whatYouWillFindTitle: 'O que você vai encontrar aqui',
     emptyState: 'Nenhum item encontrado para este hub no momento.',
     faqTitle: 'Perguntas frequentes',
     relatedTitle: 'Guias relacionados',
@@ -166,6 +168,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Updated on ${date}`,
     resultsSelected: (count) => `${count} curated results`,
     exploreProfiles: 'Explore the profiles',
+    whatYouWillFindTitle: 'What you will find here',
     emptyState: 'No items found for this hub right now.',
     faqTitle: 'Frequently asked questions',
     relatedTitle: 'Related guides',
@@ -181,6 +184,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Actualizado el ${date}`,
     resultsSelected: (count) => `${count} resultados seleccionados`,
     exploreProfiles: 'Explora los perfiles',
+    whatYouWillFindTitle: 'Qué encontrarás aquí',
     emptyState: 'No se encontraron elementos para este hub por ahora.',
     faqTitle: 'Preguntas frecuentes',
     relatedTitle: 'Guías relacionadas',
@@ -196,6 +200,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `อัปเดตเมื่อ ${date}`,
     resultsSelected: (count) => `คัดสรรแล้ว ${count} รายการ`,
     exploreProfiles: 'สำรวจโปรไฟล์',
+    whatYouWillFindTitle: 'สิ่งที่คุณจะพบที่นี่',
     emptyState: 'ยังไม่พบรายการสำหรับฮับนี้ในตอนนี้',
     faqTitle: 'คำถามที่พบบ่อย',
     relatedTitle: 'คู่มือที่เกี่ยวข้อง',
@@ -211,6 +216,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Diperbarui pada ${date}`,
     resultsSelected: (count) => `${count} hasil pilihan`,
     exploreProfiles: 'Jelajahi profil',
+    whatYouWillFindTitle: 'Apa yang akan Anda temukan di sini',
     emptyState: 'Belum ada item yang ditemukan untuk hub ini saat ini.',
     faqTitle: 'Pertanyaan yang sering diajukan',
     relatedTitle: 'Panduan terkait',
@@ -226,6 +232,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Mis à jour le ${date}`,
     resultsSelected: (count) => `${count} résultats sélectionnés`,
     exploreProfiles: 'Explorer les profils',
+    whatYouWillFindTitle: 'Ce que vous trouverez ici',
     emptyState: 'Aucun élément trouvé pour ce hub pour l\'instant.',
     faqTitle: 'Questions fréquentes',
     relatedTitle: 'Guides associés',
@@ -241,6 +248,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `${date}に更新`,
     resultsSelected: (count) => `${count}件の厳選結果`,
     exploreProfiles: 'プロフィールを探索',
+    whatYouWillFindTitle: 'ここで見つかるもの',
     emptyState: '現在このハブのアイテムが見つかりません。',
     faqTitle: 'よくある質問',
     relatedTitle: '関連ガイド',
@@ -256,6 +264,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Cập nhật ngày ${date}`,
     resultsSelected: (count) => `${count} kết quả được tuyển chọn`,
     exploreProfiles: 'Khám phá hồ sơ',
+    whatYouWillFindTitle: 'Những gì bạn sẽ tìm thấy ở đây',
     emptyState: 'Hiện không tìm thấy mục nào cho hub này.',
     faqTitle: 'Câu hỏi thường gặp',
     relatedTitle: 'Hướng dẫn liên quan',
@@ -271,6 +280,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Na-update noong ${date}`,
     resultsSelected: (count) => `${count} na napiling resulta`,
     exploreProfiles: 'I-explore ang mga profile',
+    whatYouWillFindTitle: 'Ano ang makikita mo dito',
     emptyState: 'Walang nahanap na item para sa hub na ito ngayon.',
     faqTitle: 'Mga madalas na tanong',
     relatedTitle: 'Mga kaugnay na gabay',
@@ -286,6 +296,7 @@ export const HUB_UI_STRINGS: Record<HubLocale, HubUiStrings> = {
     updatedOn: (date) => `Aggiornato il ${date}`,
     resultsSelected: (count) => `${count} risultati selezionati`,
     exploreProfiles: 'Esplora i profili',
+    whatYouWillFindTitle: 'Cosa troverai qui',
     emptyState: 'Nessun elemento trovato per questo hub al momento.',
     faqTitle: 'Domande frequenti',
     relatedTitle: 'Guide correlate',

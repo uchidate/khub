@@ -512,6 +512,16 @@ export async function getHubItems(hub: ArchiveHub): Promise<HubItem[]> {
                     ...commonWhere,
                     roles: { hasSome: SINGER_ROLES },
                 }
+                : hub.slug === 'kpop-stars-e-kbeauty'
+                ? {
+                    ...commonWhere,
+                    roles: { hasSome: SINGER_ROLES },
+                    OR: [
+                        { memberships: { some: { group: { slug: { in: ['blackpink', 'bts', 'aespa', 'twice', 'exo', 'nct-127', 'stray-kids', 'ive', 'newjeans', 'le-sserafim'] } } } } },
+                        { bio: { contains: 'beleza', mode: 'insensitive' as const } },
+                        { bio: { contains: 'beauty', mode: 'insensitive' as const } },
+                    ],
+                }
                 : {
                     ...commonWhere,
                     gender: 1,
