@@ -12,6 +12,7 @@ import { AdminEmptyState } from '@/components/admin'
 import { TakedownModal } from '@/components/admin/TakedownModal'
 import { RestoreModal } from '@/components/admin/RestoreModal'
 import { adminApi } from '@/lib/admin-api'
+import { ProfileChangeHistory } from '@/components/admin/ProfileChangeHistory'
 
 interface TakedownRecord {
     id: string
@@ -1119,6 +1120,8 @@ export default function EditProductionPage() {
                             )}
                         </div>
                     </form>
+
+                    <ProfileChangeHistory entity="Production" entityId={id} />
 
                     {/* Modals */}
                     {showTakedownModal && (

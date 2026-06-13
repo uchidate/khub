@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { Save, RefreshCw, User, Search, CheckCircle, XCircle, Download, ExternalLink, Sparkles, Plus, Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { AdminEmptyState } from '@/components/admin'
+import { ProfileChangeHistory } from '@/components/admin/ProfileChangeHistory'
 
 type FieldSource = { source: 'manual' | 'tmdb' | 'wikidata' | 'system'; at: string; by?: string }
 type FieldSources = Record<string, FieldSource>
@@ -1216,6 +1217,9 @@ export default function EditArtistPage() {
                             </Link>
                         </div>
                     </form>
+                )}
+                {!loading && artist && (
+                    <ProfileChangeHistory entity="Artist" entityId={id} />
                 )}
             </div>
         </AdminLayout>

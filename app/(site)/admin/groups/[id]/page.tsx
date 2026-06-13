@@ -11,6 +11,7 @@ import { useAdminToast } from '@/lib/hooks/useAdminToast'
 import { CheckCircle, ExternalLink, Save, RefreshCw, Search, Users, Trash2 } from 'lucide-react'
 import { adminApi, ApiError } from '@/lib/admin-api'
 import { AdminEmptyState, AdminTableSkeleton } from '@/components/admin'
+import { ProfileChangeHistory } from '@/components/admin/ProfileChangeHistory'
 
 interface MusicalGroup {
     id: string
@@ -772,6 +773,9 @@ export default function EditGroupPage() {
                             </Link>
                         </div>
                     </form>
+                )}
+                {!loading && group && (
+                    <ProfileChangeHistory entity="MusicalGroup" entityId={id} />
                 )}
             </div>
         </AdminLayout>

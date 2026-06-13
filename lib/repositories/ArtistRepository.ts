@@ -14,7 +14,7 @@
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
-import { logAudit } from '@/lib/services/audit-service'
+import { buildAuditChangeDetails, logAudit } from '@/lib/services/audit-service'
 import { detectLanguage } from '@/lib/services/language-detection-service'
 import { createLogger } from '@/lib/utils/logger'
 import { RepositoryError, ListParams, listResult, paginate, WriteContext } from './base'
@@ -322,6 +322,12 @@ export const ArtistRepository = {
     },
 
     async update(id: string, input: unknown, ctx: WriteContext) {
+        const before = await prisma.artist.findUnique({
+            where: { id },
+            include: { agency: { select: { id: true, name: true } } },
+        })
+        if (!before) throw new RepositoryError('Artista não encontrado', 'NOT_FOUND', 404)
+
         const validated = ArtistSchema.partial().parse(input)
         const data = normalizeArtistData(validated)
 
@@ -347,7 +353,16 @@ export const ArtistRepository = {
         // Auto-tradução da bio
         await afterBioWrite(id, validated.bio)
 
-        await logAudit({ adminId: ctx.adminId, action: 'UPDATE', entity: 'Artist', entityId: id, details: `Editou artista "${artist.nameRomanized}"`, ip: ctx.ip })
+        await logAudit({
+            adminId: ctx.adminId,
+            action: 'UPDATE',
+            entity: 'Artist',
+            entityId: id,
+            details: buildAuditChangeDetails(`Editou artista "${artist.nameRomanized}"`, before, artist),
+            before,
+            after: artist,
+            ip: ctx.ip,
+        })
         log.info('Artist updated', { id, fields: Object.keys(data) })
 
         return { artist, clearedAlbumsCount }

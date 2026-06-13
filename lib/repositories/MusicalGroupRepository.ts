@@ -8,7 +8,7 @@
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
-import { logAudit } from '@/lib/services/audit-service'
+import { buildAuditChangeDetails, logAudit } from '@/lib/services/audit-service'
 import { detectLanguage } from '@/lib/services/language-detection-service'
 import { createLogger } from '@/lib/utils/logger'
 import { RepositoryError, ListParams, listResult, paginate, WriteContext } from './base'
@@ -201,7 +201,16 @@ export const MusicalGroupRepository = {
         const group = await prisma.musicalGroup.update({ where: { id }, data: data as Prisma.MusicalGroupUpdateInput })
 
         await afterWrite(id, validated.bio)
-        await logAudit({ adminId: ctx.adminId, action: 'UPDATE', entity: 'MusicalGroup', entityId: id, before, after: group, ip: ctx.ip })
+        await logAudit({
+            adminId: ctx.adminId,
+            action: 'UPDATE',
+            entity: 'MusicalGroup',
+            entityId: id,
+            details: buildAuditChangeDetails(`Editou grupo "${group.name}"`, before, group),
+            before,
+            after: group,
+            ip: ctx.ip,
+        })
         log.info('MusicalGroup updated', { id, fields: Object.keys(data) })
         return group
     },

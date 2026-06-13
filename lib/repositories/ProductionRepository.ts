@@ -7,7 +7,7 @@
 
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
-import { logAudit } from '@/lib/services/audit-service'
+import { buildAuditChangeDetails, logAudit } from '@/lib/services/audit-service'
 import { detectLanguage } from '@/lib/services/language-detection-service'
 import { createLogger } from '@/lib/utils/logger'
 import { RepositoryError, ListParams, listResult, paginate, WriteContext } from './base'
@@ -197,7 +197,16 @@ export const ProductionRepository = {
         // Hook: tradução de synopsis
         await afterSynopsis(id, validated.synopsis, resolvedSynopsisSource)
 
-        await logAudit({ adminId: ctx.adminId, action: 'UPDATE', entity: 'Production', entityId: id, before, after: production, ip: ctx.ip })
+        await logAudit({
+            adminId: ctx.adminId,
+            action: 'UPDATE',
+            entity: 'Production',
+            entityId: id,
+            details: buildAuditChangeDetails(`Editou produção "${production.titlePt}"`, before, production),
+            before,
+            after: production,
+            ip: ctx.ip,
+        })
         log.info('Production updated', { id, fields: Object.keys(validated) })
 
         // Metadados para o route handler tratar side effects Next.js
