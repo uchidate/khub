@@ -125,9 +125,14 @@ export const groupsMembersHubs: ArchiveHub[] = [
             'Este hub conecta as páginas individuais das integrantes para quem quer acompanhar música, moda, atuação e presença internacional.',
         ],
         keywords: ['integrantes do blackpink', 'membros blackpink', 'blackpink kpop', 'jennie lisa jisoo rosé'],
+        whatYouWillFind: 'Aqui você encontra perfis individuais de cada integrante do BLACKPINK, com links para discografia, vídeos, doramas, campanhas de moda e conexões com outros artistas do catálogo HallyuHub.',
         faq: [
-            { question: 'As integrantes do BLACKPINK têm carreira solo?', answer: 'Sim. As integrantes também têm trabalhos individuais em música, moda, atuação ou entretenimento, quando esses dados estão disponíveis nos perfis.' },
-            { question: 'O hub mostra links oficiais?', answer: 'Os perfis individuais podem incluir redes oficiais, vídeos, discografia e outros links curados.' },
+            { question: 'As integrantes do BLACKPINK têm carreira solo?', answer: 'Sim. Rosé lançou o álbum "rosie" (2024), Jennie tem extensa carreira solo com "Solo" e "You & Me", Lisa se estabeleceu globalmente com "LALISA" e "MONEY", e Jisoo estreou como atriz em "Snowdrop" além de lançar seu primeiro single solo.' },
+            { question: 'Onde posso assistir ao BLACKPINK?', answer: 'O BLACKPINK tem conteúdo na Netflix ("Light Up the Sky", "BLACKPINK THE MOVIE"), além de shows e MVs no YouTube. As integrantes também têm presença em plataformas de streaming musical.' },
+            { question: 'Qual é a posição de cada integrante no BLACKPINK?', answer: 'Jennie é rapper e vocalista; Rosé é vocalista principal e guitarrista; Lisa é rapper principal e dançarina principal; Jisoo é vocalista principal e visual do grupo.' },
+            { question: 'O BLACKPINK ainda está ativo?', answer: 'Sim. BLACKPINK completou seus contratos individuais com a YG Entertainment e renovou. O grupo continua ativo com atividades coletivas e individuais das integrantes.' },
+            { question: 'O hub mostra links oficiais?', answer: 'Os perfis individuais podem incluir redes sociais oficiais, vídeos do YouTube, discografia curada e outros links relevantes para cada integrante.' },
+            { question: 'Lisa, Jennie, Rosé e Jisoo têm páginas individuais?', answer: 'Sim. Cada uma das quatro integrantes tem sua própria página de perfil no HallyuHub com informações de carreira, músicas e links relacionados.' },
         ],
     },
     {
@@ -211,10 +216,14 @@ export const groupsMembersHubs: ArchiveHub[] = [
             'Este hub reúne os perfis dos membros cadastrados no HallyuHub para que fãs e novos descobridores possam navegar por cada trajetória individual com facilidade.',
         ],
         keywords: ['integrantes do bts', 'membros bts', 'bts kpop', 'rm jin suga jhope jimin v jungkook', 'bangtan boys'],
+        whatYouWillFind: 'Neste hub você encontra perfis dos sete integrantes do BTS — RM, Jin, Suga, J-Hope, Jimin, V e Jungkook — com discografia solo, vídeos, colaborações, curiosidades e links relacionados.',
         faq: [
             { question: 'Quem são os integrantes do BTS?', answer: 'BTS tem sete integrantes: RM, Jin, Suga, J-Hope, Jimin, V e Jungkook. Todos têm perfis no HallyuHub com discografia, vídeos e carreira individual.' },
-            { question: 'Os membros do BTS têm carreira solo?', answer: 'Sim. Todos os membros do BTS lançaram projetos solo como álbuns, mixtapes, trilhas sonoras e colaborações internacionais. Os detalhes aparecem em cada perfil.' },
-            { question: 'BTS ainda está ativo?', answer: 'BTS pausou atividades coletivas enquanto os membros cumprem o serviço militar obrigatório na Coreia do Sul. A volta do grupo está prevista para 2025 e 2026.' },
+            { question: 'Os membros do BTS têm carreira solo?', answer: 'Sim. Todos lançaram projetos solo: RM com "Indigo", Jin com "The Astronaut", Suga com sua identidade Agust D, J-Hope com "Jack in the Box", Jimin com "FACE", V com "Layover" e Jungkook com "GOLDEN".' },
+            { question: 'BTS ainda está ativo?', answer: 'BTS pausou atividades coletivas enquanto os membros cumprem o serviço militar obrigatório. Os membros vão se formando gradualmente a partir de 2024–2025, com retorno previsto do grupo para 2025/2026.' },
+            { question: 'Jimin tem carreira solo?', answer: 'Sim. Jimin lançou o álbum "FACE" em 2023, com o hit global "Like Crazy" que estreou no topo da Billboard Hot 100, tornando-o o primeiro cantor solo coreano a alcançar o #1.' },
+            { question: 'Qual é o papel de cada membro no BTS?', answer: 'RM é o líder e rapper principal, Jin é vocalista e visual, Suga é rapper, J-Hope é dançarino principal e rapper, Jimin é vocalista e dançarino principal, V é vocalista e visual, Jungkook é maknae (caçula) e vocalista principal.' },
+            { question: 'Qual membro do BTS estreou no mundo da moda?', answer: 'Vários membros são embaixadores de marcas de luxo: J-Hope é embaixador global da Louis Vuitton, Jin da Christian Dior, Jimin da Dior menswear, Suga da Valentino e V da Celine e posteriormente outras marcas.' },
         ],
     },
     {

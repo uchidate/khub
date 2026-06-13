@@ -1,4 +1,5 @@
 import { artistsAgenciesHubs } from './artists-agencies'
+import { kbeautyHubs } from './kbeauty'
 import { artistsCategoriesHubs } from './artists-categories'
 import { artistsSoloHubs } from './artists-solo'
 import { groupsCategoriesHubs } from './groups-categories'
@@ -20,6 +21,7 @@ import { productionsYearHubs } from './productions-year'
 import type { ArchiveHub } from './types'
 
 export const archiveHubCollections: Record<string, ArchiveHub[]> = {
+    kbeauty: kbeautyHubs,
     artistsCategories: artistsCategoriesHubs,
     artistsSolo: artistsSoloHubs,
     artistsAgencies: artistsAgenciesHubs,

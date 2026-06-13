@@ -181,6 +181,15 @@ export function HubPageContent({ hub, locale, items, blogPosts = [] }: { hub: Ar
                 </div>
             </section>
 
+            {hub.whatYouWillFind && (
+                <section className="page-wrap pb-10">
+                    <div className="border border-border bg-surface p-6 sm:p-8">
+                        <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-accent">{strings.whatYouWillFindTitle}</h2>
+                        <p className="mt-3 text-sm leading-7 text-muted">{hub.whatYouWillFind}</p>
+                    </div>
+                </section>
+            )}
+
             <section className="page-wrap pb-16">
                 <div className="mb-5 flex items-end justify-between gap-4">
                     <div>

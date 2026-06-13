@@ -13,6 +13,7 @@ export type ArchiveHub = {
     intro: string[]
     keywords: string[]
     faq: Array<{ question: string; answer: string }>
+    whatYouWillFind?: string
     locale?: ArchiveHubLocale
     i18nKey?: string
 }

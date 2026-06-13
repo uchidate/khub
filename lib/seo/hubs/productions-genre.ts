@@ -28,9 +28,14 @@ export const productionsGenreHubs: ArchiveHub[] = [
             'Este hub reúne produções coreanas de romance catalogadas no HallyuHub, com páginas em português para entender elenco, sinopse e onde assistir.',
         ],
         keywords: ['doramas românticos', 'kdramas românticos', 'doramas de romance coreano', 'romance coreano netflix'],
+        whatYouWillFind: 'Aqui você encontra doramas românticos coreanos catalogados no HallyuHub, com sinopse em português, avaliação, elenco e informações sobre onde assistir — de grandes sucessos da Netflix a clássicos das emissoras coreanas.',
         faq: [
             { question: 'O que faz um bom dorama romântico coreano?', answer: 'Um bom dorama romântico coreano combina química entre os protagonistas, um OST marcante, conflitos emocionais bem desenvolvidos e a famosa tensão lenta antes do casal se unir.' },
             { question: 'Qual plataforma tem mais doramas românticos?', answer: 'Netflix, Disney+ e Amazon Prime têm crescido muito no catálogo de K-Dramas românticos, mas plataformas asiáticas como Viki e Kocowa ainda têm os maiores acervos históricos.' },
+            { question: 'Quais são os doramas românticos mais populares?', answer: '"Crash Landing on You", "Goblin", "My Love from the Star", "Business Proposal", "What\'s Wrong with Secretary Kim" e "Nevertheless" estão entre os mais assistidos do gênero no Brasil.' },
+            { question: 'O que é "slow burn" nos doramas românticos?', answer: 'Slow burn é a tensão romântica que se constrói lentamente ao longo dos episódios, com o casal resistindo ao sentimento antes de ceder. É uma das características mais amadas dos K-Dramas e cria uma fidelização enorme ao longo da série.' },
+            { question: 'Os doramas românticos têm final feliz?', answer: 'A maioria dos doramas românticos coreanos termina com final feliz. Porém, há exceções aclamadas com finais mais abertos ou melancólicos, como "My Mister" e "Nevertheless". No catálogo do HallyuHub, você pode filtrar por tag para encontrar os "happy endings".' },
+            { question: 'Tem doramas românticos mais curtos para quem está começando?', answer: 'Sim. Doramas como "Business Proposal" (12 eps), "Nevertheless" (10 eps) e "What\'s Wrong with Secretary Kim" (16 eps) são ótimas opções de entrada por serem mais curtos e leves.' },
         ],
     },
     {
