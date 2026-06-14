@@ -1,10 +1,10 @@
 import { SITE_URL } from '@/lib/constants/site'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
-import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { getHubItems, hasIndexableHubInventory } from '@/lib/seo/hub-items'
 import { HUB_LOCALE_BASE_PATH, type HubLocale } from '@/lib/seo/hub-i18n'
 import { escapeXml, xmlResponse } from '@/lib/seo/xml'
+import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -52,7 +52,14 @@ async function getIndexableHubPaths() {
 export async function GET() {
     const now = new Date().toISOString()
     const QUIZ_CATEGORIES = ['k-pop', 'k-drama', 'cultura', 'historia']
-    const hubPaths = await getIndexableHubPaths()
+    const [hubPaths, publishedTags] = await Promise.all([
+        getIndexableHubPaths(),
+        prisma.blogPost.findMany({
+            where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { not: null }, tags: { isEmpty: false } },
+            select: { tags: true },
+            take: 50000,
+        }).then(posts => [...new Set(posts.flatMap(post => post.tags ?? []))].filter(tag => tag.trim().length > 0).sort()),
+    ])
     const urls = [
         '/hubs',
         '/en/hubs',
@@ -68,7 +75,7 @@ export async function GET() {
         ...QUIZ_CATEGORIES.map(c => `/quiz/${c}`),
         ...hubPaths,
         ...BLOG_CATEGORIES.map(category => `/blog/category/${category.slug}`),
-        ...ALL_BLOG_TAGS.slice(0, 50).map(tag => `/blog/tag/${encodeURIComponent(tag)}`),
+        ...publishedTags.map(tag => `/blog/tag/${encodeURIComponent(tag)}`),
     ].map(path => `
   <url>
     <loc>${escapeXml(`${SITE_URL}${path}`)}</loc>

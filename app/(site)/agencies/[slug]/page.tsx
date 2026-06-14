@@ -159,7 +159,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ slug: 
                     "member": agency.artists.slice(0, 20).map(a => ({
                         "@type": "Person",
                         "name": a.nameRomanized,
-                        "url": `${BASE_URL}/artists/${a.id}`,
+                        "url": `${BASE_URL}/artists/${a.slug ?? a.id}`,
                     })),
                 } : {}),
             }} />

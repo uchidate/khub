@@ -8,6 +8,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 const BASE_URL = SITE_URL
 
 export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ tag: string }> }): Promise<Metadata> {
     const { tag } = await params
@@ -15,22 +16,16 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
     const title = `${decoded} — artigos e conteúdos | HallyuHub`
     const description = `Explore todos os artigos e conteúdos sobre ${decoded} no HallyuHub. Análises, curiosidades e novidades sobre K-Pop, K-Drama e cultura coreana em português.`
     const canonical = `${BASE_URL}/blog/tag/${encodeURIComponent(decoded)}`
+    const postCount = await prisma.blogPost.count({
+        where: { status: 'PUBLISHED', isPrivate: false, tags: { has: decoded } },
+    }).catch(() => 0)
     return {
         title,
         description,
         alternates: { canonical },
+        ...(postCount === 0 ? { robots: { index: false, follow: true } } : {}),
         openGraph: { title, description, url: canonical },
     }
-}
-
-export async function generateStaticParams() {
-    const posts = await prisma.blogPost.findMany({
-        where: { status: 'PUBLISHED', isPrivate: false, tags: { isEmpty: false } },
-        select: { tags: true },
-        take: 500,
-    }).catch(() => [])
-    const unique = new Set(posts.flatMap(p => p.tags as string[]))
-    return [...unique].map(tag => ({ tag: encodeURIComponent(tag) }))
 }
 
 export default async function BlogTagPage({ params, searchParams }: {

@@ -2,7 +2,6 @@ import { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
-import { ALL_BLOG_TAGS } from '@/lib/config/tags'
 import { getHubItems, hasIndexableHubInventory } from '@/lib/seo/hub-items'
 
 export const dynamic = 'force-dynamic'
@@ -159,13 +158,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 orderBy: { name: 'asc' },
             }),
             prisma.blogPost.findMany({
-                where: { publishedAt: { not: null } },
-                select: { slug: true, publishedAt: true, updatedAt: true },
+                where: { status: 'PUBLISHED', isPrivate: false, publishedAt: { not: null } },
+                select: { slug: true, publishedAt: true, updatedAt: true, tags: true },
                 orderBy: { publishedAt: 'desc' },
             }),
         ])
 
         const hubSitemapEntries = await getHubSitemapEntries()
+        const publishedBlogTags = [...new Set(blogPosts.flatMap(post => post.tags ?? []))]
+            .filter(tag => tag.trim().length > 0)
+            .sort()
 
         return [
             ...primaryRoutes,
@@ -226,7 +228,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 changeFrequency: 'weekly' as const,
                 priority: 0.72,
             })),
-            ...ALL_BLOG_TAGS.slice(0, 50).map(tag => ({
+            ...publishedBlogTags.map(tag => ({
                 url: `${BASE_URL}/blog/tag/${encodeURIComponent(tag)}`,
                 lastModified: STATIC_DATE,
                 changeFrequency: 'weekly' as const,

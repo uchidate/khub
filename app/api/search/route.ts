@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         },
         select: {
           id: true,
+          slug: true,
           nameRomanized: true,
           nameHangul: true,
           primaryImageUrl: true,
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     // Format results
     const results = [
       ...artists.map(a => ({
-        id: a.id,
+        id: a.slug ?? a.id,
         type: 'artist' as const,
         title: a.nameRomanized,
         subtitle: a.agency?.name || a.nameHangul,
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
         imageUrl: g.profileImageUrl,
       })),
       ...productions.map(p => ({
-        id: p.id,
+        id: p.slug ?? p.id,
         type: 'production' as const,
         title: p.titlePt,
         subtitle: `${p.type} • ${p.year}`,

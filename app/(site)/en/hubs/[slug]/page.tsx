@@ -27,7 +27,7 @@ export default async function HubPageEn({ params }: { params: Promise<{ slug: st
 
     const [items, blogPosts] = await Promise.all([
         getHubItems(hub),
-        getHubBlogPosts(hub).catch(() => []),
+        process.env.SKIP_BUILD_STATIC_GENERATION ? Promise.resolve([]) : getHubBlogPosts(hub).catch(() => []),
     ])
     return <HubPageContent hub={hub} locale="en" items={items} blogPosts={blogPosts} />
 }

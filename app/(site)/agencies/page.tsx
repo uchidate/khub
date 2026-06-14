@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
         return {
             title: 'Agências K-pop',
             description: 'Conheça as principais empresas de entretenimento coreano: HYBE, SM Entertainment, JYP, YG e mais.',
+            alternates: { canonical: `${SITE_URL}/agencies` },
         }
     }
     const total = await prisma.agency.count().catch(() => 0)

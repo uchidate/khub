@@ -27,6 +27,7 @@ type TrendingGroupSeed = {
 
 type TrendingProductionSeed = {
     id?: string
+    slug?: string | null
     title: string
     posterUrl: string | null
     rank?: number | null
@@ -100,7 +101,7 @@ export async function buildTrendingCluster({
         const scoreBreakdown = scoreHomeCandidate({ reason: "streaming_rank", rank: production.rank })
         items.push({
             type: "production",
-            href: `/productions/${production.id}`,
+            href: `/productions/${production.slug ?? production.id}`,
             title: production.title,
             imageUrl: production.posterUrl,
             reason: "linked_directly",
