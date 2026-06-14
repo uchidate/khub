@@ -24,6 +24,7 @@ import { CommentsSection } from '@/components/features/CommentsSection'
 import { ResponsiveFilterBar } from '@/components/ui/ResponsiveFilterBar'
 import { BLOG_CATEGORIES } from '@/lib/config/categories'
 import { ARCHIVE_HUBS } from '@/lib/seo/archive-hubs'
+import { getBlogAdChannel, hasSponsoredTag, shouldServeAdSense } from '@/lib/adsense/policy'
 
 const BlogBlockRenderer = dynamic(() => import('@/components/ui/BlogBlockRenderer').then(m => ({ default: m.BlogBlockRenderer })))
 const BlogEditButton = dynamic(() => import('@/components/blog/BlogEditButton').then(m => ({ default: m.BlogEditButton })))
@@ -36,10 +37,11 @@ const BlogBackToTop = dynamic(() => import('@/components/blog/BlogBackToTop').th
 const BlogTextShare = dynamic(() => import('@/components/blog/BlogTextShare').then(m => ({ default: m.BlogTextShare })))
 const BASE_URL = SITE_URL
 
-function MarkdownWithAds({ content }: { content: string }) {
+function MarkdownWithAds({ content, adsDisabled = false, adChannel }: { content: string; adsDisabled?: boolean; adChannel?: string }) {
   // Split on H2/H3 headings to inject ads between sections
   const sections = content.split(/(?=^#{2,3} )/m).filter(Boolean)
-  if (sections.length <= 2) {
+  const wordCount = content.split(/\s+/).filter(Boolean).length
+  if (sections.length <= 2 || adsDisabled || wordCount < 550 || !process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID) {
     return (
       <>
         <MarkdownRenderer content={content} />
@@ -52,6 +54,13 @@ function MarkdownWithAds({ content }: { content: string }) {
   return (
     <>
       <MarkdownRenderer content={firstHalf} />
+      <AdBanner
+        slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID}
+        variant="fluid"
+        channel={adChannel ? `${adChannel}-in-article` : 'blog-in-article'}
+        showFallback={false}
+        className="my-8"
+      />
       <MarkdownRenderer content={secondHalf} />
     </>
   )
@@ -237,12 +246,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }).slice(0, 4)
   const hasEntityLinks = post.relatedArtists.length > 0 || post.relatedGroups.length > 0 || post.relatedProductions.length > 0 || relatedHubs.length > 0
 
-  // Ads desabilitados: override manual, conteúdo patrocinado, tag "patrocinado"/"parceria", ou categoria com adsDisabled
-  const sponsoredTags = ['patrocinado', 'parceria', 'sponsored', 'publi']
-  const adsOff = (post as unknown as { adsDisabled?: boolean }).adsDisabled === true
-    || (post as unknown as { isSponsored?: boolean }).isSponsored === true
-    || post.tags.some(t => sponsoredTags.includes(t.toLowerCase()))
-    || (post.category as unknown as { adsDisabled?: boolean } | null)?.adsDisabled === true
+  const ratingBlock = blocks.find(b => b.type === 'blog_rating') as { score?: number; label?: string } | undefined
+  const adsOff = !shouldServeAdSense({
+    adsDisabled: (post as unknown as { adsDisabled?: boolean }).adsDisabled === true
+      || (post.category as unknown as { adsDisabled?: boolean } | null)?.adsDisabled === true,
+    isSponsored: (post as unknown as { isSponsored?: boolean }).isSponsored === true || hasSponsoredTag(post.tags),
+    isIndexable: true,
+  })
+  const adChannel = getBlogAdChannel({
+    categorySlug: post.category?.slug,
+    tags: post.tags,
+    hasRating: !!ratingBlock?.score,
+  })
 
   return (
     <PageTransition className="pb-10">
@@ -296,7 +311,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       }} />
       {/* Schema Review — gerado quando post tem bloco blog_rating */}
       {(() => {
-        const ratingBlock = blocks.find(b => b.type === 'blog_rating') as { score?: number; label?: string } | undefined
         if (!ratingBlock?.score) return null
         const itemName = post.relatedProductions[0]?.production?.titlePt
           ?? post.relatedGroups[0]?.group?.name
@@ -454,8 +468,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Content */}
         <article className="w-full">
           {Array.isArray((post as unknown as { blocks: unknown }).blocks) && ((post as unknown as { blocks: BlogBlock[] }).blocks).length > 0
-            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} adsDisabled={adsOff} />
-            : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} />
+            ? <BlogBlockRenderer blocks={(post as unknown as { blocks: BlogBlock[] }).blocks} resolvedEntities={resolvedEntities} adsDisabled={adsOff} adChannel={adChannel} />
+            : <MarkdownWithAds content={(post as unknown as { contentMd?: string }).contentMd ?? ''} adsDisabled={adsOff} adChannel={adChannel} />
           }
         </article>
 
@@ -564,7 +578,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Multiplex — discovery widget após leitura */}
-        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" channel="blog" />}
+        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" className="mt-8" channel={adChannel} />}
 
         {/* Quiz */}
         <Link
@@ -591,7 +605,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         height: 'calc(100vh - var(--site-sticky-top, 92px) - var(--section-bar-h, 44px) - 36px - 24px)',
       }}>
         {/* Ad fica fixo no topo da sidebar — não rola com o TOC */}
-        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full shrink-0" channel="blog" refreshInterval={60} />}
+        {!adsOff && <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR!} variant="auto" className="w-full shrink-0" channel={`${adChannel}-sidebar`} />}
         {/* TOC e loja rolam abaixo do ad */}
         <div className="flex flex-col gap-4 overflow-y-auto mt-4 min-h-0">
           <BlogTableOfContents />

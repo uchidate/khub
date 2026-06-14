@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, GitMerge, AlertTriangle, Link2, UsersRound, RefreshCw, MessageSquare, Flag, Sparkles, EyeOff, Languages, Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink, PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3, Layers, Tv, Globe, FolderOpen, ServerIcon, ChevronDown, ShoppingBag, Image as ImageIcon, BookOpen, Inbox, ClipboardList, Megaphone } from 'lucide-react'
+import { Shield, Users, Building2, Film, Newspaper, Disc3, Tag, Activity, Settings, ChevronLeft, Share2, GitMerge, AlertTriangle, Link2, UsersRound, RefreshCw, MessageSquare, Flag, Sparkles, EyeOff, Languages, Mail, FileText, Bot, Menu, X, Download, RotateCcw, Search, ExternalLink, PanelLeftClose, PanelLeftOpen, Home, LayoutDashboard, Workflow, Mic2, ShieldAlert, TrendingUp, BarChart3, Layers, Tv, Globe, FolderOpen, ServerIcon, ChevronDown, ShoppingBag, Image as ImageIcon, BookOpen, Inbox, ClipboardList, Megaphone, ShieldCheck } from 'lucide-react'
 import { Instagram } from '@/components/ui/BrandIcons'
 import type { PendingCounts } from '@/app/api/admin/pending-counts/route'
 import { AdminSearch } from './AdminSearch'
@@ -50,6 +50,7 @@ const navSections: NavSection[] = [
       },
       { href: '/admin/processes', label: 'Processos e melhorias', icon: ClipboardList, isNew: true },
       { href: '/admin/ops-metrics', label: 'Métricas Operacionais', icon: BarChart3, isNew: true },
+      { href: '/admin/site-health', label: 'Site Health', icon: ShieldCheck, isNew: true },
       { href: '/admin/pipeline', label: 'Pipeline',  icon: Workflow },
       { href: '/admin/cron',     label: 'Central de Automação', icon: RefreshCw, badgeKey: 'automation' },
       { href: '/admin/enrichment', label: 'Curadoria Gemini', icon: Sparkles },
@@ -217,7 +218,7 @@ const SECTION_LABELS: Record<string, string> = {
   artists: 'Artistas', groups: 'Grupos', productions: 'Produções', news: 'Notícias',
   translations: 'Traduções', enrichment: 'Curadoria Gemini', enrich: 'Curar no Gemini', albums: 'Álbuns', tags: 'Tags',
   inbox: 'Caixa de trabalho', processes: 'Processos e melhorias', comments: 'Comentários', reports: 'Reportes', emails: 'Emails', ai: 'IA', users: 'Usuários',
-  hidden: 'Central de Visibilidade', agencies: 'Agências', instagram: 'Instagram Sync', activity: 'Atividade',
+  hidden: 'Central de Visibilidade', agencies: 'Agências', instagram: 'Instagram Sync', activity: 'Atividade', 'site-health': 'Site Health',
   'bot-logs': 'Robôs', 'server-logs': 'Server Logs', cron: 'Central de Automação', infrastructure: 'Infraestrutura', settings: 'Configurações',
   kpopping: 'Kpopping', filmography: 'Filmografias', blog: 'Blog', database: 'Database',
   analytics: 'Analytics', trending: 'Trending', 'fix-names': 'Nomes via TMDB', duplicates: 'MusicBrainz',

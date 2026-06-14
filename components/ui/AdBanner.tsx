@@ -28,8 +28,6 @@ interface AdBannerProps {
     channel?: string
     /** Exibe house ad quando slot fica unfilled (default: true) */
     showFallback?: boolean
-    /** Faz refresh do slot a cada N segundos se em viewport (default: 0 = desativado) */
-    refreshInterval?: number
 }
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
@@ -88,7 +86,6 @@ export function AdBanner({
     devLabel,
     channel,
     showFallback = true,
-    refreshInterval = 0,
 }: AdBannerProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const insRef = useRef<HTMLModElement>(null)
@@ -260,33 +257,6 @@ export function AdBanner({
         return () => po.disconnect()
     }, [filled, slot, slotName, channel])
 
-    // Ad refresh — repusha o slot a cada N segundos se em viewport
-    useEffect(() => {
-        if (!refreshInterval || refreshInterval < 30) return
-        if (filled !== true || IS_DEV || !CLIENT) return
-        const el = containerRef.current
-        if (!el) return
-
-        let inViewport = false
-        const io = new IntersectionObserver(
-            entries => { inViewport = entries[0].isIntersecting },
-            { threshold: 0.5 }
-        )
-        io.observe(el)
-
-        const interval = setInterval(() => {
-            // Não conta impressão se slot fora do viewport ou aba em background
-            if (!inViewport || document.visibilityState === 'hidden') return
-            pushed.current = false // permite novo push
-            try {
-                ;((window as unknown as { adsbygoogle: unknown[] }).adsbygoogle = (window as unknown as { adsbygoogle: unknown[] }).adsbygoogle || []).push({})
-                setFilled(null) // volta ao estado loading brevemente
-            } catch { /* ignora */ }
-        }, refreshInterval * 1000)
-
-        return () => { io.disconnect(); clearInterval(interval) }
-    }, [filled, refreshInterval])
-
     if (settingsDisabled || !freqAllowed || isAdmin) return null
 
     if (IS_DEV) {
@@ -302,7 +272,7 @@ export function AdBanner({
                     <span className="text-caption font-mono text-amber-500/60 select-none">·</span>
                     <span className="text-caption font-mono text-amber-600/80 dark:text-amber-400/80 select-none">{info.use}</span>
                 </div>
-                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{channel ? ` · ch:${channel}` : ''}{refreshInterval ? ` · refresh:${refreshInterval}s` : ''}{eager ? ' · eager' : ''}</span>
+                <span className="text-micro font-mono text-amber-600/60 dark:text-amber-400/60 select-none">slot: {slot}{channel ? ` · ch:${channel}` : ''}{eager ? ' · eager' : ''}</span>
             </div>
         )
     }

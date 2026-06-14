@@ -6,32 +6,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { BlogBlock } from '@/lib/types/blocks'
-import { useAdFilled } from '@/hooks/useAdFilled'
 import { AdBanner } from '@/components/ui/AdBanner'
 
 const TwitterEmbed = dynamic(() => import('@/components/ui/TwitterEmbed').then(m => ({ default: m.TwitterEmbed })), { ssr: false })
 const InstagramEmbed = dynamic(() => import('@/components/ui/InstagramEmbed').then(m => ({ default: m.InstagramEmbed })), { ssr: false })
 const TikTokEmbed = dynamic(() => import('@/components/ui/TikTokEmbed').then(m => ({ default: m.TikTokEmbed })), { ssr: false })
 
-const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FLUID
-const IS_DEV = process.env.NODE_ENV === 'development'
 
-function InArticleAd({ id }: { id: string }) {
+function InArticleAd({ id, channel }: { id: string; channel?: string }) {
     if (!ADSENSE_SLOT) return null
     return (
         <AdBanner
             key={id}
             slot={ADSENSE_SLOT}
             variant="fluid"
-            channel="blog-in-article"
+            channel={channel ? `${channel}-in-article` : 'blog-in-article'}
             showFallback={false}
             className="my-8"
         />
     )
 }
-
-const AD_POSITIONS = new Set([4, 10, 18])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -382,11 +377,15 @@ interface BlogBlockRendererProps {
     className?: string
     resolvedEntities?: ResolvedEntities
     adsDisabled?: boolean
+    adChannel?: string
 }
 
 // Gate: mínimo de blocos de parágrafo E word count total (Google Policy)
 const MIN_PARAGRAPH_BLOCKS_FOR_ADS = 6
 const MIN_WORDS_FOR_ADS = 300
+const MIN_BLOCK_GAP_BETWEEN_ADS = 8
+const AD_DENSITY_WORDS = 550
+const MAX_IN_ARTICLE_ADS = 3
 
 const TEXT_BLOCK_TYPES = new Set([
     'blog_paragraph', 'blog_heading', 'blog_quote', 'blog_curiosity',
@@ -405,6 +404,28 @@ function countWordsInBlocks(blocks: BlogBlock[]): number {
         total += texts.join(' ').split(/\s+/).filter(Boolean).length
     }
     return total
+}
+
+function getAdAnchorPositions(rowsLength: number, wordCount: number) {
+    const adCount = Math.min(MAX_IN_ARTICLE_ADS, Math.floor(wordCount / AD_DENSITY_WORDS))
+    if (adCount <= 0 || rowsLength < 8) return []
+
+    const first = Math.max(4, Math.floor(rowsLength * 0.35))
+    if (adCount === 1) return [first]
+
+    const positions: number[] = []
+    const start = Math.max(4, Math.floor(rowsLength * 0.3))
+    const end = Math.max(start, Math.floor(rowsLength * 0.78))
+    const step = Math.max(MIN_BLOCK_GAP_BETWEEN_ADS, Math.floor((end - start) / Math.max(1, adCount - 1)))
+
+    for (let i = 0; i < adCount; i++) {
+        const pos = Math.min(end, start + (i * step))
+        if (positions.length === 0 || pos - positions[positions.length - 1] >= MIN_BLOCK_GAP_BETWEEN_ADS) {
+            positions.push(pos)
+        }
+    }
+
+    return positions
 }
 
 // ── Interactive blocks ────────────────────────────────────────────────────────
@@ -787,7 +808,7 @@ function isPortraitGroup(item: unknown): item is PortraitGroupMarker {
 }
 
 
-export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisabled = false }: BlogBlockRendererProps) {
+export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisabled = false, adChannel }: BlogBlockRendererProps) {
     // Group consecutive non-compact entity cards into a 2-col grid
     // Group consecutive compact cards into a 2-col desktop grid
     const rows: (BlogBlock | BlogBlock[] | PortraitGroupMarker)[] = []
@@ -821,7 +842,7 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisa
     const wordCount = countWordsInBlocks(blocks)
     const adsAllowed = !adsDisabled && paragraphCount >= MIN_PARAGRAPH_BLOCKS_FOR_ADS && wordCount >= MIN_WORDS_FOR_ADS
     const adAfter = new Set<number>()
-    if (adsAllowed) for (const pos of AD_POSITIONS) {
+    if (adsAllowed) for (const pos of getAdAnchorPositions(rows.length, wordCount)) {
         for (let i = pos - 1; i < rows.length; i++) {
             const cur = rows[i]
             const next = rows[i + 1]
@@ -855,7 +876,7 @@ export function BlogBlockRenderer({ blocks, className, resolvedEntities, adsDisa
                 return (
                     <Fragment key={idx}>
                         {el}
-                        {adAfter.has(idx) && <InArticleAd id={`blog-ad-${idx}`} />}
+                        {adAfter.has(idx) && <InArticleAd id={`blog-ad-${idx}`} channel={adChannel} />}
                     </Fragment>
                 )
             })}

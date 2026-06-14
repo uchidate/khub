@@ -41,6 +41,7 @@ import { getPrimaryMusicLink, getPublicMusicCatalog } from '@/lib/music/public-m
 import { buildGroupMembershipHistory } from '@/lib/groups/membership-history'
 import { cleanSameAs, compactSchema, youtubeVideoSchema } from '@/lib/seo/structured-data'
 import { getRelatedGroupHubs } from '@/lib/seo/archive-hubs'
+import { shouldServeAdSense } from '@/lib/adsense/policy'
 const BASE_URL = SITE_URL
 
 // ISR: página cacheada 1h — revalidada sob demanda via revalidatePath no admin
@@ -276,6 +277,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
             .map(([, url]) => url),
         ...(spotifyUrl ? [spotifyUrl] : []),
     ]
+    const isThinContent = !group.profileImageUrl && !group.bio
+    const adsAllowed = shouldServeAdSense({
+        isIndexable: !!group.slug,
+        isThinContent,
+    })
 
     const themeColor = officialColorRaw ?? themeColorFetched
     const accent = themeColor ?? '#9333ea'
@@ -970,9 +976,11 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                 </div>
             </div>
             {/* Multiplex — discovery após leitura completa do perfil */}
-            <div className="page-wrap py-6">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="grupos" />
-            </div>
+            {adsAllowed && (
+                <div className="page-wrap py-6">
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="group-profile" />
+                </div>
+            )}
 
             <ScrollToTop />
         </div>
