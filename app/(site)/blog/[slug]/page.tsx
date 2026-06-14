@@ -215,7 +215,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const groupIds = Array.from(new Set(blocks.filter(b => b.type === 'blog_group_card' && (b as { groupId?: string }).groupId).map(b => (b as { groupId: string }).groupId)))
   const [artists, productions, groups, relatedPosts] = await Promise.all([
     artistIds.length > 0
-      ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
+      ? prisma.artist.findMany({ where: { id: { in: artistIds } }, select: { id: true, slug: true, nameRomanized: true, roles: true, primaryImageUrl: true } })
       : [],
     productionIds.length > 0
       ? prisma.production.findMany({ where: { id: { in: productionIds } }, select: { id: true, titlePt: true, type: true, year: true, imageUrl: true } })
@@ -487,7 +487,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {artists.map(artist => (
                 <Link
                   key={artist.id}
-                  href={`/artists/${artist.id}`}
+                  href={`/artists/${artist.slug ?? artist.id}`}
                   className="group flex items-center gap-2.5 rounded-md border border-border bg-surface px-3 py-2 transition-all hover:border-accent/40 hover:bg-surface-hover"
                 >
                   <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-md bg-surface-hover">

@@ -294,7 +294,7 @@ export default async function DashboardPage() {
                   <PanelTitle icon={TrendingUp} title="Em alta" subtitle="Artistas para explorar." href="/artists" linkLabel="Artistas" />
                   <div className="grid grid-cols-3 gap-3">
                     {trendingArtists.slice(0, 6).map((artist: any) => (
-                      <Link key={artist.id} href={`/artists/${artist.id}`} className="group min-w-0 text-center">
+                      <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group min-w-0 text-center">
                         <div className="relative mx-auto h-16 w-16 overflow-hidden rounded-2xl border border-border bg-background transition-colors group-hover:border-accent/50">
                           {artist.primaryImageUrl ? (
                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover object-top transition-transform duration-500 group-hover:scale-105" sizes="64px" />
