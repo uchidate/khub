@@ -692,6 +692,23 @@ export default async function GroupDetailPage(props: { params: Promise<{ slug: s
                             </section>
                         )}
 
+                        {/* Formação clássica — grupo disbanded sem membros ativos */}
+                        {activeMembers.length === 0 && formerMembers.length > 0 && (
+                            <section id="formacao-classica">
+                                <SectionHeader icon={<Users className="w-5 h-5" />} title="Formação clássica" count={formerMembers.length} countLabel={formerMembers.length === 1 ? 'integrante' : 'integrantes'} accent={accent} />
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                                    {formerMembers.map(member => (
+                                        <GroupMemberCard
+                                            key={member.id}
+                                            member={member}
+                                            accent={accent}
+                                            isLeader={member.role?.toLowerCase().includes('leader') || member.role?.toLowerCase().includes('líder')}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         {/* ── POLL — membro favorito ── */}
                         {activeMembers.length >= 2 && (
                             <GroupMemberPoll
