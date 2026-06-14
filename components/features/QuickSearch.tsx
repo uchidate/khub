@@ -220,7 +220,7 @@ export function QuickSearch() {
                                                 {results.artists.map((artist) => (
                                                     <button
                                                         key={artist.id}
-                                                        onClick={() => handleNavigate(`/artists/${artist.id}`)}
+                                                        onClick={() => handleNavigate(`/artists/${artist.slug ?? artist.id}`)}
                                                         className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-surface transition-colors group text-left"
                                                     >
                                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-surface flex-shrink-0">

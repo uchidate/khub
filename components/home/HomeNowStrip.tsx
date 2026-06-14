@@ -23,6 +23,7 @@ interface NowGroup {
 
 interface NowProduction {
     id?: string
+    slug?: string | null
     title: string
     posterUrl: string | null
     year: number | null
@@ -60,7 +61,7 @@ export function HomeNowStrip({
     const items = [
         artist && { key: "artist", href: `/artists/${artist.slug ?? artist.id}`, eyebrow: "Artista em alta", title: artist.nameRomanized, detail: artist.nameHangul ?? "Ranking da semana", icon: Music2, imageUrl: artist.primaryImageUrl, fallback: artist.nameRomanized },
         group && { key: "group", href: `/groups/${group.slug ?? group.id}`, eyebrow: "Grupo em alta", title: group.name, detail: group.nameHangul ?? "Tendência", icon: Users, imageUrl: group.profileImageUrl, fallback: group.name },
-        production && { key: "prod", href: production.id ? `/productions/${production.id}` : "/productions", eyebrow: "Para assistir", title: production.title, detail: production.year ? String(production.year) : "Em destaque", icon: Film, imageUrl: production.posterUrl, fallback: production.title },
+        production && { key: "prod", href: production.id ? `/productions/${production.slug ?? production.id}` : "/productions", eyebrow: "Para assistir", title: production.title, detail: production.year ? String(production.year) : "Em destaque", icon: Film, imageUrl: production.posterUrl, fallback: production.title },
         birthday && { key: "bday", href: `/artists/${birthday.slug ?? birthday.id}`, eyebrow: "Aniversário", title: birthday.nameRomanized, detail: `${birthday.age} anos hoje`, icon: Cake, imageUrl: birthday.primaryImageUrl, fallback: birthday.nameRomanized },
     ].filter(Boolean) as { key: string; href: string; eyebrow: string; title: string; detail: string; icon: React.ElementType; imageUrl: string | null; fallback: string }[]
 

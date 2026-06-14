@@ -702,7 +702,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     memberships: { some: { groupId: activeGroupId, isActive: true } },
                 },
                 take: 8,
-                select: { id: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
+                select: { id: true, slug: true, nameRomanized: true, nameHangul: true, primaryImageUrl: true, roles: true, gender: true },
                 orderBy: { trendingScore: 'desc' },
             }).catch(() => [])
             : Promise.resolve([]),
@@ -1198,7 +1198,7 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
                     {relatedArtists.length > 0 && (
                         <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 sm:gap-6">
                             {relatedArtists.map(ra => (
-                                <Link key={ra.id} href={`/artists/${ra.id}`} className="group flex flex-col gap-3">
+                                <Link key={ra.id} href={`/artists/${ra.slug ?? ra.id}`} className="group flex flex-col gap-3">
                                     <div className="relative aspect-square overflow-hidden bg-[#efefef]"
                                         style={{ background: 'repeating-linear-gradient(135deg, #f0f0f0 0 10px, #e8e8e8 10px 20px)' }}>
                                         {ra.primaryImageUrl && (

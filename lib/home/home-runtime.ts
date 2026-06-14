@@ -94,7 +94,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
                 source: true, rank: true, showTitle: true, tmdbId: true,
                 posterUrl: true, year: true, voteAverage: true, isKorean: true,
                 productionId: true,
-                production: { select: { titlePt: true } },
+                production: { select: { slug: true, titlePt: true } },
             },
             orderBy: [{ source: "asc" }, { rank: "asc" }],
         }).catch(() => []),
@@ -290,6 +290,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
     const topStreamingShow = topStreamingShowRaw
         ? {
             id: topStreamingShowRaw.productionId ?? undefined,
+            slug: topStreamingShowRaw.production?.slug ?? undefined,
             title: topStreamingShowRaw.production?.titlePt ?? topStreamingShowRaw.showTitle,
             posterUrl: topStreamingShowRaw.posterUrl,
             year: topStreamingShowRaw.year,
@@ -305,7 +306,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
         reservedEntityKeys.add(homeEntityKey("group", `/groups/${trendingGroupsRaw[0].slug ?? trendingGroupsRaw[0].id}`))
     }
     if (topStreamingShow?.id) {
-        reservedEntityKeys.add(homeEntityKey("production", `/productions/${topStreamingShow.id}`))
+        reservedEntityKeys.add(homeEntityKey("production", `/productions/${topStreamingShow.slug ?? topStreamingShow.id}`))
     }
 
     const randomArtist = selectDistinctRotatingItem({
@@ -338,6 +339,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
         production: topStreamingShow
             ? {
                 id: topStreamingShow.id,
+                slug: topStreamingShow.slug,
                 title: topStreamingShow.title,
                 posterUrl: topStreamingShow.posterUrl,
                 rank: topStreamingShow.rank,
@@ -353,7 +355,7 @@ export async function buildHomeRuntimeData(now = new Date()) {
         excludeHrefs: new Set([
             trendingArtists[0] ? `/artists/${trendingArtists[0].slug ?? trendingArtists[0].id}` : "",
             trendingGroupsRaw[0] ? `/groups/${trendingGroupsRaw[0].slug ?? trendingGroupsRaw[0].id}` : "",
-            topStreamingShow?.id ? `/productions/${topStreamingShow.id}` : "",
+            topStreamingShow?.id ? `/productions/${topStreamingShow.slug ?? topStreamingShow.id}` : "",
         ].filter(Boolean)),
     })
 

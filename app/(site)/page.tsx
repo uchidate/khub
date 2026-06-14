@@ -224,11 +224,13 @@ export default async function Home() {
                 group={trendingGroups[0] ?? null}
                 production={topStreamingShow ? {
                     id: topStreamingShow.id,
+                    slug: topStreamingShow.slug,
                     title: topStreamingShow.title,
                     posterUrl: topStreamingShow.posterUrl,
                     year: topStreamingShow.year ?? null,
                 } : randomProduction ? {
                     id: randomProduction.id,
+                    slug: randomProduction.slug,
                     title: randomProduction.titlePt,
                     posterUrl: randomProduction.imageUrl,
                     year: randomProduction.year,

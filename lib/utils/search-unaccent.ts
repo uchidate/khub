@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client'
 
 type ProductionSearchResult = {
     id: string
+    slug: string | null
     titlePt: string
     titleKr: string | null
     type: string
@@ -19,6 +20,7 @@ type ProductionSearchResult = {
 
 type ArtistSearchResult = {
     id: string
+    slug: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -59,7 +61,7 @@ export async function searchProductionsUnaccent(
         : Prisma.sql``
 
     const rows = await prisma.$queryRaw<ProductionSearchResult[]>`
-        SELECT p.id, p."titlePt", p."titleKr", p.type, p.year, p."imageUrl", p."voteAverage"
+        SELECT p.id, p.slug, p."titlePt", p."titleKr", p.type, p.year, p."imageUrl", p."voteAverage"
         FROM "Production" p
         WHERE p."flaggedAsNonKorean" = false
           AND p."isHidden" = false
@@ -85,7 +87,7 @@ export async function searchArtistsUnaccent(
     const pattern = `%${searchTerm}%`
 
     const rows = await prisma.$queryRaw<ArtistSearchResult[]>`
-        SELECT a.id, a."nameRomanized", a."nameHangul", a."primaryImageUrl",
+        SELECT a.id, a.slug, a."nameRomanized", a."nameHangul", a."primaryImageUrl",
                a.roles, a.gender, a."trendingScore"
         FROM "Artist" a
         WHERE a."flaggedAsNonKorean" = false

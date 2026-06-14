@@ -36,16 +36,21 @@ export default async function BlogCategoryPage({ params, searchParams }: {
     const [{ slug }, sp] = await Promise.all([params, searchParams])
     const category = BLOG_CATEGORY_BY_SLUG[slug]
 
-    const postCount = await prisma.blogPost.count({
-        where: { status: 'PUBLISHED', isPrivate: false, category: { slug } },
-    }).catch(() => 0)
+    const shouldSkipDb = process.env.SKIP_BUILD_STATIC_GENERATION === '1'
+    const postCount = shouldSkipDb
+        ? 0
+        : await prisma.blogPost.count({
+            where: { status: 'PUBLISHED', isPrivate: false, category: { slug } },
+        }).catch(() => 0)
 
-    const recentPosts = await prisma.blogPost.findMany({
-        where: { status: 'PUBLISHED', isPrivate: false, category: { slug } },
-        select: { title: true, slug: true, publishedAt: true },
-        orderBy: { publishedAt: 'desc' },
-        take: 5,
-    }).catch(() => [])
+    const recentPosts = shouldSkipDb
+        ? []
+        : await prisma.blogPost.findMany({
+            where: { status: 'PUBLISHED', isPrivate: false, category: { slug } },
+            select: { title: true, slug: true, publishedAt: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 5,
+        }).catch(() => [])
 
     return (
         <>

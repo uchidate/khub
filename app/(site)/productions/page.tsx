@@ -15,7 +15,11 @@ const BASE_URL = SITE_URL
 
 export async function generateMetadata(): Promise<Metadata> {
     if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-        return { title: 'Doramas & Filmes Coreanos', description: 'Doramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, tudo em português.' }
+        return {
+            title: 'Doramas & Filmes Coreanos',
+            description: 'Doramas e filmes coreanos para descobrir — de romances épicos a thrillers de tirar o fôlego, tudo em português.',
+            alternates: { canonical: `${BASE_URL}/productions`, languages: { 'pt-BR': `${BASE_URL}/productions`, 'pt-PT': `${BASE_URL}/productions`, 'x-default': `${BASE_URL}/productions` } },
+        }
     }
     const ageFilter = await applyAgeRatingFilter().catch(() => ({}))
     const total = await prisma.production.count({ where: { flaggedAsNonKorean: false, isHidden: false, ...ageFilter } }).catch(() => 0)
