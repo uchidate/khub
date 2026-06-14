@@ -32,7 +32,7 @@ const getAgency = cache(async (slug: string) =>
             artists: {
                 where: { isHidden: false, flaggedAsNonKorean: false },
                 select: {
-                    id: true, nameRomanized: true, nameHangul: true,
+                    id: true, slug: true, nameRomanized: true, nameHangul: true,
                     primaryImageUrl: true, roles: true, gender: true,
                     trendingScore: true, trendingRank: true,
                 },
@@ -435,7 +435,7 @@ export default async function AgencyDetailPage(props: { params: Promise<{ slug: 
                         </h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
                             {agency.artists.map((artist) => (
-                                <Link key={artist.id} href={`/artists/${artist.id}`} className="group block">
+                                <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group block">
                                     <div className="aspect-[3/4] relative rounded-xl overflow-hidden bg-surface border border-border hover:border-[var(--a)]/40 transition-all mb-2.5"
                                         style={{ '--a': accent } as React.CSSProperties}>
                                         {artist.primaryImageUrl ? (

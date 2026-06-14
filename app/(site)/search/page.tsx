@@ -13,6 +13,7 @@ import { nameToGradient } from '@/lib/utils'
 
 interface Artist {
     id: string
+    slug: string | null
     nameRomanized: string
     nameHangul: string | null
     primaryImageUrl: string | null
@@ -291,7 +292,7 @@ function SearchContent() {
                             <SectionHeader icon={<User size={14} />} title="Artistas" count={artists.length} />
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 md:gap-4">
                                 {artists.map(artist => (
-                                    <Link key={artist.id} href={`/artists/${artist.id}`}
+                                    <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`}
                                         className="group block rounded-xl p-1.5 -m-1.5 hover:bg-surface-hover transition-colors">
                                         <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-border/60 mb-2.5 group-hover:border-accent/30 transition-all">
                                             {artist.primaryImageUrl ? (

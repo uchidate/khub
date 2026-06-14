@@ -206,7 +206,7 @@ export default async function ProfilePage() {
                   <SectionHeader title="Curadoria de artistas" subtitle="Artistas que você acompanha de perto." href="/favorites" />
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
                     {(recentFavoriteArtists.length > 0 ? recentFavoriteArtists : trendingArtists).slice(0, 6).map((artist: any) => (
-                      <Link key={artist.id} href={`/artists/${artist.id}`} className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-colors hover:border-accent/40">
+                      <Link key={artist.id} href={`/artists/${artist.slug ?? artist.id}`} className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-colors hover:border-accent/40">
                         <div className="relative aspect-square bg-background">
                           {artist.primaryImageUrl ? (
                             <Image src={artist.primaryImageUrl} alt={artist.nameRomanized} fill className="object-cover object-top transition-transform duration-500 group-hover:scale-105" sizes="180px" />
