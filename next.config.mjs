@@ -398,6 +398,11 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: '*.mlstatic.com',
             },
+            // Apple Music / iTunes CDN — capas de álbuns e fotos de artistas
+            {
+                protocol: 'https',
+                hostname: '*.mzstatic.com',
+            },
         ],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920],
         imageSizes: [16, 32, 48, 64, 96, 128, 160, 256, 384, 512],
