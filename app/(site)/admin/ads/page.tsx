@@ -164,6 +164,30 @@ export default function AdsAdminPage() {
     }
 
     const isPaused = settings?.adsGloballyPaused ?? false
+    const policyChecks = [
+        {
+            label: 'Auto-refresh manual',
+            status: 'ok',
+            desc: 'Removido dos slots AdSense; refresh fica dependente de ação/configuração permitida.',
+        },
+        {
+            label: 'Sticky mobile',
+            status: settings?.adsAutoAdsEnabled === false ? 'warn' : 'ok',
+            desc: settings?.adsAutoAdsEnabled === false
+                ? 'Sticky manual pode aparecer porque Auto Ads está pausado.'
+                : 'Sticky manual fica bloqueado enquanto Auto Ads está ativo.',
+        },
+        {
+            label: 'Thin/noindex',
+            status: 'ok',
+            desc: 'Perfis thin, adultos, sem slug ou patrocinados ficam fora do inventário.',
+        },
+        {
+            label: 'Canais granulares',
+            status: 'ok',
+            desc: 'Blog, artistas e produções enviam channels por intenção para análise de RPM.',
+        },
+    ] as const
 
     return (
         <AdminLayout title="Controle de Anúncios" subtitle="Gerencie slots, placements e configurações do Google AdSense">
@@ -185,6 +209,29 @@ export default function AdsAdminPage() {
                     >
                         AdSense <ExternalLink size={10} />
                     </a>
+                </div>
+
+                {/* Checks de política e qualidade */}
+                <div className="bg-surface border border-border rounded-xl overflow-hidden">
+                    <div className="px-5 py-3 border-b border-border">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted">Checks de Segurança AdSense</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+                        {policyChecks.map(check => {
+                            const isWarn = check.status === 'warn'
+                            return (
+                                <div key={check.label} className="flex items-start gap-3 px-5 py-4">
+                                    {isWarn
+                                        ? <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                                        : <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />}
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-foreground">{check.label}</p>
+                                        <p className="text-[11px] text-muted mt-0.5">{check.desc}</p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
                 </div>
 
                 {/* Controles */}

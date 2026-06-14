@@ -21,7 +21,6 @@ declare global {
 
 function isAdsPaused() {
     return window.__adSettings?.adsGloballyPaused === true
-        || window.__adSettings?.adsAutoAdsEnabled === false
 }
 
 let pageLevelAdsPushed = false
@@ -233,10 +232,12 @@ export function AdSenseLoader() {
         document.documentElement.dataset.adPageType = pageType
         document.documentElement.dataset.adCategory = category
 
-        // Vignette interstitial na navegação SPA (Page-level Ads API)
-        // Ignora primeira navegação (montagem inicial) e respeita cooldown
-        navCount++
-        if (navCount > 1) tryVignette()
+        if (window.__adSettings?.adsAutoAdsEnabled !== false) {
+            // Vignette interstitial na navegação SPA (Page-level Ads API)
+            // Ignora primeira navegação (montagem inicial) e respeita cooldown
+            navCount++
+            if (navCount > 1) tryVignette()
+        }
 
         const timers = ROUTE_PUSH_DELAYS.map(delay =>
             window.setTimeout(() => {

@@ -34,6 +34,7 @@ import { BrandDot } from '@/components/ui/BrandDot'
 import { getPrimaryMusicLink, getPublicMusicCatalog, toSpotifyEmbedUrl } from '@/lib/music/public-music-catalog'
 import { cleanSameAs, compactSchema, isoDateOnly, youtubeVideoSchema } from '@/lib/seo/structured-data'
 import { getRelatedArtistHubs } from '@/lib/seo/archive-hubs'
+import { getArtistAdChannel, shouldServeAdSense } from '@/lib/adsense/policy'
 const BASE_URL = SITE_URL
 
 type ArtistWithExtras = Awaited<ReturnType<typeof getArtist>> & {
@@ -737,6 +738,21 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
         }).catch(() => [])
     })()
 
+    const GENERIC_BIO = /conhecido\(a\) na ind[uú]stria|talentoso\(a\).*ind[uú]stria|de destaque na ind[uú]stria/i
+    const cleanBio = artist.bio && !GENERIC_BIO.test(artist.bio) ? artist.bio : null
+    const isThinContent = !artist.primaryImageUrl && !cleanBio
+    const adsAllowed = shouldServeAdSense({
+        isIndexable: !!artist.slug && !(isCuid(params.slug) && artist.slug !== params.slug),
+        isThinContent,
+    })
+    const adChannel = getArtistAdChannel({
+        roles: artist.roles,
+        hasPrimaryImage: !!artist.primaryImageUrl,
+        hasBio: !!cleanBio,
+        hasProductions: totalProductions > 0,
+        hasMusicCatalog: musicCatalog.releases.length > 0,
+    })
+
     const discographyReleases = musicCatalog.releases.map(release => {
         const releasePrimaryLink = getPrimaryMusicLink(release.links)
         return {
@@ -1283,9 +1299,11 @@ export default async function ArtistDetailPage(props: { params: Promise<{ slug: 
             </div>
 
             {/* Multiplex — discovery após leitura completa do perfil */}
-            <div className="page-wrap py-6">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="artistas" />
-            </div>
+            {adsAllowed && (
+                <div className="page-wrap py-6">
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel={adChannel} />
+                </div>
+            )}
 
             <ScrollToTop />
         </div>

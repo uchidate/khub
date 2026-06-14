@@ -27,6 +27,7 @@ import type { Metadata } from "next"
 import { SITE_URL } from '@/lib/constants/site'
 import { StoreProductsRail } from '@/components/store/StoreProductsRail'
 import { inferProductionContentType } from '@/lib/store/product-matcher'
+import { getProductionAdChannel, shouldServeAdSense } from '@/lib/adsense/policy'
 const BASE_URL = SITE_URL
 
 type ProductionWithExtras = Awaited<ReturnType<typeof getProduction>> & {
@@ -171,6 +172,16 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
     if (isCuid(params.slug) && production.slug && production.slug !== params.slug) {
         permanentRedirect(`/productions/${production.slug}`)
     }
+
+    const isAdultContent = production.ageRating === '18' || production.isAdultContent === true
+    const adsAllowed = shouldServeAdSense({
+        isIndexable: !!production.slug && !isAdultContent,
+        isAdultContent,
+    })
+    const adChannel = getProductionAdChannel({
+        type: production.type,
+        streamingPlatforms: production.streamingPlatforms,
+    })
 
     const tags = (production.tags || []) as string[]
     const artistIds = production.artists.map(a => a.artist.id)
@@ -1066,9 +1077,11 @@ export default async function ProductionDetailPage(props: { params: Promise<{ sl
                 </div>
             </div>
             {/* Multiplex — discovery após leitura completa */}
-            <div className="page-wrap py-6">
-                <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel="producoes" />
-            </div>
+            {adsAllowed && (
+                <div className="page-wrap py-6">
+                    <AdBanner slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_MULTIPLEX!} variant="multiplex" channel={adChannel} />
+                </div>
+            )}
 
             <ScrollToTop />
         </div>
